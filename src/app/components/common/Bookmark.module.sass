@@ -1,0 +1,15 @@
+@import '../../globals.sass'
+
+.bookmark_btn
+  color: $gray
+
+  span
+    font-size: 24px
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
+    transition: color 0.2s ease, font-variation-settings 0.2s ease
+
+  &.is_active
+    color: $amber
+    
+    span
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
