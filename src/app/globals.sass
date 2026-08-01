@@ -1,10 +1,140 @@
 // Layout //
+
+$mobile: 360px
+$tablet: 768px
+$desktop: 1440px
+
 // Layout //
   
-// Typhography //
+// Typography //
 
-// Typhography //
+// 기본 폰트 설정
+$font-main: 'Pretendard'
+$letter-spacing-base: -0.025em // 자간: -2.5%
+
+// 1. Title (타이틀): 64px / 76px
+@mixin font_title
+  font-family: $font-main
+  font-size: 64px
+  line-height: 76px
+  letter-spacing: $letter-spacing-base
+
+// 2. Subtitle (타이틀): 46px / 56px
+@mixin font_subtitle
+  font-family: $font-main
+  font-size: 46px
+  line-height: 56px
+  letter-spacing: $letter-spacing-base
+
+// 3. H1 (타이틀): 36px / 48px
+@mixin font_h1
+  font-family: $font-main
+  font-size: 36px
+  line-height: 48px
+  letter-spacing: $letter-spacing-base
+
+// 4. H2 (대제목): 28px / 36px
+@mixin font_h2
+  font-family: $font-main
+  font-size: 28px
+  line-height: 36px
+  letter-spacing: $letter-spacing-base
+
+// 5. H3 (중제목): 24px / 32px
+@mixin font_h3
+  font-family: $font-main
+  font-size: 24px
+  line-height: 32px
+  letter-spacing: $letter-spacing-base
+
+// 6. H4 (소제목): 20px / 24px
+@mixin font_h4
+  font-family: $font-main
+  font-size: 20px
+  line-height: 24px
+  letter-spacing: $letter-spacing-base
+
+// 7. body_l (본문 - 대): 18px / 24px
+@mixin font_body_l_b
+  font-family: $font-main
+  font-size: 18px
+  line-height: 24px
+  font-weight: 700
+  letter-spacing: $letter-spacing-base
+
+@mixin font_body_l_r
+  font-family: $font-main
+  font-size: 18px
+  line-height: 24px
+  font-weight: 400
+  letter-spacing: $letter-spacing-base
+
+// 8. body_m (본문 - 중): 16px / 20px
+@mixin font_body_m_b
+  font-family: $font-main
+  font-size: 16px
+  line-height: 20px
+  font-weight: 700
+  letter-spacing: $letter-spacing-base
+
+@mixin font_body_m_r
+  font-family: $font-main
+  font-size: 16px
+  line-height: 20px
+  font-weight: 400
+  letter-spacing: $letter-spacing-base
+
+// 9. body_s (본문 - 소): 14px / 16px
+@mixin font_body_s_b
+  font-family: $font-main
+  font-size: 14px
+  line-height: 16px
+  font-weight: 700
+  letter-spacing: $letter-spacing-base
+
+@mixin font_body_s_r
+  font-family: $font-main
+  font-size: 14px
+  line-height: 16px
+  font-weight: 400
+  letter-spacing: $letter-spacing-base
+
+// 10. caption (부가설명): 12px / 16px
+@mixin font_caption_b
+  font-family: $font-main
+  font-size: 12px
+  line-height: 16px
+  font-weight: 700
+  letter-spacing: $letter-spacing-base
+
+@mixin font_caption_r
+  font-family: $font-main
+  font-size: 12px
+  line-height: 16px
+  font-weight: 400
+  letter-spacing: $letter-spacing-base
+
+// Typography //
 
 // Color System //
+
+$white: #FFFFFF        // 흰색 배경, 버튼, 텍스트  
+$black: #111111        // 검정 버튼, 텍스트 (보통 텍스트 색상)
+$gray: #6F6F6F         // 회색 텍스트, 외곽선
+$stroke: #EEEEEE       // 외곽선
+$green: #00A63D        // 초록 텍스트, 버튼 (프라이머리)
+$amber: #FF9900        // 노랑 텍스트, 버튼 (세컨더리)
+$brown: #823000        // 갈색 텍스트
+$purple: #8635F6       // 보라색 텍스트, 버튼
+
+// Background Colors (Sub & Light)
+
+$sub_green: #EEFDF3     // 초록 배경
+$sub_yellow: #FFF4C1    // 노랑 배경
+$sub_purple: #EFE9FF    // 보라 배경
+$light_green: #F7F9F6   // 연초록 배경
+$light_yellow: #FFFBEB  // 연노랑 배경
+$light_purple: #F8F7FC  // 연보라 배경
+$light_gray: #FAFAFA    // 섹션 회색 배경
 
 // Color System //

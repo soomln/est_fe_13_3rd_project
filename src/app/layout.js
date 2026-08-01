@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from 'next/font/google';
+import './reset.sass';
 import './globals.sass';
 
 const geistSans = Geist({
@@ -19,6 +20,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang='en' className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        {/* Material Symbols Sharp 구글 폰트 CDN 추가 */}
+        <link
+          rel='stylesheet'
+          href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
