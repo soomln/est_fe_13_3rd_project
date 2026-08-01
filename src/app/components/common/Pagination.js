@@ -33,12 +33,10 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxP
 
   return (
     <nav className={styles.pagination}>
-      {/* 이전 버튼 */}
       <button className={styles.btnArrow} onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
         &lt;
       </button>
 
-      {/* 페이지 번호 목록 */}
       {getPageNumbers().map((page, index) => {
         if (typeof page === 'string') {
           return (
@@ -61,7 +59,6 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxP
         );
       })}
 
-      {/* 다음 버튼 */}
       <button
         className={styles.btnArrow}
         onClick={() => onPageChange(currentPage + 1)}

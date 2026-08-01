@@ -16,7 +16,7 @@
     position: relative
     border-radius: 50%
     overflow: hidden
-    background-color: $stroke // 이미지 로딩 전/없을 때 기본 배경
+    background-color: $stroke
 
     .avatar_img
       object-fit: cover
@@ -28,7 +28,6 @@
     overflow: hidden
     text-overflow: ellipsis
 
-  // 1. Large 크기 (대)
   &.large
     .avatar_wrapper
       width: 80px
@@ -37,7 +36,6 @@
       max-width: 100px
       @include font_body_m_b
 
-  // 2. Medium 크기 (중)
   &.medium
     .avatar_wrapper
       width: 52px
@@ -46,7 +44,6 @@
       max-width: 70px
       @include font_body_s_r
 
-  // 3. Small 크기 (소)
   &.small
     .avatar_wrapper
       width: 36px
