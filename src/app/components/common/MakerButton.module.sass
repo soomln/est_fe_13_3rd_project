@@ -1,0 +1,53 @@
+@import '../../globals.sass'
+
+.maker_btn
+  display: inline-flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 8px
+  cursor: pointer
+  transition: opacity 0.2s ease
+
+  &:hover
+    opacity: 0.85
+
+  .avatar_wrapper
+    position: relative
+    border-radius: 50%
+    overflow: hidden
+    background-color: $stroke
+
+    .avatar_img
+      object-fit: cover
+
+  .name
+    color: $white
+    text-align: center
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  &.large
+    .avatar_wrapper
+      width: 80px
+      height: 80px
+    .name
+      max-width: 100px
+      @include font_body_m_b
+
+  &.medium
+    .avatar_wrapper
+      width: 52px
+      height: 52px
+    .name
+      max-width: 70px
+      @include font_body_s_r
+
+  &.small
+    .avatar_wrapper
+      width: 36px
+      height: 36px
+    .name
+      max-width: 50px
+      @include font_caption_r
