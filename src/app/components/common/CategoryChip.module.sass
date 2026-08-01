@@ -1,21 +1,42 @@
 @import '../../globals.sass'
 
 .category_chip
-  @include font_body_s_r // 공통 타이포그래피 (14px, regular)
+  position: relative
   display: inline-flex
+  flex-direction: column
   align-items: center
   justify-content: center
-  padding: 6px 12px
-  border-radius: 20px
-  border: 1px solid $stroke // 공통 테두리 색상
-  background-color: $light_gray // 기본 배경색
-  color: $gray // 기본 텍스트 색상
+  padding: 8px 12px
+  background: transparent
+  border: none
+  outline: none
   cursor: pointer
-  transition: all 0.2s ease
+  transition: color 0.2s ease
 
-  // 활성화(선택)되었을 때의 스타일
-  &.is_active
-    @include font_body_s_b // 활성화 시 bold 처리
-    border-color: $green
-    background-color: $sub_green
-    color: $green
+  .label_text
+    @include font_body_s_r
+    color: $gray
+    transition: color 0.2s ease
+
+  .active_line
+    position: absolute
+    bottom: 0
+    left: 50%
+    transform: translateX(-50%)
+    width: 0%
+    height: 3px
+    background-color: $green
+    border-radius: 2px
+    transition: width 0.25s ease
+
+  &:hover
+    .label_text
+      color: $black
+
+  &.is_selected
+    .label_text
+      color: $green
+      font-weight: 700
+
+    .active_line
+      width: 100%
