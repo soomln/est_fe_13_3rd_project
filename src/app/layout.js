@@ -1,5 +1,8 @@
 import 'reset-css';
 import './globals.sass';
+import 'material-symbols/outlined.css';
+import 'material-symbols/rounded.css';
+import 'material-symbols/sharp.css';
 
 export const metadata = {
   title: 'CallBack',
@@ -9,24 +12,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang='ko'>
-      <head>
-        <link
-          rel='stylesheet'
-          as='style'
-          crossOrigin='anonymous'
-          href='https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css'
-        />
-
-        <link
-          rel='stylesheet'
-          href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-        />
-
-        <link
-          rel='stylesheet'
-          href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-        />
-      </head>
+      <head></head>
       <body>{children}</body>
     </html>
   );

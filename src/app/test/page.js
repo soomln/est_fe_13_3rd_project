@@ -14,7 +14,6 @@ import CircleBadge from '@/app/_components/common/CircleBadge';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isPostBookmarked, setIsPostBookmarked] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('web');
@@ -27,7 +26,6 @@ export default function Home() {
     { id: 1, title: '포트폴리오 예시 1', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
     { id: 2, title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
   ];
-
   return (
     <>
       {/* 1. 상단 공통 헤더 */}
@@ -50,7 +48,7 @@ export default function Home() {
         {/* 1. 북마크 테스트 */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h2>1. 북마크 버튼</h2>
-          <Bookmark isBookmarked={isBookmarked} onClick={() => setIsBookmarked((prev) => !prev)} />
+          <Bookmark />
         </section>
         {/* 2. 초록색 태그 테스트 */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
