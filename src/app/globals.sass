@@ -1,10 +1,24 @@
 // Layout //
 
-$mobile: 360px
-$tablet: 768px
-$desktop: 1440px
+.container {
+  // 1. 기본 데스크톱 스타일 (1440px 고정/중앙 정렬)
+  width: 1440px;
+  margin: 0 auto;
 
-// Layout //
+  // 2. 태블릿 구간 (1440px 미만 ~ 769px)
+  @media (max-width: 1439px) {
+    width: 100%;
+    padding: 0 24px; // 양옆 마진(여백) 24px
+    box-sizing: border-box; // 여백 때문에 화면이 안 깨지게 막아줌
+  }
+
+  // 3. 모바일 구간 (768px 이하)
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 0 16px; // 양옆 마진(여백) 16px
+    box-sizing: border-box; // 여백 때문에 화면이 안 깨지게 막아줌
+  }
+}
   
 // Typography //
 
