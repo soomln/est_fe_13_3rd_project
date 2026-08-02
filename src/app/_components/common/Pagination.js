@@ -2,7 +2,7 @@
 
 import styles from './Pagination.module.sass';
 
-export default function Pagination({ currentPage, totalPages, onPageChange, maxPageButtons = 5 }) {
+export default function Pagination({ currentPage, totalPages, onPageChange, maxPageButtons }) {
   const getPageNumbers = () => {
     const pages = [];
 
