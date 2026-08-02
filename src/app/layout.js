@@ -19,12 +19,23 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang='en' className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang='ko' className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
-        {/* Material Symbols Sharp 구글 폰트 CDN 추가 */}
+        <link
+          rel='stylesheet'
+          as='style'
+          crossOrigin='anonymous'
+          href='https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css'
+        />
+
         <link
           rel='stylesheet'
           href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+        />
+
+        <link
+          rel='stylesheet'
+          href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
         />
       </head>
       <body>{children}</body>
