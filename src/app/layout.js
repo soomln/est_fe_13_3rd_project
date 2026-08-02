@@ -1,4 +1,4 @@
-import './reset.sass';
+import 'reset-css';
 import './globals.sass';
 
 export const metadata = {
