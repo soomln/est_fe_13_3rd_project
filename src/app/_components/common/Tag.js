@@ -6,6 +6,6 @@ import styles from './Tag.module.sass';
  * @param {string} label
  * @param {string} variant
  */
-export default function Tag({ label = '', variant = 'green' }) {
+export default function Tag({ label, variant }) {
   return <span className={`${styles.tag} ${styles[variant]}`}>{label}</span>;
 }

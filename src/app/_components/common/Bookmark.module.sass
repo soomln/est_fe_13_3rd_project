@@ -1,9 +1,21 @@
-@import '../../globals.sass'
+// Bookmark.module.sass
+@use '../../globals.sass' as *
 
 .bookmark_btn
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: fit-content
+  margin-right: auto
+  align-self: flex-start
+  
+  background: transparent
+  border: none
+  padding: 0
+  cursor: pointer
   color: $gray
 
-  span
+  .icon, span
     font-size: 24px
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
     transition: color 0.2s ease, font-variation-settings 0.2s ease
@@ -11,5 +23,5 @@
   &.is_active
     color: $amber
     
-    span
+    .icon, span
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24

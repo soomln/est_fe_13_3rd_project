@@ -1,23 +1,23 @@
 import Bookmark from './Bookmark';
-import styles from './PostCard.module.sass';
+import styles from './ReviewCard.module.sass';
 
 /**
  * [공통] 면접 후기/포스트 카드 컴포넌트
  */
 export default function PostCard({
-  companyLogo = '/images/estSoft 1.png',
-  companyName = '이스트소프트',
-  difficulty = '보통',
-  result = '합격',
-  channel = '잡코리아',
-  jobInfo = '개발 / 사원 / 대졸',
-  date = '2026. 07. 23',
-  questions = ['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.'],
-  saveCount = 500,
-  commentCount = 10,
-  isBookmarked = false,
-  onBookmarkClick = () => {},
-  onClick = () => {},
+  companyLogo,
+  companyName,
+  difficulty,
+  result,
+  channel,
+  jobInfo,
+  date,
+  questions,
+  saveCount,
+  commentCount,
+  isBookmarked,
+  onBookmarkClick,
+  onClick,
 }) {
   return (
     <div className={styles.post_card} onClick={onClick}>
@@ -63,7 +63,7 @@ export default function PostCard({
       </div>
 
       <div className={styles.question_list}>
-        {questions.map((q, idx) => (
+        {questions?.map((q, idx) => (
           <p key={idx} className={styles.question_item}>
             {q}
           </p>

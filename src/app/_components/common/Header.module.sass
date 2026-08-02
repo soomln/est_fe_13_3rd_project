@@ -3,34 +3,39 @@
 
 .header
   width: 100%
-  background: $white
+  background-color: $white
   border-bottom: 1px solid $stroke
 
 .header_inner
   display: flex
   align-items: center
   justify-content: space-between
-  width: 1440px
+  width: 100%
+  max-width: 1440px  // ⭕ 고정 width 대신 max-width를 사용하여 유연하게 대응합니다.
   height: 80px
   margin: 0 auto
-  padding: 21px 0
+  padding: 0 98px    // [컨벤션 적용] 데스크탑 Margin: 98px / 98px
   box-sizing: border-box
 
+  // 태블릿 Grid 규격 (768px ~ 1439px 구간)
   @media (max-width: 1439px)
-    width: 100%
     height: 64px
-    padding: 12px 24px
-    box-sizing: border-box
+    padding: 0 24px  // [컨벤션 적용] 태블릿 Margin: 24px / 16px (좌우 24px)
 
+  // 모바일 Grid 규격 (~768px 이하 구간)
   @media (max-width: 768px)
-    width: 100%
     height: 64px
-    padding: 0 16px
-    box-sizing: border-box
+    padding: 0 16px  // [컨벤션 적용] 모바일 Margin: 16px / 16px
 
 .logo_area
   display: flex
   align-items: center
+
+  // 로고 이미지가 헤더 영역을 가득 채우지 않도록 규격 고정
+  img, svg
+    height: 32px
+    width: auto
+    object-fit: contain
 
 .nav_menu
   display: flex
@@ -38,6 +43,7 @@
   gap: 32px
 
   a
+    // [컨벤션 적용] Typography: Body Medium (16px / 20px, Letter Spacing -2.5%)
     font-size: 16px
     line-height: 20px
     font-weight: 500
@@ -45,7 +51,8 @@
     text-decoration: none
     letter-spacing: -0.025em
 
-  @media (max-width: 1024px)
+  // 768px 이하(모바일)에서만 메뉴를 숨깁니다.
+  @media (max-width: 768px)
     display: none
 
 .auth_buttons
@@ -53,12 +60,13 @@
   align-items: center
   gap: 8px
 
-  @media (max-width: 1024px)
+  // 768px 이하(모바일)에서만 버튼을 숨깁니다.
+  @media (max-width: 768px)
     display: none
 
 .btn_login
   padding: 8px 16px
-  background-color: $green
+  background-color: $green  // [컨벤션 적용] Green: #00A63D
   color: $white
   border: none
   border-radius: 20px
@@ -70,7 +78,7 @@
 
 .btn_signup
   padding: 8px 16px
-  background-color: $black
+  background-color: $black  // [컨벤션 적용] Black: #111111
   color: $white
   border: none
   border-radius: 20px
@@ -80,6 +88,7 @@
   letter-spacing: -0.025em
   cursor: pointer
 
+// 태블릿/모바일용 햄버거 메뉴 버튼 (≡)
 .btn_mobile_menu
   display: none
   background: transparent
@@ -88,7 +97,8 @@
   padding: 8px
   cursor: pointer
 
-  @media (max-width: 1024px)
+  // 768px 이하(모바일)일 때만 햄버거 버튼이 보입니다.
+  @media (max-width: 768px)
     display: flex
     align-items: center
     justify-content: center
