@@ -1,4 +1,4 @@
-@import '../../globals.sass'
+@use '../../globals.sass' as *
 
 .post_card
   position: relative
@@ -42,9 +42,6 @@
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15))
     transition: color 0.2s ease, filter 0.2s ease
 
-  // [수정 완료] 
-  // 1. &:hover 구문을 제거하여 마우스를 올려도 기본 회색 유지
-  // 2. 선택자 아래로 줄바꿈 및 들여쓰기를 진행하여 에러 해결
   &.is_active
     button, :global(.material-symbols-sharp)
       color: $amber
@@ -66,7 +63,6 @@
   object-fit: contain
 
 .company_name
-  @include font_body_s_r
   color: $gray
   text-decoration: none
 
@@ -89,15 +85,12 @@
   gap: 6px
 
 .label
-  @include font_body_s_b
   color: $black
 
 .value
-  @include font_body_s_r
   color: $gray
 
   &.green
-    @include font_body_s_b
     color: $green
 
 .divider
@@ -112,11 +105,9 @@
   color: $gray
 
 .job_text
-  @include font_caption_r
   color: $gray
 
 .date_text
-  @include font_caption_r
   color: $gray
 
 .question_list
@@ -127,14 +118,12 @@
 
 .question_item
   margin: 0
-  @include font_body_m_r
   color: $black
 
 .card_footer
   display: flex
   align-items: center
   justify-content: space-between
-  @include font_body_s_r
   color: $gray
 
 .save_box
@@ -157,5 +146,4 @@
     display: block
 
 .comment_box
-  @include font_body_s_r
   color: $gray
