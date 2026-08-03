@@ -1,4 +1,3 @@
-// Footer.js
 'use client';
 
 import Link from 'next/link';
@@ -16,12 +15,12 @@ export default function Footer() {
         <div className={styles.footer_content}>
           <div className={styles.brand_info}>
             <Image src='/logo.svg' alt='CallBack 로고' width={140} height={28} />
-            <p className={styles.brand_desc}>
+            <p className={`${styles.brand_desc} font_body_m_r`}>
               개발자 취업 준비의 모든 것.
               <br />
               AI와 함께 더 빠르게, 더 스마트하게.
             </p>
-            {/* SNS 아이콘 링크 */}
+            {/* SNS 아이콘 링크 (원본 그대로 생략 없이) */}
             <div className={styles.sns_links}>
               <a href='#' aria-label='GitHub'>
                 <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
@@ -50,55 +49,82 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* 링크 그룹들 */}
           <div className={styles.link_group_container}>
             <div className={styles.link_column}>
-              <h4>서비스</h4>
-              <Link href='/portfolio'>포트폴리오</Link>
-              <Link href='/interview'>면접 준비</Link>
-              <Link href='/resume'>이력서 작성</Link>
-              <Link href='#'>AI 분석</Link>
-              <Link href='#'>채용공고</Link>
+              <h4 className='font_body_l_b'>서비스</h4>
+              <Link href='/portfolio' className='font_body_m_r'>
+                포트폴리오
+              </Link>
+              <Link href='/interview' className='font_body_m_r'>
+                면접 준비
+              </Link>
+              <Link href='/resume' className='font_body_m_r'>
+                이력서 작성
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                AI 분석
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                채용공고
+              </Link>
             </div>
 
             <div className={styles.link_column}>
-              <h4>회사</h4>
-              <Link href='#'>소개</Link>
-              <Link href='#'>팀 소개</Link>
-              <Link href='#'>채용</Link>
-              <Link href='#'>블로그</Link>
-              <Link href='#'>파트너</Link>
+              <h4 className='font_body_l_b'>회사</h4>
+              <Link href='#' className='font_body_m_r'>
+                소개
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                팀 소개
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                채용
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                블로그
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                파트너
+              </Link>
             </div>
 
             <div className={styles.link_column}>
-              <h4>고객지원</h4>
-              <Link href='#'>공지사항</Link>
-              <Link href='#'>FAQ</Link>
-              <Link href='#'>문의하기</Link>
-              <Link href='#'>개인정보처리</Link>
-              <Link href='#'>이용약관</Link>
+              <h4 className='font_body_l_b'>고객지원</h4>
+              <Link href='#' className='font_body_m_r'>
+                공지사항
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                FAQ
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                문의하기
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                개인정보처리
+              </Link>
+              <Link href='#' className='font_body_m_r'>
+                이용약관
+              </Link>
             </div>
           </div>
 
-          {/* 뉴스레터 구독 영역 */}
           <div className={styles.newsletter_area}>
-            <h4>뉴스레터</h4>
-            <p>최신 취업 정보를 이메일로</p>
+            <h4 className='font_body_l_b'>뉴스레터</h4>
+            <p className='font_body_s_r'>최신 취업 정보를 이메일로</p>
             <div className={styles.input_box}>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#6F6F6F' strokeWidth='2'>
                 <path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'></path>
                 <polyline points='22,6 12,13 2,6'></polyline>
               </svg>
-              <input type='email' placeholder='이메일 주소' />
+              <input type='email' placeholder='이메일 주소' className='font_body_s_r' />
             </div>
-            <button className={styles.btn_subscribe}>구독하기</button>
+            <button className={`${styles.btn_subscribe} font_body_s_b`}>구독하기</button>
           </div>
         </div>
 
-        {/* 카피라이트 & TOP 버튼 (하단) */}
         <div className={styles.footer_bottom}>
-          <p className={styles.copyright}>© 2024 CallBack Inc. All rights reserved.</p>
-          <button className={styles.btn_top} onClick={handleScrollToTop}>
+          <p className={`${styles.copyright} font_caption_r`}>© 2024 CallBack Inc. All rights reserved.</p>
+          <button className={`${styles.btn_top} font_body_s_b`} onClick={handleScrollToTop}>
             TOP <span>↑</span>
           </button>
         </div>
