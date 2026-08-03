@@ -11,7 +11,7 @@ export default function LikeBtn({ iconText, count, onClick }) {
         // onClick();
       }}
     >
-      <span className={`icon material-symbols-rounded ${isSelected ? 'active' : ''}`}>{iconText}</span>
+      <span className={`icon material-symbols-sharp ${isSelected ? 'active' : ''}`}>{iconText}</span>
       <span className='count font_body_m_b'>{count}</span>
     </button>
   );
