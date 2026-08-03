@@ -1,5 +1,5 @@
 import styles from './PortfolioCard.module.sass';
-
+import ActionBtn from './ActionBtn';
 export default function PortfolioCard({
   thumbnailUrl = '',
   title = '',
@@ -18,8 +18,9 @@ export default function PortfolioCard({
         ) : (
           <div className={styles.thumb_dummy} />
         )}
-
-        {title && <p className={`${styles.card_title} font_body_m_b`}>{title}</p>}
+        <div className={styles.img_hover}>
+          <h4 className='font_h4'>{title}</h4>
+        </div>{' '}
       </div>
 
       {/* 카드 하단 정보 영역 */}
@@ -34,14 +35,8 @@ export default function PortfolioCard({
         </div>
 
         <div className={styles.stats_info}>
-          <div className={styles.stat_item}>
-            <span className='material-symbols-sharp'>thumb_up</span>
-            <span className={`${styles.count} font_body_s_b`}>{likeCount}</span>
-          </div>
-          <div className={styles.stat_item}>
-            <span className='material-symbols-sharp'>bookmark</span>
-            <span className={`${styles.count} font_body_s_b`}>{bookmarkCount}</span>
-          </div>
+          <ActionBtn iconText={'thumb_up_alt'} count={50} />
+          <ActionBtn iconText={'bookmark'} count={50} />
         </div>
       </div>
     </div>
