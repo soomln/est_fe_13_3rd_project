@@ -1,14 +1,13 @@
 import Image from 'next/image';
 import styles from './MakerButton.module.sass';
 
-/**
- * [공통] 메이커 프로필 버튼 컴포넌트
- *
- * @param {string} src - 프로필 이미지 경로
- * @param {string} name - 메이커/작성자 이름 (예: 'Zero Margin')
- * @param {string} size - 크기 옵션 ('large' | 'medium' | 'small')
- * @param {Function} onClick - 클릭 이벤트 핸들러
- */
+// 폰트 매핑 추가
+const FONT_SIZE_MAP = {
+  large: 'font_body_m_b',
+  medium: 'font_body_s_r',
+  small: 'font_caption_r',
+};
+
 export default function MakerButton({
   src = '/assets/images/default_profile.png',
   name = '',
@@ -26,7 +25,8 @@ export default function MakerButton({
           className={styles.avatar_img}
         />
       </div>
-      {name && <span className={styles.name}>{name}</span>}
+      {/* 폰트 수정 */}
+      {name && <span className={`${styles.name} ${FONT_SIZE_MAP[size]}`}>{name}</span>}
     </button>
   );
 }

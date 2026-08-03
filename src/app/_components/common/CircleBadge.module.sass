@@ -1,8 +1,5 @@
-// CircleBadge.module.sass
-// ⭕ [컨벤션 적용] @import 대신 @use 사용
 @use '../../globals.sass' as *
 
-// ⭕ [수정 1] JS 컴포넌트의 styles.circle_badge 와 클래스명 일치
 .circle_badge
   display: inline-flex
   flex-direction: column
@@ -19,7 +16,7 @@
     opacity: 0.85
 
   .avatar_wrapper
-    position: relative   // Next.js <Image fill /> 필수 속성
+    position: relative
     border-radius: 50%
     overflow: hidden
     background-color: $stroke
@@ -28,7 +25,6 @@
       object-fit: cover
 
   .name
-    // [컨벤션 적용] 기본 텍스트는 Black (#111111) 지정
     color: $black
     text-align: center
     white-space: nowrap
@@ -42,7 +38,6 @@
       height: 72px
     .name
       max-width: 100px
-      @include font_body_m_b
 
   &.medium
     .avatar_wrapper
@@ -50,7 +45,6 @@
       height: 52px
     .name
       max-width: 70px
-      @include font_body_s_r
 
   &.small
     .avatar_wrapper
@@ -58,4 +52,3 @@
       height: 36px
     .name
       max-width: 50px
-      @include font_caption_r
