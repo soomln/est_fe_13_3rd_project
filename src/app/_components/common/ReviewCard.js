@@ -5,8 +5,8 @@ import styles from './ReviewCard.module.sass';
  * [공통] 면접 후기/포스트 카드 컴포넌트
  */
 export default function PostCard({
-  companyLogo,
-  companyName,
+  companyLogo = '/images/est_logo.svg',
+  companyName = '기업명',
   difficulty,
   result,
   channel,
@@ -28,12 +28,12 @@ export default function PostCard({
           onBookmarkClick();
         }}
       >
-        <img src={isBookmarked ? '/bookmark.svg' : '/bookmark.svg'} alt='북마크' className={styles.bookmark_img} />
+        <Bookmark />
       </div>
 
       <div className={styles.card_header}>
         <div className={styles.company_info}>
-          <img src={companyLogo} alt={companyName} className={styles.logo_img} />
+          <img src={companyLogo || '/logo.svg'} alt={`${companyName} 로고`} className={styles.logo_img} />
           <span className={styles.company_name}>{companyName}</span>
         </div>
       </div>
