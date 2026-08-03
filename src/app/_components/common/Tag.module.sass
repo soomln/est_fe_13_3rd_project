@@ -1,4 +1,4 @@
-@import '../../globals.sass'
+@use '../../globals.sass' as *
 
 .tag
   display: inline-flex
@@ -6,7 +6,6 @@
   justify-content: center
   padding: 8px 16px
   border-radius: 999px
-  @include font_body_s_b
 
   &.green
     background-color: $sub_green
