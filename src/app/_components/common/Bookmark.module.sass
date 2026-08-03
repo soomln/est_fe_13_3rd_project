@@ -1,0 +1,25 @@
+// Bookmark.module.sass
+@use '../../globals.sass' as *
+
+.bookmark_btn
+  width: fit-content  
+  background: transparent
+  border: none
+  padding: 0
+  cursor: pointer
+  color: $gray
+  transition: color 0.2s ease, font-variation-settings 0.2s ease
+
+  &.is_active
+    color: $amber
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
+
+  // 여기부터 요청받은 3가지 크기(size) 클래스만 새로 추가!
+  &.small
+    font-size: 32px
+
+  &.medium
+    font-size: 52px
+
+  &.large
+    font-size: 91px
