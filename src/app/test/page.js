@@ -99,6 +99,7 @@ export default function Home() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '800px' }}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
           <PostCard
+            companyLogo='/logo.svg'
             companyName='이스트소프트'
             difficulty='보통'
             result='합격'

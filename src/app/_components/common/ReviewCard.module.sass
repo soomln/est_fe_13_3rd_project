@@ -17,23 +17,36 @@
 
 .bookmark_wrapper
   position: absolute
-  top: -2px
-  right: 93px
-  width: 52px
-  height: 68px
-  aspect-ratio: 13 / 17
+  top: -2px              // 💡 카드 상단 Border선 위에 빈틈없이 딱 붙도록 살짝 올림
+  right: 48px            // 💡 오른쪽 끝에서부터의 거리를 피그마 위치에 맞추어 조정
   z-index: 10
   cursor: pointer
-  color: $gray
-  transition: color 0.2s ease
+  display: flex
+  align-items: flex-start
+  justify-content: flex-end
 
-  svg
-    width: 100%
-    height: 100%
+  // 공통 Bookmark 컴포넌트 내 버튼과 아이콘 상단 공백 완전히 지우기
+  button
+    background: none
+    border: none
+    padding: 0           // 💡 버튼 기본 패딩 제거
+    margin: 0            // 💡 버튼 기본 마진 제거
+    line-height: 1       // 💡 폰트 행간 여백 제거
+    display: flex
+    align-items: flex-start
+
+  :global(.material-symbols-sharp)
+    font-size: 52px      // 아이콘 크기 (필요 시 48px~56px 사이 조절)
+    line-height: 0.85    // 💡 구글 머터리얼 아이콘 상단 글자 투명 공백 강제 제거
     display: block
+    color: $gray
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15))
+    transition: color 0.2s ease, filter 0.2s ease
 
   &:hover, &.is_active
-    color: $green
+    button, :global(.material-symbols-sharp)
+      color: $amber      // 주황색 변수 적용
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
 
 .card_header
   display: flex
