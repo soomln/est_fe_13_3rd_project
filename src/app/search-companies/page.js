@@ -1,7 +1,7 @@
 import styles from './page.module.sass';
 import Header from '../_components/common/Header';
-import Pagination from '../_components/common/Pagination';
 import Footer from '../_components/common/Footer';
+import Pagination from '../_components/common/Pagination';
 import CompanyCard from './components/CompanyCard';
 
 const companies = [
@@ -56,7 +56,7 @@ export default function SearchCompaniesPage() {
     <Header/>
     <main className={styles.main}>
       {/* Hero */}
-      <section className={styles.hero}>
+      <section className={`${styles.hero} flex flex-col items-center`}>
         <h1>어떤 <span>회사</span>가 궁금하신가요?</h1>
         <form>
           <input type='text' placeholder='회사명을 검색해보세요(ex. 네이버, 토스)'></input> 
