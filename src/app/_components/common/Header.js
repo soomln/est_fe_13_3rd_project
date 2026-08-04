@@ -1,4 +1,3 @@
-// Header.js
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './Header.module.sass';
@@ -16,17 +15,30 @@ export default function Header() {
 
         {/* 네비게이션 메뉴 */}
         <nav className={styles.nav_menu}>
-          <Link href='/resume'>이력서·자소서</Link>
-          <Link href='/portfolio'>포트폴리오 갤러리</Link>
-          <Link href='/interview'>AI 면접 연습</Link>
-          <Link href='/search-companies'>기업 탐색</Link>
-          <Link href='/community'>커뮤니티</Link>
+          <Link href='/about' className='font_body_m_r'>
+            소개
+          </Link>
+          <Link href='/resume' className='font_body_m_r'>
+            이력서·자소서
+          </Link>
+          <Link href='/portfolio' className='font_body_m_r'>
+            포트폴리오 갤러리
+          </Link>
+          <Link href='/interview' className='font_body_m_r'>
+            AI 면접 연습
+          </Link>
+          <Link href='/search-companies' className='font_body_m_r'>
+            기업 탐색
+          </Link>
+          <Link href='/community' className='font_body_m_r'>
+            커뮤니티
+          </Link>
         </nav>
 
         {/* 로그인 / 회원가입 버튼 */}
         <div className={styles.auth_buttons}>
-          <button className={styles.btn_login}>로그인</button>
-          <button className={styles.btn_signup}>회원가입</button>
+          <button className={`${styles.btn_login} font_body_s_b`}>로그인</button>
+          <button className={`${styles.btn_signup} font_body_s_b`}>회원가입</button>
         </div>
 
         {/* 모바일/태블릿용 햄버거 버튼 */}

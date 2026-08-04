@@ -1,14 +1,13 @@
 import Image from 'next/image';
 import styles from './CircleBadge.module.sass';
 
-/**
- * [공통] 원형 배지 컴포넌트
- *
- * @param {string} src - 이미지 경로
- * @param {string} name - 메이커/작성자 이름 (예: 'Zero Margin')
- * @param {string} size - 크기 옵션 ('large' | 'medium' | 'small')
- * @param {Function} onClick - 클릭 이벤트 핸들러
- */
+// size 옵션별 전역 폰트 클래스 매핑
+const FONT_SIZE_MAP = {
+  large: 'font_body_m_b',
+  medium: 'font_body_s_r',
+  small: 'font_caption_r',
+};
+
 export default function CircleBadge({ src, name, size, onClick }) {
   return (
     <button type='button' className={`${styles.circle_badge} ${styles[size]}`} onClick={onClick}>
@@ -21,7 +20,8 @@ export default function CircleBadge({ src, name, size, onClick }) {
           className={styles.avatar_img}
         />
       </div>
-      {name && <span className={styles.name}>{name}</span>}
+      {/* 폰트 수정: FONT_SIZE_MAP이 실제 화면에 적용되도록 연결 */}
+      {name && <span className={`${styles.name} ${FONT_SIZE_MAP[size]}`}>{name}</span>}
     </button>
   );
 }

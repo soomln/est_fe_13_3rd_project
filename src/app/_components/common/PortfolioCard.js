@@ -1,16 +1,5 @@
 import styles from './PortfolioCard.module.sass';
-
-/**
- * [공통] 포트폴리오 카드 컴포넌트
- *
- * @param {string} thumbnailUrl
- * @param {string} title
- * @param {string} authorName
- * @param {string} authorAvatar
- * @param {number} likeCount
- * @param {number} bookmarkCount
- * @param {Function} onClick
- */
+import ActionBtn from './ActionBtn';
 export default function PortfolioCard({
   thumbnailUrl = '',
   title = '',
@@ -29,8 +18,9 @@ export default function PortfolioCard({
         ) : (
           <div className={styles.thumb_dummy} />
         )}
-
-        {title && <p className={styles.card_title}>{title}</p>}
+        <div className={styles.img_hover}>
+          <h4 className='font_h4'>{title}</h4>
+        </div>{' '}
       </div>
 
       {/* 카드 하단 정보 영역 */}
@@ -41,18 +31,12 @@ export default function PortfolioCard({
           ) : (
             <span className={styles.avatar_dummy} />
           )}
-          <span className={styles.author_name}>{authorName}</span>
+          <span className={`${styles.author_name} font_body_s_b`}>{authorName}</span>
         </div>
 
         <div className={styles.stats_info}>
-          <div className={styles.stat_item}>
-            <span className='material-symbols-sharp'>thumb_up</span>
-            <span className={styles.count}>{likeCount}</span>
-          </div>
-          <div className={styles.stat_item}>
-            <span className='material-symbols-sharp'>bookmark</span>
-            <span className={styles.count}>{bookmarkCount}</span>
-          </div>
+          <ActionBtn iconText={'thumb_up_alt'} count={50} />
+          <ActionBtn iconText={'bookmark'} count={50} />
         </div>
       </div>
     </div>
