@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import styles from './Footer.module.sass';
 
 const FOOTER_MENUS = [
@@ -31,8 +32,7 @@ const Footer = () => {
         <div className={styles.main_content}>
           {/* 1. 로고 및 소셜 영역 */}
           <div className={styles.logo_group}>
-            {/* 임시 로고 대체용 텍스트 (실제 SVG 적용 시 이미지 태그 사용) */}
-            <h2 className={styles.logo_temp}>&lt;/&gt; CallBack</h2>
+            <Image src='/logo.svg' alt='CallBack Logo' width={170} height={25} className={styles.logo_img} />
             <p className={styles.logo_desc}>
               개발자 취업 준비의 모든 것.
               <br />
@@ -40,16 +40,16 @@ const Footer = () => {
             </p>
             <div className={styles.social_buttons}>
               <button className={styles.social_icon} aria-label='Github'>
-                <img src='/images/icon_github.svg' alt='github' />
+                <img src='/images/Icon.svg' alt='github' />
               </button>
               <button className={styles.social_icon} aria-label='Twitter'>
-                <img src='/images/icon_twitter.svg' alt='twitter' />
+                <img src='/images/Icon-1.svg' alt='twitter' />
               </button>
               <button className={styles.social_icon} aria-label='LinkedIn'>
-                <img src='/images/icon_linkedin.svg' alt='linkedin' />
+                <img src='/images/Icon-2.svg' alt='linkedin' />
               </button>
               <button className={styles.social_icon} aria-label='Instagram'>
-                <img src='/images/icon_instagram.svg' alt='instagram' />
+                <img src='/images/Icon-3.svg' alt='instagram' />
               </button>
             </div>
           </div>
@@ -80,6 +80,7 @@ const Footer = () => {
             </div>
             <form className={styles.newsletter_form} onSubmit={(e) => e.preventDefault()}>
               <div className={styles.input_wrapper}>
+                <span className={`material-symbols-sharp ${styles.input_icon}`}>mail</span>
                 <input
                   type='email'
                   placeholder='이메일 주소'
