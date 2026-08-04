@@ -32,7 +32,7 @@ const Footer = () => {
         <div className={styles.main_content}>
           {/* 1. 로고 및 소셜 영역 */}
           <div className={styles.logo_group}>
-            <Image src='/logo.svg' alt='CallBack Logo' width={170} height={25} className={styles.logo_img} />
+            <Image src='/logo.svg' alt='CallBack Logo' width={124} height={18} className={styles.logo_img} />
             <p className={styles.logo_desc}>
               개발자 취업 준비의 모든 것.
               <br />
