@@ -1,0 +1,25 @@
+@use '@/app/_variables.sass' as *
+
+.page
+  padding: 5rem 0 0 0
+
+.gallery
+  display: flex
+  flex-direction: column
+  gap: 1.5rem
+
+  .btns_wrapper
+    display: flex
+    justify-content: space-between
+
+    .radio_btns
+      display: flex
+      gap: 1rem
+      
+  .item_list
+    list-style: none
+    padding: 0
+    margin: 0
+    display: grid
+    grid-template-columns: repeat(4, 1fr)
+    gap: 2rem 1.5rem
