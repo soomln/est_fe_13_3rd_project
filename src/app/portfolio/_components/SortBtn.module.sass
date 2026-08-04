@@ -1,0 +1,22 @@
+@use '@/app/_variables.sass' as *
+
+.sort_btn
+  color: $gray
+
+.option_list
+  border: solid 1px $stroke
+  padding: 0.5rem
+  background: $white
+
+  & .option
+    color: $gray
+    padding: 0.5rem
+  
+  &.is_open
+
+.sort_btn:hover,
+.sort_btn.active,
+.option_list > .option:hover
+  color: $green
+  background: $sub_green
+ 
