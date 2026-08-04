@@ -11,6 +11,7 @@ import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import PostCard from '@/app/_components/common/ReviewCard';
 import CategoryChip from '@/app/_components/common/CategoryChip';
 import CircleBadge from '@/app/_components/common/CircleBadge';
+import ActionBtn from '@/app/_components/common/ActionBtn';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
@@ -80,7 +81,12 @@ export default function Home() {
         </section>
 
         {/* 5. 포트폴리오 카드 테스트 */}
+
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h2>Action Button</h2>
+          <ActionBtn iconText={'thumb_up_alt'} count={50} />
+          <ActionBtn iconText={'bookmark'} count={50} />
+
           <h2>5. 포트폴리오 카드</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {portfolioData.map((item) => (
@@ -99,6 +105,7 @@ export default function Home() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '800px' }}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
           <PostCard
+            companyLogo='/logo.svg'
             companyName='이스트소프트'
             difficulty='보통'
             result='합격'

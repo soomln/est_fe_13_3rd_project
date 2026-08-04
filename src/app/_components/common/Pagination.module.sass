@@ -1,15 +1,15 @@
-@import '../../globals.sass'
+
+@use '../../globals.sass' as *
 
 .pagination
   display: flex
   align-items: center
   gap: 8px
 
-.btnArrow
+.btn_arrow
   background: none
   border: none
   color: $gray
-  @include font_body_m_r
   padding: 8px 12px
   cursor: pointer
   transition: color 0.2s ease
@@ -21,30 +21,27 @@
     color: $stroke
     cursor: not-allowed
 
-.btnPage
+.btn_page
   width: 36px
   height: 36px
   border-radius: 8px
   border: none
   background-color: transparent
   color: $gray
-  @include font_body_m_r
   cursor: pointer
   display: flex
   align-items: center
   justify-content: center
   transition: all 0.2s ease
 
-  &:hover:not(.active)
+  &:hover:not(.is_active)
     background-color: $light_gray
 
-  &.active
+  &.is_active
     background-color: $green
     color: $white
-    @include font_body_m_b // 활성화 시 Bold 믹스인 적용
 
 .ellipsis
   color: $gray
-  @include font_body_m_r
   padding: 0 4px
   user-select: none
