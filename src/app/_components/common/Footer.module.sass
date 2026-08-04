@@ -1,155 +1,270 @@
 @use '@/app/_variables.sass' as *
 
-.footer
+import React from 'react';
+import styles from './Footer.module.sass';
+
+const FOOTER_MENUS = [
+  {
+    title: '서비스',
+    items: ['포트폴리오', '면접 준비', '이력서 작성', 'AI 분석', '채용공고'],
+  },
+  {
+    title: '회사',
+    items: ['소개', '팀 소개', '채용', '블로그', '파트너'],
+  },
+  {
+    title: '고객지원',
+    items: ['공지사항', 'FAQ', '문의하기', '개인정보처리방침', '이용약관'],
+  },
+];
+
+const Footer = () => {
+  const onScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <footer className={styles.footer_wrapper}>
+      {/* 1440px 중앙 정렬을 위한 글로벌 컨테이너 */}
+      <div className={`container ${styles.footer_container}`}>
+        
+        {/* 상단 메인 콘텐츠 (로고, 메뉴, 뉴스레터) */}
+        <div className={styles.main_content}>
+          
+          {/* 1. 로고 및 소셜 영역 */}
+          <div className={styles.logo_group}>
+            {/* 임시 로고 대체용 텍스트 (실제 SVG 적용 시 이미지 태그 사용) */}
+            <h2 className={styles.logo_temp}>&lt;/&gt; CallBack</h2>
+            <p className={styles.logo_desc}>
+              개발자 취업 준비의 모든 것.<br />
+              AI와 함께 더 빠르게, 더 스마트하게.
+            </p>
+            <div className={styles.social_buttons}>
+              <button className={styles.social_icon} aria-label="Github">
+                <img src="/images/icon_github.svg" alt="github" />
+              </button>
+              <button className={styles.social_icon} aria-label="Twitter">
+                <img src="/images/icon_twitter.svg" alt="twitter" />
+              </button>
+              <button className={styles.social_icon} aria-label="LinkedIn">
+                <img src="/images/icon_linkedin.svg" alt="linkedin" />
+              </button>
+              <button className={styles.social_icon} aria-label="Instagram">
+                <img src="/images/icon_instagram.svg" alt="instagram" />
+              </button>
+            </div>
+          </div>
+
+          {/* 2. 메뉴 네비게이션 영역 */}
+          <nav className={styles.menus_wrapper}>
+            {FOOTER_MENUS.map((menu, index) => (
+              <div key={index} className={styles.menu_column}>
+                <h4 className={styles.menu_title}>{menu.title}</h4>
+                <ul className={styles.menu_list}>
+                  {menu.items.map((item, itemIndex) => (
+                    <li key={itemIndex}>
+                      <a href="#" className={styles.menu_item}>{item}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+
+          {/* 3. 뉴스레터 영역 */}
+          <div className={styles.newsletter_section}>
+            <div className={styles.newsletter_header}>
+              <h4 className={styles.newsletter_title}>뉴스레터</h4>
+              <p className={styles.newsletter_desc}>최신 취업 정보를 이메일로</p>
+            </div>
+            <form className={styles.newsletter_form} onSubmit={(e) => e.preventDefault()}>
+              <div className={styles.input_wrapper}>
+                <input 
+                  type="email" 
+                  placeholder="이메일 주소" 
+                  className={styles.email_input} 
+                  aria-label="이메일 주소 입력"
+                />
+              </div>
+              <button type="submit" className={styles.subscribe_btn}>구독하기</button>
+            </form>
+          </div>
+        </div>
+
+        {/* 하단 저작권 및 TOP 버튼 영역 */}
+        <div className={styles.bottom_bar}>
+          <address className={styles.copyright_text}>
+            © 2024 CallBack Inc. All rights reserved.
+          </address>
+          <button onClick={onScrollToTop} className={styles.top_btn} aria-label="맨 위로 이동">
+            TOP ^
+          </button>
+        </div>
+        
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
+파일 경로: src/app/_components/common/Footer.module.sass코드 스니펫@import '../../../styles/variables'
+
+// 전체 배경 및 상단 테두리
+.footer_wrapper
   width: 100%
-  background: $white
+  background-color: $white
   border-top: 1px solid $stroke
 
-.footer_inner
+// 컨테이너 레이아웃 (Figma: Padding py-9, Gap 24px, flex-col)
+.footer_container
   display: flex
   flex-direction: column
-  gap: 24px
-  width: 1440px
-  margin: 0 auto
   padding: 36px 0
-  box-sizing: border-box
+  gap: 24px
 
-  @media (max-width: 1439px)
-    width: 100%
-    padding: 36px 24px
-    gap: 20px
-
-  @media (max-width: 768px)
-    width: 100%
-    padding: 36px 16px
-    gap: 24px
-
-.footer_content
+// 상단 영역 (로고, 메뉴, 뉴스레터 가로 배치)
+.main_content
+  width: 100%
   display: flex
   justify-content: space-between
   align-items: flex-start
-  gap: 32px
 
-  @media (max-width: 1024px)
-    flex-direction: column
-    gap: 32px
+// 1. 로고 그룹
+.logo_group
+  display: flex
+  flex-direction: column
+  gap: 24px // 로고 타이틀과 설명 사이 간격 임의 조정
 
-.brand_info
+.logo_temp
+  +setFont(24px, normal, 700)
+  color: $black
+  margin: 0
+
+.logo_desc
+  +setFont(14px, normal, 400)
+  color: $gray
+  margin: 0
+
+.social_buttons
+  display: flex
+  gap: 8px
+  margin-top: 12px
+
+.social_icon
+  width: 32px
+  height: 32px
+  border-radius: 14px
+  background-color: $light_gray
+  border: 1px solid $stroke
+  display: flex
+  align-items: center
+  justify-content: center
+  cursor: pointer
+
+// 2. 메뉴 네비게이션
+.menus_wrapper
+  display: flex
+  gap: 120px // 메뉴 컬럼 간의 넓은 간격
+
+.menu_column
   display: flex
   flex-direction: column
   gap: 16px
 
-.brand_desc
+.menu_title
+  +setFont(16px, normal, 600)
+  color: #101828
+  margin: 0
+
+.menu_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+  list-style: none
+  padding: 0
+  margin: 0
+
+.menu_item
+  +setFont(14px, normal, 400)
   color: $gray
+  text-decoration: none
 
-.sns_links
-  display: flex
-  gap: 12px
-
-  a
-    width: 36px
-    height: 36px
-    border-radius: 50%
-    background-color: $light_gray
-    display: flex
-    align-items: center
-    justify-content: center
-    color: $gray
-    text-decoration: none
-    transition: background-color 0.2s, color 0.2s
-
-    &:hover
-      background-color: $stroke
-      color: $black
-
-.link_group_container
-  display: flex
-  gap: 64px
-
-  @media (max-width: 1024px)
-    width: 100%
-    justify-content: space-between
-    gap: 24px
-
-.link_column
+// 3. 뉴스레터
+.newsletter_section
   display: flex
   flex-direction: column
-  gap: 12px
-
-  h4
-    color: $black
-    margin: 0
-
-  a
-    color: $gray
-    text-decoration: none
-
-    &:hover
-      color: $black
-
-.newsletter_area
-  display: flex
-  flex-direction: column
-  gap: 12px
+  gap: 16px
   width: 280px
 
-  @media (max-width: 1024px)
-    width: 100%
-    max-width: 360px
-
-  h4
-    color: $black
-    margin: 0
-
-  p
-    color: $gray
-    margin: 0
-
-.input_box
+.newsletter_header
   display: flex
-  align-items: center
+  flex-direction: column
   gap: 8px
-  padding: 10px 14px
-  background-color: $light_gray
-  border-radius: 8px
 
-  input
-    border: none
-    background: transparent
-    outline: none
-    width: 100%
-    color: $black
+.newsletter_title
+  +setFont(16px, normal, 600)
+  color: #101828
+  margin: 0
 
-    &::placeholder
-      color: $gray
-
-.btn_subscribe
-  padding: 12px 16px
-  background-color: $black
-  color: $white
-  border: none
-  border-radius: 20px
-  cursor: pointer
-
-.footer_bottom
-  display: flex
-  justify-content: space-between
-  align-items: center
-  padding-top: 24px
-  border-top: 1px solid $stroke
-
-.copyright
+.newsletter_desc
+  +setFont(14px, normal, 400)
   color: $gray
   margin: 0
 
-.btn_top
-  background: transparent
+.newsletter_form
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.email_input
+  width: 100%
+  height: 34px
+  padding: 8px 12px
+  border-radius: 14px
+  border: 1px solid $stroke
+  background-color: $light_gray
+  +setFont(12px, normal, 600)
+  color: #99A1AF
+  box-sizing: border-box
+  
+  &::placeholder
+    color: #99A1AF
+
+  &:focus
+    outline: 1px solid $black
+
+.subscribe_btn
+  width: 100%
+  height: 34px
+  padding: 8px 0
+  border-radius: 14px
+  background-color: $black
+  color: $white
+  +setFont(12px, normal, 600)
   border: none
+  cursor: pointer
+
+// 하단 저작권 및 TOP 버튼 (Figma: Top Border #EEEEEE, Top padding 16px)
+.bottom_bar
+  width: 100%
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding-top: 16px
+  border-top: 1px solid $stroke
+
+.copyright_text
+  +setFont(12px, normal, 600)
+  color: #99A1AF
+  font-style: normal
+  margin: 0
+
+.top_btn
+  +setFont(12px, normal, 400)
   color: $gray
+  background: none
+  border: none
   cursor: pointer
   display: flex
   align-items: center
-  gap: 4px
-
-  &:hover
-    color: $black
+  padding: 0
