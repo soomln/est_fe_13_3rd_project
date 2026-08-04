@@ -1,8 +1,8 @@
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
 import CompanyHeader from './components/CompanyHeader/CompanyHeader';
-import TabNavigation from './components/TabNavigation';
 import Content from './components/Content';
+import TabNavigation from './components/TabNavigation/TabNavigation';
 
 const company = {
   name: "이스트소프트",
