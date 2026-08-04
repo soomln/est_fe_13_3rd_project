@@ -10,7 +10,7 @@ export default function RightSidebar(){
       </section>
 
       <section>
-          {/* 배너 */}
+          <h2>배너</h2>
       </section>  
     </>
   );
