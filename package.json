@@ -18,10 +18,8 @@
     "swiper": "^14.0.7"
   },
   "devDependencies": {
-    "autoprefixer": "^10.5.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "postcss": "^8.5.25",
     "sass": "^1.102.0"
   }
 }
