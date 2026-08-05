@@ -24,8 +24,8 @@ export default function Home() {
 
   // 포트폴리오 데이터 (camelCase 준수)
   const portfolioData = [
-    { id: 1, title: '포트폴리오 예시 1', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 2, title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 1, thumbnailUrl: '', title: '포트폴리오 예시 1', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 2, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
   ];
   return (
     <>
@@ -90,13 +90,7 @@ export default function Home() {
           <h2>5. 포트폴리오 카드</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {portfolioData.map((item) => (
-              <PortfolioCard
-                key={item.id}
-                title={item.title}
-                authorName={item.authorName}
-                likeCount={item.likeCount}
-                bookmarkCount={item.bookmarkCount}
-              />
+              <PortfolioCard key={item.id} item={item} />
             ))}
           </div>
         </section>
