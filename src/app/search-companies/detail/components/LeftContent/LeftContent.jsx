@@ -1,7 +1,7 @@
 import ValueCard from "./ValueCard";
 import ServiceCard from "./ServiceCard";
 import BenefitItem from "./BenefitItem";
-import styles from "./LeftContent.module.sass";
+import "./LeftContent.module.sass";
 
 export default function LeftContent({company}){
 
@@ -14,8 +14,7 @@ export default function LeftContent({company}){
 
       <section>
         <h2>-핵심 가치-</h2>
-
-        <div className={styles.valueList}>
+        <div className="valueList">
           {company.values.map((value) => (
             <ValueCard
               key={value.title}
@@ -27,8 +26,15 @@ export default function LeftContent({company}){
 
       <section>
         <h2>주요 서비스</h2>
-
-        <ServiceCard services={company.services}/>
+        <div className="serviceList">
+          {company.services.map((service) => (
+            <ValueCard
+              key={service.description}
+              value={service}
+            />
+          ))}
+        </div>
+        <ServiceCard service={company.services}/>
       </section>
 
       <section>

@@ -1,4 +1,4 @@
-import styles from "./CompanyHeader.module.sass";
+import "./CompanyHeader.module.sass";
 import SummaryCard from "../SummaryCard/SummaryCard";
 
 
@@ -15,19 +15,19 @@ export default function CompanyHeader({company}){
 
   return(
     <>
-      <section className={styles.topInfo}>
-        <div className={styles.companyInfo}>
+      <section className="topInfo">
+        <div className="companyInfo">
           <img src={company.logo} alt={company.name} />
           <h1>{company.name}</h1>
           <p>{company.industry}</p>
-          <div className={styles.tags}>
+          <div className="tags">
             {company.tags.map((tag) => (
               <span key={tag}>#{tag}</span>
             ))}
           </div>
         </div>
 
-        <div className={styles.statistics}>
+        <div className="statistics">
           <div>
             <span>전체 후기</span>
             <strong>{company.review}건</strong>
@@ -44,7 +44,7 @@ export default function CompanyHeader({company}){
           </div>
         </div>
       </section>
-      <div className={styles.summaryCards}>
+      <div className="summaryCards">
         {summary.map((item) => (
           <SummaryCard
             key={item.title}
