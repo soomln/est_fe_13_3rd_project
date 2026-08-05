@@ -1,10 +1,20 @@
 'use client';
+
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Scrollbar, Autoplay, EffectCoverflow } from 'swiper/modules';
+
 import styles from './page.module.sass';
+import 'swiper/css';
+import 'swiper/css/scrollbar';
+import 'swiper/css/effect-coverflow';
+
 import Header from '../_components/common/Header';
 import Footer from '../_components/common/Footer';
 import CategoryBtn from './_components/CategoryBtn';
 import SortBtn from './_components/SortBtn';
 import PortfolioCard from '../_components/common/PortfolioCard';
+import Window from './_components/Modal/Window';
+import { useState } from 'react';
 
 export default function Portpolio() {
   //================test================/
@@ -19,28 +29,79 @@ export default function Portpolio() {
   ];
   //================test================/
 
+  const bestPortfolioList = [];
+  items.slice(0, 7).forEach((item) => {
+    bestPortfolioList.push(
+      <SwiperSlide>
+        <PortfolioCard key={item.id} item={item} onClick={() => {}} />
+      </SwiperSlide>,
+    );
+  });
+
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const onOpenDetail = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const onCloseDetail = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
   const portfolioList = [];
   items.forEach((item) => {
-    portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={() => {}} />);
+    portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
   });
+
   return (
-    <main className={styles.page}>
-      {/* <Header /> */}
-      <div className='container'>
-        <section className={styles.gallery}>
-          <div className={styles.btns_wrapper}>
-            <div className={styles.radio_btns}>
-              <CategoryBtn category={'web'} initChecked={true} />
-              <CategoryBtn category={'app'} />
+    <>
+      <Header />
+      <main className={styles.page}>
+        <div className={`container ${styles.container} flex flex-col gap-[4rem]`}>
+          <section className={`${styles.hero}`}>
+            <Swiper
+              className={`mySwiper ${styles.swiper_slider}`}
+              modules={[Scrollbar, Autoplay, EffectCoverflow]}
+              scrollbar={{
+                hide: false,
+              }}
+              autoplay={{ delay: 3000, pauseOnMouseEnter: true }}
+              effect={'coverflow'}
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={2}
+              coverflowEffect={{
+                rotate: 0,
+                stretch: 0, // 슬라이드 간 거리 (px)
+                depth: 150,
+                modifier: 2, // 효과 배율
+                slideShadows: true, // 슬라이드 그림자 표시 여부
+              }}
+            >
+              {bestPortfolioList}
+            </Swiper>
+          </section>
+          <section className={styles.gallery}>
+            <div className={styles.btns_wrapper}>
+              <div className={styles.radio_btns}>
+                <CategoryBtn category={'web'} initChecked={true} />
+                <CategoryBtn category={'app'} />
+              </div>
+              <div className={`${styles.sort}`}>
+                <SortBtn />
+              </div>
             </div>
-            <div className={`${styles.sort}`}>
-              <SortBtn />
-            </div>
-          </div>
-          <ul className={styles.item_list}>{portfolioList}</ul>
-        </section>
-      </div>
-      <Footer />
-    </main>
+            <ul className={styles.item_list}>{portfolioList}</ul>
+          </section>
+        </div>
+
+        <Window isOpen={isModalOpen} onClose={onCloseDetail} data={selectedItem} />
+
+        <Footer />
+      </main>
+    </>
   );
 }
