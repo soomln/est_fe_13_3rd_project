@@ -19,7 +19,7 @@ export default function PortfolioCard({ item, onClick = () => {} }) {
       <div className={styles.info_box}>
         <div className={styles.author_info}>
           {item.authorAvatar ? (
-            <img src={authorAvatar} alt={item.authorName} className={styles.avatar_img} />
+            <img src={item.authorAvatar} alt={item.authorName} className={styles.avatar_img} />
           ) : (
             <span className={styles.avatar_dummy} />
           )}
