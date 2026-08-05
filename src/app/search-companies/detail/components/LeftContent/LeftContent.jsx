@@ -1,40 +1,9 @@
-export default function LeftContent(){
+import ValueCard from "./ValueCard";
+import ServiceCard from "./ServiceCard";
+import BenefitItem from "./BenefitItem";
+import styles from "./LeftContent.module.sass";
 
-  const company = {
-    name: "이스트소프트",
-    industry: "IT / 소프트웨어",
-    rating: 4.9,
-    favorite: 100,
-    review: 100,
-    jokbo: 100,
-
-    intro:
-      "이스트소프트는 AI와 소프트웨어 기술을 기반으로...",
-
-    values: [
-      {
-        title: "성장",
-        description: "개인의 성장을 지원"
-      },
-      {
-        title: "기술 혁신",
-        description: "끊임없는 연구"
-      }
-    ],
-
-    services: [
-      "알약",
-      "줌",
-      "AI Studio"
-    ],
-
-    benefits: [
-      "식대 지원",
-      "건강검진",
-      "교육비 지원"
-    ]
-  };
-
+export default function LeftContent({company}){
 
   return(
     <>
@@ -44,28 +13,28 @@ export default function LeftContent(){
       </section>
 
       <section>
-        <h2>핵심 가치</h2>
+        <h2>-핵심 가치-</h2>
 
-        <ValueCard />
-        <ValueCard />
-        <ValueCard />
-        <ValueCard />
+        <div className={styles.valueList}>
+          {company.values.map((value) => (
+            <ValueCard
+              key={value.title}
+              value={value}
+            />
+          ))}
+        </div>
       </section>
 
       <section>
         <h2>주요 서비스</h2>
 
-        <ServiceCard />
-        <ServiceCard />
-        <ServiceCard />
+        <ServiceCard services={company.services}/>
       </section>
 
       <section>
         <h2>복지 및 혜택</h2>
 
-        <BenefitItem />
-        <BenefitItem />
-        <BenefitItem />
+        <BenefitItem benefits={company.benefits}/>
       </section>
     </>
   );
