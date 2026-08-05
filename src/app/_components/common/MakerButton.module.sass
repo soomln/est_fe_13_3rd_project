@@ -1,11 +1,11 @@
 @use '@/app/_variables.sass' as *
 
+// Figma "maker_btn"(150:924) Device 베리언트 실측: PC=large, Tablet=medium, Mobile=small 로 매핑
 .maker_btn
   display: inline-flex
   flex-direction: column
   align-items: center
   justify-content: center
-  gap: 8px
   cursor: pointer
   transition: opacity 0.2s ease
 
@@ -28,23 +28,32 @@
     overflow: hidden
     text-overflow: ellipsis
 
+  // Figma PC: avatar 70px, gap 10px, name 12px/16/600 tracking -0.3px
   &.large
+    gap: 10px
     .avatar_wrapper
-      width: 80px
-      height: 80px
+      width: 70px
+      height: 70px
     .name
-      max-width: 100px
+      max-width: 90px
+      +setFont(12px, 16px, 600)
 
+  // Figma Tablet: avatar 40px, gap 5px, name 12px/16/600 tracking -0.3px (PC와 동일 텍스트 스타일)
   &.medium
+    gap: 5px
     .avatar_wrapper
-      width: 52px
-      height: 52px
+      width: 40px
+      height: 40px
     .name
-      max-width: 70px
+      max-width: 60px
+      +setFont(12px, 16px, 600)
 
+  // Figma Mobile: avatar 30px, gap 5px, name 10px/16/600 tracking -0.25px (PC/Tablet보다 작음)
   &.small
+    gap: 5px
     .avatar_wrapper
-      width: 36px
-      height: 36px
+      width: 30px
+      height: 30px
     .name
-      max-width: 50px
+      max-width: 44px
+      +setFont(10px, 16px, 600)
