@@ -1,12 +1,13 @@
 @use '@/app/_variables.sass' as *
 
+// Figma "Component 3"(150:934) 실측: border #6F6F6F($gray) 1px, radius 15px, padding 32px 64px
 .post_card
   position: relative
   width: 100%
   background-color: $white
-  border: 1px solid $stroke
-  border-radius: 12px
-  padding: 24px 28px
+  border: 1px solid $gray
+  border-radius: 15px
+  padding: 32px 64px
   box-sizing: border-box
   cursor: pointer
   transition: transform 0.25s ease, box-shadow 0.25s ease
@@ -15,10 +16,11 @@
     transform: translateY(-4px)
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08)
 
+// Figma Component24(150:969): 카드 우측 상단 모서리에 거의 flush로 배치 (padding 무시)
 .bookmark_wrapper
   position: absolute
-  top: -2px
-  right: 48px
+  top: -32px
+  right: 0
   z-index: 10
   cursor: pointer
   display: flex
@@ -55,14 +57,16 @@
 .company_info
   display: flex
   align-items: center
-  gap: 10px
+  gap: 4px
 
 .logo_img
-  height: 24px
+  height: 35px
   width: auto
   object-fit: contain
 
+// Figma: 16px/20/600 tracking -0.4px, 색상 $gray
 .company_name
+  +setFont(16px, 20px, 600)
   color: $gray
   text-decoration: none
 
@@ -70,50 +74,61 @@
   display: flex
   align-items: center
   justify-content: space-between
-  padding-bottom: 16px
+  padding-bottom: 14px
   border-bottom: 1px solid $stroke
-  margin-bottom: 16px
+  // meta_line 아래 10px(그룹 간 gap) + 질문 블록 자체 padding-top 16px = 26px
+  margin-bottom: 26px
 
 .meta_tags
   display: flex
   align-items: center
-  gap: 12px
+  gap: 10px
 
 .meta_item
   display: flex
   align-items: center
-  gap: 6px
+  gap: 16px
+  padding-right: 16px
+  border-right: 1px solid $stroke
 
+  &:last-child
+    padding-right: 0
+    border-right: none
+
+// Figma body_m_B: 16px/20/600 tracking -0.4px
 .label
+  +setFont(16px, 20px, 600)
   color: $black
 
+// Figma body_m_R: 16px/20/400 tracking -0.4px (난이도 값만 SemiBold+초록)
 .value
+  +setFont(16px, 20px, 400)
   color: $gray
 
   &.green
     color: $green
-
-.divider
-  width: 1px
-  height: 12px
-  background-color: $stroke
+    font-weight: 600
 
 .writer_info
   display: flex
   align-items: center
   gap: 6px
+
+// Figma account_circle: Material Icons Round, 20px, #6F6F6F
+.writer_icon
+  font-size: 20px
   color: $gray
 
-.job_text
-  color: $gray
-
+// Figma: 16px/20/400 tracking -0.4px, 색상 #ACAEAD (프로젝트 변수에 없는 별도 톤)
+.job_text,
 .date_text
-  color: $gray
+  +setFont(16px, 20px, 400)
+  color: #ACAEAD
 
 .question_list
   display: flex
   flex-direction: column
-  gap: 8px
+  gap: 5px
   margin-bottom: 24px
 
 .question_item
@@ -124,26 +139,21 @@
   display: flex
   align-items: center
   justify-content: space-between
-  color: $gray
+  +setFont(16px, 20px, 400)
+  color: #ACAEAD
 
 .save_box
   display: flex
   align-items: center
   justify-content: center
   gap: 5px
-  color: $gray
 
   .fill_icon
     font-size: 18px
     line-height: 1
     display: block
-    color: $gray
+    color: #ACAEAD
     font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
 
-  :global(.material-symbols-sharp)
-    font-size: 16px
-    line-height: 1
-    display: block
-
 .comment_box
-  color: $gray
+  color: #ACAEAD
