@@ -33,24 +33,16 @@ const company = {
 
   services: [
     {
-      Image: "/images/estSoft 1.png",
+      logo: "/images/estSoft 1.png",
       description: "알약",
     },
     {
-      Image: "/images/estSoft 1.png",
-      description: "알약",
+      logo: "/images/estSoft 1.png",
+      description: "줌",
     },
     {
-      Image: "/images/estSoft 1.png",
-      description: "알약",
-    },
-    {
-      Image: "/images/estSoft 1.png",
-      description: "알약",
-    },
-    {
-      Image: "/images/estSoft 1.png",
-      description: "알약",
+      logo: "/images/estSoft 1.png",
+      description: "AI studio",
     },
   ],
 
