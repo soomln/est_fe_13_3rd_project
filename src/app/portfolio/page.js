@@ -13,6 +13,8 @@ import Footer from '../_components/common/Footer';
 import CategoryBtn from './_components/CategoryBtn';
 import SortBtn from './_components/SortBtn';
 import PortfolioCard from '../_components/common/PortfolioCard';
+import Window from './_components/Modal/Window';
+import { useState } from 'react';
 
 export default function Portpolio() {
   //================test================/
@@ -36,9 +38,22 @@ export default function Portpolio() {
     );
   });
 
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const onOpenDetail = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const onCloseDetail = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
   const portfolioList = [];
   items.forEach((item) => {
-    portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={() => {}} />);
+    portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
   });
 
   return (
@@ -82,6 +97,8 @@ export default function Portpolio() {
             <ul className={styles.item_list}>{portfolioList}</ul>
           </section>
         </div>
+
+        <Window isOpen={isModalOpen} onClose={onCloseDetail} data={selectedItem} />
 
         <Footer />
       </main>
