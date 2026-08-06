@@ -7,6 +7,7 @@ export default function ActionBtn({ iconText, value, isActiveBtn = false, onClic
       className={styles.action_btn}
       onClick={() => {
         setIsActive((prev) => !prev);
+        onClick();
       }}
     >
       <span
