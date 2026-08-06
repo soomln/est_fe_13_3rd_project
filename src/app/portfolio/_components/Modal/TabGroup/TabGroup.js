@@ -1,5 +1,4 @@
-import Tab from '../Tab';
-import Contents from '../Contents';
+import Tab from '@/app/portfolio/_components/Modal/Tab';
 
 const TABS = [
   { id: 'ai', iconText: 'auto_awesome' },
@@ -20,7 +19,6 @@ export default function TabGroup({ activeTab, onChangeTab }) {
           }}
         />
       ))}
-      <Contents />
     </div>
   );
 }

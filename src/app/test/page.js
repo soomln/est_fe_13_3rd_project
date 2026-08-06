@@ -11,7 +11,7 @@ import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import PostCard from '@/app/_components/common/ReviewCard';
 import CategoryChip from '@/app/_components/common/CategoryChip';
 import CircleBadge from '@/app/_components/common/CircleBadge';
-import ActionBtn from '@/app/_components/common/ActionBtn';
+import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
