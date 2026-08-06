@@ -1,16 +1,21 @@
 import Image from 'next/image';
-import styles from './CircleBadge.module.sass';
+import styles from './MakerButton.module.sass';
 
-// size 옵션별 전역 폰트 클래스 매핑
+// 폰트 매핑 추가
 const FONT_SIZE_MAP = {
   large: 'font_body_m_b',
   medium: 'font_body_s_r',
   small: 'font_caption_r',
 };
 
-export default function CircleBadge({ src, name, size, onClick }) {
+export default function MakerButton({
+  src = '/assets/images/default_profile.png',
+  name = '',
+  size = 'medium',
+  onClick = () => {},
+}) {
   return (
-    <button type='button' className={`${styles.circle_badge} ${styles[size]}`} onClick={onClick}>
+    <button type='button' className={`${styles.maker_btn} ${styles[size]}`} onClick={onClick}>
       <div className={styles.avatar_wrapper}>
         <Image
           src={src}
@@ -20,7 +25,7 @@ export default function CircleBadge({ src, name, size, onClick }) {
           className={styles.avatar_img}
         />
       </div>
-      {/* 폰트 수정: FONT_SIZE_MAP이 실제 화면에 적용되도록 연결 */}
+      {/* 폰트 수정 */}
       {name && <span className={`${styles.name} ${FONT_SIZE_MAP[size]}`}>{name}</span>}
     </button>
   );

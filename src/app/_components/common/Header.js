@@ -1,80 +1,52 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import s from './Header.module.sass';
-
-function Logo() {
-  return (
-    <Link href='/' className={s.logo}>
-      <Image src='/logo.svg' alt='CallBack Logo' width={170} height={25} priority />
-    </Link>
-  );
-}
-
-function NavContainer() {
-  const navItems = [
-    { label: '이력서·자소서', href: '/resume' },
-    { label: '포트폴리오 갤러리', href: '/portfolio' },
-    { label: 'AI 면접 연습', href: '/interview' },
-    { label: '기업 탐색', href: '/search-companies' },
-    { label: '커뮤니티', href: '/community' },
-  ];
-
-  return (
-    <nav className={s.navContainer}>
-      {navItems.map((item) => (
-        <Link key={item.href} href={item.href} className={s.navButton}>
-          <span className={s.navLabel}>{item.label}</span>
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
-function CtaContainer() {
-  return (
-    <div className={s.ctaContainer}>
-      <Link href='/login' className={s.btnLogin}>
-        <span className={s.ctaLabel}>로그인</span>
-      </Link>
-
-      <Link href='/register' className={s.btnRegister}>
-        <span className={s.ctaLabel}>회원가입</span>
-      </Link>
-    </div>
-  );
-}
-
-function HamburgerButton() {
-  return (
-    <button type='button' className={s.hamburgerButton} aria-label='메뉴 열기'>
-      <span className={s.hamburgerLine}></span>
-      <span className={s.hamburgerLine}></span>
-      <span className={s.hamburgerLine}></span>
-    </button>
-  );
-}
-
-function Frame() {
-  return (
-    <div className={s.frame}>
-      <div className={s.frameInner}>
-        <Logo />
-
-        <NavContainer />
-
-        <CtaContainer />
-
-        <HamburgerButton />
-      </div>
-    </div>
-  );
-}
+import styles from './Header.module.sass';
 
 export default function Header() {
   return (
-    <header className={s.header}>
-      <div className={s.inner}>
-        <Frame />
+    <header className={styles.header}>
+      <div className={styles.header_inner}>
+        {/* 로고 영역 */}
+        <div className={styles.logo_area}>
+          <Link href='/'>
+            <Image src='/logo.svg' alt='CallBack 로고' width={160} height={32} priority />
+          </Link>
+        </div>
+
+        {/* 네비게이션 메뉴 */}
+        <nav className={styles.nav_menu}>
+          <Link href='/about' className='font_body_m_r'>
+            소개
+          </Link>
+          <Link href='/resume' className='font_body_m_r'>
+            이력서·자소서
+          </Link>
+          <Link href='/portfolio' className='font_body_m_r'>
+            포트폴리오 갤러리
+          </Link>
+          <Link href='/interview' className='font_body_m_r'>
+            AI 면접 연습
+          </Link>
+          <Link href='/search-companies' className='font_body_m_r'>
+            기업 탐색
+          </Link>
+          <Link href='/community' className='font_body_m_r'>
+            커뮤니티
+          </Link>
+        </nav>
+
+        {/* 로그인 / 회원가입 버튼 */}
+        <div className={styles.auth_buttons}>
+          <button className={`${styles.btn_login} font_body_s_b`}>로그인</button>
+          <button className={`${styles.btn_signup} font_body_s_b`}>회원가입</button>
+        </div>
+
+        {/* 모바일/태블릿용 햄버거 버튼 */}
+        <button className={styles.btn_mobile_menu} aria-label='메뉴 열기'>
+          <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#111111' strokeWidth='2'>
+            <path d='M4 6h16M4 12h16M4 18h16' />
+          </svg>
+        </button>
       </div>
     </header>
   );
