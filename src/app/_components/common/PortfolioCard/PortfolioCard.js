@@ -1,8 +1,13 @@
 import styles from './PortfolioCard.module.sass';
-import ActionBtn from './ActionBtn';
-export default function PortfolioCard({ item, onClick = () => {} }) {
+import ActionBtn from '@/app/_components/common/ActionBtn';
+export default function PortfolioCard({ item, onClick }) {
   return (
-    <li className={styles.portfolio_card} onClick={onClick}>
+    <li
+      className={styles.portfolio_card}
+      onClick={() => {
+        onClick(item);
+      }}
+    >
       {/* 썸네일 & 제목 영역 */}
       <div className={styles.thumb_box}>
         {item.thumbnailUrl !== '' ? (
