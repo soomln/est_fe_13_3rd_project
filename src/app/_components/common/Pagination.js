@@ -33,17 +33,19 @@ export default function Pagination({ currentPage = 1, totalPages = 1, onPageChan
   return (
     <nav className={styles.pagination}>
       <button
-        className={`${styles.btn_arrow} font_body_m_r`}
+        type='button'
+        className={`material-symbols-sharp ${styles.btn_arrow}`}
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label='이전 페이지'
       >
-        &lt;
+        chevron_left
       </button>
 
       {getPageNumbers().map((page, index) => {
         if (typeof page === 'string') {
           return (
-            <span key={`ellipsis-${index}`} className={`${styles.ellipsis} font_body_m_r`}>
+            <span key={`ellipsis-${index}`} className={styles.ellipsis}>
               ...
             </span>
           );
@@ -55,7 +57,7 @@ export default function Pagination({ currentPage = 1, totalPages = 1, onPageChan
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`${styles.btn_page} ${isActive ? styles.is_active : ''} ${isActive ? 'font_body_m_b' : 'font_body_m_r'}`.trim()}
+            className={`${styles.btn_page} ${isActive ? styles.is_active : ''}`.trim()}
           >
             {page}
           </button>
@@ -63,11 +65,13 @@ export default function Pagination({ currentPage = 1, totalPages = 1, onPageChan
       })}
 
       <button
-        className={`${styles.btn_arrow} font_body_m_r`}
+        type='button'
+        className={`material-symbols-sharp ${styles.btn_arrow}`}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label='다음 페이지'
       >
-        &gt;
+        chevron_right
       </button>
     </nav>
   );

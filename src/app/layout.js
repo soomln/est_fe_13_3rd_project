@@ -1,4 +1,5 @@
 import 'reset-css';
+import 'pretendard/dist/web/static/pretendard.css';
 import './globals.sass';
 import 'material-symbols/outlined.css';
 import 'material-symbols/rounded.css';
