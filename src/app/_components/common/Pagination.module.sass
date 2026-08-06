@@ -1,22 +1,15 @@
 @use '@/app/_variables.sass' as *
 
-// Figma "pagination" 인스턴스(150:874) 실측: 버튼 간 gap 12px, 각 버튼 43x43
 .pagination
   display: flex
   align-items: center
-  gap: 12px
+  gap: 8px
 
 .btn_arrow
-  width: 43px
-  height: 43px
-  display: flex
-  align-items: center
-  justify-content: center
   background: none
   border: none
-  border-radius: 8px
   color: $gray
-  font-size: 24px
+  padding: 8px 12px
   cursor: pointer
   transition: color 0.2s ease
 
@@ -28,8 +21,8 @@
     cursor: not-allowed
 
 .btn_page
-  width: 43px
-  height: 43px
+  width: 36px
+  height: 36px
   border-radius: 8px
   border: none
   background-color: transparent
@@ -38,8 +31,6 @@
   display: flex
   align-items: center
   justify-content: center
-  // Figma: 페이지 번호는 활성/비활성 상관없이 전부 Bold 18px — 굵기가 아니라 배경색/글자색으로만 상태 구분
-  +setFont(18px, 24px, 700)
   transition: all 0.2s ease
 
   &:hover:not(.is_active)
@@ -50,11 +41,6 @@
     color: $white
 
 .ellipsis
-  width: 43px
-  height: 43px
-  display: flex
-  align-items: center
-  justify-content: center
-  +setFont(18px, 24px, 700)
   color: $gray
+  padding: 0 4px
   user-select: none
