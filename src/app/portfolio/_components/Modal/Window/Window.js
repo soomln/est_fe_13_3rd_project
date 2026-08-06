@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Window.module.sass';
 
-import TabGroup from '../TabGroup';
+import TabGroup from '@/app/portfolio/_components/Modal/TabGroup';
+import Contents from '@/app/portfolio/_components/Modal/Contents';
 
 export default function DetailModal({ isOpen, onClose, data }) {
   const [mounted, setMounted] = useState(false);
@@ -32,6 +33,7 @@ export default function DetailModal({ isOpen, onClose, data }) {
       />
       <div className={`container ${styles.modalBox}`}>
         <TabGroup activeTab={activeTab} onChangeTab={setActiveTab} />
+        <Contents />
       </div>
     </div>,
     document.body,
