@@ -7,6 +7,7 @@ export default function LeftContent({company}){
 
   return(
     <>
+    <h1>=========LeftContent==========</h1>
       <section>
         <h2>기업 소개</h2>
         <p>회사 소개 내용...</p>
@@ -25,22 +26,27 @@ export default function LeftContent({company}){
       </section>
 
       <section>
-        <h2>주요 서비스</h2>
+        <h2>-주요 서비스-</h2>
         <div className="serviceList">
           {company.services.map((service) => (
-            <ValueCard
+            <ServiceCard
               key={service.description}
-              value={service}
+              service={service}
             />
           ))}
         </div>
-        <ServiceCard service={company.services}/>
       </section>
 
       <section>
         <h2>복지 및 혜택</h2>
-
-        <BenefitItem benefits={company.benefits}/>
+        <div className="benefitList">
+          {company.benefits.map((benefit) => (
+            <BenefitItem
+              key={benefit.description}
+              benefit={benefit}
+            />
+          ))}
+        </div>
       </section>
     </>
   );

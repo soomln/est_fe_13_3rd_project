@@ -1,7 +1,8 @@
 export default function ValueCard({value}){
   return(
     <article>
-      {/* 아이콘 */}
+      {/* <img src={value.icon}></img> */}
+      <p>{value.icon}</p>
       <p>{value.title}</p>
       <p>{value.description}</p>
     </article>
