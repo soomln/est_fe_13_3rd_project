@@ -4,6 +4,7 @@ import styles from './Window.module.sass';
 
 import TabGroup from '@/app/portfolio/_components/Modal/TabGroup';
 import Contents from '@/app/portfolio/_components/Modal/Contents';
+import ActionBtnGroup from '@/app/portfolio/_components/Modal/ActionBtnGroup';
 
 export default function DetailModal({ isOpen, onClose, data }) {
   const [mounted, setMounted] = useState(false);
@@ -32,8 +33,11 @@ export default function DetailModal({ isOpen, onClose, data }) {
         }}
       />
       <div className={`container ${styles.modalBox}`}>
-        <TabGroup activeTab={activeTab} onChangeTab={setActiveTab} />
-        <Contents />
+        <div className={`${styles.contents_wrapper}`}>
+          <TabGroup activeTab={activeTab} onChangeTab={setActiveTab} />
+          <Contents />
+        </div>
+        <ActionBtnGroup />
       </div>
     </div>,
     document.body,
