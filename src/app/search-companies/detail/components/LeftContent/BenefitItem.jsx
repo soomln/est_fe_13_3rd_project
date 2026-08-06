@@ -1,8 +1,12 @@
-export default function BenefitItem({benefits}){
+export default function BenefitItem({benefit}){
   return(
-    <>
-      {/* 아이콘 */}
-      <p>{benefits.title}</p>
+    <> 
+      <article>
+        {/* <img src={value.icon}></img> */}
+        <p>{benefit.icon}</p>
+        <p>{benefit.title}</p>
+        <p>{benefit.description}</p>
+      </article>
     </>
   );
 }
