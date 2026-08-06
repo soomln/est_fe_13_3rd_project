@@ -8,12 +8,12 @@ import 'swiper/css';
 import 'swiper/css/scrollbar';
 import 'swiper/css/effect-coverflow';
 
-import Header from '../_components/common/Header';
-import Footer from '../_components/common/Footer';
-import CategoryBtn from './_components/CategoryBtn';
-import SortBtn from './_components/SortBtn';
-import PortfolioCard from '../_components/common/PortfolioCard';
-import Window from './_components/Modal/Window';
+import Header from '@/app/_components/common/Header';
+import Footer from '@/app/_components/common/Footer';
+import CategoryBtn from '@/app/portfolio/_components/CategoryBtn';
+import SortBtn from '@/app/portfolio/_components/SortBtn/SortBtn';
+import PortfolioCard from '@/app/_components/common/PortfolioCard';
+import Window from '@/app/portfolio/_components/Modal/Window';
 import { useState } from 'react';
 
 export default function Portpolio() {
@@ -60,7 +60,7 @@ export default function Portpolio() {
     <>
       <Header />
       <main className={styles.page}>
-        <div className={`container ${styles.container} flex flex-col gap-[4rem]`}>
+        <div className={`container ${styles.container}`}>
           <section className={`${styles.hero}`}>
             <Swiper
               className={`mySwiper ${styles.swiper_slider}`}

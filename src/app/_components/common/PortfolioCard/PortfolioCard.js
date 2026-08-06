@@ -1,5 +1,5 @@
 import styles from './PortfolioCard.module.sass';
-import ActionBtn from './ActionBtn';
+import ActionBtn from '@/app/_components/common/ActionBtn';
 export default function PortfolioCard({ item, onClick }) {
   return (
     <li
