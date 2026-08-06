@@ -6,7 +6,7 @@ export default function LikeBtn({ iconText, count, onClick }) {
   const [currentCount, setCurrentCount] = useState(count);
   return (
     <button
-      className={`inline-flex items-center cursor-pointer border-none p-0 gap-[0.125rem] ${styles.action_btn}`}
+      className={`${styles.action_btn}`}
       onClick={() => {
         setCurrentCount((prev) => (isSelected ? --prev : ++prev));
         setIsSelected(!isSelected);
