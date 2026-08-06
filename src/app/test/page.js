@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 // 팀 컨벤션 준수: 컴포넌트는 PascalCase, 절대 경로 별칭(@/) 사용
-import Header from '@/app/_components/common/Header';
-import Footer from '@/app/_components/common/Footer';
-import Bookmark from '@/app/_components/common/Bookmark';
-import Tag from '@/app/_components/common/Tag';
-import Pagination from '@/app/_components/common/Pagination';
+import Header from '@/app/_components/common/Header/Header';
+import Footer from '@/app/_components/common/Footer/Footer';
+import Bookmark from '@/app/_components/common/Bookmark/Bookmark';
+import Tag from '@/app/_components/common/Tag/Tag';
+import Pagination from '@/app/_components/common/Pagination/Pagination';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
-import PostCard from '@/app/_components/common/ReviewCard';
-import CategoryChip from '@/app/_components/common/CategoryChip';
-import CircleBadge from '@/app/_components/common/CircleBadge';
+import PostCard from '@/app/_components/common/ReviewCard/ReviewCard';
+import CategoryChip from '@/app/_components/common/Category/CategoryChip';
+import CircleBadge from '@/app/_components/common/CircleBadge/CircleBadge';
 import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
 
 export default function Home() {
