@@ -1,14 +1,37 @@
-import styles from './CategoryChip.module.sass';
+@use '@/app/_variables.sass' as *
 
-export default function CategoryChip({ label, isSelected = false, onClick }) {
-  return (
-    <button
-      type='button'
-      className={`${styles.category_chip} ${isSelected ? styles.is_selected : ''}`.trim()}
-      onClick={onClick}
-    >
-      <span className={`${styles.label_text} ${isSelected ? 'font_body_m_b' : 'font_body_m_r'}`}>{label}</span>
-      <div className={styles.active_line} />
-    </button>
-  );
-}
+.category_chip
+  position: relative
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  padding: 6px 14px
+  background: transparent
+  border: none
+  outline: none
+  cursor: pointer
+
+  .label_text
+    color: $gray
+    transition: color 0.2s ease
+
+  .active_line
+    position: absolute
+    bottom: 0
+    left: 50%
+    transform: translateX(-50%)
+    width: 0%
+    height: 3px
+    background-color: $green
+    transition: width 0.25s ease
+
+  &:hover
+    .label_text
+      color: $black
+
+  &.is_selected
+    .label_text
+      color: $green
+
+    .active_line
+      width: 100%
