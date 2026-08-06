@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Window.module.sass';
 
@@ -9,6 +9,7 @@ import ActionBtnGroup from '@/app/portfolio/_components/Modal/ActionBtnGroup';
 export default function DetailModal({ isOpen, onClose, data }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('ai');
+  const contentsRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
@@ -35,9 +36,9 @@ export default function DetailModal({ isOpen, onClose, data }) {
       <div className={`container ${styles.modalBox}`}>
         <div className={`${styles.contents_wrapper}`}>
           <TabGroup activeTab={activeTab} onChangeTab={setActiveTab} />
-          <Contents />
+          <Contents contentsRef={contentsRef} />
         </div>
-        <ActionBtnGroup />
+        <ActionBtnGroup contentsRef={contentsRef} />
       </div>
     </div>,
     document.body,
