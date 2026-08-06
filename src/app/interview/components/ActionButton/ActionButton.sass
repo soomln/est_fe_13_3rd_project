@@ -1,0 +1,22 @@
+@use '@/app/_variables.sass' as *
+
+.action_button
+  display: flex
+  justify-content: center
+  align-items: center
+  width: 644px
+  height: 64px
+  padding: 20px 24px
+  gap: 10px
+  border: none
+  border-radius: 16px
+  background-color: $green
+  color: $white
+  cursor: pointer
+  transition: all .2s ease
+
+  &:active,
+  &.is_active
+    background: $sub_green
+    color: $green
+    border: 1px solid $green
