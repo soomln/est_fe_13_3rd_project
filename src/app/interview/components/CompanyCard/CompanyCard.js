@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import './CompanyCard.sass';
 
 export default function CompanyCard({
