@@ -35,42 +35,42 @@ export default function PostCard({
       <div className={styles.card_header}>
         <div className={styles.company_info}>
           <img src={companyLogo || '/logo.svg'} alt={`${companyName} 로고`} className={styles.logo_img} />
-          <span className={styles.company_name}>{companyName}</span>
+          <span className={`font_body_m_b ${styles.company_name}`}>{companyName}</span>
         </div>
       </div>
 
       <div className={styles.meta_line}>
         <div className={styles.meta_tags}>
           <div className={styles.meta_item}>
-            <span className={styles.label}>면접 난이도</span>
-            <span className={`${styles.value} ${styles.green}`}>{difficulty}</span>
+            <span className={`font_body_m_b ${styles.label}`}>면접 난이도</span>
+            <span className={`font_body_m_r ${styles.value} ${styles.green}`}>{difficulty}</span>
           </div>
           <div className={styles.meta_item}>
-            <span className={styles.label}>합격 여부</span>
-            <span className={styles.value}>{result}</span>
+            <span className={`font_body_m_b ${styles.label}`}>합격 여부</span>
+            <span className={`font_body_m_r ${styles.value}`}>{result}</span>
           </div>
           <div className={styles.meta_item}>
-            <span className={styles.label}>면접 경로</span>
-            <span className={styles.value}>{channel}</span>
+            <span className={`font_body_m_b ${styles.label}`}>면접 경로</span>
+            <span className={`font_body_m_r ${styles.value}`}>{channel}</span>
           </div>
         </div>
 
         <div className={styles.writer_info}>
           <span className={`material-symbols-rounded ${styles.writer_icon}`}>account_circle</span>
-          <span className={styles.job_text}>{jobInfo}</span>
-          <span className={styles.date_text}>{date}</span>
+          <span className={`font_body_m_r ${styles.job_text}`}>{jobInfo}</span>
+          <span className={`font_body_m_r ${styles.date_text}`}>{date}</span>
         </div>
       </div>
 
       <div className={styles.question_list}>
         {questions.map((q, idx) => (
-          <p key={idx} className={styles.question_item}>
+          <p key={idx} className={`font_body_m_r ${styles.question_item}`}>
             {q}
           </p>
         ))}
       </div>
 
-      <div className={styles.card_footer}>
+      <div className={`font_body_m_r ${styles.card_footer}`}>
         <div className={styles.save_box}>
           <span className={`material-symbols-sharp ${styles.fill_icon}`}>bookmark</span>
           <span>퍼가요</span>

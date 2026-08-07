@@ -23,7 +23,7 @@ function NavContainer() {
     <nav className={s.navContainer}>
       {navItems.map((item) => (
         <Link key={item.href} href={item.href} className={s.navButton}>
-          <span className={s.navLabel}>{item.label}</span>
+          <span className={`font_body_l_r ${s.navLabel}`}>{item.label}</span>
         </Link>
       ))}
     </nav>
@@ -34,11 +34,11 @@ function CtaContainer() {
   return (
     <div className={s.ctaContainer}>
       <Link href='/login' className={s.btnLogin}>
-        <span className={s.ctaLabel}>로그인</span>
+        <span className={`font_body_m_b ${s.ctaLabel}`}>로그인</span>
       </Link>
 
       <Link href='/register' className={s.btnRegister}>
-        <span className={s.ctaLabel}>회원가입</span>
+        <span className={`font_body_m_b ${s.ctaLabel}`}>회원가입</span>
       </Link>
     </div>
   );

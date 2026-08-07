@@ -1,15 +1,15 @@
 @use '@/app/_variables.sass' as *
 @use '@/app/_mixin.sass' as *
 
-// Figma "Component 3"(150:934) 실측: border #6F6F6F($gray) 1px, radius 15px, padding 32px 64px
 .post_card
   position: relative
   width: 100%
   background-color: $white
-  border: 1px solid $stroke2
-  border-radius: 12px
-  padding: 24px 28px
+  border: 0.5px solid $gray
+  border-radius: 15px
+  padding: 32px 64px
   box-sizing: border-box
+  overflow: hidden
   cursor: pointer
   transition: transform 0.25s ease, box-shadow 0.25s ease
 
@@ -17,11 +17,10 @@
     transform: translateY(-4px)
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08)
 
-// Figma Component24(150:969): 카드 우측 상단 모서리에 거의 flush로 배치 (padding 무시)
 .bookmark_wrapper
   position: absolute
-  top: -32px
-  right: 0
+  top: 0
+  right: 64px
   z-index: 10
   cursor: pointer
   display: flex
@@ -45,7 +44,6 @@
 
 // Figma: 16px/20/600 tracking -0.4px, 색상 $gray
 .company_name
-  +setFont(16px, 20px, 600)
   color: $gray
   text-decoration: none
 
@@ -53,7 +51,7 @@
   display: flex
   align-items: center
   justify-content: space-between
-  padding-bottom: 16px
+  padding-bottom: 14px
   border-bottom: 1px solid $stroke3
 
 .meta_tags
@@ -74,16 +72,15 @@
 
 // Figma body_m_B: 16px/20/600 tracking -0.4px
 .label
-  +setFont(16px, 20px, 600)
   color: $black
 
 // Figma body_m_R: 16px/20/400 tracking -0.4px (난이도 값만 SemiBold+초록)
 .value
-  +setFont(16px, 20px, 400)
   color: $gray
 
   &.green
     color: $green
+    font-weight: 600
 
 .divider
   width: 1px
@@ -103,15 +100,17 @@
 // Figma: 16px/20/400 tracking -0.4px, 색상 #ACAEAD (프로젝트 변수에 없는 별도 톤)
 .job_text,
 .date_text
-  +setFont(16px, 20px, 400)
   color: #ACAEAD
 
+// Figma: meta_line 하단 border와 첫 질문 사이 26px(그룹 gap 10 + 리스트 자체 padding-top 16)
 .question_list
   display: flex
   flex-direction: column
   gap: 5px
+  margin-top: 26px
   margin-bottom: 24px
 
+// Figma body_m_R: 16px/20/400 tracking -0.4px
 .question_item
   margin: 0
   color: $black
@@ -120,7 +119,6 @@
   display: flex
   align-items: center
   justify-content: space-between
-  +setFont(16px, 20px, 400)
   color: #ACAEAD
 
 .save_box
