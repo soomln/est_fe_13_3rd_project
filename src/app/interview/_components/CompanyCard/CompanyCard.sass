@@ -1,0 +1,58 @@
+@use "../../../_variables" as *
+
+.company_card
+  display: flex
+  align-items: center
+  width: 660px
+  height: 100px
+  padding: 10px 20px
+  gap: 50px
+  background: $white
+  border: 1px solid $stroke3
+  border-radius: 5px
+  cursor: pointer
+  transition: background-color .2s ease, border-color .2s ease
+
+  &:hover
+    background: $light_yellow
+    border-color: transparent
+
+.company_content
+  display: flex
+  flex-direction: column
+  gap: 10px
+
+.company_title
+  display: flex
+  align-items: center
+
+.company_name
+  padding-right: 12px
+  margin-right: 12px
+  border-right: 1px solid $stroke2
+
+.company_detail
+  display: flex
+  align-items: center
+  gap: 16px
+
+.detail_item
+  display: flex
+  align-items: center
+  gap: 10px
+
+.divider
+  width: 1px
+  height: 14px
+  background: $stroke2
+
+.label
+  color: $gray
+
+.value
+  color: $black
+
+.star
+  color: $sub_yellow
+  font-variation-settings: 'FILL' 1
+  text-shadow: 1px 0 $gray, -1px 0 $gray, 0 1px $gray, 0 -1px $gray

@@ -1,1 +1,0 @@
-export {difault} from './FeedbackButton';
