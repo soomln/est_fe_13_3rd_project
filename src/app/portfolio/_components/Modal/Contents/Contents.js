@@ -1,8 +1,8 @@
 import styles from './Contents.module.sass';
 
-export default function Contents({ bgColor = '#ffffff', gap = '1rem' }) {
+export default function Contents({ bgColor = '#ffffff', gap = '1rem', contentsRef }) {
   return (
-    <div className={`${styles.container}`} style={{ backgroundColor: bgColor }}>
+    <div ref={contentsRef} className={`${styles.container}`} style={{ backgroundColor: bgColor }}>
       <div className={`${styles.contents}`} style={{ gap: gap }}>
         {/* ==================================Test================================== */}
         <h1 className='font_h1'>Title</h1>
