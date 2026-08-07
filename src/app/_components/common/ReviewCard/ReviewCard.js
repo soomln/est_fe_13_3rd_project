@@ -4,7 +4,7 @@ import styles from './ReviewCard.module.sass';
 /**
  * [공통] 면접 후기/포스트 카드 컴포넌트
  */
-export default function PostCard({
+export default function ReviewCard({
   companyLogo = '/images/est_logo.svg',
   companyName = '기업명',
   difficulty,
@@ -23,7 +23,7 @@ export default function PostCard({
     <div className={styles.post_card} onClick={onClick}>
       <div className={styles.bookmark_wrapper}>
         <Bookmark
-          size='medium'
+          size='large'
           isBookmarked={isBookmarked}
           onClick={(e) => {
             e.stopPropagation();
