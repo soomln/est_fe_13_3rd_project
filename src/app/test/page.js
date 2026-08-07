@@ -90,7 +90,7 @@ export default function Home() {
           <h2>5. 포트폴리오 카드</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {portfolioData.map((item) => (
-              <PortfolioCard key={item.id} item={item} />
+              <PortfolioCard key={item.id} item={item} onClick={() => {}} />
             ))}
           </div>
         </section>
