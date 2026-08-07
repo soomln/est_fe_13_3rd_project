@@ -1,8 +1,8 @@
 import styles from './page.module.sass';
-import Header from '../_components/common/Header/Header';
-import Footer from '../_components/common/Footer/Footer';
-import Pagination from '../_components/common/Pagination/Pagination';
-import CompanyCard from './components/CompanyCard';
+import Header from '../_components/common/Header';
+import Footer from '../_components/common/Footer';
+import Pagination from '../_components/common/Pagination';
+import CompanyCard from './_components/CompanyCard';
 
 const companies = [
   {
