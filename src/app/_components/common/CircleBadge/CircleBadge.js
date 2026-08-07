@@ -19,7 +19,7 @@ export default function CircleBadge({ src, name, size = 'medium', onClick = () =
           className={styles.avatar_img}
         />
       </div>
-      {name && <span className={styles.name}>{name}</span>}
+      {name && <span className={`${size !== 'small' ? 'font_caption_b' : ''} ${styles.name}`.trim()}>{name}</span>}
     </button>
   );
 }
