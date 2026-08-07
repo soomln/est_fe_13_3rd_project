@@ -9,8 +9,8 @@ import 'swiper/css';
 import 'swiper/css/scrollbar';
 import 'swiper/css/effect-coverflow';
 
-import Header from '@/app/_components/common/Header';
-import Footer from '@/app/_components/common/Footer';
+import Header from '@/app/_components/common/Header/Header';
+import Footer from '@/app/_components/common/Footer/Footer';
 import CategoryBtn from '@/app/portfolio/_components/CategoryBtn';
 import SortBtn from '@/app/portfolio/_components/SortBtn/SortBtn';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';

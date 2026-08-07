@@ -1,0 +1,59 @@
+@use '@/app/_variables.sass' as *
+@use '@/app/_mixin.sass' as *
+
+// Figma "maker_btn"(150:924) Device 베리언트 실측: PC=large, Tablet=medium, Mobile=small 로 매핑
+// (원래 MakerButton.js였던 게 CircleBadge로 이름이 바뀐 것 — 스펙 동일. 원본 MakerButton 파일은 StackBadge로 재활용됨)
+.circle_badge
+  display: inline-flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  background: transparent
+  border: none
+  padding: 0
+  cursor: pointer
+  transition: opacity 0.2s ease
+
+  &:hover
+    opacity: 0.85
+
+  .avatar_wrapper
+    position: relative
+    border-radius: 50%
+    overflow: hidden
+    background-color: $stroke2
+
+    .avatar_img
+      object-fit: cover
+
+  .name
+    color: $white
+    text-align: center
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  &.large
+    gap: 10px
+    .avatar_wrapper
+      width: 70px
+      height: 70px
+    .name
+      max-width: 90px
+
+  &.medium
+    gap: 5px
+    .avatar_wrapper
+      width: 40px
+      height: 40px
+    .name
+      max-width: 60px
+
+  &.small
+    gap: 5px
+    .avatar_wrapper
+      width: 30px
+      height: 30px
+    .name
+      max-width: 44px
+      +setFont(10px, 16px, 600)

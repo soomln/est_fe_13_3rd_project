@@ -1,3 +1,5 @@
+@use '@/app/_mixin.sass' as *
+
 // Layout //
 .container
   // 1. 기본 데스크톱 스타일 (1440px 고정/중앙 정렬)
@@ -17,14 +19,6 @@
     box-sizing: border-box
   
 // Typography Variables
-
-=setFont($size, $lh, $weight: 400)
-  font-family: 'Pretendard'
-  font-size: $size
-  line-height: $lh
-  font-weight: $weight
-  letter-spacing: -0.025em
-
 .font_title
   +setFont(64px, 76px, 700)
 
@@ -44,7 +38,7 @@
   +setFont(20px, 24px, 700)
 
 .font_body_l_b
-  +setFont(18px, 24px, 600)
+  +setFont(18px, 24px, 700)
 
 .font_body_l_r
   +setFont(18px, 24px)

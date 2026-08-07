@@ -2,21 +2,20 @@
 
 import { useState } from 'react';
 // 팀 컨벤션 준수: 컴포넌트는 PascalCase, 절대 경로 별칭(@/) 사용
-import Header from '@/app/_components/common/Header';
-import Footer from '@/app/_components/common/Footer';
-import Bookmark from '@/app/_components/common/Bookmark';
-import Tag from '@/app/_components/common/Tag';
-import Pagination from '@/app/_components/common/Pagination';
+import Header from '@/app/_components/common/Header/Header';
+import Footer from '@/app/_components/common/Footer/Footer';
+import Bookmark from '@/app/_components/common/Bookmark/Bookmark';
+import Tag from '@/app/_components/common/Tag/Tag';
+import Pagination from '@/app/_components/common/Pagination/Pagination';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
-import PostCard from '@/app/_components/common/ReviewCard';
-import CategoryChip from '@/app/_components/common/CategoryChip';
-import CircleBadge from '@/app/_components/common/CircleBadge';
+import PostCard from '@/app/_components/common/ReviewCard/ReviewCard';
+import CategoryChip from '@/app/_components/common/Category/CategoryChip';
+import CircleBadge from '@/app/_components/common/CircleBadge/CircleBadge';
 import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPostBookmarked, setIsPostBookmarked] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('web');
 
   // 카테고리 목록 데이터
@@ -50,6 +49,8 @@ export default function Home() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h2>1. 북마크 버튼</h2>
           <Bookmark />
+          <Bookmark size='medium' />
+          <Bookmark size='large' />
         </section>
         {/* 2. 초록색 태그 테스트 */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -90,14 +91,27 @@ export default function Home() {
           <h2>5. 포트폴리오 카드</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {portfolioData.map((item) => (
-              <PortfolioCard key={item.id} item={item} />
+              <PortfolioCard key={item.id} item={item} onClick={() => {}} />
             ))}
           </div>
         </section>
 
         {/* 6. 포스트(면접 후기) 카드 테스트 */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '800px' }}>
+        <section style={{}}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
+          <PostCard
+            companyLogo='/images/estSoft 1.png'
+            companyName='이스트소프트'
+            difficulty='보통'
+            result='합격'
+            channel='잡코리아'
+            jobInfo='개발 / 사원 / 대졸'
+            date='2026. 07. 23'
+            questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
+            saveCount={500}
+            commentCount={10}
+            onBookmarkClick={() => {}}
+          />
           <PostCard
             companyLogo='/logo.svg'
             companyName='이스트소프트'
@@ -109,8 +123,7 @@ export default function Home() {
             questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
             saveCount={500}
             commentCount={10}
-            isBookmarked={isPostBookmarked}
-            onBookmarkClick={() => setIsPostBookmarked((prev) => !prev)}
+            onBookmarkClick={() => {}}
           />
         </section>
 

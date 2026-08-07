@@ -1,0 +1,139 @@
+@use '@/app/_variables.sass' as *
+@use '@/app/_mixin.sass' as *
+
+.review_card
+  position: relative
+  width: 100%
+  background-color: $white
+  border: 0.5px solid $gray
+  border-radius: 15px
+  padding: 32px 64px
+  box-sizing: border-box
+  overflow: hidden
+  cursor: pointer
+  transition: transform 0.25s ease, box-shadow 0.25s ease
+
+  &:hover
+    transform: translateY(-4px)
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08)
+
+.bookmark_wrapper
+  position: absolute
+  top: 0
+  right: 48px
+  z-index: 10
+  cursor: pointer
+  display: flex
+  align-items: flex-start
+  justify-content: flex-end
+
+.card_header
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+.company_info
+  display: flex
+  align-items: center
+  gap: 4px
+
+.logo_img
+  max-width: 150px
+  height: 35px
+  aspect-ratio: 78px / 35px
+  object-fit: contain
+
+// Figma: 16px/20/600 tracking -0.4px, 색상 $gray
+.company_name
+  color: $gray
+  text-decoration: none
+
+.meta_line
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding-bottom: 14px
+  border-bottom: 1px solid $stroke3
+
+.meta_tags
+  display: flex
+  align-items: center
+  gap: 10px
+
+.meta_item
+  display: flex
+  align-items: center
+  gap: 16px
+  padding-right: 16px
+  border-right: 1px solid $stroke3
+
+  &:last-child
+    padding-right: 0
+    border-right: none
+
+// Figma body_m_B: 16px/20/600 tracking -0.4px
+.label
+  color: $black
+
+// Figma body_m_R: 16px/20/400 tracking -0.4px (난이도 값만 SemiBold+초록)
+.value
+  color: $gray
+
+  &.green
+    color: $green
+    font-weight: 600
+
+.divider
+  width: 1px
+  height: 12px
+  background-color: $stroke3
+
+.writer_info
+  display: flex
+  align-items: center
+  gap: 6px
+
+// Figma account_circle: Material Icons Round, 20px, #6F6F6F
+.writer_icon
+  font-size: 20px
+  color: $gray
+
+// Figma: 16px/20/400 tracking -0.4px, 색상 #ACAEAD (프로젝트 변수에 없는 별도 톤)
+.job_text,
+.date_text
+  color: #ACAEAD
+
+// Figma: meta_line 하단 border와 첫 질문 사이 26px(그룹 gap 10 + 리스트 자체 padding-top 16)
+.question_list
+  display: flex
+  flex-direction: column
+  gap: 5px
+  margin-top: 26px
+  margin-bottom: 24px
+
+// Figma body_m_R: 16px/20/400 tracking -0.4px
+.question_item
+  margin: 0
+  color: $black
+
+.card_footer
+  display: flex
+  align-items: center
+  justify-content: space-between
+  color: #ACAEAD
+
+.save_box
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 5px
+
+  .fill_icon
+    font-size: 18px
+    line-height: 1
+    display: block
+    color: #ACAEAD
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
+
+.comment_box
+  color: #ACAEAD

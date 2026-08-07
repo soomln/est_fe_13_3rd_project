@@ -1,0 +1,48 @@
+@use '@/app/_variables.sass' as *
+
+.step_card
+  display: flex
+  align-items: center
+  gap: 16px
+  padding: 16px 20px
+  background-color: $white
+  border: 1px solid $stroke3
+  border-radius: 16px
+  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.04)
+
+  .step_card_icon
+    flex-shrink: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 40px
+    height: 40px
+    font-size: 20px
+    background-color: $light_gray
+    border-radius: 10px
+
+  .step_card_body
+    flex: 1
+    display: flex
+    flex-direction: column
+    gap: 4px
+
+  .step_card_step
+    color: $green
+
+  .step_card_title
+    color: $black
+
+  .step_card_desc
+    color: $gray
+
+  .step_card_check
+    flex-shrink: 0
+    font-size: 24px
+    color: $stroke1
+
+  &.step_card_active
+    border-color: $green
+
+    .step_card_check
+      color: $green
