@@ -1,4 +1,5 @@
 'use client';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Scrollbar, Autoplay, EffectCoverflow } from 'swiper/modules';
@@ -14,7 +15,6 @@ import CategoryBtn from '@/app/portfolio/_components/CategoryBtn';
 import SortBtn from '@/app/portfolio/_components/SortBtn/SortBtn';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import Window from '@/app/portfolio/_components/Modal/Window';
-import { useState } from 'react';
 
 export default function Portpolio() {
   //================test================/
@@ -38,17 +38,29 @@ export default function Portpolio() {
     );
   });
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const modalId = searchParams.get('modal');
+  const selectedItem = items.find((item) => item.id === Number(modalId)) ?? null;
+  const isModalOpen = !!selectedItem;
 
   const onOpenDetail = (item) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('modal', item.id);
+
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const onCloseDetail = () => {
-    setIsModalOpen(false);
-    setSelectedItem(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('modal');
+
+    const queryString = params.toString();
+    const cleanUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    router.replace(cleanUrl);
   };
 
   const portfolioList = [];
