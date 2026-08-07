@@ -4,9 +4,6 @@ import ActionBtn from '@/app/portfolio/_components/Modal/ActionBtn';
 
 export default function ActionBtnGroup({ contentsRef, showToast }) {
   const onMoveTop = () => {
-    console.log('1. 버튼 클릭됨');
-    console.log('2. ref 요소:', contentsRef?.current);
-    console.log('3. 현재 스크롤 위치:', contentsRef?.current?.scrollTop);
     contentsRef?.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
