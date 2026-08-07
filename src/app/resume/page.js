@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 
 import styles from './page.module.sass';
@@ -5,23 +6,47 @@ import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
 import StepCard from '@/app/resume/_components/StepCard';
 import HeroStat from '@/app/resume/_components/HeroStat';
+import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
 
 const HERO_STEPS = [
-  { step: 'STEP 01', title: '무료 양식 선택', desc: '개발자의 취업을 위한 모든 양식', icon: '📋' },
-  { step: 'STEP 02', title: '브라우저에서 편집', desc: '설치 없이 웹에서 편집 · 저장 · 다운로드', icon: '✍️' },
+  {
+    step: 'STEP 01',
+    title: '무료 양식 선택',
+    desc: '개발자의 취업을 위한 모든 양식 무료 제공',
+    icon: '📋',
+    tone: 'green',
+  },
+  {
+    step: 'STEP 02',
+    title: '브라우저에서 편집',
+    desc: '설치 없이 웹에서 편집 · 저장 · 다운로드',
+    icon: '✍️',
+    tone: 'blue',
+  },
   {
     step: 'STEP 03',
     title: 'AI와 쉽고 빠르게 완성',
     desc: '장단점 · 지원동기 질의응답 통해 완성',
     icon: '🤖',
+    tone: 'purple',
     isActive: true,
   },
 ];
 
 const HERO_STATS = [
-  { value: '12+', label: '무료 양식' },
-  { value: 'AI', label: '첨삭 지원', isAccent: true },
+  { value: '12+', label: '무료 양식', tone: 'green' },
+  { value: 'AI', label: '작성 코칭', tone: 'amber' },
   { value: '8,500+', label: '작성 완료' },
+];
+
+// 주의: supabase 연결 전까지 쓰는 임시 목록
+const FREE_TEMPLATES = [
+  { id: 1, type: '이력서', title: '이력서', downloadCount: 3290 },
+  { id: 2, type: '이력서', title: '이력서', downloadCount: 3290 },
+  { id: 3, type: '자기소개서', title: '자기소개서', downloadCount: 3290 },
+  { id: 4, type: '이력서', title: '이력서', downloadCount: 3290 },
+  { id: 5, type: '자기소개서', title: '자기소개서', downloadCount: 3290 },
+  { id: 6, type: '이력서', title: '이력서', downloadCount: 3290 },
 ];
 
 export default function Resume() {
@@ -32,7 +57,7 @@ export default function Resume() {
         <section className={styles.hero}>
           <div className={`container ${styles.hero_inner}`}>
             <div className={styles.hero_intro}>
-              <span className={`${styles.hero_badge} font_body_s_b`}>무료 양식 · 브라우저 편집 · AI 첨삭</span>
+              <span className={`${styles.hero_badge} font_body_s_b`}>무료 양식 · 브라우저 편집 · AI 연습</span>
 
               <h1 className={`${styles.hero_title} font_title`}>
                 쓰기 어려운 취업 서류,
@@ -41,22 +66,22 @@ export default function Resume() {
                 <span className={styles.hero_title_point}>완성</span>하세요.
               </h1>
 
-              <p className={`${styles.hero_desc} font_body_m_r`}>
+              <p className={`${styles.hero_desc} font_body_l_r`}>
                 무료 이력서 · 자소서 양식부터 브라우저 직접 편집, AI 질의응답까지.
                 <br />
                 개발자를 위한 취업 서류 작성 도구를 한 곳에서.
               </p>
 
               <div className={styles.hero_btns}>
-                <Link href='/resume/free_form' className={`${styles.hero_btn_primary} font_body_m_b`}>
+                <Link href='/resume/free_form' className={`${styles.hero_btn_primary} font_h4`}>
                   양식 고르고 작성하기
-                  <span className='material-symbols-rounded' aria-hidden='true'>
+                  <span className='material-symbols-sharp' aria-hidden='true'>
                     arrow_forward
                   </span>
                 </Link>
-                <Link href='/mypage/documents' className={`${styles.hero_btn_secondary} font_body_m_b`}>
+                <Link href='/mypage/documents' className={`${styles.hero_btn_secondary} font_h4`}>
                   내 문서함으로 이동
-                  <span className='material-symbols-rounded' aria-hidden='true'>
+                  <span className='material-symbols-sharp' aria-hidden='true'>
                     arrow_forward
                   </span>
                 </Link>
@@ -64,43 +89,51 @@ export default function Resume() {
 
               <div className={styles.hero_stats}>
                 {HERO_STATS.map((item) => (
-                  <HeroStat key={item.label} value={item.value} label={item.label} isAccent={item.isAccent} />
+                  <HeroStat key={item.label} value={item.value} label={item.label} tone={item.tone} />
                 ))}
               </div>
             </div>
 
             <div className={styles.hero_steps}>
-              <ul className={styles.hero_step_list}>
-                {HERO_STEPS.map((item, index) => (
-                  <li key={item.step} className={styles.hero_step_item}>
-                    <StepCard
-                      step={item.step}
-                      title={item.title}
-                      desc={item.desc}
-                      icon={item.icon}
-                      isActive={item.isActive}
-                    />
-                    {index < HERO_STEPS.length - 1 && (
-                      <span className={`${styles.hero_step_arrow} material-symbols-rounded`} aria-hidden='true'>
-                        arrow_drop_down
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {HERO_STEPS.map((item, index) => (
+                <Fragment key={item.step}>
+                  <StepCard
+                    step={item.step}
+                    title={item.title}
+                    desc={item.desc}
+                    icon={item.icon}
+                    tone={item.tone}
+                    isActive={item.isActive}
+                  />
+                  {index < HERO_STEPS.length - 1 && (
+                    <span className={`${styles.hero_step_arrow} material-symbols-sharp`} aria-hidden='true'>
+                      change_history
+                    </span>
+                  )}
+                </Fragment>
+              ))}
 
               <div className={styles.hero_progress}>
-                <div className={styles.hero_progress_row}>
-                  <span className={`${styles.hero_progress_text} font_caption_b`}>
-                    평균 40분이면 서류 하나가 완성돼요!
-                  </span>
-                  <span className={`${styles.hero_progress_rate} font_caption_b`}>진행률 100%</span>
-                </div>
-                <div className={styles.hero_progress_bar}>
-                  <div className={styles.hero_progress_fill} />
-                </div>
+                <span className={`${styles.hero_progress_text} font_caption_r`}>
+                  평균 <strong className='font_caption_b'>40분</strong>이면 서류 하나가 완성돼요!
+                </span>
+                <span className={`${styles.hero_progress_rate} font_caption_b`}>완성도 100%</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className={styles.templates}>
+          <div className={`container ${styles.templates_inner}`}>
+            <div className={styles.section_head}>
+              <p className={`${styles.section_label} font_h4`}>STEP 01</p>
+              <h2 className={`${styles.section_title} font_h1`}>무료 양식으로 시작하기</h2>
+              <p className={`${styles.section_desc} font_body_m_r`}>
+                개발자를 위한 무료 이력서·자기소개서 양식을 선택하고 편집해보세요
+              </p>
+            </div>
+
+            <TemplateBrowser items={FREE_TEMPLATES} />
           </div>
         </section>
       </main>
