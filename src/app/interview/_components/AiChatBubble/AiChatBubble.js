@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import './AiChatBubble.sass';
 
 export default function AiChatBubble() {
