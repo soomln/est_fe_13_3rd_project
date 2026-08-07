@@ -6,6 +6,7 @@ import Footer from '../_components/common/Footer/Footer';
 
 import ActionButton from '@/app/interview/components/ActionButton';
 import FeatureCard from '@/app/interview/components/FeatureCard';
+import CompanyCard from '@/app/interview/components/CompanyCard';
 
 export default function InterviewPage() {
   return (
@@ -58,7 +59,22 @@ export default function InterviewPage() {
 
           {/* 관심기업 + 자주 묻는 질문 */}
           <section className='content_section'>
-            <section className='company_section'></section>
+            <section className='company_section'>
+              <div className='company_header'>
+                <h2 className='font_h3'>나의 관심 기업</h2>
+
+                <button type='button' className='view_all_btn font_body_s_r'>
+                  전체 보기
+                </button>
+              </div>
+
+              <div className='company_list'>
+                <CompanyCard />
+                <CompanyCard />
+                <CompanyCard />
+                <CompanyCard />
+              </div>
+            </section>
 
             <section className='question_section'></section>
           </section>
