@@ -33,7 +33,7 @@ const Footer = () => {
           {/* 1. 로고 및 소셜 영역 */}
           <div className={styles.logo_group}>
             <Image src='/logo.svg' alt='CallBack Logo' width={124} height={18} className={styles.logo_img} />
-            <p className={styles.logo_desc}>
+            <p className={`font_body_s_r ${styles.logo_desc}`}>
               개발자 취업 준비의 모든 것.
               <br />
               AI와 함께 더 빠르게, 더 스마트하게.
@@ -58,11 +58,11 @@ const Footer = () => {
           <nav className={styles.menus_wrapper}>
             {FOOTER_MENUS.map((menu, index) => (
               <div key={index} className={styles.menu_column}>
-                <h4 className={styles.menu_title}>{menu.title}</h4>
+                <h4 className={`font_body_m_b ${styles.menu_title}`}>{menu.title}</h4>
                 <ul className={styles.menu_list}>
                   {menu.items.map((item, itemIndex) => (
                     <li key={itemIndex}>
-                      <a href='#' className={styles.menu_item}>
+                      <a href='#' className={`font_body_s_r ${styles.menu_item}`}>
                         {item}
                       </a>
                     </li>
@@ -75,8 +75,8 @@ const Footer = () => {
           {/* 3. 뉴스레터 영역 */}
           <div className={styles.newsletter_section}>
             <div className={styles.newsletter_header}>
-              <h4 className={styles.newsletter_title}>뉴스레터</h4>
-              <p className={styles.newsletter_desc}>최신 취업 정보를 이메일로</p>
+              <h4 className={`font_body_m_b ${styles.newsletter_title}`}>뉴스레터</h4>
+              <p className={`font_body_s_r ${styles.newsletter_desc}`}>최신 취업 정보를 이메일로</p>
             </div>
             <form className={styles.newsletter_form} onSubmit={(e) => e.preventDefault()}>
               <div className={styles.input_wrapper}>
@@ -84,11 +84,11 @@ const Footer = () => {
                 <input
                   type='email'
                   placeholder='이메일 주소'
-                  className={styles.email_input}
+                  className={`font_caption_b ${styles.email_input}`}
                   aria-label='이메일 주소 입력'
                 />
               </div>
-              <button type='submit' className={styles.subscribe_btn}>
+              <button type='submit' className={`font_caption_b ${styles.subscribe_btn}`}>
                 구독하기
               </button>
             </form>
@@ -97,8 +97,8 @@ const Footer = () => {
 
         {/* 하단 저작권 및 TOP 버튼 영역 */}
         <div className={styles.bottom_bar}>
-          <address className={styles.copyright_text}>© 2024 CallBack Inc. All rights reserved.</address>
-          <button onClick={onScrollToTop} className={styles.top_btn} aria-label='맨 위로 이동'>
+          <address className={`font_caption_b ${styles.copyright_text}`}>© 2024 CallBack Inc. All rights reserved.</address>
+          <button onClick={onScrollToTop} className={`font_caption_r ${styles.top_btn}`} aria-label='맨 위로 이동'>
             TOP ^
           </button>
         </div>
