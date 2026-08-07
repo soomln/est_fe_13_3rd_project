@@ -6,13 +6,18 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:sql": "node backend/scripts/build-sql.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.2",
     "animejs": "^4.5.0",
+    "chart.js": "^4.5.1",
     "material-symbols": "^0.45.10",
     "next": "16.2.12",
     "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.4",
     "reset-css": "^5.0.2",
     "swiper": "^14.0.7"
