@@ -1,0 +1,133 @@
+@use '@/app/_variables.sass' as *
+
+// ===== HERO =====
+
+.hero
+  background-color: $light_gray
+
+// .container 의 좌우 패딩을 덮지 않도록 세로 패딩만 지정한다
+.hero_inner
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 24px
+  align-items: center
+  padding-top: 80px
+  padding-bottom: 80px
+
+  @media (max-width: 1439px)
+    padding-top: 64px
+    padding-bottom: 64px
+
+  @media (max-width: 768px)
+    grid-template-columns: 1fr
+    gap: 40px
+    padding-top: 48px
+    padding-bottom: 48px
+
+// ===== 좌측 텍스트 영역 =====
+
+.hero_intro
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 24px
+
+.hero_badge
+  display: inline-flex
+  align-items: center
+  height: 32px
+  padding: 0 16px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 999px
+
+.hero_title
+  color: $black
+
+  .hero_title_point
+    color: $green
+
+  // 모바일에서는 h1(36/48) 크기로 낮춘다
+  @media (max-width: 768px)
+    font-size: 36px
+    line-height: 48px
+
+.hero_desc
+  color: $gray
+
+.hero_btns
+  display: flex
+  flex-wrap: wrap
+  gap: 16px
+
+.hero_btn_primary,
+.hero_btn_secondary
+  display: inline-flex
+  align-items: center
+  gap: 8px
+  height: 56px
+  padding: 0 32px
+  border-radius: 999px
+  text-decoration: none
+
+  // material-symbols 는 전역 클래스라 :global() 로 감싸야 해시되지 않는다
+  :global(.material-symbols-rounded)
+    font-size: 20px
+
+.hero_btn_primary
+  color: $white
+  background-color: $black
+
+.hero_btn_secondary
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+
+.hero_stats
+  display: flex
+  gap: 48px
+
+// ===== 우측 스텝 영역 =====
+
+.hero_steps
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+.hero_step_item
+  display: flex
+  flex-direction: column
+
+.hero_step_arrow
+  align-self: center
+  font-size: 24px
+  color: $stroke1
+
+.hero_progress
+  padding: 16px
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 12px
+
+  .hero_progress_row
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 16px
+
+  .hero_progress_text,
+  .hero_progress_rate
+    color: $green
+
+  .hero_progress_bar
+    height: 4px
+    margin-top: 8px
+    background-color: $white
+    border-radius: 999px
+    overflow: hidden
+
+  .hero_progress_fill
+    width: 100%
+    height: 100%
+    background-color: $green
