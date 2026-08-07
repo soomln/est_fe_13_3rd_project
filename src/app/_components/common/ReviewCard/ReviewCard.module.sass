@@ -1,14 +1,14 @@
 @use '@/app/_variables.sass' as *
 @use '@/app/_mixin.sass' as *
 
-// Figma "Component 3"(150:934) 실측: border #6F6F6F($gray) 1px, radius 15px, padding 32px 64px
+// Figma "Component 3"(150:934) 실측: border #6F6F6F($gray) 0.5px, radius 15px, padding 32px 64px
 .post_card
   position: relative
   width: 100%
   background-color: $white
-  border: 1px solid $stroke2
-  border-radius: 12px
-  padding: 24px 28px
+  border: 0.5px solid $gray
+  border-radius: 15px
+  padding: 32px 64px
   box-sizing: border-box
   cursor: pointer
   transition: transform 0.25s ease, box-shadow 0.25s ease
