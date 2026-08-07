@@ -20,26 +20,28 @@ export default function CompanyCard({
         />
       </div>
 
-      <div className="company_info">
+      <div className="company_content">
         <div className="company_title font_body_m_b">
-          <span>{companyName}</span>
+          <span className="company_name">{companyName}</span>
           <span className="position">{position}</span>
         </div>
 
         <div className="company_detail">
           <div className="detail_item">
             <span className="label font_body_m_r">평균 연봉</span>
-            <span className="value font_body_m_r">{salary}</span>
+            <span className="value font_body_m_b">{salary}</span>
           </div>
 
-          <div className="detail_item rating">
+          <div className="divider"></div>
+
+          <div className="detail_item">
             <span className="label font_body_m_r">기업 평점</span>
 
             <span className="material-symbols-rounded star">
-              star
+              grade
             </span>
 
-            <span className="value font_body_m_r">{rating}</span>
+            <span className="value font_body_m_b">{rating}</span>
           </div>
         </div>
       </div>
