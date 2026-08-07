@@ -1,78 +1,78 @@
 @use '@/app/_variables.sass' as *
 
-// ===== HERO =====
+// hero
 
 .hero
   background-color: $light_gray
+  border-bottom: 1px solid $stroke3
 
-// .container 의 좌우 패딩을 덮지 않도록 세로 패딩만 지정한다
 .hero_inner
-  display: grid
-  grid-template-columns: 1fr 1fr
-  gap: 24px
+  display: flex
   align-items: center
-  padding-top: 80px
-  padding-bottom: 80px
+  justify-content: space-between
+  gap: 24px
+  padding-top: 64px
+  padding-bottom: 64px
 
   @media (max-width: 1439px)
-    padding-top: 64px
-    padding-bottom: 64px
-
-  @media (max-width: 768px)
-    grid-template-columns: 1fr
-    gap: 40px
     padding-top: 48px
     padding-bottom: 48px
 
-// ===== 좌측 텍스트 영역 =====
+  @media (max-width: 768px)
+    flex-direction: column
+    align-items: stretch
+    gap: 40px
 
 .hero_intro
+  flex-shrink: 0
   display: flex
   flex-direction: column
   align-items: flex-start
-  gap: 24px
+  width: 546px
+
+  @media (max-width: 1439px)
+    width: auto
 
 .hero_badge
   display: inline-flex
   align-items: center
-  height: 32px
-  padding: 0 16px
+  padding: 8px 16px
   color: $green
   background-color: $sub_green
   border: 1px solid $green
-  border-radius: 999px
+  border-radius: 16px
 
 .hero_title
+  margin-top: 24px
   color: $black
 
   .hero_title_point
     color: $green
 
-  // 모바일에서는 h1(36/48) 크기로 낮춘다
   @media (max-width: 768px)
     font-size: 36px
     line-height: 48px
 
 .hero_desc
+  margin-top: 32px
   color: $gray
 
 .hero_btns
   display: flex
   flex-wrap: wrap
-  gap: 16px
+  margin-top: 32px
+  gap: 15px
 
 .hero_btn_primary,
 .hero_btn_secondary
   display: inline-flex
   align-items: center
-  gap: 8px
-  height: 56px
-  padding: 0 32px
-  border-radius: 999px
+  gap: 4px
+  padding: 20px 24px
+  border-radius: 16px
   text-decoration: none
 
-  // material-symbols 는 전역 클래스라 :global() 로 감싸야 해시되지 않는다
-  :global(.material-symbols-rounded)
+  :global(.material-symbols-sharp)
     font-size: 20px
 
 .hero_btn_primary
@@ -80,54 +80,87 @@
   background-color: $black
 
 .hero_btn_secondary
-  color: $black
+  color: $gray
   background-color: $white
-  border: 1px solid $stroke2
+  border: 1px solid $gray
 
 .hero_stats
   display: flex
-  gap: 48px
-
-// ===== 우측 스텝 영역 =====
+  margin-top: 32px
+  gap: 40px
 
 .hero_steps
+  flex-shrink: 0
   display: flex
   flex-direction: column
+  align-items: center
   gap: 16px
+  width: 586px
 
-.hero_step_item
-  display: flex
-  flex-direction: column
+  @media (max-width: 1439px)
+    width: auto
+
+  > div
+    width: 100%
 
 .hero_step_arrow
-  align-self: center
-  font-size: 24px
+  font-size: 15px
+  line-height: 12px
   color: $stroke1
+  font-variation-settings: 'FILL' 1
+  transform: rotate(180deg)
 
 .hero_progress
-  padding: 16px
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  gap: 16px
+  padding: 8px 16px
   background-color: $sub_green
   border: 1px solid $green
-  border-radius: 12px
-
-  .hero_progress_row
-    display: flex
-    align-items: center
-    justify-content: space-between
-    gap: 16px
+  border-radius: 8px
 
   .hero_progress_text,
   .hero_progress_rate
     color: $green
 
-  .hero_progress_bar
-    height: 4px
-    margin-top: 8px
-    background-color: $white
-    border-radius: 999px
-    overflow: hidden
+// step 01
 
-  .hero_progress_fill
-    width: 100%
-    height: 100%
-    background-color: $green
+.templates
+  background-color: $white
+
+// 이 섹션만 컨테이너 1280
+.templates_inner
+  display: flex
+  flex-direction: column
+  gap: 36px
+  max-width: 1280px
+  padding-top: 80px
+  padding-bottom: 80px
+
+  @media (max-width: 768px)
+    padding-top: 56px
+    padding-bottom: 56px
+
+// 섹션 공통 머리말
+
+.section_head
+  display: flex
+  flex-direction: column
+  align-items: center
+  text-align: center
+
+.section_label
+  color: $green
+
+.section_title
+  color: $black
+
+  @media (max-width: 768px)
+    font-size: 28px
+    line-height: 36px
+
+.section_desc
+  margin-top: 16px
+  color: $gray

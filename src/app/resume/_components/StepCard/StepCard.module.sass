@@ -3,32 +3,35 @@
 .step_card
   display: flex
   align-items: center
+  justify-content: space-between
   gap: 16px
-  padding: 16px 20px
+  box-sizing: border-box
+  height: 96px
+  padding: 22px 24px
   background-color: $white
   border: 1px solid $stroke3
   border-radius: 16px
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.04)
+
+  .step_card_main
+    display: flex
+    align-items: center
+    gap: 15px
 
   .step_card_icon
     flex-shrink: 0
     display: flex
     align-items: center
     justify-content: center
-    width: 40px
-    height: 40px
+    width: 50px
+    height: 50px
     font-size: 20px
-    background-color: $light_gray
-    border-radius: 10px
+    line-height: 24px
+    border-radius: 8px
 
   .step_card_body
-    flex: 1
     display: flex
     flex-direction: column
-    gap: 4px
-
-  .step_card_step
-    color: $green
+    width: 188px
 
   .step_card_title
     color: $black
@@ -38,11 +41,35 @@
 
   .step_card_check
     flex-shrink: 0
-    font-size: 24px
-    color: $stroke1
+    font-size: 32px
+    font-weight: 300
+    color: $green
 
   &.step_card_active
     border-color: $green
 
     .step_card_check
-      color: $green
+      font-size: 26px
+      font-variation-settings: 'FILL' 1
+
+// 단계별 색
+.step_card_green
+  .step_card_step
+    color: $green
+
+  .step_card_icon
+    background-color: $sub_green
+
+.step_card_blue
+  .step_card_step
+    color: #4163E7
+
+  .step_card_icon
+    background-color: #DFE9FD
+
+.step_card_purple
+  .step_card_step
+    color: #703FE8
+
+  .step_card_icon
+    background-color: #EBE8FD
