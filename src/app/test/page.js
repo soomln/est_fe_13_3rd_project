@@ -12,6 +12,7 @@ import PostCard from '@/app/_components/common/ReviewCard/ReviewCard';
 import CategoryChip from '@/app/_components/common/Category/CategoryChip';
 import CircleBadge from '@/app/_components/common/CircleBadge/CircleBadge';
 import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
+import StackBadge from '@/app/_components/common/StackBadge/StackBadge';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
@@ -125,6 +126,18 @@ export default function Home() {
             {/* 작은 사이즈 */}
             <CircleBadge src='/logo.svg' name='박디자인' size='small' />
           </div>
+        </section>
+
+        {/* 8. 기술 스택 배지 (StackBadge) - icon은 실제 로고 에셋이 없어 임시로 logo.svg 사용 */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h2>8. 기술 스택 배지 (StackBadge)</h2>
+          <StackBadge
+            stacks={[
+              { name: 'JavaScript', icon: '/logo.svg' },
+              { name: 'React', icon: '/logo.svg' },
+              { name: 'Next.js', icon: '/logo.svg' },
+            ]}
+          />
         </section>
       </main>
 
