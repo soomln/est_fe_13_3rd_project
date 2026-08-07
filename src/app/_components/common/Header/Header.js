@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuth } from '@/app/_components/auth';
 import s from './Header.module.sass';
 
 function Logo() {
@@ -31,15 +34,29 @@ function NavContainer() {
 }
 
 function CtaContainer() {
+  const { isLoading, isLoggedIn, openLogin, openSignup } = useAuth();
+
+  if (isLoading) return <div className={s.ctaContainer} aria-hidden='true' />;
+
+  if (isLoggedIn) {
+    return (
+      <div className={s.ctaContainer}>
+        <Link href='/mypage' className={s.btnRegister}>
+          <span className={`font_body_m_b ${s.ctaLabel}`}>마이페이지</span>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className={s.ctaContainer}>
-      <Link href='/login' className={s.btnLogin}>
+      <button type='button' onClick={openLogin} className={s.btnLogin}>
         <span className={`font_body_m_b ${s.ctaLabel}`}>로그인</span>
-      </Link>
+      </button>
 
-      <Link href='/register' className={s.btnRegister}>
+      <button type='button' onClick={openSignup} className={s.btnRegister}>
         <span className={`font_body_m_b ${s.ctaLabel}`}>회원가입</span>
-      </Link>
+      </button>
     </div>
   );
 }

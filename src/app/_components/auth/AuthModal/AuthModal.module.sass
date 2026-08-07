@@ -1,0 +1,244 @@
+@use '@/app/_variables.sass' as *
+
+.overlay
+  position: fixed
+  inset: 0
+  z-index: 1000
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 20px
+  background: rgba(17, 17, 17, 0.5)
+
+.dialog
+  position: relative
+  width: 100%
+  max-width: 480px
+  padding: 32px
+  background: $white
+  border-radius: 20px
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18)
+
+.head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  margin-bottom: 24px
+
+.closeButton
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 32px
+  height: 32px
+  padding: 0
+  background: transparent
+  border: none
+  border-radius: 8px
+  color: $black
+  cursor: pointer
+
+  &:hover
+    background: $light_gray
+
+.title
+  margin-bottom: 12px
+  color: $black
+
+.description
+  margin-bottom: 28px
+  color: $gray
+  line-height: 1.5
+  white-space: pre-line
+
+.benefits
+  display: flex
+  flex-direction: column
+  gap: 10px
+  margin-bottom: 28px
+  padding: 20px
+  background: $sub_green
+  border-radius: 12px
+
+.benefitItem
+  display: flex
+  align-items: center
+  gap: 10px
+  color: $black
+
+.check
+  color: $green
+  flex-shrink: 0
+
+.providers
+  display: flex
+  align-items: flex-start
+  justify-content: center
+  gap: 24px
+  margin-bottom: 20px
+
+.provider
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 10px
+  padding: 0
+  background: transparent
+  border: none
+  cursor: pointer
+
+  &:disabled
+    opacity: 0.5
+    cursor: default
+
+.providerMark
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 64px
+  height: 64px
+  border-radius: 50%
+  transition: transform 0.15s ease
+
+  .provider:hover:not(:disabled) &
+    transform: translateY(-2px)
+
+.markGoogle
+  background: $white
+  border: 1px solid $stroke2
+
+.markGithub
+  background: #191919
+
+.markKakao
+  background: #FEE500
+
+.providerLabel
+  color: $black
+
+.providerBadge
+  color: $gray
+
+.hint
+  margin-bottom: 24px
+  color: $gray
+  text-align: center
+
+.divider
+  display: flex
+  align-items: center
+  gap: 16px
+  margin-bottom: 20px
+  color: $gray
+
+  &::before,
+  &::after
+    content: ''
+    flex: 1
+    height: 1px
+    background: $stroke3
+
+.signupButton
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+  width: 100%
+  padding: 16px
+  background: $light_green
+  border: 1px solid $green
+  border-radius: 12px
+  color: $green
+  cursor: pointer
+
+  &:hover
+    background: $sub_green
+
+.terms
+  color: $gray
+  text-align: center
+  line-height: 1.6
+
+  a
+    color: $green
+    font-weight: 700
+    text-decoration: none
+
+.footer
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 12px
+  margin-top: 24px
+  padding-top: 20px
+  border-top: 1px solid $stroke3
+  color: $gray
+
+.linkButton
+  padding: 0
+  background: transparent
+  border: none
+  color: $black
+  font-weight: 700
+  text-decoration: underline
+  cursor: pointer
+
+.connecting
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding: 8px 0 0
+
+.connectingRing
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 72px
+  height: 72px
+  margin-bottom: 24px
+  border-radius: 50%
+  border: 3px solid $green
+
+.connectingTitle
+  margin-bottom: 12px
+  color: $black
+  text-align: center
+
+.connectingDescription
+  margin-bottom: 28px
+  color: $gray
+  text-align: center
+  line-height: 1.5
+
+.cancelButton
+  width: 100%
+  padding: 16px
+  background: $white
+  border: 1px solid $stroke2
+  border-radius: 12px
+  color: $black
+  cursor: pointer
+
+  &:hover
+    background: $light_gray
+
+.error
+  margin-bottom: 20px
+  padding: 14px 16px
+  background: $warning_bg
+  border: 1px solid $warning_stroke
+  border-radius: 10px
+  color: $warning
+  line-height: 1.5
+
+@media (max-width: 768px)
+
+  .dialog
+    padding: 24px
+
+  .providers
+    gap: 16px
+
+  .providerMark
+    width: 56px
+    height: 56px
