@@ -16,7 +16,6 @@ import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPostBookmarked, setIsPostBookmarked] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('web');
 
   // 카테고리 목록 데이터
@@ -50,6 +49,8 @@ export default function Home() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h2>1. 북마크 버튼</h2>
           <Bookmark />
+          <Bookmark size='medium' />
+          <Bookmark size='large' />
         </section>
         {/* 2. 초록색 태그 테스트 */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -96,8 +97,21 @@ export default function Home() {
         </section>
 
         {/* 6. 포스트(면접 후기) 카드 테스트 */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '800px' }}>
+        <section style={{}}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
+          <PostCard
+            companyLogo='/images/estSoft 1.png'
+            companyName='이스트소프트'
+            difficulty='보통'
+            result='합격'
+            channel='잡코리아'
+            jobInfo='개발 / 사원 / 대졸'
+            date='2026. 07. 23'
+            questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
+            saveCount={500}
+            commentCount={10}
+            onBookmarkClick={() => {}}
+          />
           <PostCard
             companyLogo='/logo.svg'
             companyName='이스트소프트'
@@ -109,8 +123,7 @@ export default function Home() {
             questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
             saveCount={500}
             commentCount={10}
-            isBookmarked={isPostBookmarked}
-            onBookmarkClick={() => setIsPostBookmarked((prev) => !prev)}
+            onBookmarkClick={() => {}}
           />
         </section>
 
@@ -126,7 +139,6 @@ export default function Home() {
             <CircleBadge src='/logo.svg' name='박디자인' size='small' />
           </div>
         </section>
-
       </main>
 
       {/* 3. 하단 공통 푸터 */}

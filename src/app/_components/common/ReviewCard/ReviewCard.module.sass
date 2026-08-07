@@ -1,7 +1,7 @@
 @use '@/app/_variables.sass' as *
 @use '@/app/_mixin.sass' as *
 
-.post_card
+.review_card
   position: relative
   width: 100%
   background-color: $white
@@ -20,7 +20,7 @@
 .bookmark_wrapper
   position: absolute
   top: 0
-  right: 64px
+  right: 48px
   z-index: 10
   cursor: pointer
   display: flex
@@ -29,8 +29,8 @@
 
 .card_header
   display: flex
-  align-items: center
-  margin-bottom: 16px
+  flex-direction: column
+  gap: 16px
 
 .company_info
   display: flex
@@ -38,8 +38,9 @@
   gap: 4px
 
 .logo_img
+  max-width: 150px
   height: 35px
-  width: auto
+  aspect-ratio: 78px / 35px
   object-fit: contain
 
 // Figma: 16px/20/600 tracking -0.4px, 색상 $gray
