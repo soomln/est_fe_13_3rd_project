@@ -1,11 +1,11 @@
-import Bookmark from '../Bookmark/Bookmark';
+import Bookmark from '../Bookmark';
 import styles from './ReviewCard.module.sass';
 
 /**
  * [공통] 면접 후기/포스트 카드 컴포넌트
  */
 export default function ReviewCard({
-  companyLogo = '/images/est_logo.svg',
+  companyLogo = null,
   companyName = '기업명',
   difficulty,
   result,
@@ -15,50 +15,42 @@ export default function ReviewCard({
   questions,
   saveCount,
   commentCount,
-  isBookmarked,
-  onBookmarkClick,
+  onBookmarkClick, // 백엔드 구현 시 수정 필요
   onClick,
 }) {
   return (
-    <div className={styles.post_card} onClick={onClick}>
+    <div className={styles.review_card} onClick={onClick}>
       <div className={styles.bookmark_wrapper}>
-        <Bookmark
-          size='large'
-          isBookmarked={isBookmarked}
-          onClick={(e) => {
-            e.stopPropagation();
-            onBookmarkClick();
-          }}
-        />
+        {companyLogo && <Bookmark size='large' onClick={onBookmarkClick} />}
       </div>
 
       <div className={styles.card_header}>
         <div className={styles.company_info}>
-          <img src={companyLogo || '/logo.svg'} alt={`${companyName} 로고`} className={styles.logo_img} />
+          {companyLogo && <img src={companyLogo} alt={`${companyName} 로고`} className={styles.logo_img} />}
           <span className={`font_body_m_b ${styles.company_name}`}>{companyName}</span>
         </div>
-      </div>
 
-      <div className={styles.meta_line}>
-        <div className={styles.meta_tags}>
-          <div className={styles.meta_item}>
-            <span className={`font_body_m_b ${styles.label}`}>면접 난이도</span>
-            <span className={`font_body_m_r ${styles.value} ${styles.green}`}>{difficulty}</span>
+        <div className={styles.meta_line}>
+          <div className={styles.meta_tags}>
+            <div className={styles.meta_item}>
+              <span className={`font_body_m_b ${styles.label}`}>면접 난이도</span>
+              <span className={`font_body_m_r ${styles.value} ${styles.green}`}>{difficulty}</span>
+            </div>
+            <div className={styles.meta_item}>
+              <span className={`font_body_m_b ${styles.label}`}>합격 여부</span>
+              <span className={`font_body_m_r ${styles.value}`}>{result}</span>
+            </div>
+            <div className={styles.meta_item}>
+              <span className={`font_body_m_b ${styles.label}`}>면접 경로</span>
+              <span className={`font_body_m_r ${styles.value}`}>{channel}</span>
+            </div>
           </div>
-          <div className={styles.meta_item}>
-            <span className={`font_body_m_b ${styles.label}`}>합격 여부</span>
-            <span className={`font_body_m_r ${styles.value}`}>{result}</span>
-          </div>
-          <div className={styles.meta_item}>
-            <span className={`font_body_m_b ${styles.label}`}>면접 경로</span>
-            <span className={`font_body_m_r ${styles.value}`}>{channel}</span>
-          </div>
-        </div>
 
-        <div className={styles.writer_info}>
-          <span className={`material-symbols-rounded ${styles.writer_icon}`}>account_circle</span>
-          <span className={`font_body_m_r ${styles.job_text}`}>{jobInfo}</span>
-          <span className={`font_body_m_r ${styles.date_text}`}>{date}</span>
+          <div className={styles.writer_info}>
+            <span className={`material-symbols-rounded ${styles.writer_icon}`}>account_circle</span>
+            <span className={`font_body_m_r ${styles.job_text}`}>{jobInfo}</span>
+            <span className={`font_body_m_r ${styles.date_text}`}>{date}</span>
+          </div>
         </div>
       </div>
 
