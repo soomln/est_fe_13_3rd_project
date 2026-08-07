@@ -21,14 +21,15 @@ export default function PostCard({
 }) {
   return (
     <div className={styles.post_card} onClick={onClick}>
-      <div
-        className={`${styles.bookmark_wrapper} ${isBookmarked ? styles.is_active : ''}`.trim()}
-        onClick={(e) => {
-          e.stopPropagation(); // 💡 카드 전체 클릭(onClick)과 북마크 클릭이 겹치지 않게 막아주는 훌륭한 코드입니다!
-          onBookmarkClick();
-        }}
-      >
-        <Bookmark />
+      <div className={styles.bookmark_wrapper}>
+        <Bookmark
+          size='medium'
+          isBookmarked={isBookmarked}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBookmarkClick();
+          }}
+        />
       </div>
 
       <div className={styles.card_header}>
