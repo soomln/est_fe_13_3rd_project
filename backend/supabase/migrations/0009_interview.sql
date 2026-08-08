@@ -64,3 +64,7 @@ create policy "interview_qas 본인만"
   on public.interview_qas for all to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
+
+drop trigger if exists trg_cleanup_reactions on public.interview_qas;
+create trigger trg_cleanup_reactions after delete on public.interview_qas
+  for each row execute function public.cleanup_reactions('interview_qa');
