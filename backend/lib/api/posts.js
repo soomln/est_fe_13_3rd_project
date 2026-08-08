@@ -1,6 +1,11 @@
 import { PAGE_SIZE, REACTION } from '../constants';
 import { apiFetch } from './_fetch';
-import { getMyReactionIds, listMyReactionTargetIds, toggleReaction } from './reactions';
+import {
+  getMyReactionIds,
+  listMyReactionTargetIds,
+  removeReactions,
+  toggleReaction,
+} from './reactions';
 
 export async function listPosts({
   type,
@@ -85,8 +90,8 @@ export async function listMyScrappedPosts({ type, page = 1, pageSize = PAGE_SIZE
   return { items: items.slice(from, from + pageSize), total: items.length, page, pageSize };
 }
 
-export async function removeScraps(postIds) {
-  const { removeReactions } = await import('./reactions');
-  await removeReactions(...REACTION.postScrap, postIds);
-  return postIds.length;
+export async function removePostScraps(postIds) {
+  return removeReactions(...REACTION.postScrap, postIds);
 }
+
+export const removeScraps = removePostScraps;
