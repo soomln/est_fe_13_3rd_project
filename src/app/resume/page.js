@@ -70,6 +70,8 @@ const AI_RANKS = [
 // 주의: supabase 연결 전까지 쓰는 임시 목록
 const NEXT_PROJECTS = ['프로젝트명', '프로젝트명', '프로젝트명'];
 
+const CTA_POINTS = ['무료 양식 12종', '설치 없이 웹에서', '평균 40분 완성'];
+
 export default function Resume() {
   return (
     <>
@@ -347,6 +349,59 @@ export default function Resume() {
                 ))}
               </LinkCard>
             </ul>
+          </div>
+        </section>
+
+        <section className={styles.cta}>
+          <div className={`container ${styles.section_inner}`}>
+            <div className={styles.cta_banner}>
+              <img src='/images/resume/banner.png' alt='' className={styles.cta_banner_img} />
+
+              <div className={styles.cta_content}>
+                <span className={`${styles.cta_tag} font_body_s_b`}>위로 다시 올라갈 필요 없어요</span>
+
+                <div className={styles.cta_main}>
+                  <div className={styles.cta_text}>
+                    <h2 className={`${styles.cta_title} font_h1`}>
+                      설명은 여기까지,
+                      <br />
+                      이제 <span className={styles.cta_title_green}>내 서류</span>를 만들{' '}
+                      <span className={styles.cta_title_amber}>시간</span>이에요
+                    </h2>
+                    <p className={`${styles.cta_desc} font_body_m_b`}>
+                      양식을 고르고 AI와 대화하다 보면, 오늘 안에
+                      <br />내 첫 서류 한 장이 완성돼요.
+                    </p>
+                  </div>
+
+                  <div className={styles.cta_btns}>
+                    <Link href='/resume/free_form' className={`${styles.cta_btn_primary} font_body_m_b`}>
+                      양식 고르고 작성하기
+                      <span className='material-symbols-sharp' aria-hidden='true'>
+                        arrow_forward
+                      </span>
+                    </Link>
+                    <Link href='/mypage/documents' className={`${styles.cta_btn_secondary} font_body_m_b`}>
+                      내 문서함으로 이동
+                      <span className='material-symbols-sharp' aria-hidden='true'>
+                        arrow_forward
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+
+                <ul className={styles.cta_points}>
+                  {CTA_POINTS.map((point) => (
+                    <li key={point} className={`${styles.cta_point} font_body_s_b`}>
+                      <span className='material-symbols-sharp' aria-hidden='true'>
+                        check
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
       </main>

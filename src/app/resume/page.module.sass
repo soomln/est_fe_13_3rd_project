@@ -376,6 +376,110 @@
   background-color: $sub_purple
   border-radius: 999px
 
+// cta
+
+.cta
+  background-color: $white
+
+// 둥근 모서리와 테두리는 이미지에 이미 들어 있어 CSS 로 다시 씌우지 않는다
+.cta_banner
+  position: relative
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  justify-content: center
+  aspect-ratio: 1288 / 522
+  padding-left: 56px
+
+.cta_banner_img
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  object-fit: contain
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.25))
+
+.cta_content
+  position: relative
+  display: flex
+  flex-direction: column
+  gap: 24px
+  width: 424px
+
+.cta_tag
+  align-self: flex-start
+  display: inline-flex
+  align-items: center
+  padding: 8px 16px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 16px
+
+.cta_main
+  display: flex
+  flex-direction: column
+  gap: 32px
+
+.cta_text
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+.cta_title
+  color: $black
+
+  .cta_title_green
+    color: $green
+
+  .cta_title_amber
+    color: $amber
+
+.cta_desc
+  color: $gray
+
+.cta_btns
+  display: flex
+  gap: 15px
+
+.cta_btn_primary,
+.cta_btn_secondary
+  display: inline-flex
+  align-items: center
+  gap: 8px
+  padding: 18px 32px
+  border-radius: 16px
+  text-decoration: none
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+.cta_btn_primary
+  color: $white
+  background-color: $black
+
+.cta_btn_secondary
+  color: $gray
+  background-color: $white
+  border: 1px solid $gray
+
+.cta_points
+  display: flex
+  gap: 22px
+
+.cta_point
+  display: flex
+  align-items: center
+  gap: 5px
+  color: $gray
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+    color: $green
+
 // 섹션 공통 머리말
 
 .section_head
