@@ -24,6 +24,18 @@ import {
 } from '@backend/lib/api/portfolio';
 import { createComment, deleteComment, listComments, toggleCommentLike } from '@backend/lib/api/comments';
 import {
+  createSession,
+  deleteSession,
+  finishSession,
+  getMyScrappedQaIds,
+  getSession,
+  listMyQas,
+  listMyScraps,
+  listMySessions,
+  saveQas,
+  toggleQaScrap,
+} from '@backend/lib/api/interview';
+import {
   createPost,
   deletePosts,
   listMyPosts,
@@ -53,6 +65,8 @@ export default function BackendTestPage() {
   const [posts, setPosts] = useState(null);
   const [openPostId, setOpenPostId] = useState(null);
   const [comments, setComments] = useState(null);
+  const [sessions, setSessions] = useState(null);
+  const [scraps, setScraps] = useState(null);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -144,8 +158,21 @@ export default function BackendTestPage() {
       setPosts({ error: e.message });
     }
 
+    try {
+      setSessions(await listMySessions({ pageSize: 10 }));
+      setScraps(await listMyScraps({ pageSize: 20 }));
+    } catch (e) {
+      setSessions({ error: e.message });
+      setScraps(null);
+    }
+
     setChecks(results);
     setBusy(false);
+  }, []);
+
+  const reloadInterview = useCallback(async () => {
+    setSessions(await listMySessions({ pageSize: 10 }).catch((e) => ({ error: e.message })));
+    setScraps(await listMyScraps({ pageSize: 20 }).catch(() => null));
   }, []);
 
   const reloadPosts = useCallback(async () => {
@@ -914,6 +941,171 @@ export default function BackendTestPage() {
               )}
             </ul>
           </div>
+        )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>8. AI 면접 (저장·조회)</h2>
+
+        {sessions?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {sessions.error}
+          </p>
+        )}
+
+        <ul style={S.summary}>
+          <li>
+            내 세션 <b>{sessions?.error ? '-' : sessions?.total ?? 0}</b>
+          </li>
+          <li>
+            스크랩한 질문 <b>{scraps?.total ?? 0}</b>
+          </li>
+        </ul>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('면접 1회 완주 (세션 → QA 저장 → 종료)', async () => {
+                const session = await createSession({
+                  companyId: companies[0]?.id ?? null,
+                  interviewerStyle: 'pressure',
+                  selectedCategories: ['intro', 'tech1', 'closing'],
+                  showTimer: true,
+                });
+
+                const { saved } = await saveQas(session.id, [
+                  {
+                    seq: 1,
+                    category: 'intro',
+                    question: '자기소개를 해주세요.',
+                    answer: '문제를 화면 단위로 쪼개 해결하는 프론트엔드 개발자입니다.',
+                    feedback: { summary: '두괄식이라 좋습니다.', strengths: ['두괄식'], improvements: ['사례 추가'] },
+                    score: 4,
+                  },
+                  {
+                    seq: 2,
+                    category: 'tech1',
+                    question: '클로저란 무엇인가요?',
+                    answer: '함수와 렉시컬 환경의 조합입니다.',
+                    feedback: { summary: '정의는 정확합니다.' },
+                    score: 3,
+                  },
+                ]);
+
+                const done = await finishSession(session.id, {
+                  durationSec: 612,
+                  totalScore: 7,
+                  subScores: { 답변내용: 4, 전달력: 3, 논리성: 4, 전문성: 3, 태도: 4 },
+                });
+
+                await reloadInterview();
+                return `QA ${saved}건 저장 · ${done.status} · ${done.durationSec}초 · 총점 ${done.totalScore}`;
+              })
+            }
+          >
+            면접 1회 완주
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('본문 검색 ("클로저")', async () => {
+                const [qaAll, qaHit, scrapAll, scrapHit] = await Promise.all([
+                  listMyQas({ pageSize: 50 }),
+                  listMyQas({ q: '클로저', pageSize: 50 }),
+                  listMyScraps({ pageSize: 50 }),
+                  listMyScraps({ q: '클로저', pageSize: 50 }),
+                ]);
+                return `전체 QA ${qaAll.total}건 중 ${qaHit.total}건 · 스크랩 ${scrapAll.total}건 중 ${scrapHit.total}건`;
+              })
+            }
+          >
+            스크랩 본문 검색
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('세션 전체 삭제 (QA·스크랩 연쇄 삭제 확인)', async () => {
+                const list = sessions?.items ?? [];
+                for (const s of list) await deleteSession(s.id);
+                await reloadInterview();
+                const after = await listMyScraps({ pageSize: 20 });
+                return `세션 ${list.length}건 삭제 → 남은 스크랩 ${after.total}건`;
+              })
+            }
+          >
+            세션 전체 삭제
+          </button>
+        </div>
+
+        <ul style={S.list}>
+          {(sessions?.items ?? []).map((s) => (
+            <li key={s.id} style={S.item}>
+              <span style={{ ...S.badge, background: s.status === 'finished' ? '#00A63D' : '#ACAEAD' }}>
+                {s.status === 'finished' ? '종료' : '진행중'}
+              </span>
+              <span style={{ ...S.itemLabel, minWidth: 150 }}>{s.date}</span>
+              <span style={S.itemDetail}>
+                {s.interviewerStyle} · {s.selectedCategories.join(', ')} · {s.durationSec}초 · 총점{' '}
+                {s.totalScore ?? '-'}
+              </span>
+            </li>
+          ))}
+          {(sessions?.items ?? []).length === 0 && !sessions?.error && (
+            <li style={S.itemDetail}>세션이 없습니다. `면접 1회 완주` 를 눌러보세요.</li>
+          )}
+        </ul>
+
+        {scraps?.items?.length > 0 && (
+          <div style={S.detailBox}>
+            <div style={S.detailTitle}>스크랩한 질문 ({scraps.total})</div>
+            <ul style={S.list}>
+              {scraps.items.map((qa) => (
+                <li key={qa.id} style={{ ...S.item, alignItems: 'flex-start' }}>
+                  <span style={{ ...S.badge, background: '#111111' }}>Q</span>
+                  <span style={{ ...S.itemLabel, minWidth: 200 }}>{qa.question}</span>
+                  <span style={S.itemDetail}>
+                    A. {qa.answer.slice(0, 30)}… / AI. {qa.feedbackText.slice(0, 30)}…
+                  </span>
+                  <span style={S.itemDetail}>{qa.date}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {sessions?.items?.length > 0 && (
+          <p style={S.hint}>
+            스크랩 {scraps?.total ?? 0}건.
+            <button
+              type='button'
+              style={{ ...S.miniBtn, marginLeft: 8 }}
+              onClick={() =>
+                runDocAction('최근 세션의 모든 질문 스크랩', async () => {
+                  const full = await getSession(sessions.items[0].id);
+                  if (!full.qas?.length) return '저장된 질문이 없습니다';
+
+                  const already = await getMyScrappedQaIds(full.qas.map((q) => q.id));
+                  let added = 0;
+                  for (const qa of full.qas) {
+                    if (!already.has(qa.id)) {
+                      await toggleQaScrap(qa.id);
+                      added += 1;
+                    }
+                  }
+                  await reloadInterview();
+                  return `${added}건 스크랩 (이미 ${already.size}건)`;
+                })
+              }
+            >
+              최근 세션 질문 전체 스크랩
+            </button>
+          </p>
         )}
       </section>
 

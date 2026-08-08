@@ -38,3 +38,23 @@ create policy "reactions 본인만 생성"
 create policy "reactions 본인만 삭제"
   on public.reactions for delete to authenticated
   using ((select auth.uid()) = user_id);
+
+drop trigger if exists trg_cleanup_reactions on public.companies;
+create trigger trg_cleanup_reactions after delete on public.companies
+  for each row execute function public.cleanup_reactions('company');
+
+drop trigger if exists trg_cleanup_reactions on public.resume_templates;
+create trigger trg_cleanup_reactions after delete on public.resume_templates
+  for each row execute function public.cleanup_reactions('template');
+
+drop trigger if exists trg_cleanup_reactions on public.portfolios;
+create trigger trg_cleanup_reactions after delete on public.portfolios
+  for each row execute function public.cleanup_reactions('portfolio');
+
+drop trigger if exists trg_cleanup_reactions on public.posts;
+create trigger trg_cleanup_reactions after delete on public.posts
+  for each row execute function public.cleanup_reactions('post');
+
+drop trigger if exists trg_cleanup_reactions on public.comments;
+create trigger trg_cleanup_reactions after delete on public.comments
+  for each row execute function public.cleanup_reactions('comment');
