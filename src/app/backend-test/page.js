@@ -22,10 +22,19 @@ import {
   updatePortfolio,
   uploadPortfolioImages,
 } from '@backend/lib/api/portfolio';
+import { createComment, deleteComment, listComments, toggleCommentLike } from '@backend/lib/api/comments';
+import {
+  createPost,
+  deletePosts,
+  listMyPosts,
+  listPosts,
+  togglePostLike,
+  togglePostScrap,
+} from '@backend/lib/api/posts';
 import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
 import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
 import { listTemplates } from '@backend/lib/api/templates';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function BackendTestPage() {
   const [authError, setAuthError] = useState(null);
@@ -38,8 +47,12 @@ export default function BackendTestPage() {
   const [templates, setTemplates] = useState(null);
   const [documents, setDocuments] = useState(null);
   const [docLog, setDocLog] = useState([]);
+  const [isLogOpen, setIsLogOpen] = useState(false);
   const [gallery, setGallery] = useState(null);
   const [myPortfolios, setMyPortfolios] = useState(null);
+  const [posts, setPosts] = useState(null);
+  const [openPostId, setOpenPostId] = useState(null);
+  const [comments, setComments] = useState(null);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -125,8 +138,23 @@ export default function BackendTestPage() {
       setMyPortfolios({ error: e.message });
     }
 
+    try {
+      setPosts(await listPosts({ pageSize: 20 }));
+    } catch (e) {
+      setPosts({ error: e.message });
+    }
+
     setChecks(results);
     setBusy(false);
+  }, []);
+
+  const reloadPosts = useCallback(async () => {
+    setPosts(await listPosts({ pageSize: 20 }));
+  }, []);
+
+  const openComments = useCallback(async (postId) => {
+    setOpenPostId(postId);
+    setComments(await listComments(postId, { pageSize: 20 }).catch((e) => ({ error: e.message })));
   }, []);
 
   const reloadPortfolios = useCallback(async () => {
@@ -134,8 +162,12 @@ export default function BackendTestPage() {
     setMyPortfolios(await listMyPortfolios({ pageSize: 20 }).catch((e) => ({ error: e.message })));
   }, []);
 
+  const logSeq = useRef(0);
+
   const log = useCallback((ok, message) => {
-    setDocLog((prev) => [{ ok, message, at: new Date().toLocaleTimeString() }, ...prev].slice(0, 12));
+    logSeq.current += 1;
+    const entry = { id: logSeq.current, ok, message, at: new Date().toLocaleTimeString() };
+    setDocLog((prev) => [entry, ...prev].slice(0, 20));
   }, []);
 
   const reloadDocuments = useCallback(async () => {
@@ -679,14 +711,241 @@ export default function BackendTestPage() {
         </div>
       </section>
 
-      <section style={{ ...S.card, position: 'sticky', bottom: 0, background: '#FFFFFF' }}>
-        <h2 style={S.h2}>실행 로그</h2>
-        {docLog.length === 0 ? (
-          <p style={S.itemDetail}>아직 실행한 동작이 없습니다. 위 버튼을 눌러보세요.</p>
-        ) : (
-          <ul style={S.list}>
+      <section style={S.card}>
+        <h2 style={S.h2}>7. 면접 후기 · 족보</h2>
+
+        {posts?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {posts.error}
+          </p>
+        )}
+
+        <ul style={S.summary}>
+          <li>
+            전체 <b>{posts?.total ?? 0}</b>
+          </li>
+          <li>
+            후기 <b>{(posts?.items ?? []).filter((p) => p.postType === 'review').length}</b>
+          </li>
+          <li>
+            족보 <b>{(posts?.items ?? []).filter((p) => p.postType === 'qbank').length}</b>
+          </li>
+        </ul>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('면접 후기 작성', async () => {
+                const p = await createPost({
+                  postType: 'review',
+                  companyId: companies[0]?.id ?? null,
+                  title: '테스트 면접 후기',
+                  body: '분위기는 편안했고 꼬리질문이 많았습니다.',
+                  difficultyCode: 'normal',
+                  difficultyScore: 3.0,
+                  passResultCode: 'pass',
+                  channelCode: 'online',
+                  jobRoleCode: 'frontend',
+                  positionLevel: '신입',
+                  educationLevel: '대졸',
+                  tags: ['CS', '기술면접'],
+                  overallComment: '준비한 만큼 나옵니다',
+                });
+                await reloadPosts();
+                return `${p.companyName} · ${p.difficulty} · ${p.result} · ${p.route}`;
+              })
+            }
+          >
+            면접 후기 작성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('면접 족보 작성', async () => {
+                const p = await createPost({
+                  postType: 'qbank',
+                  companyId: companies[0]?.id ?? null,
+                  questions: ['REST API의 장점은?', '브라우저 렌더링 과정을 설명하세요', '클로저란?'],
+                  difficultyCode: 'hard',
+                  difficultyScore: 4.5,
+                  passResultCode: 'waiting',
+                  channelCode: 'etc',
+                  channelEtc: '잡코리아',
+                  jobRoleCode: 'backend',
+                  positionLevel: '신입',
+                  educationLevel: '대졸',
+                });
+                await reloadPosts();
+                return `질문 ${p.questions.length}개 · 경로 "${p.route}" (기타 처리 확인)`;
+              })
+            }
+          >
+            면접 족보 작성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('내 글 전체 삭제', async () => {
+                const mine = await listMyPosts({ pageSize: 50 });
+                const n = await deletePosts(mine.items.map((p) => p.id));
+                setOpenPostId(null);
+                setComments(null);
+                await reloadPosts();
+                return `${n}건 삭제`;
+              })
+            }
+          >
+            내 글 전체 삭제
+          </button>
+        </div>
+
+        <ul style={S.list}>
+          {(posts?.items ?? []).map((p) => (
+            <li key={p.id} style={{ ...S.item, flexWrap: 'wrap' }}>
+              <span style={{ ...S.badge, background: p.postType === 'review' ? '#00A63D' : '#8635F6' }}>
+                {p.postType === 'review' ? '후기' : '족보'}
+              </span>
+              <span style={{ ...S.itemLabel, minWidth: 170 }}>
+                {p.title || `질문 ${p.questions.length}개`}
+              </span>
+              <span style={S.itemDetail}>
+                {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo}
+              </span>
+              <span style={S.itemDetail}>
+                👍 {p.likeCount} · 🔖 {p.scrapCount} · 💬 {p.commentCount}
+              </span>
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('도움돼요 토글', async () => {
+                    const on = await togglePostLike(p.id);
+                    await reloadPosts();
+                    return on ? '켜짐' : '꺼짐';
+                  })
+                }
+              >
+                도움돼요
+              </button>
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('퍼가요 토글', async () => {
+                    const on = await togglePostScrap(p.id);
+                    await reloadPosts();
+                    return on ? '켜짐' : '꺼짐';
+                  })
+                }
+              >
+                퍼가요
+              </button>
+              <button type='button' style={S.miniBtn} onClick={() => openComments(p.id)}>
+                댓글 보기
+              </button>
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('댓글 작성', async () => {
+                    const c = await createComment(p.id, `테스트 댓글 ${new Date().toLocaleTimeString()}`);
+                    await reloadPosts();
+                    await openComments(p.id);
+                    return c.body;
+                  })
+                }
+              >
+                댓글 달기
+              </button>
+            </li>
+          ))}
+          {(posts?.items ?? []).length === 0 && (
+            <li style={S.itemDetail}>글이 없습니다. 위 버튼으로 작성해 보세요.</li>
+          )}
+        </ul>
+
+        {openPostId && (
+          <div style={S.detailBox}>
+            <div style={S.detailTitle}>댓글 ({comments?.total ?? 0})</div>
+            {comments?.error && <p style={{ ...S.itemDetail, color: '#DC2626' }}>{comments.error}</p>}
+            <ul style={S.list}>
+              {(comments?.items ?? []).map((c) => (
+                <li key={c.id} style={S.item}>
+                  <span style={S.itemLabel}>{c.authorName}</span>
+                  <span style={S.itemDetail}>{c.body}</span>
+                  <span style={S.itemDetail}>👍 {c.likeCount}</span>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('댓글 좋아요', async () => {
+                        const on = await toggleCommentLike(c.id);
+                        await openComments(openPostId);
+                        return on ? '켜짐' : '꺼짐';
+                      })
+                    }
+                  >
+                    좋아요
+                  </button>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('댓글 삭제', async () => {
+                        await deleteComment(c.id);
+                        await reloadPosts();
+                        await openComments(openPostId);
+                        return '삭제됨';
+                      })
+                    }
+                  >
+                    삭제
+                  </button>
+                </li>
+              ))}
+              {(comments?.items ?? []).length === 0 && !comments?.error && (
+                <li style={S.itemDetail}>댓글이 없습니다.</li>
+              )}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <section style={S.logBar}>
+        <div style={S.logHead}>
+          <button type='button' style={S.miniBtn} onClick={() => setIsLogOpen((v) => !v)}>
+            {isLogOpen ? '접기' : '펼치기'}
+          </button>
+          <span style={S.logTitle}>실행 로그 ({docLog.length})</span>
+
+          {docLog[0] ? (
+            <>
+              <span style={{ ...S.badge, background: docLog[0].ok ? '#00A63D' : '#DC2626' }}>
+                {docLog[0].ok ? 'OK' : 'FAIL'}
+              </span>
+              <span style={S.logLatest}>{docLog[0].message}</span>
+            </>
+          ) : (
+            <span style={S.itemDetail}>아직 실행한 동작이 없습니다.</span>
+          )}
+
+          {docLog.length > 0 && (
+            <button type='button' style={S.miniBtn} onClick={() => setDocLog([])}>
+              지우기
+            </button>
+          )}
+        </div>
+
+        {isLogOpen && docLog.length > 0 && (
+          <ul style={S.logList}>
             {docLog.map((l) => (
-              <li key={`${l.at}-${l.message}`} style={S.item}>
+              <li key={l.id} style={S.item}>
                 <span style={{ ...S.badge, background: l.ok ? '#00A63D' : '#DC2626' }}>
                   {l.ok ? 'OK' : 'FAIL'}
                 </span>
@@ -747,6 +1006,35 @@ const S = {
     overflow: 'hidden',
   },
   logoImg: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' },
+  logBar: {
+    position: 'sticky',
+    bottom: 0,
+    marginTop: 16,
+    padding: '10px 16px',
+    background: '#FFFFFF',
+    border: '1px solid #EEEEEE',
+    borderRadius: 12,
+    boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
+  },
+  logHead: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  logTitle: { fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' },
+  logLatest: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    color: '#6F6F6F',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  logList: {
+    marginTop: 12,
+    maxHeight: 220,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
   miniBtn: {
     padding: '4px 8px',
     border: '1px solid #ACAEAD',
