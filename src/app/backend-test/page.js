@@ -10,6 +10,18 @@ import {
   listMyDocuments,
   updateDocument,
 } from '@backend/lib/api/documents';
+import {
+  createPortfolio,
+  deletePortfolios,
+  getPortfolio,
+  listMyPortfolios,
+  listPortfolios,
+  publishPortfolio,
+  togglePortfolioBookmark,
+  togglePortfolioLike,
+  updatePortfolio,
+  uploadPortfolioImages,
+} from '@backend/lib/api/portfolio';
 import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
 import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
 import { listTemplates } from '@backend/lib/api/templates';
@@ -26,6 +38,8 @@ export default function BackendTestPage() {
   const [templates, setTemplates] = useState(null);
   const [documents, setDocuments] = useState(null);
   const [docLog, setDocLog] = useState([]);
+  const [gallery, setGallery] = useState(null);
+  const [myPortfolios, setMyPortfolios] = useState(null);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -99,8 +113,25 @@ export default function BackendTestPage() {
       setDocuments({ error: e.message });
     }
 
+    try {
+      setGallery(await listPortfolios({ pageSize: 20 }));
+    } catch (e) {
+      setGallery({ error: e.message });
+    }
+
+    try {
+      setMyPortfolios(await listMyPortfolios({ pageSize: 20 }));
+    } catch (e) {
+      setMyPortfolios({ error: e.message });
+    }
+
     setChecks(results);
     setBusy(false);
+  }, []);
+
+  const reloadPortfolios = useCallback(async () => {
+    setGallery(await listPortfolios({ pageSize: 20 }));
+    setMyPortfolios(await listMyPortfolios({ pageSize: 20 }).catch((e) => ({ error: e.message })));
   }, []);
 
   const log = useCallback((ok, message) => {
@@ -467,20 +498,203 @@ export default function BackendTestPage() {
               )}
             </ul>
 
-            {docLog.length > 0 && (
-              <ul style={{ ...S.list, marginTop: 16 }}>
-                {docLog.map((l) => (
-                  <li key={`${l.at}-${l.message}`} style={S.item}>
-                    <span style={{ ...S.badge, background: l.ok ? '#00A63D' : '#DC2626' }}>
-                      {l.ok ? 'OK' : 'FAIL'}
-                    </span>
-                    <span style={S.itemDetail}>{l.at}</span>
-                    <span style={S.itemDetail}>{l.message}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
           </>
+        )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>6. 포트폴리오</h2>
+
+        {gallery?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {gallery.error}
+          </p>
+        )}
+
+        <ul style={S.summary}>
+          <li>
+            갤러리(공개) <b>{gallery?.total ?? 0}</b>
+          </li>
+          <li>
+            내 포트폴리오 <b>{myPortfolios?.error ? '-' : myPortfolios?.total ?? 0}</b>
+          </li>
+        </ul>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('임시저장 생성', async () => {
+                const p = await createPortfolio({
+                  title: '테스트 포트폴리오',
+                  category: 'web',
+                  description: '스모크 테스트',
+                  content: [{ type: 'text', html: '<p>본문</p>' }],
+                });
+                await reloadPortfolios();
+                return `draft 생성 id=${p.id.slice(0, 8)}…`;
+              })
+            }
+          >
+            임시저장 생성
+          </button>
+
+          <label style={{ ...S.btn, display: 'inline-flex', alignItems: 'center' }}>
+            이미지 업로드
+            <input
+              type='file'
+              accept='image/*'
+              multiple
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                e.target.value = '';
+                if (files.length === 0) return;
+
+                runDocAction(`이미지 업로드 (${files.length}장)`, async () => {
+                  let target = myPortfolios?.items?.[0];
+                  if (!target) {
+                    target = await createPortfolio({
+                      title: '이미지 업로드 테스트',
+                      category: 'web',
+                    });
+                  }
+
+                  const urls = await uploadPortfolioImages(target.id, files);
+                  const current = await getPortfolio(target.id);
+
+                  await updatePortfolio(target.id, {
+                    thumbnailUrl: current.thumbnailUrl || urls[0],
+                    content: [
+                      ...(current.content ?? []),
+                      ...urls.map((url) => ({ type: 'image', url })),
+                    ],
+                  });
+
+                  await reloadPortfolios();
+                  return `${urls.length}장 → ${urls[0]}`;
+                });
+              }}
+            />
+          </label>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('내 포트폴리오 전체 삭제', async () => {
+                const n = await deletePortfolios((myPortfolios?.items ?? []).map((p) => p.id));
+                await reloadPortfolios();
+                return `${n}건 삭제`;
+              })
+            }
+          >
+            내 포트폴리오 전체 삭제
+          </button>
+        </div>
+
+        {myPortfolios?.error && (
+          <p className='font_body_s_r' style={{ ...S.hint, color: '#DC2626' }}>
+            내 포트폴리오: {myPortfolios.error}
+          </p>
+        )}
+
+        <ul style={S.list}>
+          {(myPortfolios?.items ?? []).map((p) => (
+            <li key={p.id} style={S.item}>
+              <span style={{ ...S.badge, background: p.status === 'published' ? '#00A63D' : '#ACAEAD' }}>
+                {p.status === 'published' ? '공개' : '초안'}
+              </span>
+              <span style={{ ...S.itemLabel, minWidth: 180 }}>{p.title}</span>
+              <span style={S.itemDetail}>
+                {p.category ?? '-'} · 👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
+              </span>
+              {p.status !== 'published' && (
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('공개 전환', async () => {
+                      const r = await publishPortfolio(p.id);
+                      await reloadPortfolios();
+                      return r.status;
+                    })
+                  }
+                >
+                  공개
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <div style={S.grid}>
+          {(gallery?.items ?? []).map((p) => (
+            <div key={p.id} style={S.companyCard}>
+              <span style={{ ...S.logoBox, height: 90 }}>
+                {p.thumbnailUrl ? (
+                  <img src={p.thumbnailUrl} alt='' style={S.logoImg} />
+                ) : (
+                  <span style={S.noLogo}>썸네일 없음</span>
+                )}
+              </span>
+              <span style={S.companyName}>{p.title}</span>
+              <span style={S.companyMeta}>
+                {p.authorName ?? '작성자 없음'} · {p.category ?? '-'}
+              </span>
+              <span style={S.companyMeta}>
+                👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
+              </span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('좋아요 토글', async () => {
+                      const on = await togglePortfolioLike(p.id);
+                      await reloadPortfolios();
+                      return on ? '켜짐' : '꺼짐';
+                    })
+                  }
+                >
+                  좋아요
+                </button>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('북마크 토글', async () => {
+                      const on = await togglePortfolioBookmark(p.id);
+                      await reloadPortfolios();
+                      return on ? '켜짐' : '꺼짐';
+                    })
+                  }
+                >
+                  북마크
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ ...S.card, position: 'sticky', bottom: 0, background: '#FFFFFF' }}>
+        <h2 style={S.h2}>실행 로그</h2>
+        {docLog.length === 0 ? (
+          <p style={S.itemDetail}>아직 실행한 동작이 없습니다. 위 버튼을 눌러보세요.</p>
+        ) : (
+          <ul style={S.list}>
+            {docLog.map((l) => (
+              <li key={`${l.at}-${l.message}`} style={S.item}>
+                <span style={{ ...S.badge, background: l.ok ? '#00A63D' : '#DC2626' }}>
+                  {l.ok ? 'OK' : 'FAIL'}
+                </span>
+                <span style={S.itemDetail}>{l.at}</span>
+                <span style={S.itemDetail}>{l.message}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </main>
