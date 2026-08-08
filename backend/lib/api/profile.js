@@ -52,6 +52,15 @@ export async function uploadAvatar(file) {
   return publicUrl;
 }
 
+export async function removeAvatar() {
+  await updateProfile({ avatar_url: null });
+  return null;
+}
+
 export async function getProfileStats(userId) {
   return apiFetch(`/api/profiles/${encodeURIComponent(userId)}/stats`);
+}
+
+export async function getMyProfileStats() {
+  return getProfileStats('me');
 }
