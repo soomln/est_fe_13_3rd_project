@@ -77,7 +77,7 @@ left join (
 
     round(
       100.0 * count(*) filter (where pass_result_code = 'pass')
-            / nullif(count(*) filter (where pass_result_code is not null), 0)
+            / nullif(count(*) filter (where pass_result_code in ('pass', 'fail')), 0)
     ) as pass_rate
   from public.posts
   where company_id is not null
