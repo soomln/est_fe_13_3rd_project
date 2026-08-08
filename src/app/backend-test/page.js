@@ -3,7 +3,16 @@
 import { getCurrentUser, OAUTH_PROVIDERS, onAuthChange, signInWith, signOut } from '@backend/lib/api/auth';
 import { getCodes } from '@backend/lib/api/codes';
 import { getCompany, listCompanies } from '@backend/lib/api/companies';
+import {
+  createDocument,
+  createDocumentFromTemplate,
+  deleteDocuments,
+  listMyDocuments,
+  updateDocument,
+} from '@backend/lib/api/documents';
 import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
+import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
+import { listTemplates } from '@backend/lib/api/templates';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function BackendTestPage() {
@@ -14,6 +23,9 @@ export default function BackendTestPage() {
   const [companies, setCompanies] = useState([]);
   const [companyError, setCompanyError] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [templates, setTemplates] = useState(null);
+  const [documents, setDocuments] = useState(null);
+  const [docLog, setDocLog] = useState([]);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -75,9 +87,42 @@ export default function BackendTestPage() {
       setCompanyError(e.message);
     }
 
+    try {
+      setTemplates(await listTemplates({ sort: 'popular', pageSize: 20 }));
+    } catch (e) {
+      setTemplates({ error: e.message });
+    }
+
+    try {
+      setDocuments(await listMyDocuments({ pageSize: 20 }));
+    } catch (e) {
+      setDocuments({ error: e.message });
+    }
+
     setChecks(results);
     setBusy(false);
   }, []);
+
+  const log = useCallback((ok, message) => {
+    setDocLog((prev) => [{ ok, message, at: new Date().toLocaleTimeString() }, ...prev].slice(0, 12));
+  }, []);
+
+  const reloadDocuments = useCallback(async () => {
+    setDocuments(await listMyDocuments({ pageSize: 20 }));
+  }, []);
+
+  const runDocAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+        await reloadDocuments();
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+        await reloadDocuments().catch(() => {});
+      }
+    },
+    [log, reloadDocuments]
+  );
 
   useEffect(() => {
     runChecks();
@@ -247,6 +292,197 @@ export default function BackendTestPage() {
           </>
         )}
       </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>4. 무료 양식</h2>
+        {templates?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {templates.error}
+          </p>
+        )}
+        {templates?.counts && (
+          <>
+            <ul style={S.summary}>
+              <li>
+                전체 <b>{templates.counts.all}</b>
+              </li>
+              <li>
+                이력서 <b>{templates.counts.resume}</b>
+              </li>
+              <li>
+                자기소개서 <b>{templates.counts.cover_letter}</b>
+              </li>
+            </ul>
+            <div style={S.grid}>
+              {templates.items.map((t) => (
+                <div key={t.id} style={S.companyCard}>
+                  <span style={{ ...S.logoBox, height: 90 }}>
+                    {t.thumbnail ? (
+                      <img src={t.thumbnail} alt='' style={S.logoImg} />
+                    ) : (
+                      <span style={S.noLogo}>썸네일 없음</span>
+                    )}
+                  </span>
+                  <span style={S.companyMeta}>
+                    {t.docType === 'resume' ? '이력서' : '자기소개서'}
+                  </span>
+                  <span style={S.companyName}>{t.title}</span>
+                  <span style={S.companyMeta}>조회 {t.views.toLocaleString()}</span>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction(`양식으로 문서 생성 (${t.title})`, async () => {
+                        const d = await createDocumentFromTemplate(t.id);
+                        return `id=${d.id.slice(0, 8)}…`;
+                      })
+                    }
+                  >
+                    이 양식으로 문서 만들기
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>5. 문서함</h2>
+        {documents?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {documents.error}
+          </p>
+        )}
+        {documents?.counts && (
+          <>
+            <ul style={S.summary}>
+              <li>
+                전체 <b>{documents.counts.all}</b>
+              </li>
+              <li>
+                이력서 <b>{documents.counts.resume}</b>/10
+              </li>
+              <li>
+                자기소개서 <b>{documents.counts.cover_letter}</b>/10
+              </li>
+            </ul>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button
+                type='button'
+                style={S.btn}
+                onClick={() =>
+                  runDocAction('빈 이력서 생성', async () => {
+                    const d = await createDocument({ docType: 'resume', title: '테스트 이력서' });
+                    return `id=${d.id.slice(0, 8)}…`;
+                  })
+                }
+              >
+                빈 이력서 생성
+              </button>
+              <button
+                type='button'
+                style={S.btn}
+                onClick={() =>
+                  runDocAction('10개 제한 확인 (11개까지 시도)', async () => {
+                    for (let i = 0; i < 11; i += 1) {
+                      try {
+                        await createDocument({ docType: 'resume', title: `제한테스트 ${i + 1}` });
+                      } catch (e) {
+                        return `${i}개 생성 후 차단됨 → "${e.message}"`;
+                      }
+                    }
+                    return '11개가 모두 생성됨 (트리거 미작동)';
+                  })
+                }
+              >
+                10개 제한 확인
+              </button>
+              <button
+                type='button'
+                style={S.btn}
+                onClick={() =>
+                  runDocAction('내 정보 불러오기', async () => {
+                    const html = await buildResumeHtmlFromMyProfile();
+                    if (!html) return '프로필이 비어 있습니다';
+                    const d = await createDocument({
+                      docType: 'resume',
+                      title: '내 정보로 만든 이력서',
+                      contentHtml: html,
+                    });
+                    return `${html.length}자 생성 → 문서 id=${d.id.slice(0, 8)}…`;
+                  })
+                }
+              >
+                내 정보 불러오기 → 문서 생성
+              </button>
+              <button
+                type='button'
+                style={S.btn}
+                onClick={() =>
+                  runDocAction('전체 삭제', async () => {
+                    const n = await deleteDocuments(documents.items.map((d) => d.id));
+                    return `${n}건 삭제`;
+                  })
+                }
+              >
+                전체 삭제
+              </button>
+            </div>
+
+            <ul style={S.list}>
+              {documents.items.map((d, i) => (
+                <li key={d.id} style={S.item}>
+                  <span style={{ ...S.badge, background: d.docType === 'resume' ? '#00A63D' : '#FF9900' }}>
+                    {d.docType === 'resume' ? '이력서' : '자소서'}
+                  </span>
+                  <span style={{ ...S.itemLabel, minWidth: 200 }}>
+                    {i + 1}. {d.title}
+                  </span>
+                  <span style={S.itemDetail}>{new Date(d.updatedAt).toLocaleString()}</span>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('제목 수정', async () => {
+                        const r = await updateDocument(d.id, { title: `${d.title} (수정됨)` });
+                        return r.title;
+                      })
+                    }
+                  >
+                    수정
+                  </button>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() => runDocAction('삭제', async () => `${await deleteDocuments([d.id])}건`)}
+                  >
+                    삭제
+                  </button>
+                </li>
+              ))}
+              {documents.items.length === 0 && (
+                <li style={S.itemDetail}>문서가 없습니다. 위 버튼으로 만들어 보세요.</li>
+              )}
+            </ul>
+
+            {docLog.length > 0 && (
+              <ul style={{ ...S.list, marginTop: 16 }}>
+                {docLog.map((l) => (
+                  <li key={`${l.at}-${l.message}`} style={S.item}>
+                    <span style={{ ...S.badge, background: l.ok ? '#00A63D' : '#DC2626' }}>
+                      {l.ok ? 'OK' : 'FAIL'}
+                    </span>
+                    <span style={S.itemDetail}>{l.at}</span>
+                    <span style={S.itemDetail}>{l.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }
@@ -297,6 +533,15 @@ const S = {
     overflow: 'hidden',
   },
   logoImg: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' },
+  miniBtn: {
+    padding: '4px 8px',
+    border: '1px solid #ACAEAD',
+    borderRadius: 6,
+    background: '#FFFFFF',
+    cursor: 'pointer',
+    fontSize: 11,
+    marginTop: 4,
+  },
   noLogo: { fontSize: 11, color: '#DC2626' },
   companyName: { fontSize: 13, fontWeight: 700, color: '#111111' },
   companyMeta: { fontSize: 11, color: '#6F6F6F' },
