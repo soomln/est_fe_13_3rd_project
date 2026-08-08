@@ -8,6 +8,7 @@ import StepCard from '@/app/resume/_components/StepCard';
 import HeroStat from '@/app/resume/_components/HeroStat';
 import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
 import FunctionBox from '@/app/resume/_components/FunctionBox';
+import RankBox from '@/app/resume/_components/RankBox';
 
 const HERO_STEPS = [
   {
@@ -55,6 +56,14 @@ const EDITOR_FUNCTIONS = [
   'AI에게 물어보며 작성',
   '계정 문서함에 저장 · 관리',
   '저장한 서류 기반 AI 면접 질문 제공',
+];
+
+const AI_RANKS = [
+  { rank: 1, label: '💪 나의 장점 · 강점', levelText: '매우 높음', tone: 'top' },
+  { rank: 2, label: '🎯 지원 동기', levelText: '높음', tone: 'high' },
+  { rank: 3, label: '🔎 나의 단점 · 보완점', levelText: '높음', tone: 'high' },
+  { rank: 4, label: '🚀 프로젝트 경험 정리', levelText: '보통', tone: 'normal' },
+  { rank: 5, label: '🌱 입사 후 포부', levelText: '보통', tone: 'normal' },
 ];
 
 export default function Resume() {
@@ -169,6 +178,60 @@ export default function Resume() {
                   <FunctionBox key={label} label={label} />
                 ))}
               </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.ai_chat}>
+          <div className={`container ${styles.section_inner}`}>
+            <div className={styles.section_head}>
+              <p className={`${styles.section_label} font_h4`}>STEP 03</p>
+              <h2 className={`${styles.section_title} font_h1`}>
+                AI와 대화하며 <span className={styles.section_title_point}>나</span>를 알고 완성하기
+              </h2>
+              <p className={`${styles.section_desc} font_body_m_r`}>
+                장단점, 지원동기처럼 쓰기 어려운 항목도 AI 질의응답으로 술술 완성
+              </p>
+            </div>
+
+            <div className={styles.ai_chat_body}>
+              <div className={styles.ai_chat_preview}>
+                <img
+                  src='/images/resume/ai_chat_image.png'
+                  alt='AI 코치와 대화하며 자기소개서를 작성하는 화면'
+                  className={styles.ai_chat_img}
+                />
+              </div>
+
+              <div className={styles.ai_chat_rank}>
+                <div className={styles.ai_chat_rank_head}>
+                  <span className={styles.ai_chat_rank_icon} aria-hidden='true'>
+                    🏆
+                  </span>
+                  <div className={styles.ai_chat_rank_head_text}>
+                    <p className={`${styles.ai_chat_rank_title} font_body_m_b`}>AI가 가장 많이 도와준 항목</p>
+                    <p className={`${styles.ai_chat_rank_desc} font_caption_r`}>
+                      개발자들이 자소서 작성 시 가장 많이 고민하는 항목이에요
+                    </p>
+                  </div>
+                </div>
+
+                <ul className={styles.ai_chat_rank_list}>
+                  {AI_RANKS.map((item) => (
+                    <RankBox
+                      key={item.rank}
+                      rank={item.rank}
+                      label={item.label}
+                      levelText={item.levelText}
+                      tone={item.tone}
+                    />
+                  ))}
+                </ul>
+
+                <p className={`${styles.ai_chat_notice} font_caption_b`}>
+                  💡 어려운 항목일수록 AI 코치와 함께라면 더 쉽게 완성할 수 있어요.
+                </p>
+              </div>
             </div>
           </div>
         </section>
