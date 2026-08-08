@@ -1,0 +1,78 @@
+@use '@/app/_variables.sass' as *
+
+$card_gap: 43.5px
+
+.template_browser
+  display: flex
+  flex-direction: column
+  gap: 36px
+
+.template_browser_filter
+  position: relative
+  display: flex
+  align-items: center
+  justify-content: center
+
+.template_browser_chips
+  display: flex
+  flex-wrap: wrap
+  justify-content: center
+  gap: 24px
+
+.template_browser_more
+  position: absolute
+  top: 50%
+  right: 68px
+  display: inline-flex
+  align-items: center
+  color: $green
+  text-decoration: none
+  white-space: nowrap
+  transform: translateY(-50%)
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+.template_browser_carousel
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+// overflow 가 북마크와 그림자를 자르므로 여백만큼 넓힌 뒤 음수 마진으로 되돌린다
+.template_browser_track
+  display: flex
+  gap: $card_gap
+  min-width: 0
+  margin: -32px -12px
+  padding: 32px 12px
+  overflow-x: auto
+  scrollbar-width: none
+
+  &::-webkit-scrollbar
+    display: none
+
+  > li
+    flex: 0 0 342px
+
+.template_browser_arrow
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 40px
+  height: 40px
+  color: $white
+  background-color: $green
+  border: 0
+  border-radius: 50%
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+  &:disabled
+    color: $stroke1
+    background-color: $white
+    border: 1px solid $stroke1
+    cursor: default
