@@ -1,4 +1,4 @@
-drop view if exists public.v_portfolios;
+drop view if exists public.v_portfolios cascade;
 create view public.v_portfolios
 with (security_invoker = on) as
 select
@@ -22,7 +22,7 @@ left join (
 comment on view public.v_portfolios is
   '포트폴리오 + 작성자 + 좋아요/북마크 수. 정렬: created_at(최신) / view_count(조회) / like_count(추천) / bookmark_count(스크랩)';
 
-drop view if exists public.v_posts;
+drop view if exists public.v_posts cascade;
 create view public.v_posts
 with (security_invoker = on) as
 select
@@ -53,7 +53,7 @@ left join (
 comment on view public.v_posts is
   '면접 후기(review) / 면접 족보(qbank) + 작성자 + 기업 + 도움돼요/퍼가요/댓글 수';
 
-drop view if exists public.v_companies;
+drop view if exists public.v_companies cascade;
 create view public.v_companies
 with (security_invoker = on) as
 select
@@ -87,7 +87,7 @@ left join (
 comment on view public.v_companies is
   '기업 + 관심회사 수 + 후기/족보 수 + 평균 난이도 + 합격률';
 
-drop view if exists public.v_comments;
+drop view if exists public.v_comments cascade;
 create view public.v_comments
 with (security_invoker = on) as
 select
@@ -104,7 +104,7 @@ left join (
 
 comment on view public.v_comments is '댓글 + 작성자 + 좋아요 수. 정렬: 최신순(기본) / 추천순';
 
-drop view if exists public.v_profile_stats;
+drop view if exists public.v_profile_stats cascade;
 create view public.v_profile_stats
 with (security_invoker = on) as
 select
