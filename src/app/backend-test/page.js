@@ -43,7 +43,18 @@ import {
   togglePostLike,
   togglePostScrap,
 } from '@backend/lib/api/posts';
+import {
+  getMyAccount,
+  getMySummary,
+  listMyScrappedCompanies,
+  listMyScrappedPortfolios,
+  removeCompanyBookmarks,
+  removePortfolioBookmarks,
+  removePostScraps,
+  removeQaScraps,
+} from '@backend/lib/api/mypage';
 import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
+import { listMyScrappedPosts } from '@backend/lib/api/posts';
 import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
 import { listTemplates } from '@backend/lib/api/templates';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -67,12 +78,48 @@ export default function BackendTestPage() {
   const [comments, setComments] = useState(null);
   const [sessions, setSessions] = useState(null);
   const [scraps, setScraps] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [myScraps, setMyScraps] = useState(null);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
   }, []);
 
   useEffect(() => onAuthChange(setUser), []);
+
+  const loadMypage = useCallback(async () => {
+    const me = await getCurrentUser().catch(() => null);
+    if (!me) {
+      setAccount(null);
+      setSummary(null);
+      setMyScraps(null);
+      return;
+    }
+
+    try {
+      const [nextAccount, nextSummary, companyScraps, postScraps, portfolioScraps] =
+        await Promise.all([
+          getMyAccount(),
+          getMySummary(),
+          listMyScrappedCompanies({ pageSize: 9 }),
+          listMyScrappedPosts({ pageSize: 10 }),
+          listMyScrappedPortfolios({ pageSize: 9 }),
+        ]);
+
+      setAccount(nextAccount);
+      setSummary(nextSummary);
+      setMyScraps({
+        companies: companyScraps,
+        posts: postScraps,
+        portfolios: portfolioScraps,
+      });
+    } catch (e) {
+      setAccount({ error: e.message });
+      setSummary(null);
+      setMyScraps(null);
+    }
+  }, []);
 
   const runChecks = useCallback(async () => {
     setBusy(true);
@@ -166,9 +213,11 @@ export default function BackendTestPage() {
       setScraps(null);
     }
 
+    await loadMypage();
+
     setChecks(results);
     setBusy(false);
-  }, []);
+  }, [loadMypage]);
 
   const reloadInterview = useCallback(async () => {
     setSessions(await listMySessions({ pageSize: 10 }).catch((e) => ({ error: e.message })));
@@ -212,6 +261,18 @@ export default function BackendTestPage() {
       }
     },
     [log, reloadDocuments]
+  );
+
+  const runMypageAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await loadMypage();
+    },
+    [log, loadMypage]
   );
 
   useEffect(() => {
@@ -1107,6 +1168,189 @@ export default function BackendTestPage() {
             </button>
           </p>
         )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>9. 마이페이지 (요약·스크랩·계정)</h2>
+
+        {account?.error && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {account.error}
+          </p>
+        )}
+
+        {!user && <p style={S.hint}>로그인하면 마이페이지 데이터를 확인할 수 있습니다.</p>}
+
+        {summary && (
+          <>
+            <ul style={S.summary}>
+              <li>
+                문서 <b>{summary.stats.docCount}</b>
+              </li>
+              <li>
+                포트폴리오 <b>{summary.stats.portfolioCount}</b> (공개{' '}
+                {summary.stats.publishedPortfolioCount} · 초안 {summary.stats.draftPortfolioCount})
+              </li>
+              <li>
+                면접 스크랩 <b>{summary.stats.interviewScrapCount}</b>
+              </li>
+              <li>
+                완주 면접 <b>{summary.stats.finishedInterviewCount}</b>
+              </li>
+            </ul>
+
+            <ul style={S.summary}>
+              <li>
+                스크랩 기업 <b>{summary.stats.scrappedCompanyCount}</b>
+              </li>
+              <li>
+                스크랩 글 <b>{summary.stats.scrappedPostCount}</b>
+              </li>
+              <li>
+                스크랩 포트폴리오 <b>{summary.stats.scrappedPortfolioCount}</b>
+              </li>
+              <li>
+                내 후기 <b>{summary.stats.myReviewCount}</b> · 내 족보{' '}
+                <b>{summary.stats.myQbankCount}</b>
+              </li>
+            </ul>
+          </>
+        )}
+
+        {account && !account.error && (
+          <div style={S.detailBox}>
+            <div style={S.detailTitle}>계정 설정</div>
+            <ul style={S.list}>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>이메일</span>
+                <span style={S.itemDetail}>{account.email ?? '(없음)'}</span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>가입일</span>
+                <span style={S.itemDetail}>
+                  {account.createdAt ? new Date(account.createdAt).toLocaleString() : '-'}
+                </span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>최근 로그인</span>
+                <span style={S.itemDetail}>
+                  {account.lastSignInAt ? new Date(account.lastSignInAt).toLocaleString() : '-'}
+                </span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>연결된 소셜</span>
+                <span style={S.itemDetail}>{account.providers.join(', ') || '-'}</span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>프로필 사진</span>
+                <span style={S.itemDetail}>{summary?.profile?.avatar_url ?? '(없음)'}</span>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {myScraps && (
+          <div style={S.detailBox}>
+            <div style={S.detailTitle}>스크랩 목록 (복수 삭제)</div>
+            <ul style={S.list}>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>기업</span>
+                <span style={S.itemDetail}>
+                  {myScraps.companies.total}건
+                  {myScraps.companies.items.length > 0 &&
+                    ` — ${myScraps.companies.items.map((c) => c.name).join(', ')}`}
+                </span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>면접 후기·족보</span>
+                <span style={S.itemDetail}>
+                  {myScraps.posts.total}건
+                  {myScraps.posts.items.length > 0 &&
+                    ` — ${myScraps.posts.items
+                      .map((p) => p.title || p.companyName || p.id.slice(0, 8))
+                      .join(', ')}`}
+                </span>
+              </li>
+              <li style={S.item}>
+                <span style={{ ...S.itemLabel, minWidth: 120 }}>포트폴리오</span>
+                <span style={S.itemDetail}>
+                  {myScraps.portfolios.total}건
+                  {myScraps.portfolios.items.length > 0 &&
+                    ` — ${myScraps.portfolios.items.map((p) => p.title).join(', ')}`}
+                </span>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runMypageAction('스크랩 기업 전체 해제', async () => {
+                const ids = (myScraps?.companies?.items ?? []).map((c) => c.id);
+                if (ids.length === 0) return '해제할 기업이 없습니다';
+                return `${await removeCompanyBookmarks(ids)}건 해제`;
+              })
+            }
+          >
+            스크랩 기업 전체 해제
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runMypageAction('스크랩 글 전체 해제', async () => {
+                const ids = (myScraps?.posts?.items ?? []).map((p) => p.id);
+                if (ids.length === 0) return '해제할 글이 없습니다';
+                return `${await removePostScraps(ids)}건 해제`;
+              })
+            }
+          >
+            스크랩 글 전체 해제
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runMypageAction('스크랩 포트폴리오 전체 해제', async () => {
+                const ids = (myScraps?.portfolios?.items ?? []).map((p) => p.id);
+                if (ids.length === 0) return '해제할 포트폴리오가 없습니다';
+                return `${await removePortfolioBookmarks(ids)}건 해제`;
+              })
+            }
+          >
+            스크랩 포트폴리오 전체 해제
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runMypageAction('면접 스크랩 전체 해제', async () => {
+                const ids = (scraps?.items ?? []).map((qa) => qa.id);
+                if (ids.length === 0) return '해제할 면접 스크랩이 없습니다';
+                const removed = await removeQaScraps(ids);
+                await reloadInterview();
+                return `${removed}건 해제`;
+              })
+            }
+          >
+            면접 스크랩 전체 해제
+          </button>
+
+          <button type='button' style={S.btn} onClick={() => runMypageAction('요약 새로고침', async () => '완료')}>
+            요약 새로고침
+          </button>
+        </div>
+
+        <p style={S.hint}>
+          회원 탈퇴는 <code>deleteMyAccount()</code> 한 줄이며 계정·문서·포트폴리오·스크랩·업로드
+          파일이 모두 삭제됩니다. 되돌릴 수 없으므로 이 페이지에는 버튼을 두지 않았습니다.
+        </p>
       </section>
 
       <section style={S.logBar}>

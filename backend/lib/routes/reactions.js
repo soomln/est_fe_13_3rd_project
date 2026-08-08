@@ -1,7 +1,7 @@
 import { badRequest } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
 
-const TARGET_TYPES = ['portfolio', 'post', 'company', 'comment', 'interview_qa'];
+const TARGET_TYPES = ['portfolio', 'post', 'company', 'comment', 'interview_qa', 'template'];
 const KINDS = ['like', 'bookmark'];
 
 function assertTarget(targetType, kind) {

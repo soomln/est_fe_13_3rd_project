@@ -3,7 +3,12 @@ import { createClient } from '../supabase/client';
 import { apiFetch } from './_fetch';
 import { getCurrentUser } from './auth';
 import { ApiError } from './errors';
-import { getMyReactionIds, listMyReactionTargetIds, toggleReaction } from './reactions';
+import {
+  getMyReactionIds,
+  listMyReactionTargetIds,
+  removeReactions,
+  toggleReaction,
+} from './reactions';
 
 export async function listPortfolios({
   category,
@@ -89,6 +94,10 @@ export async function listMyBookmarkedPortfolios({
   items.sort((a, b) => order.get(a.id) - order.get(b.id));
 
   return { items, total: ids.length, page, pageSize };
+}
+
+export async function removePortfolioBookmarks(portfolioIds) {
+  return removeReactions(...REACTION.portfolioBookmark, portfolioIds);
 }
 
 export async function uploadPortfolioImage(portfolioId, file) {

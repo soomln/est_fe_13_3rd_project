@@ -67,11 +67,11 @@ export async function getMyScrappedQaIds(qaIds) {
   return getMyReactionIds(...REACTION.interviewQaScrap, qaIds);
 }
 
-export async function removeScraps(qaIds) {
-  if (!qaIds?.length) return 0;
-  await removeReactions(...REACTION.interviewQaScrap, qaIds);
-  return qaIds.length;
+export async function removeQaScraps(qaIds) {
+  return removeReactions(...REACTION.interviewQaScrap, qaIds);
 }
+
+export const removeScraps = removeQaScraps;
 
 export async function deleteQas(ids) {
   if (!ids?.length) return 0;
