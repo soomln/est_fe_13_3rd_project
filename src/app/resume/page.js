@@ -7,6 +7,7 @@ import Footer from '@/app/_components/common/Footer';
 import StepCard from '@/app/resume/_components/StepCard';
 import HeroStat from '@/app/resume/_components/HeroStat';
 import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
+import FunctionBox from '@/app/resume/_components/FunctionBox';
 
 const HERO_STEPS = [
   {
@@ -47,6 +48,13 @@ const FREE_TEMPLATES = [
   { id: 4, type: '이력서', title: '이력서', downloadCount: 3290 },
   { id: 5, type: '자기소개서', title: '자기소개서', downloadCount: 3290 },
   { id: 6, type: '이력서', title: '이력서', downloadCount: 3290 },
+];
+
+const EDITOR_FUNCTIONS = [
+  '설치 없이 브라우저에서 편집',
+  'AI에게 물어보며 작성',
+  '계정 문서함에 저장 · 관리',
+  '저장한 서류 기반 AI 면접 질문 제공',
 ];
 
 export default function Resume() {
@@ -124,7 +132,7 @@ export default function Resume() {
         </section>
 
         <section className={styles.templates}>
-          <div className={`container ${styles.templates_inner}`}>
+          <div className={`container ${styles.section_inner}`}>
             <div className={styles.section_head}>
               <p className={`${styles.section_label} font_h4`}>STEP 01</p>
               <h2 className={`${styles.section_title} font_h1`}>무료 양식으로 시작하기</h2>
@@ -134,6 +142,34 @@ export default function Resume() {
             </div>
 
             <TemplateBrowser items={FREE_TEMPLATES} />
+          </div>
+        </section>
+
+        <section className={styles.editor}>
+          <div className={`container ${styles.section_inner}`}>
+            <div className={styles.section_head}>
+              <p className={`${styles.section_label} font_h4`}>STEP 02</p>
+              <h2 className={`${styles.section_title} font_h1`}>브라우저에서 바로 편집</h2>
+              <p className={`${styles.section_desc} font_body_m_r`}>
+                별도 프로그램 설치 없이 웹에서 편집·저장·다운로드 하세요
+              </p>
+            </div>
+
+            <div className={styles.editor_body}>
+              <div className={styles.editor_preview}>
+                <img
+                  src='/images/resume/editor_image.png'
+                  alt='브라우저에서 이력서를 편집하는 화면'
+                  className={styles.editor_img}
+                />
+              </div>
+
+              <ul className={styles.editor_functions}>
+                {EDITOR_FUNCTIONS.map((label) => (
+                  <FunctionBox key={label} label={label} />
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
       </main>

@@ -130,8 +130,8 @@
 .templates
   background-color: $white
 
-// 이 섹션만 컨테이너 1280
-.templates_inner
+// 섹션 안쪽 공통 (컨테이너 1280)
+.section_inner
   display: flex
   flex-direction: column
   gap: 36px
@@ -142,6 +142,33 @@
   @media (max-width: 768px)
     padding-top: 56px
     padding-bottom: 56px
+
+// step 02
+
+.editor
+  background-color: $light_gray
+
+.editor_body
+  display: flex
+  flex-direction: column
+  gap: 24px
+
+.editor_preview
+  aspect-ratio: 1280 / 723
+  border: 1px solid $gray
+  border-radius: 16px
+  overflow: hidden
+
+.editor_img
+  width: 100%
+  height: 100%
+  object-fit: cover
+
+.editor_functions
+  display: flex
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 16px
 
 // 섹션 공통 머리말
 
