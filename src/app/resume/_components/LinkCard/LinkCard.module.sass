@@ -1,0 +1,111 @@
+@use '@/app/_variables.sass' as *
+
+.link_card
+  flex: 0 0 calc((100% - 56px) / 3)
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  gap: 22px
+  height: 376px
+  padding: 36px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 16px
+
+  .link_card_head
+    display: flex
+    align-items: center
+    justify-content: space-between
+
+  .link_card_icon
+    flex-shrink: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 56px
+    height: 56px
+    font-size: 24px
+    line-height: 1
+    border-radius: 8px
+
+  .link_card_btn
+    display: inline-flex
+    align-items: center
+    gap: 4px
+    padding: 10px 16px
+    color: $white
+    border-radius: 8px
+    text-decoration: none
+    white-space: nowrap
+
+    :global(.material-symbols-sharp)
+      font-size: 20px
+
+  .link_card_text
+    display: flex
+    flex-direction: column
+    gap: 8px
+
+  .link_card_heading
+    display: flex
+    flex-direction: column
+
+  .link_card_title
+    color: $black
+
+  .link_card_desc
+    color: $gray
+
+    b
+      font-weight: inherit
+
+  .link_card_mockup
+    flex: 1
+    box-sizing: border-box
+    display: flex
+    flex-direction: column
+    gap: 6px
+    padding: 12px
+    border-radius: 14px
+
+.link_card_green
+  .link_card_icon
+    background-color: $sub_green
+
+  .link_card_btn
+    background-color: $green
+
+  .link_card_label,
+  .link_card_desc b
+    color: $green
+
+  .link_card_mockup
+    background-color: $sub_green
+
+.link_card_amber
+  .link_card_icon
+    background-color: $sub_yellow
+
+  .link_card_btn
+    background-color: $amber
+
+  .link_card_label,
+  .link_card_desc b
+    color: $amber
+
+  .link_card_mockup
+    background-color: $sub_yellow
+
+.link_card_purple
+  .link_card_icon
+    background-color: $sub_purple
+
+  .link_card_btn
+    background-color: $purple
+
+  .link_card_label,
+  .link_card_desc b
+    color: $purple
+
+  .link_card_mockup
+    background-color: $sub_purple

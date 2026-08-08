@@ -9,6 +9,7 @@ import HeroStat from '@/app/resume/_components/HeroStat';
 import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
 import FunctionBox from '@/app/resume/_components/FunctionBox';
 import RankBox from '@/app/resume/_components/RankBox';
+import LinkCard from '@/app/resume/_components/LinkCard';
 
 const HERO_STEPS = [
   {
@@ -65,6 +66,9 @@ const AI_RANKS = [
   { rank: 4, label: '🚀 프로젝트 경험 정리', levelText: '보통', tone: 'normal' },
   { rank: 5, label: '🌱 입사 후 포부', levelText: '보통', tone: 'normal' },
 ];
+
+// 주의: supabase 연결 전까지 쓰는 임시 목록
+const NEXT_PROJECTS = ['프로젝트명', '프로젝트명', '프로젝트명'];
 
 export default function Resume() {
   return (
@@ -233,6 +237,116 @@ export default function Resume() {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className={styles.next_step}>
+          <div className={`container ${styles.section_inner}`}>
+            <div className={styles.section_head}>
+              <p className={`${styles.section_label} font_body_l_b`}>NEXT STEP</p>
+              <h2 className={`${styles.section_title} font_h1`}>서류를 다 썼다면, 이제 다음 여정으로</h2>
+              <p className={`${styles.section_desc} font_body_m_r`}>
+                작성한 서류는 CallBack의 다른 서비스에서도 자동으로 연결돼요
+              </p>
+            </div>
+
+            <div className={styles.next_progress}>
+              <div className={styles.next_progress_step}>
+                <span className={`${styles.next_progress_icon} ${styles.next_progress_icon_done}`}>
+                  <span className='material-symbols-sharp' aria-hidden='true'>
+                    check
+                  </span>
+                </span>
+                <div className={styles.next_progress_text}>
+                  <p className={`${styles.next_progress_label} font_caption_b`}>완료</p>
+                  <p className={`${styles.next_progress_title} font_body_s_b`}>취업 서류 작성</p>
+                </div>
+              </div>
+
+              <span className={`${styles.next_progress_arrow} material-symbols-sharp`} aria-hidden='true'>
+                arrow_right_alt
+              </span>
+
+              <div className={styles.next_progress_step}>
+                <span className={`${styles.next_progress_icon} ${styles.next_progress_icon_next} font_body_l_b`}>2</span>
+                <div className={styles.next_progress_text}>
+                  <p className={`${styles.next_progress_label_next} font_caption_b`}>다음 단계</p>
+                  <p className={`${styles.next_progress_title} font_body_s_b`}>서류로 시작하는 취업 준비</p>
+                </div>
+              </div>
+            </div>
+
+            <ul className={styles.next_links}>
+              <LinkCard
+                tone='green'
+                icon='🎤'
+                label='방금 쓴 서류로'
+                title='AI 모의 면접 연습'
+                btnLabel='면접 연습 시작'
+                btnHref='/interview'
+                desc={
+                  <>
+                    방금 쓴 이력서와 자소서를 기반으로
+                    <br />
+                    <b>실전형 답변 연습</b>을 받아보세요
+                  </>
+                }
+              >
+                <div className={styles.next_mock_row}>
+                  <span className={`${styles.next_mock_badge} ${styles.next_mock_badge_q}`}>Q</span>
+                  <p className={styles.next_mock_text}>어떤 기술 스택을 주로 쓰나요?</p>
+                </div>
+                <div className={`${styles.next_mock_row} ${styles.next_mock_row_indent}`}>
+                  <span className={`${styles.next_mock_badge} ${styles.next_mock_badge_a}`}>A</span>
+                  <p className={`${styles.next_mock_text} ${styles.next_mock_text_answer}`}>
+                    React + TS, 주로 SPA 아키텍처...
+                  </p>
+                </div>
+                <div className={styles.next_mock_row}>
+                  <span className={`${styles.next_mock_badge} ${styles.next_mock_badge_q}`}>Q</span>
+                  <p className={styles.next_mock_text}>가장 힘들었던 프로젝트는?</p>
+                </div>
+              </LinkCard>
+
+              <LinkCard
+                tone='amber'
+                icon='🎨'
+                label='공유하기'
+                title='포트폴리오 갤러리'
+                btnLabel='갤러리 둘러보기'
+                btnHref='/portfolio'
+                desc={
+                  <>
+                    내 포트폴리오를 갤러리에 공개하고,
+                    <br />
+                    다른 개발자들의 프로젝트에서 <b>영감</b>과 <b>피드백</b>을 받아보세요
+                  </>
+                }
+              />
+
+              <LinkCard
+                tone='purple'
+                icon='👥'
+                label='함께 성장'
+                title='팀 매칭 · 커뮤니티'
+                btnLabel='팀원 · 정보 찾기'
+                btnHref='/community'
+                desc={
+                  <>
+                    스터디 · 사이드 프로젝트 팀원을 찾거나,
+                    <br />
+                    실제 <b>면접 후기</b>와 <b>기업 정보</b>를 개발자들과 나눠요
+                  </>
+                }
+              >
+                {NEXT_PROJECTS.map((name, index) => (
+                  <div key={`${name}-${index}`} className={styles.next_mock_project}>
+                    <p className={styles.next_mock_project_name}>{name}</p>
+                    <span className={styles.next_mock_project_tag}>모집중</span>
+                  </div>
+                ))}
+              </LinkCard>
+            </ul>
           </div>
         </section>
       </main>
