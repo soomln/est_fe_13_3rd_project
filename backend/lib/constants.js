@@ -39,4 +39,5 @@ export const REACTION = {
   companyBookmark: ['company', 'bookmark'],
   commentLike: ['comment', 'like'],
   interviewQaScrap: ['interview_qa', 'bookmark'],
+  templateBookmark: ['template', 'bookmark'],
 };
