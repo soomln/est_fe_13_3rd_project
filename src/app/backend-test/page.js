@@ -2,6 +2,7 @@
 
 import { getCurrentUser, OAUTH_PROVIDERS, onAuthChange, signInWith, signOut } from '@backend/lib/api/auth';
 import { getCodes } from '@backend/lib/api/codes';
+import { getCompany, listCompanies } from '@backend/lib/api/companies';
 import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -10,6 +11,9 @@ export default function BackendTestPage() {
   const [user, setUser] = useState(null);
   const [checks, setChecks] = useState([]);
   const [busy, setBusy] = useState(true);
+  const [companies, setCompanies] = useState([]);
+  const [companyError, setCompanyError] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -60,6 +64,16 @@ export default function BackendTestPage() {
       const s = await getProfileStats('me');
       return `문서 ${s.docCount} · 포트폴리오 ${s.portfolioCount} · 면접스크랩 ${s.interviewScrapCount}`;
     });
+
+    try {
+      const { items } = await listCompanies({ sort: 'name', pageSize: 50 });
+      setCompanies(items);
+      setCompanyError(null);
+      if (items.length > 0) setDetail(await getCompany(items[0].slug));
+    } catch (e) {
+      setCompanies([]);
+      setCompanyError(e.message);
+    }
 
     setChecks(results);
     setBusy(false);
@@ -139,6 +153,100 @@ export default function BackendTestPage() {
           ))}
         </ul>
       </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>3. 기업 데이터 ({companies.length}곳)</h2>
+
+        {companyError && (
+          <p className='font_body_s_r' style={S.error} role='alert'>
+            {companyError}
+          </p>
+        )}
+
+        {companies.length > 0 && (
+          <>
+            <ul style={S.summary}>
+              <li>
+                로고 <b>{companies.filter((c) => c.logo).length}</b>/{companies.length}
+              </li>
+              <li>
+                평점 <b>{companies.filter((c) => c.rating != null).length}</b>/{companies.length}
+              </li>
+              <li>
+                태그 <b>{companies.filter((c) => c.tags?.length).length}</b>/{companies.length}
+              </li>
+            </ul>
+
+            <div style={S.grid}>
+              {companies.map((c) => (
+                <button
+                  key={c.id}
+                  type='button'
+                  style={S.companyCard}
+                  onClick={() => getCompany(c.slug).then(setDetail)}
+                >
+                  <span style={S.logoBox}>
+                    {c.logo ? (
+                      <img src={c.logo} alt='' style={S.logoImg} />
+                    ) : (
+                      <span style={S.noLogo}>없음</span>
+                    )}
+                  </span>
+                  <span style={S.companyName}>{c.name}</span>
+                  <span style={S.companyMeta}>{c.category}</span>
+                  <span style={S.companyMeta}>
+                    ★ {c.rating ?? '-'} · 관심 {c.favorite} · 후기 {c.review}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {detail && (
+              <div style={S.detailBox}>
+                <div style={S.detailTitle}>
+                  {detail.name} <span style={S.itemDetail}>/api/companies/{detail.slug}</span>
+                </div>
+                <ul style={S.list}>
+                  {[
+                    ['로고', detail.logo],
+                    ['업종', detail.industry],
+                    ['소개', detail.intro],
+                    ['대표자', detail.ceo],
+                    ['설립일', detail.founded],
+                    ['본사', detail.address],
+                    ['홈페이지', detail.homepage],
+                    ['핵심가치', detail.values?.length ? `${detail.values.length}개` : null],
+                    ['주요서비스', detail.services?.length ? `${detail.services.length}개` : null],
+                    ['복지', detail.benefits?.length ? `${detail.benefits.length}개` : null],
+                    ['한눈에보기', detail.summary?.length ? `${detail.summary.length}개` : null],
+                    ['뉴스', detail.news?.length ? `${detail.news.length}건` : null],
+                  ].map(([label, value]) => (
+                    <li key={label} style={S.item}>
+                      <span style={{ ...S.badge, background: value ? '#00A63D' : '#ACAEAD' }}>
+                        {value ? 'OK' : '없음'}
+                      </span>
+                      <span style={{ ...S.itemLabel, minWidth: 90 }}>{label}</span>
+                      <span style={S.itemDetail}>{String(value ?? '').slice(0, 60)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {detail.news?.length > 0 && (
+                  <ul style={{ ...S.list, marginTop: 12 }}>
+                    {detail.news.map((n) => (
+                      <li key={n.url ?? n.title} style={S.item}>
+                        <span style={S.itemDetail}>{n.date}</span>
+                        <a href={n.url} target='_blank' rel='noreferrer' style={S.newsLink}>
+                          {n.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }
@@ -157,6 +265,44 @@ const S = {
     cursor: 'pointer',
     fontSize: 14,
   },
+  summary: { display: 'flex', gap: 16, marginTop: 12, fontSize: 13, color: '#6F6F6F' },
+  grid: {
+    marginTop: 16,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+    gap: 10,
+  },
+  companyCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
+    padding: 12,
+    border: '1px solid #EEEEEE',
+    borderRadius: 10,
+    background: '#FFFFFF',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  },
+  logoBox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 40,
+    marginBottom: 6,
+    background: '#FAFAFA',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  logoImg: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' },
+  noLogo: { fontSize: 11, color: '#DC2626' },
+  companyName: { fontSize: 13, fontWeight: 700, color: '#111111' },
+  companyMeta: { fontSize: 11, color: '#6F6F6F' },
+  detailBox: { marginTop: 20, padding: 16, background: '#FAFAFA', borderRadius: 10 },
+  detailTitle: { fontSize: 14, fontWeight: 700, marginBottom: 4 },
+  newsLink: { fontSize: 12, color: '#00A63D', textDecoration: 'none' },
   list: { marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 },
   item: { display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 13 },
   itemLabel: { minWidth: 280, fontWeight: 600 },
