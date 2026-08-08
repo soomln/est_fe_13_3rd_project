@@ -1,0 +1,70 @@
+@use '@/app/_variables.sass' as *
+
+.free_form_filter
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 16px
+
+.free_form_chips
+  display: flex
+  flex-wrap: wrap
+  gap: 16px
+
+.free_form_tools
+  display: flex
+  align-items: center
+  gap: 16px
+
+  @media (max-width: 768px)
+    flex: 1
+    flex-wrap: wrap
+
+.free_form_grid
+  display: grid
+  grid-template-columns: repeat(4, 1fr)
+  gap: 24px
+  margin-top: 26px
+
+  @media (max-width: 1200px)
+    grid-template-columns: repeat(3, 1fr)
+
+  @media (max-width: 768px)
+    grid-template-columns: repeat(2, 1fr)
+
+.free_form_empty
+  display: flex
+  flex-direction: column
+  align-items: center
+  margin-top: 26px
+  margin-bottom: 72px
+  padding: 100px 0
+  text-align: center
+
+.free_form_empty_icon
+  font-size: 48px
+  color: $stroke1
+
+.free_form_empty_title
+  margin-top: 16px
+  color: $black
+
+.free_form_empty_desc
+  margin-top: 8px
+  color: $gray
+
+.free_form_empty_btn
+  margin-top: 24px
+  padding: 10px 16px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 8px
+  cursor: pointer
+
+.free_form_pagination
+  display: flex
+  justify-content: center
+  margin-top: 48px
+  margin-bottom: 72px

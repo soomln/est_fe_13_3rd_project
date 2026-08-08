@@ -44,12 +44,12 @@ const HERO_STATS = [
 
 // 주의: supabase 연결 전까지 쓰는 임시 목록
 const FREE_TEMPLATES = [
-  { id: 1, type: '이력서', title: '이력서', downloadCount: 3290 },
-  { id: 2, type: '이력서', title: '이력서', downloadCount: 3290 },
-  { id: 3, type: '자기소개서', title: '자기소개서', downloadCount: 3290 },
-  { id: 4, type: '이력서', title: '이력서', downloadCount: 3290 },
-  { id: 5, type: '자기소개서', title: '자기소개서', downloadCount: 3290 },
-  { id: 6, type: '이력서', title: '이력서', downloadCount: 3290 },
+  { id: 1, type: '이력서', title: '이력서', views: 3290 },
+  { id: 2, type: '이력서', title: '이력서', views: 3290 },
+  { id: 3, type: '자기소개서', title: '자기소개서', views: 3290 },
+  { id: 4, type: '이력서', title: '이력서', views: 3290 },
+  { id: 5, type: '자기소개서', title: '자기소개서', views: 3290 },
+  { id: 6, type: '이력서', title: '이력서', views: 3290 },
 ];
 
 const EDITOR_FUNCTIONS = [
