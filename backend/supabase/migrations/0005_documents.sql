@@ -15,8 +15,12 @@ create table if not exists public.resume_templates (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
-  constraint resume_templates_doc_type check (doc_type in ('resume', 'cover_letter'))
+  constraint resume_templates_doc_type check (doc_type in ('resume', 'cover_letter')),
+  constraint resume_templates_unique_title unique (doc_type, title)
 );
+
+alter table public.resume_templates drop constraint if exists resume_templates_unique_title;
+alter table public.resume_templates add constraint resume_templates_unique_title unique (doc_type, title);
 
 create index if not exists idx_templates_type
   on public.resume_templates (doc_type, sort_order)

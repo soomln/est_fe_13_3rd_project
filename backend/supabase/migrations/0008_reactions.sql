@@ -8,10 +8,14 @@ create table if not exists public.reactions (
   primary key (user_id, target_type, target_id, kind),
 
   constraint reactions_target_type
-    check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa')),
+    check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa', 'template')),
   constraint reactions_kind
     check (kind in ('like', 'bookmark'))
 );
+
+alter table public.reactions drop constraint if exists reactions_target_type;
+alter table public.reactions add constraint reactions_target_type
+  check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa', 'template'));
 
 create index if not exists idx_reactions_target
   on public.reactions (target_type, target_id, kind);
