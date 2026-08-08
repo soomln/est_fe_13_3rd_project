@@ -72,7 +72,7 @@ export default function TemplateBrowser({ items }) {
               id={item.id}
               type={item.type}
               title={item.title}
-              downloadCount={item.downloadCount}
+              views={item.views}
               thumbnailUrl={item.thumbnailUrl}
             />
           ))}

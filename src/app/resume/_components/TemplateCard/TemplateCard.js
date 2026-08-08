@@ -4,7 +4,7 @@ import BookmarkBtn from '@/app/resume/_components/BookmarkBtn';
 import PrimaryBtn from '@/app/resume/_components/PrimaryBtn';
 import styles from './TemplateCard.module.sass';
 
-export default function TemplateCard({ id, type, title, downloadCount, thumbnailUrl = '' }) {
+export default function TemplateCard({ id, type, title, views, thumbnailUrl = '' }) {
   return (
     <li className={styles.template_card}>
       <Link href={`/resume/editor?template=${id}`} className={styles.template_card_link}>
@@ -31,11 +31,14 @@ export default function TemplateCard({ id, type, title, downloadCount, thumbnail
             <p className={`${styles.template_card_type} font_caption_b`}>{type}</p>
             <p className={`${styles.template_card_title} font_body_l_b`}>{title}</p>
           </div>
-          <span className={`${styles.template_card_download} font_caption_b`}>
+          <span
+            className={`${styles.template_card_views} font_caption_b`}
+            aria-label={`조회수 ${views.toLocaleString()}`}
+          >
             <span className='material-symbols-sharp' aria-hidden='true'>
-              download
+              visibility
             </span>
-            {downloadCount.toLocaleString()}
+            {views.toLocaleString()}
           </span>
         </div>
       </Link>
