@@ -1,6 +1,11 @@
 import { PAGE_SIZE, REACTION } from '../constants';
 import { apiFetch } from './_fetch';
-import { getMyReactionIds, listMyReactionTargetIds, toggleReaction } from './reactions';
+import {
+  getMyReactionIds,
+  listMyReactionTargetIds,
+  removeReactions,
+  toggleReaction,
+} from './reactions';
 
 export async function listCompanies({
   q,
@@ -56,4 +61,8 @@ export async function listMyBookmarkedCompanies({
   items.sort((a, b) => order.get(a.id) - order.get(b.id));
 
   return { items, total: ids.length, page, pageSize };
+}
+
+export async function removeCompanyBookmarks(companyIds) {
+  return removeReactions(...REACTION.companyBookmark, companyIds);
 }
