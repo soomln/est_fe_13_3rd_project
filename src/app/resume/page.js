@@ -96,7 +96,7 @@ export default function Resume() {
               </p>
 
               <div className={styles.hero_btns}>
-                <Link href='/resume/free_form' className={`${styles.hero_btn_primary} font_h4`}>
+                <Link href='/resume/free-form' className={`${styles.hero_btn_primary} font_h4`}>
                   양식 고르고 작성하기
                   <span className='material-symbols-sharp' aria-hidden='true'>
                     arrow_forward
@@ -375,7 +375,7 @@ export default function Resume() {
                   </div>
 
                   <div className={styles.cta_btns}>
-                    <Link href='/resume/free_form' className={`${styles.cta_btn_primary} font_body_m_b`}>
+                    <Link href='/resume/free-form' className={`${styles.cta_btn_primary} font_body_m_b`}>
                       양식 고르고 작성하기
                       <span className='material-symbols-sharp' aria-hidden='true'>
                         arrow_forward
