@@ -1,0 +1,25 @@
+@use '@/app/_variables' as *
+
+.upload_btn
+  display: flex
+  align-items: center
+  gap: 0.3125rem
+  padding: 0.625rem 0 0.6875rem 0.625rem
+  width: 100%
+  background: $white
+  border: solid 2px $green
+  border-radius: 5px
+  
+  .icon
+    color: $green
+    &.fill
+      font-variation-settings: 'FILL' 1
+  
+  .text
+    color: $black
+
+  &:hover
+    background: $sub_green
+
+  &.wide
+    grid-column: span 2
