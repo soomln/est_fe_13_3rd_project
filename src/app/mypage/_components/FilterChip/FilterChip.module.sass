@@ -1,0 +1,18 @@
+@use '@/app/_variables.sass' as *
+
+.filter_chip
+  display: inline-flex
+  align-items: center
+  padding: 10px 16px
+  color: $stroke1
+  background-color: $white
+  border: 1px solid $stroke1
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+.filter_chip_active
+  color: $green
+  background-color: $sub_green
+  border-color: $green
