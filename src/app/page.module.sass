@@ -1,0 +1,433 @@
+@use '@/app/_variables.sass' as *
+
+// ===== 1. 히어로 =====
+
+.hero
+  background-color: $light_gray
+
+.hero_inner
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 24px
+  padding-top: 80px
+  padding-bottom: 80px
+
+  @media (max-width: 1439px)
+    padding-top: 56px
+    padding-bottom: 56px
+
+  @media (max-width: 768px)
+    padding-top: 40px
+    padding-bottom: 40px
+
+.hero_badge
+  display: inline-flex
+  align-items: center
+  height: 32px
+  padding: 0 16px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 999px
+
+.hero_title
+  color: $black
+
+  @media (max-width: 768px)
+    font-size: 36px
+    line-height: 48px
+
+.hero_desc
+  max-width: 620px
+  color: $gray
+
+.hero_btns
+  display: flex
+  flex-wrap: wrap
+  gap: 16px
+
+.hero_btn_primary,
+.hero_btn_secondary
+  display: inline-flex
+  align-items: center
+  height: 56px
+  padding: 0 32px
+  border-radius: 999px
+  text-decoration: none
+
+.hero_btn_primary
+  color: $white
+  background-color: $black
+
+.hero_btn_secondary
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+
+.hero_stats
+  display: flex
+  flex-wrap: wrap
+  gap: 32px
+  margin-top: 8px
+
+// ===== 2. 서비스 소개 =====
+
+.services
+  padding: 80px 0
+
+  @media (max-width: 1439px)
+    padding: 56px 0
+
+  @media (max-width: 768px)
+    padding: 40px 0
+
+.service_grid
+  display: grid
+  grid-template-columns: repeat(6, 1fr)
+  gap: 24px
+  list-style: none
+
+  @media (max-width: 1439px)
+    grid-template-columns: repeat(3, 1fr)
+    row-gap: 40px
+
+  @media (max-width: 768px)
+    grid-template-columns: repeat(2, 1fr)
+
+// ===== 3. 포트폴리오 홍보 =====
+
+.showcase
+  background-color: $light_gray
+
+.showcase_inner
+  display: grid
+  grid-template-columns: 1fr 1fr
+  align-items: center
+  gap: 40px
+  padding-top: 80px
+  padding-bottom: 80px
+
+  @media (max-width: 1439px)
+    padding-top: 56px
+    padding-bottom: 56px
+
+  @media (max-width: 768px)
+    grid-template-columns: 1fr
+    padding-top: 40px
+    padding-bottom: 40px
+
+.showcase_title
+  color: $black
+  margin-bottom: 24px
+
+.showcase_points
+  display: flex
+  flex-direction: column
+  gap: 12px
+  margin-bottom: 32px
+
+.showcase_point
+  display: flex
+  align-items: center
+  gap: 8px
+  color: $black
+
+  :global(.material-symbols-rounded)
+    color: $green
+
+.showcase_btn
+  display: inline-flex
+  align-items: center
+  height: 56px
+  padding: 0 32px
+  color: $white
+  background-color: $black
+  border-radius: 999px
+  text-decoration: none
+
+// ===== 4. 기업 정보 / 탐색 =====
+
+.company_inner
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 40px
+  padding-top: 80px
+  padding-bottom: 80px
+
+  @media (max-width: 1439px)
+    padding-top: 56px
+    padding-bottom: 56px
+
+  @media (max-width: 768px)
+    grid-template-columns: 1fr
+    padding-top: 40px
+    padding-bottom: 40px
+
+.company_spotlight
+  padding: 32px
+  background-color: $light_gray
+  border-radius: 16px
+
+.company_badge
+  display: inline-flex
+  align-items: center
+  height: 28px
+  padding: 0 12px
+  margin-bottom: 24px
+  color: $black
+  background-color: $white
+  border-radius: 999px
+
+.company_sub_title
+  color: $black
+  margin-bottom: 12px
+
+.company_salary_row
+  display: flex
+  flex-wrap: wrap
+  gap: 24px
+  margin-bottom: 24px
+
+.company_salary_col
+  display: flex
+  flex-direction: column
+  gap: 4px
+
+.company_salary_label
+  color: $gray
+
+.company_salary_value
+  color: $black
+
+.company_scores
+  display: grid
+  grid-template-columns: repeat(2, 1fr)
+  gap: 16px
+  list-style: none
+
+.company_score_item
+  display: flex
+  flex-direction: column
+  gap: 4px
+  padding: 16px
+  background-color: $white
+  border-radius: 12px
+
+.company_score_label
+  color: $gray
+
+.company_score_value
+  color: $green
+
+.company_search_title
+  color: $black
+  margin-bottom: 8px
+
+.company_search_desc
+  color: $gray
+  margin-bottom: 24px
+
+.company_search_box
+  display: flex
+  align-items: center
+  gap: 8px
+  height: 48px
+  padding: 0 16px
+  margin-bottom: 16px
+  border: 1px solid $stroke2
+  border-radius: 999px
+
+  :global(.material-symbols-rounded)
+    color: $gray
+    font-size: 20px
+
+.company_search_input
+  flex: 1
+  border: none
+  outline: none
+  color: $black
+
+.company_keywords
+  display: flex
+  flex-wrap: wrap
+  gap: 8px
+  margin-bottom: 24px
+
+.company_keyword
+  display: inline-flex
+  align-items: center
+  height: 28px
+  padding: 0 12px
+  color: $black
+  background-color: $light_gray
+  border-radius: 999px
+
+.company_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+  margin-bottom: 24px
+  list-style: none
+
+.company_list_item
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: 12px 16px
+  border: 1px solid $stroke3
+  border-radius: 12px
+
+.company_list_name
+  color: $black
+
+.company_list_desc
+  color: $gray
+
+.company_search_btn
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 100%
+  height: 48px
+  color: $white
+  background-color: $black
+  border-radius: 999px
+  text-decoration: none
+
+// ===== 5. 3단 기능 소개 =====
+
+.features
+  padding: 80px 0
+  background-color: $light_gray
+
+  @media (max-width: 1439px)
+    padding: 56px 0
+
+  @media (max-width: 768px)
+    padding: 40px 0
+
+.features_inner
+  display: grid
+  grid-template-columns: repeat(3, 1fr)
+  gap: 24px
+
+  @media (max-width: 1439px)
+    grid-template-columns: 1fr
+    max-width: 600px
+
+.feature_card
+  display: flex
+  flex-direction: column
+  padding: 32px
+  background-color: $white
+  border-radius: 16px
+
+  > :global(.material-symbols-rounded)
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 36px
+    height: 36px
+    margin-bottom: 16px
+    color: $green
+    font-size: 20px
+    background-color: $sub_green
+    border-radius: 50%
+
+.feature_title
+  color: $black
+  margin-bottom: 8px
+
+.feature_desc
+  color: $gray
+  margin-bottom: 24px
+
+// 이력서 단계 리스트
+.feature_step_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+  margin-bottom: 24px
+  list-style: none
+
+.feature_step_item
+  display: flex
+  align-items: flex-start
+  gap: 12px
+  padding: 10px
+  background-color: $light_gray
+  border-radius: 12px
+
+.feature_step_num
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 24px
+  height: 24px
+  color: $white
+  background-color: $green
+  border-radius: 50%
+
+.feature_step_title
+  color: $black
+
+.feature_step_desc
+  color: $gray
+  margin-top: 2px
+
+// 면접 질문 리스트
+.feature_qa_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+  margin-bottom: 24px
+  list-style: none
+
+.feature_qa_item
+  padding: 12px 16px
+  color: $black
+  background-color: $light_gray
+  border-radius: 12px
+
+// 커뮤니티 게시글 리스트
+.feature_post_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+  margin-bottom: 24px
+  list-style: none
+
+.feature_post_item
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: 12px 16px
+  background-color: $light_gray
+  border-radius: 12px
+
+.feature_post_title
+  color: $black
+
+.feature_post_tag
+  color: $gray
+  margin-top: 2px
+
+.feature_post_status
+  flex-shrink: 0
+  padding: 4px 8px
+  color: $green
+  background-color: $sub_green
+  border-radius: 999px
+
+.feature_btn
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  height: 44px
+  margin-top: auto
+  color: $white
+  background-color: $black
+  border-radius: 999px
+  text-decoration: none
