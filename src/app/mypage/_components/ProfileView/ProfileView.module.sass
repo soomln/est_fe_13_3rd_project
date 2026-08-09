@@ -1,0 +1,146 @@
+@use '@/app/_variables.sass' as *
+
+.profile_view_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 24px
+
+.profile_view_head_text
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.profile_view_head_title
+  color: $black
+
+.profile_view_head_desc
+  color: $gray
+
+.profile_view_head_btn
+  flex-shrink: 0
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  color: $white
+  background-color: $green
+  border-radius: 8px
+  text-decoration: none
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.profile_view_summary
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 32px
+  padding: 32px 33px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 20px
+
+.profile_view_summary_avatar
+  flex-shrink: 0
+  width: 120px
+  height: 120px
+  background-color: $stroke3
+  border-radius: 24px
+  object-fit: cover
+
+.profile_view_summary_text
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-direction: column
+  gap: 7px
+
+.profile_view_summary_name
+  color: $black
+
+.profile_view_summary_headline
+  color: $gray
+
+.profile_view_summary_contact
+  display: flex
+  align-items: center
+  gap: 12px
+
+.profile_view_summary_divider
+  flex-shrink: 0
+  width: 1px
+  height: 12px
+  background-color: $stroke2
+
+.profile_view_summary_email
+  color: $gray
+
+.profile_view_summary_github
+  color: $green
+
+.profile_view_summary_stats
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  gap: 32px
+  width: 238px
+  padding-left: 32px
+  border-left: 1px solid $stroke2
+
+.profile_view_summary_stat
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 4px
+
+.profile_view_summary_value_black
+  color: $black
+
+.profile_view_summary_value_green
+  color: $green
+
+.profile_view_summary_value_amber
+  color: $amber
+
+.profile_view_summary_label
+  color: $gray
+  white-space: nowrap
+
+.profile_view_bio
+  color: $black
+
+.profile_view_rows
+  display: flex
+  flex-direction: column
+  gap: 11px
+
+.profile_view_awards
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.profile_view_skills
+  display: flex
+  flex-wrap: wrap
+  gap: 26px
+
+.profile_view_companies
+  display: flex
+  flex-wrap: wrap
+  gap: 40px
+
+.profile_view_interests
+  display: flex
+  flex-wrap: wrap
+  gap: 8px
+
+.profile_view_interest
+  padding: 9px 16px
+  color: $green
+  background-color: $sub_green
+  border-radius: 999px
+  white-space: nowrap

@@ -1,0 +1,21 @@
+@use '@/app/_variables.sass' as *
+
+.mypage
+  background-color: $light_gray
+
+.mypage_inner
+  display: flex
+  align-items: flex-start
+  gap: 24px
+  padding-top: 48px
+  padding-bottom: 180px
+
+  @media (max-width: 1439px)
+    padding-bottom: 80px
+
+.mypage_main
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-direction: column
+  gap: 19px

@@ -1,0 +1,27 @@
+@use '@/app/_variables.sass' as *
+
+.interest_chip
+  display: inline-flex
+  align-items: center
+  box-sizing: border-box
+  gap: 6px
+  height: 40px
+  padding: 0 16px
+  color: $gray
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 999px
+  cursor: pointer
+  white-space: nowrap
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+  &:hover
+    border-color: $green
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+.interest_chip_selected
+  color: $green
+  background-color: $sub_green
+  border-color: $green

@@ -61,7 +61,7 @@ export default function EditorHeader({ isChatOpen, onOpenChat }) {
           </button>
         )}
 
-        <Link href='/resume/free_form' className={`${styles.editor_header_back} font_body_l_b`}>
+        <Link href='/resume/free-form' className={`${styles.editor_header_back} font_body_l_b`}>
           <span className='material-symbols-sharp' aria-hidden='true'>
             arrow_back
           </span>

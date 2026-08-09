@@ -4,13 +4,13 @@ import { useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import Pagination from '@/app/_components/common/Pagination';
-import CategoryBtn from '@/app/resume/_components/CategoryBtn';
-import TemplateCard from '@/app/resume/_components/TemplateCard';
-import SearchBar from '@/app/resume/free_form/_components/SearchBar';
-import SortBtn from '@/app/resume/free_form/_components/SortBtn';
-import styles from './FreeFormBrowser.module.sass';
+import FilterChip from '@/app/mypage/_components/FilterChip';
+import SearchPill from '@/app/mypage/_components/SearchPill';
+import SortPill from '@/app/mypage/_components/SortPill';
+import DocumentRow from '@/app/mypage/_components/DocumentRow';
+import styles from './DocumentBrowser.module.sass';
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 10;
 
 const DOC_TYPES = [
   { value: '', label: '전체' },
@@ -18,22 +18,18 @@ const DOC_TYPES = [
   { value: 'cover_letter', label: '자기소개서' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'popular', label: '조회순' },
-  { value: 'latest', label: '최신순' },
-  { value: 'title', label: '이름순' },
-];
+const SORTS = { 등록순: 'created', 최신순: 'latest', 이름순: 'title' };
 
 const SORTERS = {
-  popular: (a, b) => b.views - a.views,
-  latest: (a, b) => a.order - b.order,
+  created: (a, b) => a.order - b.order,
+  latest: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
   title: (a, b) => a.title.localeCompare(b.title, 'ko'),
 };
 
 // 쿼리에서 생략하는 기본값
-const DEFAULTS = { docType: '', q: '', sort: 'popular', page: '1' };
+const DEFAULTS = { docType: '', q: '', sort: 'created', page: '1' };
 
-export default function FreeFormBrowser({ templates }) {
+export default function DocumentBrowser({ documents }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,8 +37,9 @@ export default function FreeFormBrowser({ templates }) {
   const docType = searchParams.get('docType') ?? '';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
-  const sort = SORTERS[sortParam] ? sortParam : 'popular';
+  const sort = SORTERS[sortParam] ? sortParam : 'created';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
 
   const updateQuery = (changes) => {
     const next = new URLSearchParams(searchParams);
@@ -57,91 +54,75 @@ export default function FreeFormBrowser({ templates }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const counts = useMemo(
-    () => ({
-      '': templates.length,
-      resume: templates.filter((item) => item.docType === 'resume').length,
-      cover_letter: templates.filter((item) => item.docType === 'cover_letter').length,
-    }),
-    [templates]
-  );
-
   const filtered = useMemo(() => {
     const text = keyword.trim().toLowerCase();
 
-    return templates
+    return documents
       .map((item, index) => ({ ...item, order: index }))
       .filter((item) => (docType ? item.docType === docType : true))
       .filter((item) => (text ? item.title.toLowerCase().includes(text) : true))
       .sort(SORTERS[sort]);
-  }, [templates, docType, keyword, sort]);
+  }, [documents, docType, keyword, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <>
-      <div className={styles.free_form_filter}>
-        <div className={styles.free_form_chips}>
+    <div className={styles.document_browser}>
+      <div className={styles.document_browser_filter}>
+        <div className={styles.document_browser_chips}>
           {DOC_TYPES.map((type) => (
-            <CategoryBtn
+            <FilterChip
               key={type.value || 'all'}
               label={type.label}
-              count={counts[type.value]}
               isActive={docType === type.value}
               onClick={() => updateQuery({ docType: type.value, page: 1 })}
             />
           ))}
         </div>
 
-        <div className={styles.free_form_tools}>
-          <SearchBar
+        <div className={styles.document_browser_tools}>
+          <SearchPill
             key={keyword}
-            keyword={keyword}
+            placeholder='문서 이름으로 검색'
             onSearch={(text) => updateQuery({ q: text, page: 1 })}
           />
-          <SortBtn
-            value={sort}
-            options={SORT_OPTIONS}
-            onChange={(value) => updateQuery({ sort: value, page: 1 })}
+          <SortPill
+            options={Object.keys(SORTS)}
+            value={sortLabel}
+            onChange={(label) => updateQuery({ sort: SORTS[label], page: 1 })}
           />
         </div>
       </div>
 
       {items.length > 0 ? (
-        <ul className={styles.free_form_grid}>
-          {items.map((item) => (
-            <TemplateCard
+        <ul className={styles.document_browser_list}>
+          {items.map((item, index) => (
+            <DocumentRow
               key={item.id}
               id={item.id}
-              type={item.docType === 'resume' ? '이력서' : '자기소개서'}
+              index={(currentPage - 1) * PAGE_SIZE + index + 1}
+              docType={item.docType}
               title={item.title}
-              views={item.views}
+              updatedAt={item.updatedAt}
             />
           ))}
         </ul>
       ) : (
-        <div className={styles.free_form_empty}>
-          <span className={`material-symbols-sharp ${styles.free_form_empty_icon}`} aria-hidden='true'>
-            search_off
+        <div className={styles.document_browser_empty}>
+          <span className={`material-symbols-sharp ${styles.document_browser_empty_icon}`} aria-hidden='true'>
+            folder_open
           </span>
-          <p className={`${styles.free_form_empty_title} font_h4`}>검색 결과가 없습니다</p>
-          <p className={`${styles.free_form_empty_desc} font_body_m_r`}>
-            다른 검색어나 분류로 다시 찾아보세요.
+          <p className={`${styles.document_browser_empty_title} font_h4`}>저장한 문서가 없습니다</p>
+          <p className={`${styles.document_browser_empty_desc} font_body_m_r`}>
+            새로 작성하기를 눌러 이력서나 자기소개서를 만들어보세요.
           </p>
-          <button
-            type='button'
-            className={`${styles.free_form_empty_btn} font_body_m_b`}
-            onClick={() => updateQuery({ docType: '', q: '', page: 1 })}
-          >
-            전체 보기
-          </button>
         </div>
       )}
 
       {items.length > 0 && (
-        <div className={styles.free_form_pagination}>
+        <div className={styles.document_browser_pagination}>
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -149,6 +130,6 @@ export default function FreeFormBrowser({ templates }) {
           />
         </div>
       )}
-    </>
+    </div>
   );
 }

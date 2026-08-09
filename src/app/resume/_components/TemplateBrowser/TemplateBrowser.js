@@ -44,7 +44,7 @@ export default function TemplateBrowser({ items }) {
           ))}
         </div>
 
-        <Link href='/resume/free_form' className={`${styles.template_browser_more} font_body_s_b`}>
+        <Link href='/resume/free-form' className={`${styles.template_browser_more} font_body_s_b`}>
           더보기
           <span className='material-symbols-sharp' aria-hidden='true'>
             arrow_forward

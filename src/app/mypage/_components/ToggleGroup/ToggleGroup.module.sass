@@ -1,0 +1,32 @@
+@use '@/app/_variables.sass' as *
+
+.toggle_group
+  display: flex
+  box-sizing: border-box
+  gap: 4px
+  padding: 4px
+  background-color: $light_gray
+  border: 1px solid $stroke2
+  border-radius: 8px
+
+.toggle_group_btn
+  flex: 1
+  min-width: 0
+  height: 40px
+  padding: 0 16px
+  color: $gray
+  background-color: transparent
+  border: 0
+  border-radius: 6px
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease
+
+  &:hover
+    background-color: $sub_green
+
+.toggle_group_btn_active
+  color: $white
+  background-color: $green
+
+  &:hover
+    background-color: $green
