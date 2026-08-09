@@ -1,5 +1,87 @@
 @use '@/app/_variables.sass' as *
 
+.document_browser_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 24px
+
+.document_browser_head_text
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.document_browser_head_title
+  color: $black
+
+.document_browser_head_desc
+  color: $gray
+
+.document_browser_head_btns
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+
+.document_browser_ghost_btn,
+.document_browser_new_btn,
+.document_browser_delete_btn
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  border-radius: 8px
+  text-decoration: none
+  white-space: nowrap
+  cursor: pointer
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.document_browser_ghost_btn
+  color: $gray
+  background-color: $white
+  border: 1px solid $stroke2
+  transition: color 0.2s ease, border-color 0.2s ease
+
+  &:hover
+    color: $green
+    border-color: $green
+
+.document_browser_new_btn
+  color: $white
+  background-color: $green
+  border: 1px solid $green
+
+.document_browser_delete_btn
+  color: $white
+  background-color: $warning
+  border: 1px solid $warning
+
+  &:disabled
+    color: $stroke1
+    background-color: $stroke3
+    border-color: $stroke3
+    cursor: not-allowed
+
+// 삭제모드 안내
+.document_browser_notice
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 12px
+  padding: 16px 21px
+  color: $brown
+  background-color: $light_yellow
+  border: 1px solid $amber
+  border-radius: 12px
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.document_browser_guide
+  color: $green
+
 .document_browser
   display: flex
   flex-direction: column
@@ -19,6 +101,7 @@
 
 .document_browser_chips
   display: flex
+  align-items: center
   flex-wrap: wrap
   gap: 8px
 

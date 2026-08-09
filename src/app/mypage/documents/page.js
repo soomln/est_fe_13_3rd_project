@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
 
 import DocumentBrowser from '@/app/mypage/documents/_components/DocumentBrowser';
-import styles from './page.module.sass';
 
 // 주의: supabase 연결 전까지 쓰는 임시 목록. 배열 순서가 등록순
 const DOCUMENTS = [
@@ -24,38 +22,8 @@ const DOCUMENTS = [
 
 export default function Documents() {
   return (
-    <>
-      <div className={styles.documents_head}>
-        <div className={styles.documents_head_text}>
-          <h1 className={`${styles.documents_head_title} font_h1`}>문서함</h1>
-          <p className={`${styles.documents_head_desc} font_body_m_r`}>
-            저장한 이력서와 자기소개서를 여기서 관리해요.
-          </p>
-        </div>
-
-        <div className={styles.documents_head_btns}>
-          <Link
-            href='/mypage/documents?mode=delete'
-            className={`${styles.documents_delete_btn} font_body_l_b`}
-          >
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              delete
-            </span>
-            삭제
-          </Link>
-
-          <Link href='/resume/free-form' className={`${styles.documents_new_btn} font_body_l_b`}>
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              add
-            </span>
-            새로 작성하기
-          </Link>
-        </div>
-      </div>
-
-      <Suspense>
-        <DocumentBrowser documents={DOCUMENTS} />
-      </Suspense>
-    </>
+    <Suspense>
+      <DocumentBrowser documents={DOCUMENTS} />
+    </Suspense>
   );
 }
