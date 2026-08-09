@@ -1,0 +1,61 @@
+.core_feature_card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 260px;
+  padding: 50px;
+  border-radius: 12px;
+}
+
+.feature_content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.feature_list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.feature_list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feature_list li .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.feature_image {
+  flex-shrink: 0;
+}
+.feature_image img {
+  width: 100%;
+  height: auto;
+}
+
+.green {
+  background: #F7F9F6;
+}
+.green .feature_content h3 {
+  color: #00A63D;
+}
+.green .feature_list .material-symbols-rounded {
+  color: #00A63D;
+}
+
+.yellow {
+  background: #FFFBEB;
+}
+.yellow .feature_content h3 {
+  color: #FF9900;
+}
+.yellow .feature_list .material-symbols-rounded {
+  color: #FF9900;
+}/*# sourceMappingURL=CoreFeatureCard.css.map */

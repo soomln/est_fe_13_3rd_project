@@ -1,0 +1,9 @@
+.portfolio_preview {
+  list-style: none;
+  max-width: 360px;
+}
+@media (max-width: 768px) {
+  .portfolio_preview {
+    max-width: 100%;
+  }
+}/*# sourceMappingURL=PortfolioPreview.module.css.map */

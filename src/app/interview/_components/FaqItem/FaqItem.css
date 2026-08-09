@@ -1,0 +1,31 @@
+.faq_item {
+  border-bottom: 1px solid #EEEEEE;
+}
+
+.faq_header {
+  width: 100%;
+  height: 72px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.faq_left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.question_mark {
+  color: #00A63D;
+  font-weight: 700;
+}
+
+.faq_answer {
+  padding: 16px;
+  background: #EEFDF3;
+  color: #111111;
+}/*# sourceMappingURL=FaqItem.css.map */
