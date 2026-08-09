@@ -1,0 +1,83 @@
+@use '@/app/_variables.sass' as *
+
+.toolbar
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 4px
+  width: 100%
+  max-width: 1148px
+  height: 64px
+  margin: 0 auto
+  padding: 0 16px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 16px
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
+
+.toolbar_inner
+  flex: 1
+  min-width: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 4px
+  overflow-x: auto
+
+// 헤더·툴바 구분선 색 (와이어프레임 전용이라 변수에 없음)
+.toolbar_divider
+  flex-shrink: 0
+  width: 1px
+  height: 28px
+  background-color: #767779
+
+.toolbar_select
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  height: 36px
+  padding-right: 8px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 8px
+
+  :global(.material-symbols-sharp)
+    font-size: 22px
+    pointer-events: none
+
+.toolbar_select_field
+  padding: 0 4px 0 10px
+  color: $black
+  background-color: transparent
+  border: 0
+  appearance: none
+  cursor: pointer
+
+  &:focus
+    outline: none
+
+// space-between 이 -, 숫자, + 사이까지 벌리지 않도록 셋만 고정 간격으로 둔다
+.toolbar_size_group
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 2px
+
+.toolbar_size
+  flex-shrink: 0
+  box-sizing: border-box
+  width: 40px
+  height: 36px
+  padding: 0 2px
+  color: $black
+  text-align: center
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 8px
+
+  &:focus
+    outline: none
+    border-color: $green
