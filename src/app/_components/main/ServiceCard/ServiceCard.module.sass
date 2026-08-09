@@ -1,0 +1,36 @@
+@use '@/app/_variables.sass' as *
+
+.service_card
+  display: flex
+  flex-direction: column
+  align-items: center
+  text-align: center
+  gap: 12px
+  list-style: none
+
+.service_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 72px
+  height: 72px
+  border-radius: 50%
+  background-color: $light_gray
+  color: $green
+  font-size: 28px
+
+.service_title
+  color: $black
+
+.service_desc
+  color: $gray
+
+.service_link
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  color: $green
+  text-decoration: none
+
+  :global(.material-symbols-rounded)
+    font-size: 16px

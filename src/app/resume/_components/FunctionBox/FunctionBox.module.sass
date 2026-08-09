@@ -1,0 +1,31 @@
+@use '@/app/_variables.sass' as *
+
+.function_box
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 8px
+  width: 286px
+  padding: 17px 16px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 16px
+
+  .function_box_icon
+    flex-shrink: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    box-sizing: border-box
+    width: 32px
+    height: 32px
+    background-color: $sub_green
+    border: 1px solid $green
+    border-radius: 8px
+
+    :global(.material-symbols-sharp)
+      font-size: 20px
+      color: $green
+
+  .function_box_label
+    color: $black

@@ -1,0 +1,93 @@
+@use '@/app/_variables.sass' as *
+
+// 양식 카드
+.template_card
+  position: relative
+  box-sizing: border-box
+  background-color: $white
+  border: 1px solid $stroke1
+  border-radius: 16px
+  transition: box-shadow 0.2s ease
+
+  &:hover
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25)
+
+    .template_card_overlay
+      opacity: 1
+
+  .template_card_link
+    display: block
+    text-decoration: none
+
+  .template_card_top
+    position: relative
+    padding: 19px 25px 0
+
+  .template_card_thumb
+    aspect-ratio: 290 / 338
+    border-radius: 16px
+    overflow: hidden
+
+  .template_card_thumb_img
+    width: 100%
+    height: 100%
+    object-fit: cover
+    object-position: top
+
+  .template_card_thumb_empty
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 100%
+    height: 100%
+    background-color: $light_gray
+
+    :global(.material-symbols-sharp)
+      font-size: 64px
+      color: $stroke2
+
+  .template_card_overlay
+    position: absolute
+    inset: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    background-color: rgba(28, 28, 28, 0.7)
+    border-radius: 15px 15px 0 0
+    opacity: 0
+    transition: opacity 0.2s ease
+
+  .template_card_info
+    display: flex
+    align-items: flex-end
+    justify-content: space-between
+    gap: 8px
+    padding: 18px 21px
+    background-color: $light_gray
+    border-top: 1px solid $stroke1
+    border-radius: 0 0 15px 15px
+
+  .template_card_text
+    display: flex
+    flex-direction: column
+
+  .template_card_type
+    color: $gray
+
+  .template_card_title
+    color: $black
+
+  .template_card_views
+    display: inline-flex
+    align-items: center
+    gap: 4px
+    color: $gray
+
+    :global(.material-symbols-sharp)
+      font-size: 15px
+
+  .template_card_bookmark
+    position: absolute
+    top: -12px
+    right: 24px
+    z-index: 1
