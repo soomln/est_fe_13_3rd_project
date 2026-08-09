@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/_components/auth';
 import s from './Header.module.sass';
 
@@ -34,16 +35,26 @@ function NavContainer() {
 }
 
 function CtaContainer() {
-  const { isLoading, isLoggedIn, openLogin, openSignup } = useAuth();
+  const router = useRouter();
+  const { isLoading, isLoggedIn, openLogin, openSignup, signOut } = useAuth();
 
   if (isLoading) return <div className={s.ctaContainer} aria-hidden='true' />;
 
   if (isLoggedIn) {
+    const handleLogout = async () => {
+      await signOut();
+      router.push('/');
+    };
+
     return (
       <div className={s.ctaContainer}>
         <Link href='/mypage' className={s.btnRegister}>
           <span className={`font_body_m_b ${s.ctaLabel}`}>마이페이지</span>
         </Link>
+
+        <button type='button' onClick={handleLogout} className={s.btnLogin}>
+          <span className={`font_body_m_b ${s.ctaLabel}`}>로그아웃</span>
+        </button>
       </div>
     );
   }
