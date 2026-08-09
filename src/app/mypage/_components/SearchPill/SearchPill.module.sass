@@ -1,0 +1,50 @@
+@use '@/app/_variables.sass' as *
+
+.search_pill
+  display: flex
+  align-items: center
+  gap: 8px
+
+.search_pill_field
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 4px
+  min-width: 240px
+  height: 40px
+  padding: 0 16px
+  background-color: $light_gray
+  border-radius: 50px
+
+  :global(.material-symbols-sharp)
+    flex-shrink: 0
+    font-size: 20px
+    color: $gray
+
+.search_pill_input
+  flex: 1
+  min-width: 0
+  padding: 0
+  color: $black
+  background-color: transparent
+  border: 0
+
+  &::placeholder
+    color: $stroke1
+
+  &:focus
+    outline: none
+
+  &::-webkit-search-cancel-button
+    appearance: none
+
+.search_pill_btn
+  flex-shrink: 0
+  height: 40px
+  padding: 0 16px
+  color: $white
+  background-color: $black
+  border: 0
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
