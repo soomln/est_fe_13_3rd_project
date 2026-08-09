@@ -97,6 +97,13 @@ export default function Portpolio() {
     portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
   });
 
+  const handleMoveTop = () => {
+    galleryRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
   return (
     <>
       <Header />
@@ -136,7 +143,7 @@ export default function Portpolio() {
               </div>
             </div>
             <ul className={styles.item_list}>{portfolioList}</ul>
-            {showQuickBtns && <QuickBtns />}
+            {showQuickBtns && <QuickBtns onMoveTop={handleMoveTop} />}
           </section>
         </div>
 
