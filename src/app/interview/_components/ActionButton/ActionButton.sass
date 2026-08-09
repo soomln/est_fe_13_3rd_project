@@ -1,22 +1,41 @@
-@use '@/app/_variables.sass' as *
+@use "../../../_variables" as *
 
 .action_button
   display: flex
-  justify-content: center
   align-items: center
+  justify-content: center
+  gap: 10px
+  box-sizing: border-box
+  cursor: pointer
+  transition: 0.2s ease
+
+// 히어로 버튼
+.action_button.default
   width: 644px
   height: 64px
   padding: 20px 24px
-  gap: 10px
-  border: none
-  border-radius: 16px
-  background-color: $green
-  color: $white
-  cursor: pointer
-  transition: all .2s ease
 
-  &:active,
-  &.is_active
+  background: $green
+  border: 1px solid $green
+  border-radius: 12px
+  color: $white
+
+  &.active
     background: $sub_green
-    color: $green
     border: 1px solid $green
+    color: $green
+
+// 가이드 버튼
+.action_button.purple
+  width: 180px
+  height: 40px
+  padding: 10px
+
+  background: $white
+  border: 1px solid $sub_purple
+  border-radius: 8px
+  color: $purple
+
+  &.active
+    background: $purple
+    color: $white
