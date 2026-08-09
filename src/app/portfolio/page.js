@@ -1,5 +1,6 @@
 'use client';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Scrollbar, Autoplay, EffectCoverflow } from 'swiper/modules';
@@ -14,6 +15,7 @@ import Footer from '@/app/_components/common/Footer/Footer';
 import CategoryBtn from '@/app/portfolio/_components/CategoryBtn';
 import SortBtn from '@/app/portfolio/_components/SortBtn/SortBtn';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
+import QuickBtns from './_components/QuickBtns';
 import Window from '@/app/portfolio/_components/Modal/Window';
 
 export default function Portpolio() {
@@ -26,6 +28,14 @@ export default function Portpolio() {
     { id: 5, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
     { id: 6, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
     { id: 7, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 8, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 9, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 10, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 11, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 12, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 13, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 14, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
+    { id: 15, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
   ];
   //================test================/
 
@@ -45,6 +55,25 @@ export default function Portpolio() {
   const modalId = searchParams.get('modal');
   const selectedItem = items.find((item) => item.id === Number(modalId)) ?? null;
   const isModalOpen = !!selectedItem;
+
+  const galleryRef = useRef(null);
+  const [showQuickBtns, setShowQuickBtns] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const gallery = galleryRef.current;
+      if (!gallery) return;
+
+      const { top, bottom } = gallery.getBoundingClientRect();
+      const isActive = top <= 0 && bottom > 0;
+      setShowQuickBtns(isActive);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -67,6 +96,13 @@ export default function Portpolio() {
   items.forEach((item) => {
     portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
   });
+
+  const handleMoveTop = () => {
+    galleryRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   return (
     <>
@@ -96,7 +132,7 @@ export default function Portpolio() {
               {bestPortfolioList}
             </Swiper>
           </section>
-          <section className={styles.gallery}>
+          <section className={styles.gallery} ref={galleryRef}>
             <div className={styles.btns_wrapper}>
               <div className={styles.radio_btns}>
                 <CategoryBtn category={'web'} initChecked={true} />
@@ -107,6 +143,7 @@ export default function Portpolio() {
               </div>
             </div>
             <ul className={styles.item_list}>{portfolioList}</ul>
+            {showQuickBtns && <QuickBtns onMoveTop={handleMoveTop} />}
           </section>
         </div>
 

@@ -1,0 +1,42 @@
+@use '@/app/_variables' as *
+
+.btns
+  width: fit-content
+  display: flex
+  padding: 1rem 0
+  border-radius: 999px
+  gap: 1rem
+  position: sticky
+  left: 50%
+  bottom: 3rem
+  transform: translateX(-50%)
+  background: $sub_green
+  
+  .btn
+    position: relative
+    display: flex
+    justify-content: center
+    align-items: center
+    padding-left: 1rem
+    background: none
+    border: none
+    cursor: pointer
+
+    .icon
+      color: $green
+      font-variation-settings: 'FILL' 1
+    .text
+      color: $black
+
+    &:last-child
+      padding-right: 1rem
+
+    &:not(:last-child)::after
+        content: ''
+        position: absolute
+        top: 50%
+        right: -1rem
+        width: 2px
+        height: 20px
+        background-color: $stroke2
+        transform: translateY(-50%)
