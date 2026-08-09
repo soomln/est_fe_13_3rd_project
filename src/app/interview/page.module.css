@@ -1,0 +1,139 @@
+.interview_page {
+  width: 100%;
+}
+
+.page_content {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  padding: 80px 0;
+}
+
+.hero_section {
+  width: 100%;
+  background: #F7F9F6;
+}
+
+.hero_content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 0;
+  gap: 30px;
+}
+
+.hero_left {
+  flex: 1;
+  max-width: 644px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.hero_title {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hero_title span {
+  display: block;
+  color: #6F6F6F;
+}
+.hero_title h1 {
+  color: #111111;
+}
+.hero_title h1 strong {
+  color: #00A63D;
+}
+
+.hero_cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero_right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.hero_right img {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+.content_section {
+  display: flex;
+  gap: 40px;
+}
+
+.company_section {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  flex: 1;
+  height: 600px;
+  gap: 50px;
+  padding: 20px;
+  border: 1px solid #EEEEEE;
+  border-radius: 15px;
+}
+
+.company_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.company_list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.view_all_btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #6F6F6F;
+  cursor: pointer;
+}
+.view_all_btn:hover {
+  color: #111111;
+}
+
+.question_section {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  gap: 25px;
+  flex: 1;
+  min-height: 560px;
+  padding: 20px;
+  border: 1px solid #EEEEEE;
+  border-radius: 15px;
+}
+
+.question_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feature_section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.feature_cards {
+  display: flex;
+  gap: 40px;
+}
+.feature_cards > * {
+  flex: 1;
+  min-width: 0;
+}/*# sourceMappingURL=page.module.css.map */
