@@ -2,8 +2,7 @@ import Image from 'next/image';
 import './CoreFeatureCard.sass';
 
 export default function CoreFeatureCard({
-  titleLine1,
-  titleLine2,
+  title,
   description,
   features,
   image,
@@ -12,13 +11,11 @@ export default function CoreFeatureCard({
   return (
     <article className={`core_feature_card ${variant}`}>
       <div className="feature_content">
-        <h3 className="font_body_l_b">
-          {titleLine1}
-          <br />
-          {titleLine2}
+        <h3 className="font_h3">
+          {title}
         </h3>
 
-        <p className="font_body_s_r">
+        <p className="font_body_l_r">
           {description}
         </p>
 
@@ -29,7 +26,7 @@ export default function CoreFeatureCard({
                 check
               </span>
 
-              <span className="font_body_s_r">
+              <span className="font_body_l_r">
                 {feature}
               </span>
             </li>
