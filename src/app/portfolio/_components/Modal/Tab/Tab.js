@@ -1,6 +1,6 @@
 import styles from './Tab.module.sass';
 
-export default function Tab({ iconText, isActive = false, onChangeTab, activeBgColor = '#ffffff' }) {
+export default function Tab({ iconText, activeBgColor = '#ffffff', isActive = false, onChangeTab }) {
   return (
     <button
       type='button'

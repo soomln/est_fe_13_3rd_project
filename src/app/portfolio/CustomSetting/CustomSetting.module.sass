@@ -1,0 +1,70 @@
+@use '@/app/_variables' as *
+
+.custom_setting
+  display: flex
+  flex-direction: column
+  gap: 15px
+
+  .bg_color_setting,
+  .gap_setting
+    display: flex
+    justify-content: space-between
+
+  .bg_color_setting
+    align-items: center
+
+    .input_wrapper
+      display: flex
+      input[type='color']
+        width: 1.5rem
+        height: 1.5rem
+        border: none
+        background: none
+        cursor: pointer
+            
+        &::-webkit-color-swatch-wrapper
+          padding: 0
+
+        &::-webkit-color-swatch
+          border: solid 1px $stroke1
+          border-radius: 5px
+
+
+      input[type='text']
+        width: 7ch
+        color: $gray
+        border: none
+        text-transform: uppercase
+
+        &:focus-visible
+          outline: none
+          border: solid 1px $stroke2
+
+  .gap_setting
+    flex-direction: column
+    gap: 0.5rem
+
+    .slider_header
+      display: flex
+      justify-content: space-between
+    
+    .slider
+      width: 100%
+      height: 0.5rem
+      appearance: none
+      border-radius: 999px
+      cursor: pointer
+      background: linear-gradient(
+      to right,
+      $green 0%,
+      $green var(--progress),
+      $stroke2 var(--progress),
+      $stroke2 100%
+  )
+      &::-webkit-slider-thumb
+        appearance: none
+        width: 1rem
+        height: 1rem
+        border-radius: 50%
+        background: $green
+        cursor: pointer
