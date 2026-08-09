@@ -6,13 +6,14 @@ const TABS = [
   { id: 'code', iconText: 'code' },
 ];
 
-export default function TabGroup({ activeTab, onChangeTab }) {
+export default function TabGroup({ bgColor, activeTab, onChangeTab }) {
   return (
     <div>
       {TABS.map((tab) => (
         <Tab
           key={tab.id}
           iconText={tab.iconText}
+          activeBgColor={bgColor}
           isActive={activeTab === tab.id}
           onChangeTab={() => {
             onChangeTab(tab.id);

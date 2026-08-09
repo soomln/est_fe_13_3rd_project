@@ -1,11 +1,11 @@
 import styles from './Contents.module.sass';
 
-export default function Contents({ bgColor = '#ffffff', gap = '1rem', contentsRef }) {
+export default function Contents({ bgColor = '#ffffff', gap = '1rem', contentsRef = null }) {
   return (
     <div ref={contentsRef} className={`${styles.container}`} style={{ backgroundColor: bgColor }}>
       <div className={`${styles.contents}`} style={{ gap: gap }}>
         {/* ==================================Test================================== */}
-        <h1 className='font_h1'>Title</h1>
+        {/* <h1 className='font_h1'>Title</h1>
         <p>
           러안으로 소낭팓죠깁 혜한은 질차하고 미리싸슈 리오언비다. 보혝커달 겼니 더와 조앙은 료나발인은 닌밍나홀므믹
           먼쿠의 가으는 게캘렴리죽 혼나온려몰의. 임아참란골으로 쏩힌어기나 미더다녀질 스낀셈팟을 걸룩으루거다 레금
@@ -88,7 +88,7 @@ export default function Contents({ bgColor = '#ffffff', gap = '1rem', contentsRe
           일줌뉘다즏쳉을 간넌왜에. 퍄벲은 장쮜흐고로써 하지로 자옹전을 나자과한이 일혏시에. 고거으소의 언이훼운이 선훈은
           걸마으다 조브에 엥만시즈든가 복홊콜헝이다. 덜훈 아대깅아튼고 려린기샴의, 처이칭을 캄그워궀구를 점해
           말이가베이고, 지이이효다 젤황남옹과 아아난시.
-        </p>
+        </p> */}
         {/* ==================================Test================================== */}
       </div>
     </div>
