@@ -8,10 +8,14 @@ create table if not exists public.reactions (
   primary key (user_id, target_type, target_id, kind),
 
   constraint reactions_target_type
-    check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa')),
+    check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa', 'template')),
   constraint reactions_kind
     check (kind in ('like', 'bookmark'))
 );
+
+alter table public.reactions drop constraint if exists reactions_target_type;
+alter table public.reactions add constraint reactions_target_type
+  check (target_type in ('portfolio', 'post', 'company', 'comment', 'interview_qa', 'template'));
 
 create index if not exists idx_reactions_target
   on public.reactions (target_type, target_id, kind);
@@ -34,3 +38,23 @@ create policy "reactions 본인만 생성"
 create policy "reactions 본인만 삭제"
   on public.reactions for delete to authenticated
   using ((select auth.uid()) = user_id);
+
+drop trigger if exists trg_cleanup_reactions on public.companies;
+create trigger trg_cleanup_reactions after delete on public.companies
+  for each row execute function public.cleanup_reactions('company');
+
+drop trigger if exists trg_cleanup_reactions on public.resume_templates;
+create trigger trg_cleanup_reactions after delete on public.resume_templates
+  for each row execute function public.cleanup_reactions('template');
+
+drop trigger if exists trg_cleanup_reactions on public.portfolios;
+create trigger trg_cleanup_reactions after delete on public.portfolios
+  for each row execute function public.cleanup_reactions('portfolio');
+
+drop trigger if exists trg_cleanup_reactions on public.posts;
+create trigger trg_cleanup_reactions after delete on public.posts
+  for each row execute function public.cleanup_reactions('post');
+
+drop trigger if exists trg_cleanup_reactions on public.comments;
+create trigger trg_cleanup_reactions after delete on public.comments
+  for each row execute function public.cleanup_reactions('comment');

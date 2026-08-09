@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:sql": "node backend/scripts/build-sql.mjs"
+    "db:sql": "node backend/scripts/build-sql.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.mjs",
+    "test:e2e:watch": "vitest --config vitest.e2e.config.mjs",
+    "test:e2e:coverage": "vitest run --config vitest.e2e.config.mjs --coverage",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
@@ -23,8 +30,10 @@
     "swiper": "^14.0.7"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "sass": "^1.102.0"
+    "sass": "^1.102.0",
+    "vitest": "^3.2.7"
   }
 }

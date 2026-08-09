@@ -1,0 +1,53 @@
+@use '@/app/_variables.sass' as *
+
+.search_bar
+  display: flex
+  align-items: center
+  gap: 16px
+
+.search_bar_field
+  box-sizing: border-box
+  display: flex
+  align-items: center
+  gap: 4px
+  width: 234px
+  padding: 10px 16px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+
+  @media (max-width: 768px)
+    width: 100%
+
+.search_bar_icon
+  flex-shrink: 0
+  font-size: 20px
+  color: $gray
+
+.search_bar_input
+  flex: 1
+  min-width: 0
+  padding: 0
+  color: $black
+  background-color: transparent
+  border: 0
+
+  &::placeholder
+    color: $stroke1
+
+  &:focus
+    outline: none
+
+  // 브라우저 기본 지우기 버튼 숨김
+  &::-webkit-search-cancel-button
+    appearance: none
+
+.search_bar_btn
+  flex-shrink: 0
+  padding: 10px 16px
+  color: $white
+  background-color: $black
+  border: 1px solid $black
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap

@@ -10,6 +10,7 @@ create table if not exists public.companies (
 
   tagline     text,
   description text,
+  tags        text[] not null default '{}',
   homepage    text,
   hq_address  text,
   location    text,
@@ -43,6 +44,8 @@ create index if not exists idx_companies_name    on public.companies (name);
 create index if not exists idx_companies_industry on public.companies (industry_code);
 create index if not exists idx_companies_size     on public.companies (size_code);
 create index if not exists idx_companies_roles    on public.companies using gin (job_role_codes);
+
+alter table public.companies add column if not exists tags text[] not null default '{}';
 
 drop trigger if exists trg_companies_updated_at on public.companies;
 create trigger trg_companies_updated_at
