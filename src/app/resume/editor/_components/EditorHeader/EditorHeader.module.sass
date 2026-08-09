@@ -1,0 +1,236 @@
+@use '@/app/_variables.sass' as *
+
+// 화면 전체 폭을 덮고 왼쪽은 채팅 패널이 가린다 (z-index 는 채팅 패널이 2)
+.editor_header
+  position: relative
+  z-index: 1
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  gap: 24px
+  height: 80px
+  margin-left: calc(var(--chat-width) * -1)
+  padding: 0 24px 0 calc(var(--chat-width) + 24px)
+  background-color: $white
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25)
+  transition: margin-left 0.2s ease, padding-left 0.2s ease
+
+.editor_header_wide
+  margin-left: 0
+  padding-left: 24px
+
+.editor_header_left
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 16px
+
+.editor_header_expand
+  display: inline-flex
+  align-items: center
+  box-sizing: border-box
+  gap: 4px
+  height: 40px
+  padding: 0 12px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
+  transition: color 0.2s ease, background-color 0.2s ease
+
+  &:hover
+    color: $sub_green
+    background-color: $green
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.editor_header_back
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  color: $gray
+  text-decoration: none
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.editor_header_title
+  display: flex
+  align-items: center
+  min-width: 0
+  gap: 10px
+
+.editor_header_title_label
+  flex-shrink: 0
+  color: $black
+
+// 보기 <-> 편집 전환 때 자리가 밀리지 않도록 폭·테두리를 맞춘다
+.editor_header_title_value,
+.editor_header_title_input
+  box-sizing: border-box
+  width: 188px
+  min-width: 0
+  padding: 0
+  background-color: transparent
+  border: 0
+  border-bottom: 1px solid transparent
+  text-align: left
+
+.editor_header_title_value
+  color: $gray
+  cursor: pointer
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+
+.editor_header_title_input
+  color: $black
+  border-bottom-color: $green
+
+  &::placeholder
+    color: $stroke1
+
+  &:focus
+    outline: none
+
+.editor_header_tools
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 16px
+
+.editor_header_history
+  display: flex
+  align-items: center
+  gap: 24px
+
+.editor_header_history_btn
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 0
+  color: $black
+  background-color: transparent
+  border: 0
+  cursor: pointer
+  transition: color 0.2s ease
+
+  &:hover
+    color: $green
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+// 헤더·툴바 구분선 색 (와이어프레임 전용이라 변수에 없음)
+.editor_header_divider
+  width: 1px
+  height: 28px
+  background-color: #767779
+
+.editor_header_actions
+  display: flex
+  align-items: center
+  gap: 8px
+
+.editor_header_print
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 40px
+  height: 40px
+  padding: 0
+  color: $black
+  background-color: $stroke3
+  border: 0
+  border-radius: 8px
+  cursor: pointer
+  transition: background-color 0.2s ease
+
+  &:hover
+    background-color: $stroke2
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.editor_header_save
+  padding: 10px 16px
+  color: $white
+  background-color: $black
+  border: 0
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
+
+.editor_header_download_wrap
+  position: relative
+
+.editor_header_download
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 10px 16px
+  color: $white
+  background-color: $green
+  border: 0
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.editor_header_tip
+  position: absolute
+  top: calc(100% + 6px)
+  right: 0
+  z-index: 2
+  box-sizing: border-box
+  display: flex
+  align-items: center
+  min-width: 408px
+  height: 64px
+  padding: 0 25px
+  color: $brown
+  white-space: nowrap
+  background-color: $sub_yellow
+  border: 1px solid $amber
+  border-radius: 8px
+  opacity: 0
+  visibility: hidden
+  pointer-events: none
+  transition: opacity 0.2s ease, visibility 0.2s ease
+
+  &::before,
+  &::after
+    content: ''
+    position: absolute
+    right: 44px
+    border: 8px solid transparent
+
+  &::before
+    bottom: 100%
+    border-bottom-color: $amber
+
+  &::after
+    bottom: calc(100% - 1px)
+    border-bottom-color: $sub_yellow
+
+.editor_header_download_wrap:hover .editor_header_tip,
+.editor_header_tip_shown
+  opacity: 1
+  visibility: visible
+
+.editor_header_tip_blink
+  animation: tip_blink 0.9s ease
+
+@keyframes tip_blink
+  0%, 50%, 100%
+    opacity: 1
+  25%, 75%
+    opacity: 0

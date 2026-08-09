@@ -1,0 +1,114 @@
+@use '@/app/_variables.sass' as *
+
+.editor_main
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-direction: column
+
+// 헤더와 같이 화면 전체 폭을 덮는다. 왼쪽은 채팅 패널이 가린다
+.editor_body
+  position: relative
+  flex: 1
+  min-height: 0
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  margin-left: calc(var(--chat-width) * -1)
+  padding: 40px 24px 0 calc(var(--chat-width) + 24px)
+  background-color: $stroke3
+  transition: margin-left 0.2s ease, padding-left 0.2s ease
+
+  @media (max-width: 1439px)
+    padding: 24px 24px 0 calc(var(--chat-width) + 24px)
+
+.editor_body_wide
+  margin-left: 0
+  padding-left: 24px
+
+  @media (max-width: 1439px)
+    padding-left: 24px
+
+// padding-top 은 첫 장 그림자가 잘리지 않게 두는 자리
+.editor_doc_area
+  flex: 1
+  min-height: 0
+  margin-top: 24px
+  padding-top: 8px
+  padding-bottom: 40px
+  overflow: auto
+
+.editor_doc_pages
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 24px
+
+.editor_doc_pages_50
+  zoom: 0.5
+
+.editor_doc_pages_60
+  zoom: 0.6
+
+.editor_doc_pages_70
+  zoom: 0.7
+
+.editor_doc_pages_80
+  zoom: 0.8
+
+.editor_doc_pages_90
+  zoom: 0.9
+
+.editor_doc_pages_100
+  zoom: 1
+
+.editor_doc_pages_110
+  zoom: 1.1
+
+.editor_doc_pages_125
+  zoom: 1.25
+
+.editor_doc_pages_150
+  zoom: 1.5
+
+.editor_zoom
+  position: absolute
+  right: 24px
+  bottom: 24px
+  display: flex
+  align-items: center
+  gap: 4px
+  padding: 4px
+  background-color: $white
+  border: 1px solid $stroke1
+  border-radius: 8px
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
+
+.editor_zoom_btn
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 28px
+  height: 28px
+  padding: 0
+  color: $black
+  background-color: transparent
+  border: 0
+  border-radius: 4px
+  cursor: pointer
+  transition: background-color 0.2s ease
+
+  &:hover:not(:disabled)
+    background-color: $sub_green
+
+  &:disabled
+    color: $stroke1
+    cursor: not-allowed
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.editor_zoom_value
+  min-width: 40px
+  color: $gray
+  text-align: center
