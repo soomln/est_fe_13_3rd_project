@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
-import FreeFormBrowser from '@/app/resume/free_form/_components/FreeFormBrowser';
+import FreeFormBrowser from '@/app/resume/free-form/_components/FreeFormBrowser';
 import styles from './page.module.sass';
 
 // 주의: supabase 연결 전까지 쓰는 임시 목록. 배열 순서가 등록 최신순
