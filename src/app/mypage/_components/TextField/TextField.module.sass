@@ -1,0 +1,62 @@
+@use '@/app/_variables.sass' as *
+
+.text_field
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.text_field_label
+  color: $gray
+
+.text_field_control
+  box-sizing: border-box
+  width: 100%
+  height: 48px
+  padding: 0 16px
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+
+  &::placeholder
+    color: $stroke1
+
+  &:focus
+    outline: none
+    border-color: $green
+
+.text_field_area
+  box-sizing: border-box
+  width: 100%
+  padding: 16px
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+  resize: vertical
+
+  &::placeholder
+    color: $stroke1
+
+  &:focus
+    outline: none
+    border-color: $green
+
+.text_field_select_wrap
+  position: relative
+  display: flex
+  align-items: center
+
+  .text_field_control
+    appearance: none
+    padding-right: 40px
+    cursor: pointer
+
+  :global(.material-symbols-sharp)
+    position: absolute
+    right: 12px
+    font-size: 24px
+    color: $gray
+    pointer-events: none
