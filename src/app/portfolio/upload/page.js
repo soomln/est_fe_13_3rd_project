@@ -5,9 +5,8 @@ import styles from './page.module.sass';
 
 import TabGroup from '../_components/Modal/TabGroup';
 import Contents from '../_components/Modal/Contents';
-import UploadBtnGroup from '../_components/UploadBtnGroup';
-import UploadBtn from '../_components/UploadBtn';
-import CustomSetting from '../CustomSetting';
+import UploadBtn from './_components/UploadBtn';
+import CustomSetting from './_components/CustomSetting';
 
 export default function Upload() {
   const [activeTab, setActiveTab] = useState('ai');
