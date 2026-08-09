@@ -1,0 +1,49 @@
+@use '@/app/_variables.sass' as *
+
+.card
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 24px
+  width: 100%
+  max-width: 194px
+  padding: 25px 17px
+  background: $white
+  border: 1px solid rgba(0, 0, 0, 0.06)
+  border-radius: 20px
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06)
+
+// 피그마 아이콘 배경 전용 컬러 (프로젝트 공용 토큰에는 없는 일회성 그라데이션/보더)
+.icon_box
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 72px
+  height: 72px
+  background: linear-gradient(140deg, #f0fdf4 3.67%, #dcfce7 96.33%)
+  border: 1px solid #a7f3d0
+  border-radius: 16px
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.1)
+
+.icon
+  font-size: 28px
+  color: $green
+
+.text_box
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 8px
+
+.title
+  color: $black
+
+.description
+  color: $gray
+  text-align: center
+  white-space: pre-line
+
+.link
+  color: $green
+  text-decoration: none

@@ -1,0 +1,165 @@
+@use '@/app/_variables.sass' as *
+
+.spotlight
+  display: flex
+  flex-direction: column
+  gap: 10px
+  padding: 24px
+  background: $white
+  border-radius: 16px
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+
+  --donut-green: #{$green}
+  --donut-amber: #{$amber}
+  --donut-purple: #{$purple}
+  --donut-gray: #{$gray}
+
+// ===== 상단 브랜드 =====
+
+.brand
+  display: flex
+  align-items: center
+  gap: 8px
+  padding: 0 12px
+
+.brand_name
+  color: $gray
+
+// ===== 연봉 · 점수 카드 =====
+
+.card
+  display: flex
+  flex-direction: column
+  gap: 32px
+  padding: 24px 32px
+  background: $white
+  border-radius: 10px
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25)
+
+.salary_block
+  display: flex
+  flex-direction: column
+  gap: 12px
+
+.salary_title
+  color: $black
+
+.salary_row
+  display: flex
+  align-items: center
+  gap: 16px
+  padding: 16px 30px
+  background: $light_gray
+  border-radius: 16px
+
+.salary_item
+  display: flex
+  flex: 1
+  align-items: center
+  justify-content: space-between
+  gap: 16px
+  padding-right: 16px
+  border-right: 1px solid $stroke1
+
+  &:last-child
+    border-right: none
+
+.salary_value_group
+  display: flex
+  align-items: center
+  gap: 4px
+
+.salary_value
+  color: $black
+
+.salary_unit
+  color: $gray
+
+.color_black
+  color: $black
+
+.color_green
+  color: $green
+
+.color_amber
+  color: $amber
+
+.color_purple
+  color: $purple
+
+.color_gray
+  color: $gray
+
+// ===== 점수 도넛 =====
+
+.score_row
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 24px
+
+  @media (max-width: 768px)
+    flex-wrap: wrap
+
+.score_item
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 12px
+
+.score_label
+  white-space: nowrap
+
+.donut
+  position: relative
+  width: 100px
+  height: 100px
+  border-radius: 50%
+  background: conic-gradient(var(--color) var(--percent), $stroke3 0)
+
+.donut_inner
+  position: absolute
+  inset: 10px
+  display: flex
+  align-items: baseline
+  justify-content: center
+  gap: 2px
+  background: $white
+  border-radius: 50%
+
+.donut_value
+  color: $black
+
+.donut_unit
+  color: $gray
+
+// ===== 복지 리스트 =====
+
+.benefit_row
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  padding: 0 29px
+
+  @media (max-width: 768px)
+    flex-wrap: wrap
+
+.benefit_item
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 10px
+  padding: 10px
+
+.benefit_icon
+  font-size: 48px
+  color: $black
+
+.benefit_title
+  color: $green
+
+.benefit_desc
+  color: $black
+  text-align: center
+  white-space: pre-line
