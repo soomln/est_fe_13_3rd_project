@@ -1,0 +1,60 @@
+@use '@/app/_variables.sass' as *
+@use '@/app/_mixin.sass' as *
+
+// A4 (96dpi 기준 794x1123)
+.document_page
+  flex-shrink: 0
+  box-sizing: border-box
+  width: 794px
+  min-height: 1123px
+  padding: 94px 76px
+  background-color: $white
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
+
+  &:focus
+    outline: none
+
+  h1
+    +setFont(36px, 48px, 700)
+    color: $black
+
+  h2
+    margin-top: 32px
+    +setFont(20px, 24px, 700)
+    color: $black
+
+  p
+    margin-top: 8px
+    +setFont(16px, 20px, 400)
+    color: $black
+
+  em
+    font-style: italic
+    color: $gray
+
+  table
+    width: 100%
+    margin-top: 12px
+    border-collapse: collapse
+
+  td
+    padding: 8px 0
+    +setFont(16px, 20px, 400)
+    color: $black
+    border-bottom: 1px solid $stroke3
+
+    &:first-child
+      width: 180px
+      color: $gray
+
+  ul
+    margin-top: 12px
+    padding-left: 20px
+
+  li
+    +setFont(16px, 20px, 400)
+    color: $black
+    list-style: disc
+
+    & + li
+      margin-top: 4px
