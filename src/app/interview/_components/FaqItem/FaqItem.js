@@ -21,7 +21,7 @@ export default function FaqItem({
             Q.
           </span>
 
-          <span className="font_body_m_r">
+          <span className="font_body_l_r">
             {question}
           </span>
         </div>

@@ -9,6 +9,7 @@ import FeatureCard from '@/app/interview/_components/FeatureCard';
 import CompanyCard from '@/app/interview/_components/CompanyCard';
 import FaqItem from '@/app/interview/_components/FaqItem';
 import CoreFeatureCard from '@/app/interview/_components/CoreFeatureCard';
+import GuideCard from '@/app/interview/_components/GuideCard';
 
 // 임시 데이터
 const dummyCompanies = [
@@ -123,7 +124,12 @@ export default function InterviewPage() {
                   />
                 </div>
 
-                <ActionButton text="AI 면접 연습 시작하기" />
+                <ActionButton
+                  text="AI 면접 연습 시작하기"
+                  href="/interview/chat"
+                  className="font_h4"
+                  showArrow
+                />
               </div>
 
               <div className={styles.hero_right}>
@@ -132,7 +138,6 @@ export default function InterviewPage() {
                   alt="AI 면접 로봇"
                   width={650}
                   height={650}
-                  className={styles.hero_image}
                   priority
                 />
               </div>
@@ -185,15 +190,20 @@ export default function InterviewPage() {
           </section>
 
           <section className={styles.feature_section}>
-            <h2 className="font_h3">
+            <h2 className="font_h2">
               🤖 AI 면접의 핵심 기능 설명 🤖
             </h2>
 
             <div className={styles.feature_cards}>
               <CoreFeatureCard
                 variant="green"
-                titleLine1="필요한 면접, 상황에 맞춰"
-                titleLine2="커스터마이징하는 AI 면접 코칭"
+                title={
+                  <>
+                    필요한 면접, 상황에 맞춰
+                    <br />
+                    커스터마이징하는 AI 면접 코칭
+                  </>
+                }
                 description={
                   <>
                     기업, 직무, 전형별로 필요한 면접을
@@ -211,26 +221,81 @@ export default function InterviewPage() {
 
               <CoreFeatureCard
                 variant="yellow"
-                titleLine1="내 자소서 / 이력서와 연계 분석으로"
-                titleLine2="최적화된 질문을 준비하세요!"
+                title={
+                  <>
+                    내 자소서 / 이력서와 연계 분석으로
+                    <br />
+                    최적화된 질문을 준비하세요!
+                  </>
+                }
                 description={
                   <>
-                    기업, 직무, 전형별로 필요한 면접을
+                    내 이력서와 자기소개서를 분석해
                     <br />
-                    직접 선택하고 연습할 수 있어요.
+                    나에게 딱 맞는 질문을 추천드려요.
                   </>
                 }
                 features={[
                   '이력서 기반 질문 생성',
                   '자소서 기반 질문 생성',
-                  '예상 질문 확인',
+                  '예상 질문 리스트 생성',
                 ]}
                 image="/images/feature-resume.png"
               />
             </div>
           </section>
+
+          <section className={styles.guide_section}>
+            <div className={styles.guide_intro}>
+              <h2 className="font_h2">
+                AI 면접 가이드
+              </h2>
+
+              <div className={styles.guide_text}>
+                <p className="font_body_s_b">
+                  처음이 어렵다면?
+                </p>
+                <p className="font_body_s_r">
+                  가이드를 통해 AI면접을
+                  <br />
+                  완벽하게 준비해보세요.
+                </p>
+              </div>
+
+              <ActionButton
+                text="AI 면접 시작하기"
+                variant="purple"
+                className="font_body_s_b"
+              />
+            </div>
+            <div className={styles.guide_robot}>
+              <Image
+                src="/images/AIguide.png"
+                alt="AI 면접 가이드 로봇"
+                width={130}
+                height={210}
+              />
+            </div>
+
+            <div className={styles.guide_cards}>
+              <GuideCard
+                icon="badge"
+                title="AI 면접이란?"
+                description="AI와 채팅하며 실제 면접처럼 질문에 답하고 실전 감각을 익힐 수 있습니다."
+              />
+              <GuideCard
+                icon="thumb_up"
+                title="AI 피드백"
+                description="답변의 장점과 보완할 점을 분석해 개선 방향과 예시 답변을 제공합니다."
+              />
+              <GuideCard
+                icon="calendar_month"
+                title="반복 연습"
+                description="다양한 질문을 반복 연습하며 자신만의 면접 답변을 완성해 보세요."
+              />
+            </div>
+          </section>
         </div>
-        <section className='guide_section'></section>
       </main>
 
       <Footer />
