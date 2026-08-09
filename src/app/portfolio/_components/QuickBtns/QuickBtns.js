@@ -1,6 +1,6 @@
 import styles from './QuickBtns.module.sass';
 
-export default function QuickBtnGroup({}) {
+export default function QuickBtnGroup({ onMoveTop }) {
   return (
     <div className={styles.btns}>
       <button className={styles.btn}>
@@ -11,7 +11,7 @@ export default function QuickBtnGroup({}) {
         <span className={`${styles.icon} material-symbols-outlined`}>add</span>
         <span className={`${styles.text} font_body_m_b`}>업로드</span>
       </button>
-      <button className={styles.btn}>
+      <button className={styles.btn} onClick={onMoveTop}>
         <span className={`${styles.icon} material-symbols-outlined`}>arrow_upward</span>
         <span className={`${styles.text} font_body_m_b`}>이동</span>
       </button>
