@@ -4,29 +4,53 @@ import styles from './DocumentRow.module.sass';
 
 const TYPE_LABEL = { resume: '이력서', cover_letter: '자기소개서' };
 
-export default function DocumentRow({ id, index, docType, title, updatedAt }) {
+// onToggle 을 넘기면 삭제모드가 된다. 편집 버튼을 뺀 나머지 전체가 체크 영역
+export default function DocumentRow({
+  id,
+  index,
+  docType,
+  title,
+  updatedAt,
+  isSelected = false,
+  onToggle,
+}) {
   const tone = docType === 'resume' ? 'green' : 'amber';
+  const Body = onToggle ? 'label' : 'div';
 
   return (
-    <li className={styles.document_row}>
-      <div className={styles.document_row_left}>
+    <li className={`${styles.document_row} ${isSelected ? styles.document_row_selected : ''}`}>
+      <Body className={`${styles.document_row_body} ${onToggle ? styles.document_row_pickable : ''}`}>
+        {onToggle && (
+          <span className={styles.document_row_check}>
+            <input
+              type='checkbox'
+              checked={isSelected}
+              onChange={onToggle}
+              aria-label={`${title} 선택`}
+            />
+            <span className='material-symbols-sharp' aria-hidden='true'>
+              check
+            </span>
+          </span>
+        )}
+
         <span className={`${styles.document_row_index} font_body_s_b`}>{index}</span>
         <span className={`${styles[`document_row_tag_${tone}`]} font_body_s_b`}>
           {TYPE_LABEL[docType]}
         </span>
         <span className={`${styles.document_row_title} font_body_l_b`}>{title}</span>
-      </div>
-
-      <div className={styles.document_row_right}>
         <span className={`${styles.document_row_date} font_body_s_b`}>{updatedAt}</span>
+      </Body>
 
-        <Link href={`/resume/editor?document=${id}`} className={`${styles.document_row_edit} font_body_l_b`}>
-          <span className='material-symbols-sharp' aria-hidden='true'>
-            edit
-          </span>
-          편집
-        </Link>
-      </div>
+      <Link
+        href={`/resume/editor?document=${id}`}
+        className={`${styles.document_row_edit} font_body_l_b`}
+      >
+        <span className='material-symbols-sharp' aria-hidden='true'>
+          edit
+        </span>
+        편집
+      </Link>
     </li>
   );
 }
