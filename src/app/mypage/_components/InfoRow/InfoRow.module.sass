@@ -1,0 +1,54 @@
+@use '@/app/_variables.sass' as *
+
+.info_row
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  gap: 16px
+  padding: 13px 16px
+  background-color: $light_gray
+  border-radius: 12px
+
+.info_row_left
+  display: flex
+  align-items: center
+  min-width: 0
+  gap: 17px
+
+.info_row_title
+  color: $black
+  white-space: nowrap
+
+.info_row_divider
+  flex-shrink: 0
+  width: 1px
+  height: 12px
+  background-color: $stroke2
+
+.info_row_sub
+  color: $gray
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+
+.info_row_right
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+
+.info_row_meta
+  color: $gray
+
+.info_row_badge_green
+  padding: 2px 10px
+  color: $green
+  background-color: $sub_green
+  border-radius: 999px
+  white-space: nowrap
+
+// 퇴사처럼 강조하지 않는 상태
+.info_row_badge_plain
+  color: $gray
+  white-space: nowrap
