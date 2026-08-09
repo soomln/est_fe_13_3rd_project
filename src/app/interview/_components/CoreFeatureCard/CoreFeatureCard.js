@@ -1,25 +1,50 @@
-<section className="core_feature_card">
-  <div className="card_left">
+import Image from 'next/image';
+import './CoreFeatureCard.sass';
 
-    <h3>{title}</h3>
+export default function CoreFeatureCard({
+  titleLine1,
+  titleLine2,
+  description,
+  features,
+  image,
+  variant = 'green',
+}) {
+  return (
+    <article className={`core_feature_card ${variant}`}>
+      <div className="feature_content">
+        <h3 className="font_body_l_b">
+          {titleLine1}
+          <br />
+          {titleLine2}
+        </h3>
 
-    <p>{description}</p>
+        <p className="font_body_s_r">
+          {description}
+        </p>
 
-    <ul className="feature_list">
-      {list.map((item) => (
-        <li key={item}>
-          <span className="material-symbols-rounded">
-            check
-          </span>
+        <ul className="feature_list">
+          {features.map((feature) => (
+            <li key={feature}>
+              <span className="material-symbols-rounded">
+                check
+              </span>
 
-          {item}
-        </li>
-      ))}
-    </ul>
+              <span className="font_body_s_r">
+                {feature}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-  </div>
-
-  <div className="card_right">
-    <Image />
-  </div>
-</section>
+      <div className="feature_image">
+        <Image
+          src={image}
+          alt=""
+          width={220}
+          height={180}
+        />
+      </div>
+    </article>
+  );
+}

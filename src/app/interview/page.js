@@ -8,6 +8,7 @@ import ActionButton from '@/app/interview/_components/ActionButton';
 import FeatureCard from '@/app/interview/_components/FeatureCard';
 import CompanyCard from '@/app/interview/_components/CompanyCard';
 import FaqItem from '@/app/interview/_components/FaqItem';
+import CoreFeatureCard from '@/app/interview/_components/CoreFeatureCard';
 
 // 임시 데이터
 const dummyCompanies = [
@@ -140,7 +141,6 @@ export default function InterviewPage() {
           </div>
         </section>
 
-        {/* 관심기업 + 자주 묻는 질문 */}
         <div className="container">
           <section className={styles.content_section}>
             <section className={styles.company_section}>
@@ -183,12 +183,53 @@ export default function InterviewPage() {
               </div>
             </section>
           </section>
+
+          <section className={styles.feature_section}>
+            <h2 className="font_h3">
+              🤖 AI 면접의 핵심 기능 설명 🤖
+            </h2>
+
+            <div className={styles.feature_cards}>
+              <CoreFeatureCard
+                variant="green"
+                titleLine1="필요한 면접, 상황에 맞춰"
+                titleLine2="커스터마이징하는 AI 면접 코칭"
+                description={
+                  <>
+                    기업, 직무, 전형별로 필요한 면접을
+                    <br />
+                    직접 선택하고 연습할 수 있어요.
+                  </>
+                }
+                features={[
+                  '기업별 면접 보기',
+                  '채용공고별 면접 보기',
+                  '직무별 면접 보기',
+                ]}
+                image="/images/feature-interview.png"
+              />
+
+              <CoreFeatureCard
+                variant="yellow"
+                titleLine1="내 자소서 / 이력서와 연계 분석으로"
+                titleLine2="최적화된 질문을 준비하세요!"
+                description={
+                  <>
+                    기업, 직무, 전형별로 필요한 면접을
+                    <br />
+                    직접 선택하고 연습할 수 있어요.
+                  </>
+                }
+                features={[
+                  '이력서 기반 질문 생성',
+                  '자소서 기반 질문 생성',
+                  '예상 질문 확인',
+                ]}
+                image="/images/feature-resume.png"
+              />
+            </div>
+          </section>
         </div>
-
-        {/* 핵심 기능 */}
-        <section className='feature_section'></section>
-
-        {/* AI 면접 가이드 */}
         <section className='guide_section'></section>
       </main>
 

@@ -1,0 +1,11 @@
+.container {
+  max-height: 100vh;
+  padding: 0 7.625rem;
+  overflow-y: auto;
+}
+.container .contents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 0;
+}/*# sourceMappingURL=Contents.module.css.map */
