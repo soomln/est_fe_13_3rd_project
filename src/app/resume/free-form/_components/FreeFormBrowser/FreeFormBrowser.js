@@ -6,8 +6,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Pagination from '@/app/_components/common/Pagination';
 import CategoryBtn from '@/app/resume/_components/CategoryBtn';
 import TemplateCard from '@/app/resume/_components/TemplateCard';
-import SearchBar from '@/app/resume/free_form/_components/SearchBar';
-import SortBtn from '@/app/resume/free_form/_components/SortBtn';
+import SearchBar from '@/app/resume/free-form/_components/SearchBar';
+import SortBtn from '@/app/resume/free-form/_components/SortBtn';
 import styles from './FreeFormBrowser.module.sass';
 
 const PAGE_SIZE = 16;
