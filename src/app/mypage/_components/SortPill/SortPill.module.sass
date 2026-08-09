@@ -1,0 +1,59 @@
+@use '@/app/_variables.sass' as *
+
+.sort_pill
+  position: relative
+  flex-shrink: 0
+
+.sort_pill_toggle
+  display: inline-flex
+  align-items: center
+  box-sizing: border-box
+  gap: 4px
+  height: 40px
+  padding: 0 16px
+  color: $gray
+  background-color: $white
+  border: 0
+  border-radius: 50px
+  cursor: pointer
+  white-space: nowrap
+  transition: background-color 0.2s ease
+
+  &:hover
+    background-color: $light_gray
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.sort_pill_list
+  position: absolute
+  top: calc(100% + 4px)
+  right: 0
+  z-index: 2
+  box-sizing: border-box
+  min-width: 100%
+  padding: 4px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12)
+
+.sort_pill_option
+  display: block
+  width: 100%
+  padding: 8px 12px
+  color: $gray
+  background-color: transparent
+  border: 0
+  border-radius: 4px
+  text-align: left
+  white-space: nowrap
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease
+
+  &:hover
+    background-color: $light_gray
+
+.sort_pill_option_active
+  color: $green
+  background-color: $sub_green
