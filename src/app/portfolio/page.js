@@ -40,10 +40,10 @@ export default function Portpolio() {
   //================test================/
 
   const bestPortfolioList = [];
-  items.slice(0, 7).forEach((item) => {
+  items.map((item) => {
     bestPortfolioList.push(
-      <SwiperSlide>
-        <PortfolioCard key={item.id} item={item} onClick={() => {}} />
+      <SwiperSlide key={item.id}>
+        <PortfolioCard item={item} onClick={() => {}} />
       </SwiperSlide>,
     );
   });
@@ -93,7 +93,7 @@ export default function Portpolio() {
   };
 
   const portfolioList = [];
-  items.forEach((item) => {
+  items.map((item) => {
     portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
   });
 
