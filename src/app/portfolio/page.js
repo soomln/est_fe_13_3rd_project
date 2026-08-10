@@ -42,8 +42,8 @@ export default function Portpolio() {
   const bestPortfolioList = [];
   items.map((item) => {
     bestPortfolioList.push(
-      <SwiperSlide>
-        <PortfolioCard key={item.id} item={item} onClick={() => {}} />
+      <SwiperSlide key={item.id}>
+        <PortfolioCard item={item} onClick={() => {}} />
       </SwiperSlide>,
     );
   });
