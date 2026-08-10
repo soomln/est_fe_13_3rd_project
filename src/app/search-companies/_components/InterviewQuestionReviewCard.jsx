@@ -1,13 +1,16 @@
 import Bookmark from "@/app/_components/common/Bookmark";
-import styles from "../_components/InterviewReviewCard.module.sass"
+import styles from "../_components/InterviewQuestionReviewCard.module.sass"
 
 
-export default function InterviewReviewCard({review, onBookmarkClick, onClick}){
+export default function InterviewQuestionReviewCard({review, onBookmarkClick, onClick}){
+  const questions = review.questions;
+
+
   return (
     <div className={styles.review_card} onClick={onClick}>
-      {/* <div className={styles.bookmark_wrapper}>
+      <div className={styles.bookmark_wrapper}>
         {<Bookmark size='large' onClick={onBookmarkClick} />}
-      </div> */}
+      </div>
 
       <div className={styles.card_header}>
 
@@ -37,8 +40,11 @@ export default function InterviewReviewCard({review, onBookmarkClick, onClick}){
       </div>
 
       <div className={styles.content}>
-        <h1>{review.title}</h1>
-        <p>{review.content}</p>
+        {questions.map((q, idx) => (
+          <p key={idx} className={`font_body_m_r ${styles.question_item}`}>
+            {q}
+          </p>
+        ))}
       </div>
       <div>
 
