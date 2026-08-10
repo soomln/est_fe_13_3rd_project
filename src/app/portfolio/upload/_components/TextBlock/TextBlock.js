@@ -45,6 +45,14 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
     return true;
   };
 
+  const handleInput = (e) => {
+    const editor = e.currentTarget;
+
+    if (editor.textContent.trim() === '') {
+      editor.innerHTML = '';
+    }
+  };
+
   const applyCommand = (command, value = null) => {
     if (!restoreSelection()) return;
 
@@ -111,7 +119,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='굵게'
           >
-            <span className='material-symbols-outlined'>format_bold</span>
+            <span className='material-symbols-sharp'>format_bold</span>
           </button>
 
           <button
@@ -122,7 +130,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='밑줄'
           >
-            <span className='material-symbols-outlined'>format_underlined</span>
+            <span className='material-symbols-sharp'>format_underlined</span>
           </button>
 
           <button
@@ -133,7 +141,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='왼쪽 정렬'
           >
-            <span className='material-symbols-outlined'>format_align_left</span>
+            <span className='material-symbols-sharp'>format_align_left</span>
           </button>
 
           <button
@@ -144,7 +152,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='가운데 정렬'
           >
-            <span className='material-symbols-outlined'>format_align_center</span>
+            <span className='material-symbols-sharp'>format_align_center</span>
           </button>
 
           <button
@@ -155,7 +163,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='오른쪽 정렬'
           >
-            <span className='material-symbols-outlined'>format_align_right</span>
+            <span className='material-symbols-sharp'>format_align_right</span>
           </button>
 
           <button
@@ -166,7 +174,7 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             }}
             aria-label='링크'
           >
-            <span className='material-symbols-outlined'>link</span>
+            <span className='material-symbols-sharp'>link</span>
           </button>
 
           <select
@@ -195,17 +203,6 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
               32pt
             </option>
           </select>
-
-          <button
-            type='button'
-            onMouseDown={(e) => {
-              e.preventDefault();
-              removeBlock(block.id);
-            }}
-            aria-label='삭제'
-          >
-            <span className='material-symbols-outlined'>delete</span>
-          </button>
         </div>
       )}
 
@@ -217,9 +214,21 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
           suppressContentEditableWarning
           data-placeholder='여기에 텍스트 입력...'
           onFocus={() => setIsFocused(true)}
+          onInput={handleInput}
           onMouseUp={saveSelection}
           onKeyUp={saveSelection}
         />
+        <button
+          type='button'
+          className={styles.close_btn}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            removeBlock(block.id);
+          }}
+          aria-label='삭제'
+        >
+          <span className='material-symbols-sharp'>close</span>
+        </button>
       </div>
     </div>
   );
