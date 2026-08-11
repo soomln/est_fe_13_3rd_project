@@ -1,0 +1,80 @@
+@use '@/app/_variables.sass' as *
+
+.company_search
+  width: 100%
+  height: 270px
+  padding: 20px
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 10px
+  border-radius: 10px
+  background: $warning_bg
+  overflow: hidden
+
+  h3
+    margin: 0
+    color: $black
+
+.company_search_input
+  width: 100%
+  height: 40px
+  padding: 0 16px 0 20px
+  box-sizing: border-box
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-shrink: 0
+  border: 1px solid $warning_stroke
+  border-radius: 30px
+  background: $white
+  color: $gray
+
+.company_search_button
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 0
+  border: 0
+  background: transparent
+  color: $warning
+  cursor: pointer
+
+  .material-symbols-outlined
+    font-size: 20px
+
+.company_list
+  width: 100%
+  max-height: 75px
+  margin: 0
+  padding: 0
+  list-style: none
+  display: flex
+  flex-direction: column
+  gap: 5px
+  overflow-y: auto
+
+  &::-webkit-scrollbar
+    width: 4px
+
+  &::-webkit-scrollbar-track
+    background: transparent
+
+  &::-webkit-scrollbar-thumb
+    background: $warning
+    border-radius: 4px
+
+.company_list_item
+  display: flex
+  align-items: center
+  gap: 8px
+  flex-shrink: 0
+  color: $gray
+
+.company_checkbox
+  width: 16px
+  height: 16px
+  flex-shrink: 0
+  color: $warning
+  font-size: 16px
