@@ -1,16 +1,48 @@
 @use '@/app/_variables.sass' as *
 
+// Figma에 정의되지 않은 one-off 컬러 (stats 전용)
+$hero_blue: #155DFC
+$hero_sub_blue: #DBEAFE
+
 .stat_item
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 6px
+
+.stat_top
   display: flex
   align-items: center
   gap: 6px
 
 .stat_icon
-  font-size: 18px
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 32px
+  height: 32px
+  border-radius: 50%
+  font-size: 14px
+
+.tone_green
+  background-color: $sub_green
   color: $green
+
+.tone_blue
+  background-color: $hero_sub_blue
+  color: $hero_blue
+
+.tone_yellow
+  background-color: $sub_yellow
+  color: $amber
+
+.tone_purple
+  background-color: $sub_purple
+  color: $purple
 
 .stat_label
   color: $gray
+  white-space: nowrap
 
 .stat_value
   color: $black

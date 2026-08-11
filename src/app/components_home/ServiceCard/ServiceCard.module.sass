@@ -1,6 +1,7 @@
 @use '@/app/_variables.sass' as *
 
 .card
+  box-sizing: border-box
   display: flex
   flex-direction: column
   align-items: center
@@ -13,7 +14,6 @@
   border-radius: 20px
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06)
 
-// 피그마 아이콘 배경 전용 컬러 (프로젝트 공용 토큰에는 없는 일회성 그라데이션/보더)
 .icon_box
   display: flex
   align-items: center
@@ -21,14 +21,37 @@
   flex-shrink: 0
   width: 72px
   height: 72px
-  background: linear-gradient(140deg, #f0fdf4 3.67%, #dcfce7 96.33%)
-  border: 1px solid #a7f3d0
   border-radius: 16px
-  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.1)
 
 .icon
-  font-size: 28px
-  color: $green
+  width: 50px
+  height: 50px
+
+// 피그마 카드별 아이콘 배경 테마 (프로젝트 공용 토큰에는 없는 일회성 그라데이션/보더) — 아이콘 자체는 Figma에서 내보낸 다색 SVG라 색을 따로 입힐 필요 없음
+.tone_green
+  background: linear-gradient(140deg, #f0fdf4 3.67%, #dcfce7 96.33%)
+  border: 1px solid #a7f3d0
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.1)
+
+.tone_sky
+  background: linear-gradient(140deg, #f0f9ff 3.67%, #e0f2fe 96.33%)
+  border: 1px solid #7dd3fc
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1)
+
+.tone_amber
+  background: linear-gradient(140deg, #fffbeb 3.67%, #fef3c7 96.33%)
+  border: 1px solid #fde68a
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1)
+
+.tone_orange
+  background: linear-gradient(140deg, #fff7ed 3.67%, #ffedd5 96.33%)
+  border: 1px solid #ffe2b6
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.1)
+
+.tone_violet
+  background-color: #f5f3ff
+  border: 1px solid #c4b5fd
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.1)
 
 .text_box
   display: flex
