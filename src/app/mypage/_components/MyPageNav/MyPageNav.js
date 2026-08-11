@@ -9,7 +9,7 @@ const MENUS = [
   { href: '/mypage', icon: 'account_circle', label: '프로필' },
   { href: '/mypage/documents', icon: 'insert_drive_file', label: '문서함' },
   { href: '/mypage/portfolio', icon: 'folder', label: '포트폴리오' },
-  { href: '/mypage/interview_scrap', icon: 'bookmark', label: 'AI 면접 스크랩' },
+  { href: '/mypage/interview-scrap', icon: 'bookmark', label: 'AI 면접 스크랩' },
   { href: '/mypage/activity', icon: 'vital_signs', label: '내 활동' },
   { href: '/mypage/account', icon: 'settings', label: '계정 설정' },
 ];

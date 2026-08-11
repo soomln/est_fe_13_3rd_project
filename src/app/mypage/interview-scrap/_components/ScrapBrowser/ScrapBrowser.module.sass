@@ -1,0 +1,158 @@
+@use '@/app/_variables.sass' as *
+
+.scrap_browser_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 24px
+
+.scrap_browser_head_text
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.scrap_browser_head_title
+  color: $black
+
+.scrap_browser_head_desc
+  color: $gray
+
+.scrap_browser_head_btns
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+
+.scrap_browser_ghost_btn,
+.scrap_browser_practice_btn
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  border-radius: 8px
+  text-decoration: none
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.scrap_browser_ghost_btn
+  color: $gray
+  background-color: $white
+  border: 1px solid $stroke2
+  transition: color 0.2s ease, border-color 0.2s ease
+
+  &:hover
+    color: $green
+    border-color: $green
+
+.scrap_browser_practice_btn
+  color: $white
+  background-color: $green
+  border: 1px solid $green
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.scrap_browser
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 20px
+  padding: 32px 33px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 20px
+
+.scrap_browser_filter
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 16px
+
+.scrap_browser_count
+  color: $black
+
+.scrap_browser_tools
+  display: flex
+  align-items: center
+  gap: 8px
+
+.scrap_browser_list
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+.scrap_browser_empty
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding: 100px 0
+  text-align: center
+
+.scrap_browser_empty_icon
+  font-size: 48px
+  color: $stroke1
+
+.scrap_browser_empty_title
+  margin-top: 16px
+  color: $black
+
+.scrap_browser_empty_desc
+  margin-top: 8px
+  color: $gray
+
+// 면접 연습 유도 배너
+.scrap_browser_cta
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  gap: 24px
+  padding: 32px 120px
+  background-color: $light_green
+  border-radius: 18px
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.25))
+
+.scrap_browser_cta_text
+  display: flex
+  align-items: center
+  gap: 16px
+
+.scrap_browser_cta_icon
+  flex-shrink: 0
+  width: 64px
+  height: 62px
+  object-fit: contain
+
+.scrap_browser_cta_copy
+  display: flex
+  flex-direction: column
+  gap: 4px
+
+.scrap_browser_cta_title
+  color: $black
+
+.scrap_browser_cta_desc
+  color: $gray
+
+.scrap_browser_cta_btn
+  flex-shrink: 0
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  color: $white
+  background-color: $green
+  border-radius: 8px
+  text-decoration: none
+  white-space: nowrap
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.scrap_browser_pagination
+  display: flex
+  justify-content: center
+  padding: 12px 0 16px
