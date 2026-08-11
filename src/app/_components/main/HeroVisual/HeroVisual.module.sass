@@ -1,0 +1,407 @@
+@use '@/app/_variables.sass' as *
+
+// Figma에 정의되지 않은 one-off 컬러 (이 컴포넌트 전용)
+$card-title: #101828
+$card-subtitle: #99A1AF
+$card-body-dark: #1E2939
+$card-body-mid: #364153
+$card-tag-bg: #F3F4F6
+$qa-bg: #F9FAFB
+$qa-green-bg: #DCFCE7
+$qa-green-text: #008236
+$qa-tag-bg: #F0FDF4
+$new-badge-bg: #FEF3C6
+$new-badge-text: #BB4D00
+$review-border: #FDE68A
+$review-grad1: #FFFBEB
+$review-grad2: #FEF3C7
+$review-badge-bg: #FFFBEB
+$review-badge-text: #E17100
+$portfolio-border: #A7F3D0
+$portfolio-grad1: #F0FDF4
+$portfolio-grad2: #DCFCE7
+$team-border: #C4B5FD
+$team-grad1: #F5F3FF
+$team-grad2: #EDE9FE
+$team-tag-bg: #F5F3FF
+$team-tag-border: #EDE9FE
+$purple-dot: #8E51FF
+$resume-border: #93C5FD
+$resume-grad1: #EFF6FF
+$resume-grad2: #DBEAFE
+$resume-tag-bg: #EFF6FF
+$resume-tag-text: #155DFC
+$progress-bg: #F3F4F6
+$progress-fill: #00C950
+$card-border: rgba(0, 0, 0, 0.06)
+
+.visual
+  position: relative
+  width: 832px
+  height: 491px
+  flex-shrink: 0
+
+  @media (max-width: 1200px)
+    display: none
+
+// ===== 장식 (점선 타원 + 별/점) =====
+// 좌표·색상 모두 Figma 장식 레이어(node 275:516)만 격리 스크린샷 떠서
+// 픽셀 샘플링으로 역산한 실측치 (center 405,233 / rx 365 / ry 178 타원,
+// 별은 진한 원색 44% 투명도, 점은 프로젝트 sub_ 변수와 픽셀이 정확히 일치)
+
+$star-sky: #4FB8ED
+$star-violet: #8F4FFE
+$star-emerald: #3DBC6D
+$star-amber: #FEB700
+$star-rose: #FB1850
+$ring-color: #B7B7B7
+
+.decor
+  position: absolute
+  inset: 0
+
+.deco_ring
+  position: absolute
+  left: 40px
+  top: 55px
+  width: 730px
+  height: 356px
+  border: 2px dashed $ring-color
+  border-radius: 50%
+
+.deco_star
+  position: absolute
+  font-size: 16px
+  opacity: 0.44
+  font-variation-settings: 'FILL' 1
+
+.star_0
+  left: 618px
+  top: 289px
+  color: $star-sky
+.star_1
+  left: 627px
+  top: 44px
+  color: $star-violet
+.star_2
+  left: 448px
+  top: 394px
+  color: $star-emerald
+.star_3
+  left: 152px
+  top: 154px
+  color: $star-amber
+.star_4
+  left: 5px
+  top: 58px
+  color: $star-emerald
+.star_5
+  left: 404px
+  top: 20px
+  color: $star-rose
+.star_6
+  left: 135px
+  top: 365px
+  color: $resume-tag-text
+
+.deco_dot
+  position: absolute
+  width: 10px
+  height: 10px
+  border-radius: 50%
+
+.dot_0
+  left: 548px
+  top: 33px
+  background-color: $sub_green
+.dot_1
+  left: 91px
+  top: 193px
+  background-color: $sub_purple
+.dot_2
+  left: 666px
+  top: 264px
+  background-color: $sub_green
+.dot_3
+  left: 254px
+  top: 411px
+  background-color: $sub_yellow
+.dot_4
+  left: 275px
+  top: 0
+  background-color: $sub_yellow
+
+// ===== 공용 카드 =====
+
+.card
+  position: absolute
+  box-sizing: border-box
+  background-color: $white
+  border: 1px solid $card-border
+  border-radius: 16px
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06))
+
+.mini_head
+  display: flex
+  align-items: center
+  gap: 8px
+
+.mini_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  box-sizing: border-box
+  width: 32px
+  height: 32px
+  border-radius: 14px
+  border: 1px solid transparent
+
+  span
+    font-size: 16px
+
+.icon_yellow
+  border-color: $review-border
+  background: linear-gradient(140deg, $review-grad1 4%, $review-grad2 96%)
+  span
+    color: $review-badge-text
+
+.icon_green
+  border-color: $portfolio-border
+  background: linear-gradient(140deg, $portfolio-grad1 4%, $portfolio-grad2 96%)
+  span
+    color: $green
+
+.icon_purple
+  border-color: $team-border
+  background: linear-gradient(140deg, $team-grad1 4%, $team-grad2 96%)
+  span
+    color: $purple
+
+.icon_blue
+  border-color: $resume-border
+  background: linear-gradient(140deg, $resume-grad1 4%, $resume-grad2 96%)
+  span
+    color: $resume-tag-text
+
+.mini_title
+  color: $card-title
+
+.mini_pill
+  margin-top: 8px
+  padding: 8px
+  background-color: $qa-bg
+  border-radius: 10px
+
+.mini_pill_text
+  color: $card-body-dark
+
+.mini_desc
+  margin-top: 6px
+  color: $card-subtitle
+
+.mini_desc_dark
+  color: $card-body-mid
+
+.mini_footer
+  display: flex
+  align-items: center
+  justify-content: space-between
+  margin-top: 8px
+
+.footer_date
+  color: $card-subtitle
+
+.footer_badge
+  padding: 2px 6px
+  color: $review-badge-text
+  background-color: $review-badge-bg
+  border-radius: 999px
+
+.tag_row
+  display: flex
+  gap: 4px
+  margin-top: 6px
+
+.gray_tag
+  padding: 2px 6px
+  color: $gray
+  background-color: $card-tag-bg
+  border-radius: 8px
+
+.purple_tag
+  padding: 3px 7px
+  color: $purple
+  background-color: $team-tag-bg
+  border: 1px solid $team-tag-border
+  border-radius: 4px
+
+.meta_row
+  display: flex
+  align-items: center
+  justify-content: space-between
+  margin-top: 6px
+  color: $card-subtitle
+
+.meta_gray
+  color: $card-subtitle
+
+.status_green
+  color: $green
+
+.blue_tag
+  padding: 2px 6px
+  color: $resume-tag-text
+  background-color: $resume-tag-bg
+  border-radius: 999px
+
+.team_recruit
+  display: flex
+  align-items: center
+  gap: 6px
+  margin-top: 10px
+
+.purple_dot
+  width: 6px
+  height: 6px
+  border-radius: 50%
+  background-color: $purple-dot
+
+.progress_track
+  margin-top: 4px
+  width: 100%
+  height: 6px
+  background-color: $progress-bg
+  border-radius: 999px
+  overflow: hidden
+
+.progress_fill
+  height: 100%
+  background-color: $progress-fill
+  border-radius: 999px
+
+// ===== 개별 카드 위치 =====
+
+.review_card
+  left: 55px
+  top: 0
+  width: 170px
+  padding: 15px
+
+.portfolio_card
+  left: 584px
+  top: 117px
+  width: 172px
+  padding: 15px
+
+.team_card
+  left: 563px
+  top: 355px
+  width: 171px
+  padding: 15px
+
+.resume_card
+  left: 20px
+  top: 246px
+  width: 172px
+  padding: 15px
+
+// ===== 중앙 AI 예상 질문 카드 =====
+
+.qna_card
+  left: 233px
+  top: 88px
+  width: 314px
+  padding: 17px 21px
+  display: flex
+  flex-direction: column
+  gap: 16px
+  border-radius: 16px
+  box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.13)
+
+.qna_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+.qna_head_left
+  display: flex
+  align-items: center
+  gap: 10px
+
+.qna_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  box-sizing: border-box
+  width: 36px
+  height: 36px
+  border-radius: 14px
+  background-color: $green
+  filter: drop-shadow(0 3px 5px rgba(22, 163, 74, 0.35))
+
+  span
+    font-size: 20px
+    color: $white
+
+.qna_title
+  color: $card-title
+
+.qna_subtitle
+  color: $card-subtitle
+
+.qna_new_badge
+  flex-shrink: 0
+  padding: 2px 8px
+  color: $new-badge-text
+  background-color: $new-badge-bg
+  border-radius: 999px
+
+.qna_list
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.qna_item
+  display: flex
+  align-items: center
+  gap: 8px
+  padding: 8px 10px
+  background-color: $qa-bg
+  border-radius: 14px
+
+.qna_q
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 16px
+  height: 16px
+  font-size: 9px
+  font-weight: 700
+  color: $qa-green-text
+  background-color: $qa-green-bg
+  border-radius: 999px
+
+.qna_question
+  color: $card-body-mid
+
+.qna_tags
+  display: flex
+  gap: 6px
+
+.qna_tag
+  padding: 3px 9px
+  color: $qa-green-text
+  background-color: $qa-tag-bg
+  border: 1px solid $qa-green-bg
+  border-radius: 999px
+
+.qna_btn
+  height: 40px
+  color: $white
+  background-color: $green
+  border: none
+  border-radius: 14px
+  cursor: pointer
