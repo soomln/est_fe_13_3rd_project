@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import styles from './CustomSetting.module.sass';
 
-export default function CustomSetting({ bgColor, onSetColor, onSetGap }) {
-  const [gap, setGap] = useState(Number(16));
+export default function CustomSetting({ bgColor, onSetColor, gap, onSetGap }) {
   const minGap = 0;
   const maxGap = 64;
   const gapPercent = ((gap - minGap) / (maxGap - minGap)) * 100;
@@ -39,7 +38,7 @@ export default function CustomSetting({ bgColor, onSetColor, onSetGap }) {
           max='64'
           value={gap}
           onChange={(e) => {
-            setGap(Number(e.target.value));
+            onSetGap(Number(e.target.value));
           }}
           className={styles.slider}
           style={{
