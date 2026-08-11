@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -33,7 +33,9 @@ export default function PortfolioBrowser({ portfolios }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [selectedIds, setSelectedIds] = useState([]);
 
+  const isDeleteMode = searchParams.get('mode') === 'delete';
   const scope = searchParams.get('scope') ?? '';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
@@ -68,6 +70,16 @@ export default function PortfolioBrowser({ portfolios }) {
   const currentPage = Math.min(page, totalPages);
   const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
+
+  const toggleOne = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(isAllSelected ? [] : items.map((item) => item.id));
+  };
+
   return (
     <>
       <div className={styles.portfolio_browser_head}>
@@ -79,24 +91,63 @@ export default function PortfolioBrowser({ portfolios }) {
         </div>
 
         <div className={styles.portfolio_browser_head_btns}>
-          <Link
-            href='/mypage/portfolio?mode=delete'
-            className={`${styles.portfolio_browser_ghost_btn} font_body_l_b`}
-          >
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              delete
-            </span>
-            삭제
-          </Link>
+          {isDeleteMode ? (
+            <>
+              <Link
+                href='/mypage/portfolio'
+                className={`${styles.portfolio_browser_ghost_btn} font_body_l_b`}
+                onClick={() => setSelectedIds([])}
+              >
+                취소
+              </Link>
 
-          <Link href='/portfolio' className={`${styles.portfolio_browser_new_btn} font_body_l_b`}>
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              add
-            </span>
-            등록하기
-          </Link>
+              <button
+                type='button'
+                className={`${styles.portfolio_browser_ghost_btn} font_body_l_b`}
+                onClick={toggleAll}
+              >
+                {isAllSelected ? '선택 해제' : '전체 선택'}
+              </button>
+
+              <button
+                type='button'
+                className={`${styles.portfolio_browser_delete_btn} font_body_l_b`}
+                disabled={selectedIds.length === 0}
+              >
+                선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href='/mypage/portfolio?mode=delete'
+                className={`${styles.portfolio_browser_ghost_btn} font_body_l_b`}
+              >
+                <span className='material-symbols-sharp' aria-hidden='true'>
+                  delete
+                </span>
+                삭제
+              </Link>
+
+              <Link href='/portfolio' className={`${styles.portfolio_browser_new_btn} font_body_l_b`}>
+                <span className='material-symbols-sharp' aria-hidden='true'>
+                  add
+                </span>
+                등록하기
+              </Link>
+            </>
+          )}
         </div>
       </div>
+
+      {isDeleteMode && (
+        <p className={`${styles.portfolio_browser_notice} font_body_m_b`} role='status'>
+          <span className='material-symbols-sharp' aria-hidden='true'>
+            info
+          </span>
+          삭제 모드입니다. 삭제할 포트폴리오를 체크한 뒤 우측 상단 “선택 삭제”를 눌러주세요.
+        </p>
+      )}
 
       <div className={styles.portfolio_browser}>
         <div className={styles.portfolio_browser_filter}>
@@ -109,6 +160,12 @@ export default function PortfolioBrowser({ portfolios }) {
                 onClick={() => updateQuery({ scope: item.value, page: 1 })}
               />
             ))}
+
+            {isDeleteMode && (
+              <span className={`${styles.portfolio_browser_guide} font_body_m_b`}>
+                삭제할 포트폴리오를 선택해주세요
+              </span>
+            )}
           </div>
 
           <div className={styles.portfolio_browser_tools}>
@@ -131,7 +188,12 @@ export default function PortfolioBrowser({ portfolios }) {
               <PortfolioCard
                 key={item.id}
                 item={item}
-                onClick={() => router.push(`/portfolio/${item.id}`)}
+                onClick={() => {
+                  if (isDeleteMode) toggleOne(item.id);
+                  else router.push(`/portfolio/${item.id}`);
+                }}
+                isSelected={selectedIds.includes(item.id)}
+                onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
               />
             ))}
           </ul>
