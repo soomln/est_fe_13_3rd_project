@@ -6,7 +6,7 @@ import styles from './ReviewCard.module.sass';
  */
 export default function ReviewCard({
   companyLogo = null,
-  companyName = '기업명',
+  companyName = '',
   difficulty,
   result,
   channel,
@@ -21,13 +21,13 @@ export default function ReviewCard({
   return (
     <div className={styles.review_card} onClick={onClick}>
       <div className={styles.bookmark_wrapper}>
-        {companyLogo && <Bookmark size='large' onClick={onBookmarkClick} />}
+        <Bookmark size='large' onClick={onBookmarkClick} />
       </div>
 
       <div className={styles.card_header}>
         <div className={styles.company_info}>
           {companyLogo && <img src={companyLogo} alt={`${companyName} 로고`} className={styles.logo_img} />}
-          <span className={`font_body_m_b ${styles.company_name}`}>{companyName}</span>
+          {companyName && <span className={`font_body_m_b ${styles.company_name}`}>{companyName}</span>}
         </div>
 
         <div className={styles.meta_line}>
