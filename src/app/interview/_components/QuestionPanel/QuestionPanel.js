@@ -1,69 +1,59 @@
 import './QuestionPanel.sass';
-import ActionButton from '../ActionButton';
+import QuestionListButton from '../QuestionListButton';
 
-export default function QuestionPanel({
-  questions,
-  selectedQuestion,
-  onSelect,
-  onStart,
-}) {
+export default function QuestionList() {
+  const questions = [
+    {
+      title: '전체',
+      description: '처음부터 모든 질문을 순서대로 진행합니다.',
+    },
+    {
+      title: '자기소개',
+      description: '본인에 대해 간단히 소개해주세요.',
+    },
+    {
+      title: '기술 질문 1',
+      description: '지원한 직무와 관련된 기술 질문입니다.',
+    },
+    {
+      title: '기술 질문 2',
+      description: '기술 이해도를 확인하는 질문입니다.',
+    },
+    {
+      title: '인성 질문',
+      description: '성격, 가치관에 대한 질문입니다.',
+    },
+    {
+      title: '마무리 질문',
+      description: '마지막으로 자유롭게 적어주세요.',
+    },
+  ];
+
   return (
-    <section className="question_panel">
-      <h2 className="panel_title font_h3">
-        질문 리스트
-      </h2>
-
-      <div className="question_list">
-        {/* 항상 표시되는 전체 */}
-        <label className="question_item">
-          <input
-            type="radio"
-            name="question"
-            checked={selectedQuestion === 'all'}
-            onChange={() => onSelect('all')}
-          />
-
-          <div className="question_content">
-            <p className="question_title font_h4">
-              전체
-            </p>
-
-            <p className="question_description font_body_m_r">
-              처음부터 모든 질문을 순서대로 진행합니다.
-            </p>
-          </div>
-        </label>
-
-        {/* AI가 생성한 질문 */}
+    <aside className="question_panel">
+      <h2 className="font_h3">질문 리스트</h2>
+      <ul className="question_list">
         {questions.map((question) => (
-          <label
-            key={question.id}
-            className="question_item"
-          >
-            <input
-              type="radio"
-              name="question"
-              checked={selectedQuestion === question.id}
-              onChange={() => onSelect(question.id)}
-            />
-
-            <div className="question_content">
-              <p className="question_title font_h4">
+          <li key={question.title}>
+            <span className="material-symbols-outlined">
+              check_box_outline_blank
+            </span>
+            <div>
+              <strong className="font_h4">
                 {question.title}
-              </p>
+              </strong>
 
-              <p className="question_description font_body_m_r">
+              <p className="font_body_m_r">
                 {question.description}
               </p>
             </div>
-          </label>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <ActionButton
-        text="선택한 질문으로 시작하기"
-        onClick={onStart}
-      />
-    </section>
+      <QuestionListButton>
+        선택한 질문으로 시작하기
+      </QuestionListButton>
+    </aside>
   );
 }
