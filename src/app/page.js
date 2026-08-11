@@ -6,12 +6,13 @@ import Footer from '@/app/_components/common/Footer';
 import ServiceCard from '@/app/_components/main/ServiceCard';
 import StatItem from '@/app/_components/main/StatItem';
 import PortfolioPreview from '@/app/_components/main/PortfolioPreview';
+import HeroVisual from '@/app/_components/main/HeroVisual';
 
 const HERO_STATS = [
-  { icon: 'group', value: '10,000+', label: '회원' },
-  { icon: 'work', value: '5,000+', label: '포트폴리오' },
-  { icon: 'forum', value: '10,000+', label: '면접 후기' },
-  { icon: 'sentiment_satisfied', value: '10,000+', label: '만족도' },
+  { icon: 'group', value: '10,000+', label: '회원', tone: 'green' },
+  { icon: 'folder_open', value: '5,000+', label: '포트폴리오', tone: 'blue' },
+  { icon: 'forum', value: '10,000+', label: '면접 후기', tone: 'yellow' },
+  { icon: 'sentiment_satisfied', value: '10,000+', label: '만족도', tone: 'purple' },
 ];
 
 const SERVICES = [
@@ -92,28 +93,51 @@ export default function Home() {
         {/* 1. 히어로 */}
         <section className={styles.hero}>
           <div className={`container ${styles.hero_inner}`}>
-            <span className={`font_body_s_b ${styles.hero_badge}`}>AI 기반 취업 준비 플랫폼</span>
+            <div className={styles.hero_content}>
+              <span className={`font_body_s_b ${styles.hero_badge}`}>
+                <span className='material-symbols-rounded' aria-hidden='true'>
+                  auto_awesome
+                </span>
+                AI 기반 취업 준비 플랫폼
+              </span>
 
-            <h1 className={`font_title ${styles.hero_title}`}>당신의 취업 과정을 최적화 하세요</h1>
+              <h1 className={`font_title ${styles.hero_title}`}>
+                <span className={styles.hero_title_line}>당신의 취업 과정을</span>
+                <span className={styles.hero_title_line}>
+                  <span className={styles.hero_title_highlight}>최적화 </span>
+                  하세요
+                </span>
+              </h1>
 
-            <p className={`font_body_l_r ${styles.hero_desc}`}>
-              이력서·자기소개서 작성, AI 면접 준비, 기업 탐색, 커뮤니티까지 개발자 취업의 모든 과정을 한 곳에서
-            </p>
+              <p className={`font_body_l_r ${styles.hero_desc}`}>
+                이력서·자기소개서 작성, AI 면접 준비, 기업 탐색, 커뮤니티까지
+                <br />
+                개발자 취업의 모든 과정을 한 곳에서
+              </p>
 
-            <div className={styles.hero_btns}>
-              <Link href='/resume' className={`font_body_m_b ${styles.hero_btn_primary}`}>
-                지금 시작하기
-              </Link>
-              <Link href='/portfolio' className={`font_body_m_b ${styles.hero_btn_secondary}`}>
-                서비스 둘러보기
-              </Link>
+              <div className={styles.hero_btns}>
+                <Link href='/resume' className={`font_h4 ${styles.hero_btn_primary}`}>
+                  취업 서류 작성하기
+                  <span className='material-symbols-sharp' aria-hidden='true'>
+                    arrow_forward
+                  </span>
+                </Link>
+                <Link href='/interview' className={`font_h4 ${styles.hero_btn_secondary}`}>
+                  AI 면접 연습하기
+                  <span className='material-symbols-sharp' aria-hidden='true'>
+                    arrow_forward
+                  </span>
+                </Link>
+              </div>
+
+              <div className={styles.hero_stats}>
+                {HERO_STATS.map((item) => (
+                  <StatItem key={item.label} icon={item.icon} value={item.value} label={item.label} tone={item.tone} />
+                ))}
+              </div>
             </div>
 
-            <div className={styles.hero_stats}>
-              {HERO_STATS.map((item) => (
-                <StatItem key={item.label} icon={item.icon} value={item.value} label={item.label} />
-              ))}
-            </div>
+            <HeroVisual />
           </div>
         </section>
 
