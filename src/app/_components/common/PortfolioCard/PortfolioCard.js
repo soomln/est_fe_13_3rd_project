@@ -1,13 +1,29 @@
 import styles from './PortfolioCard.module.sass';
 import ActionBtn from '@/app/_components/common/ActionBtn';
-export default function PortfolioCard({ item, onClick }) {
+
+// onToggle 을 넘길 때만 선택용 체크박스가 나온다 (마이페이지 삭제모드)
+export default function PortfolioCard({ item, onClick, isSelected = false, onToggle }) {
   return (
     <li
-      className={styles.portfolio_card}
+      className={`${styles.portfolio_card} ${isSelected ? styles.is_selected : ''}`}
       onClick={() => {
         onClick(item);
       }}
     >
+      {onToggle && (
+        <label
+          className={styles.select_box}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+        >
+          <input type='checkbox' checked={isSelected} onChange={onToggle} aria-label={`${item.title} 선택`} />
+          <span className='material-symbols-sharp' aria-hidden='true'>
+            check
+          </span>
+        </label>
+      )}
+
       {/* 썸네일 & 제목 영역 */}
       <div className={styles.thumb_box}>
         {item.thumbnailUrl !== '' ? (
