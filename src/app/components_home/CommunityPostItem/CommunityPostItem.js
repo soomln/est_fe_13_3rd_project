@@ -12,7 +12,7 @@ export default function CommunityPostItem({
         <p className={styles.tag}>{tag}</p>
       </div>
 
-      <span className={styles.status}>{status}</span>
+      <span className={`${styles.status} ${status === '모집중' ? styles.status_open : styles.status_closed}`}>{status}</span>
     </div>
   );
 }
