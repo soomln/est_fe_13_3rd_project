@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -30,6 +30,9 @@ export default function ActivityBrowser({ companies, qbanks }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const isDeleteMode = searchParams.get('mode') === 'delete';
   const isQbank = searchParams.get('tab') === 'qbank';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
@@ -75,6 +78,22 @@ export default function ActivityBrowser({ companies, qbanks }) {
   const currentPage = Math.min(page, totalPages);
   const items = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
+
+  const toggleOne = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(isAllSelected ? [] : items.map((item) => item.id));
+  };
+
+  // 탭마다 지우는 대상이 달라서 탭을 옮기면 선택을 비운다
+  const changeTab = (value) => {
+    setSelectedIds([]);
+    updateQuery({ tab: value, q: '', page: 1 });
+  };
+
   return (
     <>
       <div className={styles.activity_browser_head}>
@@ -85,16 +104,57 @@ export default function ActivityBrowser({ companies, qbanks }) {
           </p>
         </div>
 
-        <Link
-          href='/mypage/activity?mode=delete'
-          className={`${styles.activity_browser_ghost_btn} font_body_l_b`}
-        >
-          <span className='material-symbols-sharp' aria-hidden='true'>
-            delete
-          </span>
-          삭제
-        </Link>
+        <div className={styles.activity_browser_head_btns}>
+          {isDeleteMode ? (
+            <>
+              <Link
+                href={isQbank ? '/mypage/activity?tab=qbank' : '/mypage/activity'}
+                className={`${styles.activity_browser_ghost_btn} font_body_l_b`}
+                onClick={() => setSelectedIds([])}
+              >
+                취소
+              </Link>
+
+              <button
+                type='button'
+                className={`${styles.activity_browser_ghost_btn} font_body_l_b`}
+                onClick={toggleAll}
+              >
+                {isAllSelected ? '선택 해제' : '전체 선택'}
+              </button>
+
+              <button
+                type='button'
+                className={`${styles.activity_browser_delete_btn} font_body_l_b`}
+                disabled={selectedIds.length === 0}
+              >
+                선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
+              </button>
+            </>
+          ) : (
+            <Link
+              href={
+                isQbank ? '/mypage/activity?tab=qbank&mode=delete' : '/mypage/activity?mode=delete'
+              }
+              className={`${styles.activity_browser_ghost_btn} font_body_l_b`}
+            >
+              <span className='material-symbols-sharp' aria-hidden='true'>
+                delete
+              </span>
+              삭제
+            </Link>
+          )}
+        </div>
       </div>
+
+      {isDeleteMode && (
+        <p className={`${styles.activity_browser_notice} font_body_m_b`} role='status'>
+          <span className='material-symbols-sharp' aria-hidden='true'>
+            info
+          </span>
+          삭제 모드입니다. 삭제할 항목을 체크한 뒤 우측 상단 “선택 삭제”를 눌러주세요.
+        </p>
+      )}
 
       <div className={styles.activity_browser}>
         <div className={styles.activity_browser_filter}>
@@ -104,9 +164,15 @@ export default function ActivityBrowser({ companies, qbanks }) {
                 key={tab.value || 'company'}
                 label={tab.label}
                 isActive={(tab.value === 'qbank') === isQbank}
-                onClick={() => updateQuery({ tab: tab.value, q: '', page: 1 })}
+                onClick={() => changeTab(tab.value)}
               />
             ))}
+
+            {isDeleteMode && (
+              <span className={`${styles.activity_browser_guide} font_body_m_b`}>
+                삭제할 항목을 선택해주세요
+              </span>
+            )}
           </div>
 
           <div className={styles.activity_browser_tools}>
@@ -124,32 +190,51 @@ export default function ActivityBrowser({ companies, qbanks }) {
         </div>
 
         {items.length > 0 ? (
-          isQbank ? (
-            <div className={styles.activity_browser_list}>
-              {items.map((item) => (
+          <div className={isQbank ? styles.activity_browser_list : styles.activity_browser_grid}>
+            {items.map((item) => {
+              const card = isQbank ? (
+                <QbankCard
+                  qbank={item}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
+                />
+              ) : (
+                <CompanyCard
+                  company={item}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
+                />
+              );
+
+              // 삭제모드에서는 상세로 가지 않고 선택만 한다
+              if (isDeleteMode) {
+                return (
+                  <div
+                    key={item.id}
+                    className={styles.activity_browser_link}
+                    onClick={() => toggleOne(item.id)}
+                  >
+                    {card}
+                  </div>
+                );
+              }
+
+              // 주의: 기업 상세가 고정 경로라 slug 를 못 넘긴다. 동적 라우트가 생기면 교체
+              return (
                 <Link
                   key={item.id}
-                  href={`/search-companies/interview-question/${item.id}`}
+                  href={
+                    isQbank
+                      ? `/search-companies/interview-question/${item.id}`
+                      : '/search-companies/detail'
+                  }
                   className={styles.activity_browser_link}
                 >
-                  <QbankCard qbank={item} />
+                  {card}
                 </Link>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.activity_browser_grid}>
-              {items.map((item) => (
-                // 주의: 기업 상세가 고정 경로라 slug 를 못 넘긴다. 동적 라우트가 생기면 교체
-                <Link
-                  key={item.id}
-                  href='/search-companies/detail'
-                  className={styles.activity_browser_link}
-                >
-                  <CompanyCard company={item} />
-                </Link>
-              ))}
-            </div>
-          )
+              );
+            })}
+          </div>
         ) : (
           <div className={styles.activity_browser_empty}>
             <span
