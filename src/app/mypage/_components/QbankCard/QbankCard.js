@@ -23,24 +23,24 @@ export default function QbankCard({ qbank }) {
         ) : (
           <span className={styles.qbank_card_logo_dummy} />
         )}
-        <p className={`${styles.qbank_card_company_name} font_body_s_r`}>{companyName}</p>
+        <p className={`${styles.qbank_card_company_name} font_body_m_b`}>{companyName}</p>
       </div>
 
       <div className={styles.qbank_card_meta}>
         <div className={styles.qbank_card_tags}>
           <span className={styles.qbank_card_tag}>
             <span className='font_body_m_b'>면접 난이도</span>
-            <span className={`${styles.qbank_card_tag_green} font_body_m_r`}>{difficulty}</span>
+            <span className={`${styles.qbank_card_difficulty} font_body_m_r`}>{difficulty}</span>
           </span>
 
           <span className={styles.qbank_card_tag}>
             <span className='font_body_m_b'>합격 여부</span>
-            <span className='font_body_m_r'>{result}</span>
+            <span className={`${styles.qbank_card_value} font_body_m_r`}>{result}</span>
           </span>
 
           <span className={styles.qbank_card_tag}>
             <span className='font_body_m_b'>면접 경로</span>
-            <span className='font_body_m_r'>{route}</span>
+            <span className={`${styles.qbank_card_value} font_body_m_r`}>{route}</span>
           </span>
         </div>
 
@@ -48,15 +48,15 @@ export default function QbankCard({ qbank }) {
           <span className='material-symbols-rounded' aria-hidden='true'>
             account_circle
           </span>
-          <span className='font_body_s_r'>{jobInfo}</span>
-          <span className='font_body_s_r'>{createdAt}</span>
+          <span className='font_body_m_r'>{jobInfo}</span>
+          <span className='font_body_m_r'>{createdAt}</span>
         </div>
       </div>
 
       <ol className={styles.qbank_card_questions}>
-        {questions.map((question, index) => (
+        {questions.map((question) => (
           <li key={question} className='font_body_m_r'>
-            {index + 1}. {question}
+            {question}
           </li>
         ))}
       </ol>
@@ -69,7 +69,7 @@ export default function QbankCard({ qbank }) {
           <span className='font_body_m_r'>퍼가요</span>
           <span className='font_body_m_r'>{bookmark}</span>
         </span>
-        <span className={`${styles.qbank_card_count} font_body_m_r`}>댓글 {comment}</span>
+        <span className='font_body_m_r'>댓글 {comment}</span>
       </div>
     </div>
   );
