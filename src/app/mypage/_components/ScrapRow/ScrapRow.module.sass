@@ -1,43 +1,95 @@
 @use '@/app/_variables.sass' as *
 @use '@/app/_mixin.sass' as *
 
+// 안쪽 여백은 머리글이 갖는다. 그래야 카드 가장자리까지 클릭 영역이 된다
 .scrap_row
   display: flex
   flex-direction: column
   box-sizing: border-box
-  gap: 16px
-  padding: 21px 22px
   background-color: $white
   border: 1px solid $stroke3
   border-radius: 12px
-  transition: border-color 0.2s ease
+  transition: background-color 0.2s ease, border-color 0.2s ease
 
   &:hover
     border-color: $green
 
-// 펼쳤을 때만 머리글 아래에 구분선이 생긴다
+// 펼쳤을 때만 머리글 아래에 구분선이 생긴다. 구분선은 Q 배지 위치에서 시작한다
 .scrap_row_open
-  padding-bottom: 22px
-
   .scrap_row_head
     padding-bottom: 14px
-    border-bottom: 1px solid $stroke2
+
+    &::after
+      content: ''
+      position: absolute
+      right: 22px
+      bottom: 0
+      left: 69px
+      height: 1px
+      background-color: $stroke2
 
   .scrap_row_toggle span
     transform: rotate(180deg)
 
+// 삭제모드에서는 머리글이 label 이라 아무 곳이나 누르면 체크된다
+.scrap_row_pickable
+  // 체크박스(20) + 간격(20) 만큼 답변과 구분선도 함께 밀린다
+  .scrap_row_body
+    padding-left: 109px
+
+  .scrap_row_head::after
+    left: 109px
+
+.scrap_row_selected
+  background-color: $sub_green
+  border-color: $green
+
+// 머리글 전체가 클릭 영역이다 (일반모드는 펼치기, 삭제모드는 선택)
 .scrap_row_head
+  position: relative
   display: flex
   align-items: center
-  justify-content: space-between
-  gap: 20px
+  gap: 13px
+  padding: 21px 22px
+  cursor: pointer
 
-.scrap_row_question
+.scrap_row_main
   flex: 1
   min-width: 0
   display: flex
   align-items: center
   gap: 20px
+
+.scrap_row_check
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 20px
+  height: 20px
+  color: transparent
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 4px
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+  input
+    position: absolute
+    width: 100%
+    height: 100%
+    margin: 0
+    opacity: 0
+    cursor: pointer
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+  &:has(input:checked)
+    color: $white
+    background-color: $green
+    border-color: $green
 
 .scrap_row_index
   flex-shrink: 0
@@ -56,7 +108,7 @@
   background-color: $black
   border-radius: 8px
 
-.scrap_row_question_text
+.scrap_row_question
   flex: 1
   min-width: 0
   color: $black
@@ -64,16 +116,12 @@
   white-space: nowrap
   text-overflow: ellipsis
 
-.scrap_row_meta
-  flex-shrink: 0
-  display: flex
-  align-items: center
-  gap: 13px
-
 .scrap_row_date
+  flex-shrink: 0
   color: $gray
 
 .scrap_row_toggle
+  flex-shrink: 0
   display: flex
   align-items: center
   justify-content: center
@@ -95,12 +143,12 @@
     font-size: 16px
     transition: transform 0.2s ease
 
-// 답변·피드백은 Q 배지 위치에 맞춰 들여쓴다 (순번 27 + 간격 20)
+// 답변·피드백은 Q 배지 위치에 맞춰 들여쓴다 (카드 여백 22 + 순번 27 + 간격 20)
 .scrap_row_body
   display: flex
   flex-direction: column
   gap: 16px
-  padding-left: 47px
+  padding: 16px 22px 22px 69px
 
 .scrap_row_block
   display: flex
@@ -129,11 +177,20 @@
 .scrap_row_answer
   flex: 1
   min-width: 0
+  display: flex
+  flex-direction: column
   box-sizing: border-box
+  gap: 8px
   padding: 16px
-  color: $black
   background-color: $light_gray
+  border: 1px solid $stroke3
   border-radius: 12px
+
+.scrap_row_answer_label
+  color: $gray
+
+.scrap_row_answer_text
+  color: $black
 
 .scrap_row_feedback
   flex: 1

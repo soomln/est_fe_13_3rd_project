@@ -27,7 +27,9 @@ export default function ScrapBrowser({ scraps }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [openIds, setOpenIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
 
+  const isDeleteMode = searchParams.get('mode') === 'delete';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
   const sort = SORTERS[sortParam] ? sortParam : 'latest';
@@ -66,8 +68,27 @@ export default function ScrapBrowser({ scraps }) {
   const currentPage = Math.min(page, totalPages);
   const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
+
   const toggleOpen = (id) => {
     setOpenIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
+  };
+
+  const toggleOne = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(isAllSelected ? [] : items.map((item) => item.id));
+  };
+
+  // 삭제모드는 전부 펼친 채로 시작한다. 그래서 openIds 를 "접은 것" 목록으로 뒤집어 쓴다
+  const isRowOpen = (id) => (isDeleteMode ? !openIds.includes(id) : openIds.includes(id));
+
+  // 모드가 바뀌면 펼침·선택 상태를 비운다
+  const resetView = () => {
+    setSelectedIds([]);
+    setOpenIds([]);
   };
 
   return (
@@ -81,28 +102,79 @@ export default function ScrapBrowser({ scraps }) {
         </div>
 
         <div className={styles.scrap_browser_head_btns}>
-          <Link
-            href='/mypage/interview-scrap?mode=delete'
-            className={`${styles.scrap_browser_ghost_btn} font_body_l_b`}
-          >
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              delete
-            </span>
-            삭제
-          </Link>
+          {isDeleteMode ? (
+            <>
+              <Link
+                href='/mypage/interview-scrap'
+                className={`${styles.scrap_browser_ghost_btn} font_body_l_b`}
+                onClick={resetView}
+              >
+                취소
+              </Link>
 
-          <Link href='/interview' className={`${styles.scrap_browser_practice_btn} font_body_l_b`}>
-            AI 면접 연습하기
-            <span className='material-symbols-sharp' aria-hidden='true'>
-              arrow_forward
-            </span>
-          </Link>
+              <button
+                type='button'
+                className={`${styles.scrap_browser_ghost_btn} font_body_l_b`}
+                onClick={toggleAll}
+              >
+                {isAllSelected ? '선택 해제' : '전체 선택'}
+              </button>
+
+              <button
+                type='button'
+                className={`${styles.scrap_browser_delete_btn} font_body_l_b`}
+                disabled={selectedIds.length === 0}
+              >
+                선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href='/mypage/interview-scrap?mode=delete'
+                className={`${styles.scrap_browser_ghost_btn} font_body_l_b`}
+                onClick={resetView}
+              >
+                <span className='material-symbols-sharp' aria-hidden='true'>
+                  delete
+                </span>
+                삭제
+              </Link>
+
+              <Link
+                href='/interview'
+                className={`${styles.scrap_browser_practice_btn} font_body_l_b`}
+              >
+                AI 면접 연습하기
+                <span className='material-symbols-sharp' aria-hidden='true'>
+                  arrow_forward
+                </span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
+      {isDeleteMode && (
+        <p className={`${styles.scrap_browser_notice} font_body_m_b`} role='status'>
+          <span className='material-symbols-sharp' aria-hidden='true'>
+            info
+          </span>
+          삭제 모드입니다. 삭제할 질문을 체크한 뒤 우측 상단 “선택 삭제”를 눌러주세요.
+        </p>
+      )}
+
       <div className={styles.scrap_browser}>
         <div className={styles.scrap_browser_filter}>
-          <p className={`${styles.scrap_browser_count} font_h4`}>총 {filtered.length}개</p>
+          <div className={styles.scrap_browser_labels}>
+            <p className={`${styles.scrap_browser_count} font_h4`}>총 {filtered.length}개</p>
+
+            {isDeleteMode && (
+              <span className={`${styles.scrap_browser_guide} font_body_m_b`}>
+                삭제할 질문을 선택해주세요
+              </span>
+            )}
+          </div>
 
           <div className={styles.scrap_browser_tools}>
             <SearchPill
@@ -128,8 +200,10 @@ export default function ScrapBrowser({ scraps }) {
                 answer={item.answer}
                 feedback={item.feedback}
                 createdAt={item.createdAt}
-                isOpen={openIds.includes(item.id)}
+                isOpen={isRowOpen(item.id)}
                 onToggleOpen={() => toggleOpen(item.id)}
+                isSelected={selectedIds.includes(item.id)}
+                onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
               />
             ))}
           </ul>
@@ -152,6 +226,7 @@ export default function ScrapBrowser({ scraps }) {
           </div>
         )}
 
+        {!isDeleteMode && (
         <div className={styles.scrap_browser_cta}>
           <div className={styles.scrap_browser_cta_text}>
             <img
@@ -176,6 +251,7 @@ export default function ScrapBrowser({ scraps }) {
             </span>
           </Link>
         </div>
+        )}
 
         {items.length > 0 && (
           <div className={styles.scrap_browser_pagination}>
