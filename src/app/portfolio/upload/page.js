@@ -11,6 +11,7 @@ import EditorBlock from './_components/EditorBlock';
 import AiChatPanel from './_components/AiChatPanel';
 import AiChatBtn from './_components/AiChatBtn';
 import BackBtn from './_components/BackBtn';
+import SaveBtn from './_components/SaveBtn';
 
 export default function Upload() {
   const [activeTab, setActiveTab] = useState('ai');
@@ -73,7 +74,7 @@ export default function Upload() {
         )}
         <div className={`${styles.workspace}`}>
           <header>
-            <div className={styles.left_btns}>
+            <div className={styles.btns}>
               {!isChatOpen && (
                 <AiChatBtn
                   onClick={() => {
@@ -82,6 +83,10 @@ export default function Upload() {
                 />
               )}
               <BackBtn />
+            </div>
+            <div className={styles.btns}>
+              <SaveBtn iconText='save' text='임시 저장' textColor='#00A63D' bgColor='#EEFDF3' />
+              <SaveBtn iconText='upload' text='업로드' textColor='#FFFFFF' bgColor='#111111' />
             </div>
           </header>
           <main>
@@ -101,10 +106,7 @@ export default function Upload() {
             </div>
             <UploadBtn iconText='import_export' text='순서 바꾸기' />
             <CustomSetting bgColor={bgColor} onSetColor={setBgColor} gap={gap} onSetGap={setGap} />
-            <div className={styles.save_btns}>
-              <UploadBtn iconText='monitor' text='미리보기' />
-              <UploadBtn iconText='save' text='임시 저장' isIconFill={true} />
-            </div>
+            <div className={styles.save_btns}></div>
           </aside>
         </div>
       </div>
