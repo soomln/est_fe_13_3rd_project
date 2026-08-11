@@ -2,11 +2,18 @@
 
 .workspace
   display: grid
-  grid-template-rows: 1fr
   grid-template-columns: 4fr 1fr
   gap: 1.5rem
   padding: 4rem 3.5rem
-  
+  height: 100vh
+  box-sizing: border-box
+
+  main
+    display: flex
+    flex-direction: column
+    min-height: 0
+    overflow: hidden
+
   .add_btns
     display: grid
     grid-template-columns: repeat(2, 1fr)
