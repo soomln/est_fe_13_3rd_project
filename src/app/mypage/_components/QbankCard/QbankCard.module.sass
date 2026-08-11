@@ -1,0 +1,97 @@
+@use '@/app/_variables.sass' as *
+
+.qbank_card
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 16px
+  padding: 24px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 12px
+  cursor: pointer
+  transition: border-color 0.2s ease
+
+  &:hover
+    border-color: $green
+
+.qbank_card_company
+  display: flex
+  align-items: center
+  gap: 8px
+
+.qbank_card_logo
+  flex-shrink: 0
+  width: 56px
+  height: 20px
+  object-fit: contain
+
+.qbank_card_logo_dummy
+  flex-shrink: 0
+  width: 56px
+  height: 20px
+  background-color: $stroke3
+  border-radius: 4px
+
+.qbank_card_company_name
+  color: $gray
+
+// 난이도·합격여부·경로와 작성자 정보
+.qbank_card_meta
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 12px
+  padding-bottom: 16px
+  border-bottom: 1px solid $stroke3
+
+.qbank_card_tags
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 20px
+
+.qbank_card_tag
+  display: flex
+  align-items: center
+  gap: 8px
+  color: $black
+
+.qbank_card_tag_green
+  color: $green
+
+.qbank_card_writer
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+  color: $gray
+
+  :global(.material-symbols-rounded)
+    font-size: 20px
+
+.qbank_card_questions
+  display: flex
+  flex-direction: column
+  gap: 8px
+  padding-left: 12px
+  color: $black
+
+.qbank_card_counts
+  display: flex
+  align-items: center
+  justify-content: flex-end
+  gap: 16px
+  padding-top: 16px
+  color: $gray
+  border-top: 1px solid $stroke3
+
+.qbank_card_count
+  display: flex
+  align-items: center
+  gap: 4px
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+    font-variation-settings: 'FILL' 1
