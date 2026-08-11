@@ -1,12 +1,18 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 import styles from './page.module.sass';
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
-import ServiceCard from '@/app/_components/main/ServiceCard';
 import StatItem from '@/app/_components/main/StatItem';
-import PortfolioPreview from '@/app/_components/main/PortfolioPreview';
 import HeroVisual from '@/app/_components/main/HeroVisual';
+import ServiceIntro from '@/app/components_home/ServiceIntro';
+import ServiceCard from '@/app/components_home/ServiceCard';
+import CompanySpotlight from '@/app/components_home/CompanySpotlight';
+import FeatureHeader from '@/app/components_home/FeatureHeader';
+import StepListItem from '@/app/components_home/StepListItem';
+import QaListItem from '@/app/components_home/QaListItem';
+import CommunityPostItem from '@/app/components_home/CommunityPostItem';
 
 const HERO_STATS = [
   { icon: 'group', value: '10,000+', label: '회원', tone: 'green' },
@@ -17,26 +23,47 @@ const HERO_STATS = [
 
 const SERVICES = [
   {
-    icon: 'description',
-    title: '이력서·자소서',
-    description: 'AI와 무료 양식으로 완성도 높게 작성하세요.',
+    iconSrc: '/images/services/resume.svg',
+    title: '이력서/자소서',
+    description: 'AI와 무료 양식으로\n완성도 높게 작성하세요.',
     href: '/resume',
+    tone: 'green',
   },
-  { icon: 'palette', title: '포트폴리오', description: '나만의 포트폴리오를 간편하게 관리하세요.', href: '/portfolio' },
-  { icon: 'mic', title: 'AI 면접 준비', description: 'AI 예상 질문으로 실전 감각을 키우세요.', href: '/interview' },
   {
-    icon: 'apartment',
+    iconSrc: '/images/services/portfolio.svg',
+    title: '포트폴리오',
+    description: '나만의 포트폴리오를\n간편하게 관리하세요.',
+    href: '/portfolio',
+    tone: 'sky',
+  },
+  {
+    iconSrc: '/images/services/interview.svg',
+    title: 'AI 면접 준비',
+    description: 'AI 예상 질문으로\n실전 감각을 키우세요.',
+    href: '/interview',
+    tone: 'amber',
+  },
+  {
+    iconSrc: '/images/services/companies.svg',
     title: '기업 탐색',
-    description: '기업 후기와 족보를 한눈에 확인하세요.',
+    description: '기업 후기와 족보를\n한눈에 확인하세요.',
     href: '/search-companies',
+    tone: 'orange',
   },
   {
-    icon: 'groups',
+    iconSrc: '/images/services/team.svg',
     title: '팀 프로젝트',
-    description: '함께할 팀원을 찾고 프로젝트를 시작하세요.',
+    description: '함께할 팀원을 찾고\n프로젝트를 시작하세요.',
     href: '/community',
+    tone: 'violet',
   },
-  { icon: 'chat_bubble', title: '커뮤니티', description: '질문하고 답변하며 함께 성장하세요.', href: '/community' },
+  {
+    iconSrc: '/images/services/community.svg',
+    title: '커뮤니티',
+    description: '질문하고 답변하며\n함께 성장하세요.',
+    href: '/community',
+    tone: 'violet',
+  },
 ];
 
 const RESUME_STEPS = [
@@ -46,42 +73,34 @@ const RESUME_STEPS = [
   { step: '4', title: '최종점검 및 작성 완료', desc: '작성한 서류 데이터를 기반으로 AI 면접 연습 시작' },
 ];
 
-const INTERVIEW_QUESTIONS = ['자기소개를 간단히 해주세요.', '지원 동기를 말씀해주세요.', '협업 중 갈등을 해결한 경험은?'];
+const INTERVIEW_QA = [
+  { type: 'q', text: '자기소개를 간단히 해주세요.' },
+  { type: 'a', text: '···' },
+  { type: 'q', text: '지원 동기를 말씀 해주세요.' },
+  { type: 'q', text: '협업 중 갈등을 해결한 경험은?' },
+];
 
 const COMMUNITY_POSTS = [
   { title: '백엔드 스터디', tag: 'Spring Boot · Java', status: '모집중' },
   { title: '쇼핑몰 플랫폼 개발 프로젝트', tag: 'React · TypeScript', status: '모집 마감' },
   { title: '코딩테스트 스터디', tag: 'C++', status: '모집중' },
-];
-
-const COMPANY_SCORES = [
-  { label: '급여 · 보상', value: '4.5' },
-  { label: '워라벨', value: '4.5' },
-  { label: '사내 문화', value: '4.5' },
-  { label: '성장 가능성', value: '4.5' },
-];
-
-const COMPANY_SALARY = [
-  { label: '전체 평균', value: '5,240만원' },
-  { label: '신입 평균', value: '3,800만원' },
-  { label: '상위 25%', value: '7,100만원' },
+  { title: '면접 스터디', tag: '프론트엔드', status: '모집중' },
 ];
 
 const POPULAR_KEYWORDS = ['카카오', '네이버', '토스', 'SK 하이닉스', '삼성SDS', '배민'];
 
 const RECOMMENDED_COMPANIES = [
-  { name: '토스', desc: '채용중 4건 · IT/개발, 디자인' },
-  { name: '네이버', desc: '채용중 8건 · IT/개발, 데이터' },
-  { name: '카카오', desc: '채용중 12건 · IT/개발, 기획' },
+  { name: '토스', desc: '채용중 4건 · IT/개발, 디자인', logo: '/images/companies/toss.svg' },
+  { name: '네이버', desc: '채용중 8건 · IT/개발, 데이터', logo: '/images/companies/naver.svg' },
+  { name: '카카오', desc: '채용중 12건 · IT/개발, 기획', logo: '/images/companies/kakao.svg' },
 ];
 
-const SAMPLE_PORTFOLIO = {
-  id: 1,
+const SHOWCASE_PORTFOLIO = {
   title: '포트폴리오 웹사이트',
-  authorName: '김지수 · 풀스택 개발자',
-  thumbnailUrl: '',
-  likeCount: 0,
-  bookmarkCount: 0,
+  author: '김지수 · 풀스택 개발자',
+  badge: 'Best',
+  tags: ['React', 'Tailwind'],
+  date: '2024.03',
 };
 
 export default function Home() {
@@ -143,7 +162,9 @@ export default function Home() {
 
         {/* 2. 서비스 소개 */}
         <section className={styles.services}>
-          <div className='container'>
+          <div className={styles.services_inner}>
+            <ServiceIntro />
+
             <ul className={styles.service_grid}>
               {SERVICES.map((item) => (
                 <ServiceCard key={item.title} {...item} />
@@ -154,173 +175,284 @@ export default function Home() {
 
         {/* 3. 포트폴리오 홍보 */}
         <section className={styles.showcase}>
-          <div className={`container ${styles.showcase_inner}`}>
+          <div className={styles.showcase_inner}>
             <div className={styles.showcase_intro}>
-              <h2 className={`font_h1 ${styles.showcase_title}`}>포트폴리오로 나를 어필하세요</h2>
+              <div className={styles.showcase_text_group}>
+                <p className={`font_h4 ${styles.showcase_eyebrow}`}>PORTFOLIO</p>
+                <h2 className={`font_h1 ${styles.showcase_title}`}>나의 포트폴리오로 가능성을 보여주세요</h2>
+                <p className={`font_body_l_r ${styles.showcase_desc}`}>
+                  Demo 자료, 기술 문서, 핵심 코드까지
+                  <br />
+                  흩어진 자료를 한 곳에 정리하고 채용 기회를 잡아보세요
+                </p>
+              </div>
 
               <ul className={styles.showcase_points}>
                 <li className={`font_body_l_r ${styles.showcase_point}`}>
-                  <span className='material-symbols-rounded' aria-hidden='true'>
-                    check_circle
+                  <span className={styles.showcase_point_icon}>
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      check
+                    </span>
                   </span>
                   AI가 도와주는 기술문서 정리
                 </li>
                 <li className={`font_body_l_r ${styles.showcase_point}`}>
-                  <span className='material-symbols-rounded' aria-hidden='true'>
-                    check_circle
+                  <span className={styles.showcase_point_icon}>
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      check
+                    </span>
                   </span>
                   AI가 추천하는 핵심 코드 어필
                 </li>
               </ul>
 
-              <Link href='/portfolio' className={`font_body_m_b ${styles.showcase_btn}`}>
-                포트폴리오 만들기
+              <Link href='/portfolio' className={`font_h4 ${styles.showcase_btn}`}>
+                포트폴리오 등록하기
+                <span className='material-symbols-sharp' aria-hidden='true'>
+                  arrow_forward
+                </span>
               </Link>
             </div>
 
-            <PortfolioPreview item={SAMPLE_PORTFOLIO} />
+            <div className={styles.preview}>
+              <button type='button' className={`${styles.preview_nav} ${styles.preview_nav_prev}`} aria-label='이전 포트폴리오'>
+                <span className='material-symbols-rounded' aria-hidden='true'>
+                  chevron_left
+                </span>
+              </button>
+              <button type='button' className={`${styles.preview_nav} ${styles.preview_nav_next}`} aria-label='다음 포트폴리오'>
+                <span className='material-symbols-rounded' aria-hidden='true'>
+                  chevron_right
+                </span>
+              </button>
+
+              <div className={styles.preview_card}>
+                <div className={styles.preview_cover}>
+                  <Image
+                    src='/images/main/portfolio-showcase.png'
+                    alt='포트폴리오 미리보기'
+                    fill
+                    sizes='(max-width: 1439px) 100vw, 585px'
+                    className={styles.preview_cover_img}
+                  />
+                </div>
+
+                <div className={styles.preview_meta}>
+                  <div className={styles.preview_meta_top}>
+                    <div>
+                      <p className={`font_h4 ${styles.preview_name}`}>{SHOWCASE_PORTFOLIO.title}</p>
+                      <p className={`font_caption_b ${styles.preview_author}`}>{SHOWCASE_PORTFOLIO.author}</p>
+                    </div>
+                    <span className={`font_caption_b ${styles.preview_badge}`}>{SHOWCASE_PORTFOLIO.badge}</span>
+                  </div>
+
+                  <div className={styles.preview_meta_bottom}>
+                    <div className={styles.preview_tags}>
+                      {SHOWCASE_PORTFOLIO.tags.map((tag) => (
+                        <span key={tag} className={`${styles.preview_tag} ${styles[`tag_${tag.toLowerCase()}`]}`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <span className={`font_caption_b ${styles.preview_date}`}>{SHOWCASE_PORTFOLIO.date}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.preview_dots}>
+                <span className={`${styles.dot} ${styles.dot_active}`} />
+                <span className={styles.dot} />
+                <span className={styles.dot} />
+              </div>
+            </div>
           </div>
         </section>
 
         {/* 4. 기업 정보 / 탐색 */}
         <section className={styles.company}>
-          <div className={`container ${styles.company_inner}`}>
-            <div className={styles.company_spotlight}>
-              <span className={`font_body_s_b ${styles.company_badge}`}>이스트소프트</span>
-
-              <h3 className={`font_h4 ${styles.company_sub_title}`}>평균 연봉</h3>
-              <div className={styles.company_salary_row}>
-                {COMPANY_SALARY.map((item) => (
-                  <div key={item.label} className={styles.company_salary_col}>
-                    <span className={`font_body_s_r ${styles.company_salary_label}`}>{item.label}</span>
-                    <span className={`font_h4 ${styles.company_salary_value}`}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <ul className={styles.company_scores}>
-                {COMPANY_SCORES.map((item) => (
-                  <li key={item.label} className={styles.company_score_item}>
-                    <span className={`font_body_s_r ${styles.company_score_label}`}>{item.label}</span>
-                    <span className={`font_h4 ${styles.company_score_value}`}>{item.value}점</span>
-                  </li>
-                ))}
-              </ul>
+          <div className={styles.company_inner}>
+            <div className={styles.company_text_group}>
+              <p className={`font_h4 ${styles.company_eyebrow}`}>HOW IT WORKS</p>
+              <h2 className={`font_h1 ${styles.company_title}`}>나에게 맞는 기업 탐색</h2>
+              <p className={`font_body_l_r ${styles.company_desc}`}>나의 데이터와 AI 피드백으로 확실한 결과를 만들어보세요</p>
             </div>
 
-            <div className={styles.company_search}>
-              <h2 className={`font_h2 ${styles.company_search_title}`}>어느 기업이 궁금하신가요?</h2>
-              <p className={`font_body_s_r ${styles.company_search_desc}`}>
-                평균 연봉부터 기업의 평가, 면접 질문 족보까지 확인해보세요.
-              </p>
+            <div className={styles.company_row}>
+              <CompanySpotlight />
 
-              <div className={styles.company_search_box}>
-                <span className='material-symbols-rounded' aria-hidden='true'>
-                  search
-                </span>
-                <input
-                  type='text'
-                  placeholder='기업, 직무, 기술 스택 검색'
-                  className={`font_body_s_r ${styles.company_search_input}`}
-                />
-              </div>
+              <div className={styles.company_search}>
+                <h3 className={`font_h3 ${styles.company_search_heading}`}>맞춤 기업 탐색</h3>
 
-              <div className={styles.company_keywords}>
-                {POPULAR_KEYWORDS.map((keyword) => (
-                  <span key={keyword} className={`font_body_s_r ${styles.company_keyword}`}>
-                    {keyword}
+                <div className={styles.company_search_panel}>
+                  <div className={styles.company_search_intro}>
+                    <p className={`font_body_m_b ${styles.company_search_title}`}>어느 기업이 궁금하신가요?</p>
+                    <p className={`font_body_s_r ${styles.company_search_desc}`}>
+                      평균 연봉부터 기업의 평가, 면접 질문 족보까지 확인해보세요.
+                    </p>
+                  </div>
+
+                  <div className={styles.company_search_box}>
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      search
+                    </span>
+                    <input
+                      type='text'
+                      placeholder='원하시는 기업, 직무, 기술 스택을 검색해보세요.'
+                      className={`font_caption_b ${styles.company_search_input}`}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.company_keyword_group}>
+                  <p className={`font_caption_b ${styles.company_keyword_label}`}>인기 검색어</p>
+                  <div className={styles.company_keywords}>
+                    {POPULAR_KEYWORDS.map((keyword) => (
+                      <span key={keyword} className={`font_caption_b ${styles.company_keyword}`}>
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.company_list_group}>
+                  <p className={`font_caption_b ${styles.company_list_label}`}>추천기업</p>
+                  <ul className={styles.company_list}>
+                    {RECOMMENDED_COMPANIES.map((company) => (
+                      <li key={company.name} className={styles.company_list_item}>
+                        <Image src={company.logo} alt={`${company.name} 로고`} width={28} height={28} className={styles.company_list_logo} />
+                        <div>
+                          <p className={`font_body_m_b ${styles.company_list_name}`}>{company.name}</p>
+                          <p className={`font_body_s_r ${styles.company_list_desc}`}>{company.desc}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link href='/search-companies' className={`font_body_s_b ${styles.company_search_btn}`}>
+                  기업 탐색하기
+                  <span className='material-symbols-rounded' aria-hidden='true'>
+                    arrow_forward
                   </span>
-                ))}
+                </Link>
               </div>
-
-              <ul className={styles.company_list}>
-                {RECOMMENDED_COMPANIES.map((company) => (
-                  <li key={company.name} className={styles.company_list_item}>
-                    <span className={`font_body_m_b ${styles.company_list_name}`}>{company.name}</span>
-                    <span className={`font_body_s_r ${styles.company_list_desc}`}>{company.desc}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href='/search-companies' className={`font_body_m_b ${styles.company_search_btn}`}>
-                기업 탐색하기
-              </Link>
             </div>
           </div>
         </section>
 
         {/* 5. 3단 기능 소개 */}
         <section className={styles.features}>
-          <div className={`container ${styles.features_inner}`}>
-            {/* 이력서·자기소개서 작성 */}
-            <div className={styles.feature_card}>
-              <span className='material-symbols-rounded' aria-hidden='true'>
-                edit_document
-              </span>
-              <h3 className={`font_h4 ${styles.feature_title}`}>이력서·자기소개서 작성</h3>
-              <p className={`font_body_s_r ${styles.feature_desc}`}>AI와 함께 완벽한 지원서를 지금 완성해보세요!</p>
-
-              <ol className={styles.feature_step_list}>
-                {RESUME_STEPS.map((item) => (
-                  <li key={item.step} className={styles.feature_step_item}>
-                    <span className={`font_body_s_b ${styles.feature_step_num}`}>{item.step}</span>
-                    <div>
-                      <p className={`font_body_s_b ${styles.feature_step_title}`}>{item.title}</p>
-                      <p className={`font_caption_r ${styles.feature_step_desc}`}>{item.desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              <Link href='/resume' className={`font_body_s_b ${styles.feature_btn}`}>
-                새로 작성하기
-              </Link>
+          <div className={styles.features_inner}>
+            <div className={styles.features_text_group}>
+              <p className={`font_h4 ${styles.features_eyebrow}`}>FEATURES</p>
+              <h2 className={`font_h1 ${styles.features_title}`}>핵심 기능 살펴보기</h2>
+              <p className={`font_body_l_r ${styles.features_desc}`}>저장한 데이터는 CallBack의 모든 서비스와 연결돼요</p>
             </div>
 
-            {/* AI 면접 연습 */}
-            <div className={styles.feature_card}>
-              <span className='material-symbols-rounded' aria-hidden='true'>
-                mic
-              </span>
-              <h3 className={`font_h4 ${styles.feature_title}`}>AI 면접 연습</h3>
-              <p className={`font_body_s_r ${styles.feature_desc}`}>AI 모의 면접으로 자신감을 높이세요!</p>
+            <div className={styles.features_grid}>
+              {/* 이력서·자기소개서 작성 */}
+              <div className={`${styles.feature_card} ${styles.tone_green}`}>
+                <FeatureHeader
+                  icon='description'
+                  title='이력서·자기소개서 작성'
+                  description='AI와 함께 완벽한 지원서를 지금 완성해보세요 !'
+                  tone='green'
+                />
 
-              <ul className={styles.feature_qa_list}>
-                {INTERVIEW_QUESTIONS.map((question) => (
-                  <li key={question} className={`font_body_s_r ${styles.feature_qa_item}`}>
-                    Q. {question}
-                  </li>
-                ))}
-              </ul>
+                <div className={styles.feature_body}>
+                  <div className={styles.feature_tags}>
+                    {['맞춤형', 'AI 작성', 'AI 첨삭'].map((tag) => (
+                      <span key={tag} className={`font_caption_b ${styles.feature_tag}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
 
-              <Link href='/interview' className={`font_body_s_b ${styles.feature_btn}`}>
-                AI 면접 시작하기
-              </Link>
-            </div>
+                  <ol className={styles.feature_list}>
+                    {RESUME_STEPS.map((item) => (
+                      <li key={item.step}>
+                        <StepListItem number={item.step} title={item.title} description={item.desc} />
+                      </li>
+                    ))}
+                  </ol>
 
-            {/* 팀 매칭 · 커뮤니티 */}
-            <div className={styles.feature_card}>
-              <span className='material-symbols-rounded' aria-hidden='true'>
-                diversity_3
-              </span>
-              <h3 className={`font_h4 ${styles.feature_title}`}>팀 매칭 · 커뮤니티</h3>
-              <p className={`font_body_s_r ${styles.feature_desc}`}>사람들과 정보를 공유하고 함께 성장하세요!</p>
+                  <Link href='/resume' className={`font_caption_b ${styles.feature_btn}`}>
+                    새로 작성하기
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      arrow_forward
+                    </span>
+                  </Link>
+                </div>
+              </div>
 
-              <ul className={styles.feature_post_list}>
-                {COMMUNITY_POSTS.map((post) => (
-                  <li key={post.title} className={styles.feature_post_item}>
-                    <div>
-                      <p className={`font_body_s_b ${styles.feature_post_title}`}>{post.title}</p>
-                      <p className={`font_caption_r ${styles.feature_post_tag}`}>{post.tag}</p>
-                    </div>
-                    <span className={`font_caption_b ${styles.feature_post_status}`}>{post.status}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* AI 면접 연습 */}
+              <div className={`${styles.feature_card} ${styles.tone_amber}`}>
+                <FeatureHeader icon='mic' title='AI 면접 연습' description='AI 모의 면접으로 자신감을 높이세요 !' tone='amber' />
 
-              <Link href='/community' className={`font_body_s_b ${styles.feature_btn}`}>
-                팀원 구하기
-              </Link>
+                <div className={styles.feature_body}>
+                  <div className={styles.feature_tags}>
+                    {['맞춤형', 'AI 질문', '실전형'].map((tag) => (
+                      <span key={tag} className={`font_caption_b ${styles.feature_tag}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <ol className={styles.feature_list}>
+                    {INTERVIEW_QA.map((qa, i) =>
+                      qa.type === 'a' ? (
+                        <li key={i} className={styles.feature_answer_row}>
+                          <span className='material-symbols-rounded' aria-hidden='true'>
+                            subdirectory_arrow_right
+                          </span>
+                          <QaListItem label='A' question={qa.text} tone='gray' />
+                        </li>
+                      ) : (
+                        <li key={i}>
+                          <QaListItem label='Q' question={qa.text} tone='amber' />
+                        </li>
+                      ),
+                    )}
+                  </ol>
+
+                  <Link href='/interview' className={`font_caption_b ${styles.feature_btn}`}>
+                    AI 면접 시작하기
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      arrow_forward
+                    </span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* 팀 매칭 · 커뮤니티 */}
+              <div className={`${styles.feature_card} ${styles.tone_purple}`}>
+                <FeatureHeader icon='diversity_3' title='팀 매칭 · 커뮤니티' description='사람들과 정보를 공유하고 함께 성장하세요 !' tone='purple' />
+
+                <div className={styles.feature_body}>
+                  <div className={styles.feature_tags}>
+                    {['팀 프로젝트', '스터디', '자유게시판'].map((tag) => (
+                      <span key={tag} className={`font_caption_b ${styles.feature_tag}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <ul className={styles.feature_list}>
+                    {COMMUNITY_POSTS.map((post) => (
+                      <li key={post.title}>
+                        <CommunityPostItem title={post.title} tag={post.tag} status={post.status} />
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link href='/community' className={`font_caption_b ${styles.feature_btn}`}>
+                    팀원 구하기
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      arrow_forward
+                    </span>
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>

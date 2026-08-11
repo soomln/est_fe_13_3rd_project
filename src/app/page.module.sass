@@ -1,5 +1,8 @@
 @use '@/app/_variables.sass' as *
 
+// Figma에 정의되지 않은 one-off 컬러 (page.js 전용)
+$muted_text: #99A1AF
+
 // ===== 1. 히어로 =====
 
 .hero
@@ -96,6 +99,7 @@
 // ===== 2. 서비스 소개 =====
 
 .services
+  background-color: $light_gray
   padding: 80px 0
 
   @media (max-width: 1439px)
@@ -104,10 +108,26 @@
   @media (max-width: 768px)
     padding: 40px 0
 
+.services_inner
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 36px
+  width: 1280px
+  max-width: 100%
+  margin: 0 auto
+
+  @media (max-width: 1439px)
+    padding: 0 24px
+
+  @media (max-width: 768px)
+    padding: 0 16px
+
 .service_grid
   display: grid
   grid-template-columns: repeat(6, 1fr)
   gap: 24px
+  width: 100%
   list-style: none
 
   @media (max-width: 1439px)
@@ -120,185 +140,380 @@
 // ===== 3. 포트폴리오 홍보 =====
 
 .showcase
-  background-color: $light_gray
+  background-color: $white
+  padding: 80px 0
+
+  @media (max-width: 1439px)
+    padding: 56px 0
+
+  @media (max-width: 768px)
+    padding: 40px 0
 
 .showcase_inner
   display: grid
   grid-template-columns: 1fr 1fr
   align-items: center
   gap: 40px
-  padding-top: 80px
-  padding-bottom: 80px
+  width: 1280px
+  max-width: 100%
+  margin: 0 auto
 
   @media (max-width: 1439px)
-    padding-top: 56px
-    padding-bottom: 56px
+    grid-template-columns: 1fr
+    padding: 0 24px
 
   @media (max-width: 768px)
-    grid-template-columns: 1fr
-    padding-top: 40px
-    padding-bottom: 40px
+    padding: 0 16px
+
+.showcase_intro
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 40px
+
+.showcase_text_group
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 8px
+
+.showcase_eyebrow
+  color: $green
 
 .showcase_title
   color: $black
-  margin-bottom: 24px
+
+.showcase_desc
+  color: $gray
 
 .showcase_points
   display: flex
   flex-direction: column
-  gap: 12px
-  margin-bottom: 32px
+  align-items: flex-start
+  gap: 8px
 
 .showcase_point
   display: flex
   align-items: center
-  gap: 8px
-  color: $black
+  gap: 10px
+  color: $gray
 
-  :global(.material-symbols-rounded)
+.showcase_point_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 27px
+  height: 27px
+  background-color: $sub_green
+  border-radius: 50%
+
+  span
+    font-size: 16px
     color: $green
 
 .showcase_btn
   display: inline-flex
   align-items: center
-  height: 56px
-  padding: 0 32px
+  gap: 4px
+  padding: 20px 24px
   color: $white
-  background-color: $black
-  border-radius: 999px
+  background-color: $green
+  border-radius: 16px
   text-decoration: none
+
+  span
+    font-size: 20px
+
+// ----- 프리뷰 카드 -----
+
+.preview
+  position: relative
+
+.preview_nav
+  position: absolute
+  top: 50%
+  transform: translateY(-49px)
+  z-index: 2
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 36px
+  height: 36px
+  background-color: $white
+  border: 1px solid rgba(0, 0, 0, 0.08)
+  border-radius: 50%
+  box-shadow: 0 4px 3px rgba(0, 0, 0, 0.1), 0 2px 2px rgba(0, 0, 0, 0.1)
+  cursor: pointer
+
+  span
+    font-size: 16px
+    color: $gray
+
+.preview_nav_prev
+  left: -18px
+
+.preview_nav_next
+  right: -18px
+
+.preview_card
+  overflow: hidden
+  background-color: $white
+  border: 1px solid rgba(0, 0, 0, 0.08)
+  border-radius: 16px
+  box-shadow: 0 12px 56px rgba(0, 0, 0, 0.16)
+
+.preview_cover
+  position: relative
+  width: 100%
+  aspect-ratio: 585 / 465
+  background-color: #f7f4ef
+
+.preview_cover_img
+  object-fit: cover
+
+.preview_meta
+  display: flex
+  flex-direction: column
+  gap: 10px
+  padding: 16px 24px
+
+.preview_meta_top
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+
+.preview_name
+  color: #101828
+
+.preview_author
+  margin-top: 2px
+  color: $muted_text
+
+.preview_badge
+  flex-shrink: 0
+  padding: 4px 12px
+  color: #bb4d00
+  background-color: #fef3c6
+  border-radius: 999px
+
+.preview_meta_bottom
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+.preview_tags
+  display: flex
+  gap: 8px
+
+.preview_tag
+  padding: 5px 13px
+  font-family: Pretendard, sans-serif
+  font-size: 13px
+  font-weight: 500
+  letter-spacing: -0.4px
+  border-radius: 10px
+
+.tag_react
+  color: #155dfc
+  background-color: #eff6ff
+  border: 1px solid #dbeafe
+
+.tag_tailwind
+  color: #0092b8
+  background-color: #ecfeff
+  border: 1px solid #cefafe
+
+.preview_date
+  color: $muted_text
+
+.preview_dots
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+  margin-top: 12px
+
+.dot
+  width: 6px
+  height: 6px
+  background-color: #d1d5dc
+  border-radius: 999px
+
+.dot_active
+  width: 24px
+  background-color: $green
 
 // ===== 4. 기업 정보 / 탐색 =====
 
-.company_inner
-  display: grid
-  grid-template-columns: 1fr 1fr
-  gap: 40px
-  padding-top: 80px
-  padding-bottom: 80px
+// Figma에 정의되지 않은 one-off 컬러 (기업 탐색 카드 전용)
+$company_mint_bg: #EEFDF3
+$company_mint_border: #B9F8CF
+
+.company
+  background-color: $light_gray
+  padding: 80px 0
 
   @media (max-width: 1439px)
-    padding-top: 56px
-    padding-bottom: 56px
+    padding: 56px 0
 
   @media (max-width: 768px)
-    grid-template-columns: 1fr
-    padding-top: 40px
-    padding-bottom: 40px
+    padding: 40px 0
 
-.company_spotlight
-  padding: 32px
-  background-color: $light_gray
-  border-radius: 16px
-
-.company_badge
-  display: inline-flex
-  align-items: center
-  height: 28px
-  padding: 0 12px
-  margin-bottom: 24px
-  color: $black
-  background-color: $white
-  border-radius: 999px
-
-.company_sub_title
-  color: $black
-  margin-bottom: 12px
-
-.company_salary_row
-  display: flex
-  flex-wrap: wrap
-  gap: 24px
-  margin-bottom: 24px
-
-.company_salary_col
+.company_inner
   display: flex
   flex-direction: column
-  gap: 4px
+  align-items: flex-start
+  gap: 36px
+  width: 1280px
+  max-width: 100%
+  margin: 0 auto
 
-.company_salary_label
-  color: $gray
+  @media (max-width: 1439px)
+    padding: 0 24px
 
-.company_salary_value
-  color: $black
+  @media (max-width: 768px)
+    padding: 0 16px
 
-.company_scores
-  display: grid
-  grid-template-columns: repeat(2, 1fr)
-  gap: 16px
-  list-style: none
-
-.company_score_item
+.company_text_group
   display: flex
   flex-direction: column
-  gap: 4px
-  padding: 16px
-  background-color: $white
-  border-radius: 12px
+  align-items: flex-start
+  gap: 8px
 
-.company_score_label
-  color: $gray
-
-.company_score_value
+.company_eyebrow
   color: $green
+
+.company_title
+  color: $black
+
+.company_desc
+  color: $gray
+
+.company_row
+  display: flex
+  align-items: stretch
+  gap: 19px
+  width: 100%
+
+  @media (max-width: 1439px)
+    flex-direction: column
+
+// ----- 좌측: CompanySpotlight는 컴포넌트 자체 스타일 사용 -----
+
+// ----- 우측: 맞춤 기업 탐색 -----
+
+.company_search
+  display: flex
+  flex-direction: column
+  gap: 16px
+  width: 426px
+  max-width: 100%
+  padding: 18px 23px
+  background-color: $white
+  border-radius: 20px
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+
+.company_search_heading
+  color: $black
+  text-align: center
+
+.company_search_panel
+  display: flex
+  flex-direction: column
+  gap: 16px
+  padding: 17px
+  background-color: $company_mint_bg
+  border: 1px solid $company_mint_border
+  border-radius: 14px
+
+.company_search_intro
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 4px
+  text-align: center
 
 .company_search_title
   color: $black
-  margin-bottom: 8px
 
 .company_search_desc
   color: $gray
-  margin-bottom: 24px
 
 .company_search_box
   display: flex
   align-items: center
   gap: 8px
-  height: 48px
-  padding: 0 16px
-  margin-bottom: 16px
-  border: 1px solid $stroke2
-  border-radius: 999px
+  padding: 9px 17px
+  background-color: $white
+  border: 1px solid $company_mint_border
+  border-radius: 10px
 
   :global(.material-symbols-rounded)
-    color: $gray
-    font-size: 20px
+    color: $stroke1
+    font-size: 14px
 
 .company_search_input
   flex: 1
+  min-width: 0
   border: none
   outline: none
-  color: $black
+  color: $stroke1
+
+  &::placeholder
+    color: $stroke1
+
+.company_keyword_group
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 8px
+
+.company_keyword_label
+  color: $gray
 
 .company_keywords
   display: flex
   flex-wrap: wrap
-  gap: 8px
-  margin-bottom: 24px
+  gap: 6px
 
 .company_keyword
   display: inline-flex
   align-items: center
-  height: 28px
-  padding: 0 12px
-  color: $black
-  background-color: $light_gray
-  border-radius: 999px
+  padding: 6px 12px
+  color: $green
+  background-color: $company_mint_bg
+  border: 1px solid $company_mint_border
+  border-radius: 15px
+
+.company_list_group
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 8px
+
+.company_list_label
+  color: $gray
 
 .company_list
   display: flex
   flex-direction: column
-  gap: 12px
-  margin-bottom: 24px
+  gap: 10px
+  width: 100%
   list-style: none
 
 .company_list_item
   display: flex
   align-items: center
-  justify-content: space-between
-  padding: 12px 16px
+  gap: 8px
+  padding: 9px 17px
+  background-color: $white
   border: 1px solid $stroke3
-  border-radius: 12px
+  border-radius: 10px
+
+.company_list_logo
+  flex-shrink: 0
+  object-fit: contain
 
 .company_list_name
   color: $black
@@ -310,18 +525,30 @@
   display: inline-flex
   align-items: center
   justify-content: center
-  width: 100%
-  height: 48px
+  gap: 8px
+  height: 45px
   color: $white
-  background-color: $black
-  border-radius: 999px
+  background-color: $green
+  border-radius: 12px
   text-decoration: none
+
+  span
+    font-size: 14px
 
 // ===== 5. 3단 기능 소개 =====
 
+// Figma에 정의되지 않은 one-off 컬러 (기능 카드 전용)
+$feature_green_border: #B9F8CF
+$feature_green_list_bg: #DAFFE9
+$feature_amber_border: #FFF7D2
+$feature_amber_tag_border: #FCECA0
+$feature_purple_border: #ECE4FF
+$feature_purple_tag_border: #CBB9F8
+$feature_purple_list_bg: #EAE4FC
+
 .features
   padding: 80px 0
-  background-color: $light_gray
+  background-color: $white
 
   @media (max-width: 1439px)
     padding: 56px 0
@@ -330,9 +557,40 @@
     padding: 40px 0
 
 .features_inner
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 36px
+  width: 1292px
+  max-width: 100%
+  margin: 0 auto
+
+  @media (max-width: 1439px)
+    padding: 0 24px
+
+  @media (max-width: 768px)
+    padding: 0 16px
+
+.features_text_group
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 8px
+
+.features_eyebrow
+  color: $green
+
+.features_title
+  color: $black
+
+.features_desc
+  color: $gray
+
+.features_grid
   display: grid
   grid-template-columns: repeat(3, 1fr)
-  gap: 24px
+  gap: 20px
+  width: 100%
 
   @media (max-width: 1439px)
     grid-template-columns: 1fr
@@ -341,115 +599,101 @@
 .feature_card
   display: flex
   flex-direction: column
-  padding: 32px
-  background-color: $white
-  border-radius: 16px
+  gap: 24px
+  padding: 34px 26px 18px
+  border: 2px solid transparent
+  border-radius: 35px
 
-  > :global(.material-symbols-rounded)
-    display: flex
-    align-items: center
-    justify-content: center
-    width: 36px
-    height: 36px
-    margin-bottom: 16px
-    color: $green
-    font-size: 20px
-    background-color: $sub_green
-    border-radius: 50%
+.tone_green
+  background-color: $sub_green
+  border-color: $feature_green_border
 
-.feature_title
-  color: $black
-  margin-bottom: 8px
+.tone_amber
+  background-color: $light_yellow
+  border-color: $feature_amber_border
 
-.feature_desc
-  color: $gray
-  margin-bottom: 24px
+.tone_purple
+  background-color: $light_purple
+  border-color: $feature_purple_border
 
-// 이력서 단계 리스트
-.feature_step_list
+.feature_body
   display: flex
   flex-direction: column
   gap: 12px
-  margin-bottom: 24px
-  list-style: none
+  width: 100%
 
-.feature_step_item
+.feature_tags
   display: flex
-  align-items: flex-start
-  gap: 12px
-  padding: 10px
-  background-color: $light_gray
-  border-radius: 12px
+  flex-wrap: wrap
+  gap: 6px
 
-.feature_step_num
-  display: flex
+.feature_tag
+  display: inline-flex
   align-items: center
-  justify-content: center
-  flex-shrink: 0
-  width: 24px
-  height: 24px
-  color: $white
-  background-color: $green
-  border-radius: 50%
+  padding: 4px 10px
+  border-radius: 999px
 
-.feature_step_title
-  color: $black
-
-.feature_step_desc
-  color: $gray
-  margin-top: 2px
-
-// 면접 질문 리스트
-.feature_qa_list
-  display: flex
-  flex-direction: column
-  gap: 12px
-  margin-bottom: 24px
-  list-style: none
-
-.feature_qa_item
-  padding: 12px 16px
-  color: $black
-  background-color: $light_gray
-  border-radius: 12px
-
-// 커뮤니티 게시글 리스트
-.feature_post_list
-  display: flex
-  flex-direction: column
-  gap: 12px
-  margin-bottom: 24px
-  list-style: none
-
-.feature_post_item
-  display: flex
-  align-items: center
-  justify-content: space-between
-  padding: 12px 16px
-  background-color: $light_gray
-  border-radius: 12px
-
-.feature_post_title
-  color: $black
-
-.feature_post_tag
-  color: $gray
-  margin-top: 2px
-
-.feature_post_status
-  flex-shrink: 0
-  padding: 4px 8px
+.tone_green .feature_tag
   color: $green
   background-color: $sub_green
-  border-radius: 999px
+  border: 1px solid $feature_green_border
+
+.tone_amber .feature_tag
+  color: $brown
+  background-color: $sub_yellow
+  border: 1px solid $feature_amber_tag_border
+
+.tone_purple .feature_tag
+  color: $purple
+  background-color: $sub_purple
+  border: 1px solid $feature_purple_tag_border
+
+.feature_list
+  display: flex
+  flex-direction: column
+  gap: 8px
+  padding: 10px
+  border-radius: 14px
+  list-style: none
+
+.tone_green .feature_list
+  background-color: $feature_green_list_bg
+
+.tone_amber .feature_list
+  background-color: $sub_yellow
+
+.tone_purple .feature_list
+  background-color: $feature_purple_list_bg
+
+.feature_answer_row
+  display: flex
+  align-items: center
+  gap: 0
+  padding-left: 12px
+
+  > :global(.material-symbols-rounded)
+    flex-shrink: 0
+    color: $amber
+    font-size: 24px
+
+  > *
+    flex: 1
 
 .feature_btn
   display: inline-flex
   align-items: center
-  justify-content: center
-  height: 44px
-  margin-top: auto
-  color: $white
-  background-color: $black
-  border-radius: 999px
+  align-self: flex-end
+  gap: 6px
   text-decoration: none
+
+  span
+    font-size: 14px
+
+.tone_green .feature_btn
+  color: $green
+
+.tone_amber .feature_btn
+  color: $brown
+
+.tone_purple .feature_btn
+  color: $purple
