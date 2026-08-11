@@ -3,13 +3,14 @@
 // ===== 1. 히어로 =====
 
 .hero
-  background-color: $light_gray
+  background-color: $white
+  border-bottom: 1px solid $stroke3
 
 .hero_inner
   display: flex
-  flex-direction: column
-  align-items: flex-start
-  gap: 24px
+  align-items: center
+  justify-content: space-between
+  gap: 40px
   padding-top: 80px
   padding-bottom: 80px
 
@@ -21,25 +22,43 @@
     padding-top: 40px
     padding-bottom: 40px
 
+.hero_content
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 24px
+  width: 546px
+  max-width: 100%
+
 .hero_badge
   display: inline-flex
   align-items: center
-  height: 32px
-  padding: 0 16px
+  gap: 4px
+  padding: 8px 16px
   color: $green
   background-color: $sub_green
   border: 1px solid $green
-  border-radius: 999px
+  border-radius: 16px
+
+  span
+    font-size: 18px
 
 .hero_title
+  display: flex
+  flex-direction: column
   color: $black
 
   @media (max-width: 768px)
     font-size: 36px
     line-height: 48px
 
+.hero_title_line
+  display: block
+
+.hero_title_highlight
+  color: $green
+
 .hero_desc
-  max-width: 620px
   color: $gray
 
 .hero_btns
@@ -51,24 +70,27 @@
 .hero_btn_secondary
   display: inline-flex
   align-items: center
-  height: 56px
-  padding: 0 32px
-  border-radius: 999px
+  gap: 4px
+  padding: 20px 24px
+  border-radius: 16px
   text-decoration: none
+
+  span
+    font-size: 20px
 
 .hero_btn_primary
   color: $white
-  background-color: $black
+  background-color: $green
 
 .hero_btn_secondary
-  color: $black
+  color: $gray
   background-color: $white
-  border: 1px solid $stroke2
+  border: 1px solid $gray
 
 .hero_stats
   display: flex
   flex-wrap: wrap
-  gap: 32px
+  gap: 36px
   margin-top: 8px
 
 // ===== 2. 서비스 소개 =====
