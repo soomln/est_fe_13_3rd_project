@@ -15,10 +15,47 @@
   &:hover
     border-color: $green
 
+.qbank_card_selected
+  border-color: $green
+
 .qbank_card_company
   display: flex
   align-items: center
   gap: 4px
+
+// 선택 체크박스 (onToggle 을 넘겼을 때만 그려진다). 로고 왼쪽에 나란히 놓는다
+.qbank_card_check
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 20px
+  height: 20px
+  margin-right: 12px
+  color: transparent
+  background-color: $white
+  border: 2px solid $stroke1
+  border-radius: 4px
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+  input
+    position: absolute
+    width: 100%
+    height: 100%
+    margin: 0
+    opacity: 0
+    cursor: pointer
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+  &:has(input:checked)
+    color: $white
+    background-color: $green
+    border-color: $green
 
 .qbank_card_logo
   flex-shrink: 0

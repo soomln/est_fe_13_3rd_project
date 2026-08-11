@@ -1,7 +1,8 @@
 import styles from './QbankCard.module.sass';
 
 // 스크랩한 면접 질문 족보 카드
-export default function QbankCard({ qbank }) {
+// onToggle 을 넘길 때만 선택용 체크박스가 나온다 (삭제모드)
+export default function QbankCard({ qbank, isSelected = false, onToggle }) {
   const {
     companyName,
     companyLogo,
@@ -16,8 +17,27 @@ export default function QbankCard({ qbank }) {
   } = qbank;
 
   return (
-    <div className={styles.qbank_card}>
+    <div className={`${styles.qbank_card} ${isSelected ? styles.qbank_card_selected : ''}`}>
       <div className={styles.qbank_card_company}>
+        {onToggle && (
+          <label
+            className={styles.qbank_card_check}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <input
+              type='checkbox'
+              checked={isSelected}
+              onChange={onToggle}
+              aria-label={`${companyName} 족보 선택`}
+            />
+            <span className='material-symbols-sharp' aria-hidden='true'>
+              check
+            </span>
+          </label>
+        )}
+
         {companyLogo ? (
           <img src={companyLogo} alt='' className={styles.qbank_card_logo} />
         ) : (
