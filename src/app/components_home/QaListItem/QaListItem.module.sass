@@ -1,9 +1,11 @@
 @use '@/app/_variables.sass' as *
 
 .item
+  box-sizing: border-box
   display: flex
   align-items: center
   gap: 8px
+  width: 100%
   padding: 8px 16px
   background: $white
   border-radius: 10px
@@ -17,9 +19,18 @@
   width: 30px
   height: 30px
   color: $white
+  border-radius: 7px
+
+.tone_amber
   background: $amber
   border: 1px solid #ffe8c4
-  border-radius: 7px
+
+.tone_gray
+  background: $stroke1
+  border: 1px solid $stroke2
 
 .question
   color: $black
+
+.item:has(.tone_gray) .question
+  color: $gray

@@ -12,6 +12,7 @@ import PostCard from '@/app/_components/common/ReviewCard/ReviewCard';
 import CategoryChip from '@/app/_components/common/Category/CategoryChip';
 import CircleBadge from '@/app/_components/common/CircleBadge/CircleBadge';
 import ActionBtn from '@/app/_components/common/ActionBtn/ActionBtn';
+import ReviewCard from '@/app/_components/common/ReviewCard/ReviewCard';
 
 export default function Home() {
   // 1. Boolean 상태 관리 (팀 컨벤션: is / has / can 접두사 준수)
@@ -99,9 +100,7 @@ export default function Home() {
         {/* 6. 포스트(면접 후기) 카드 테스트 */}
         <section style={{}}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
-          <PostCard
-            companyLogo='/images/estSoft 1.png'
-            companyName='이스트소프트'
+          <ReviewCard
             difficulty='보통'
             result='합격'
             channel='잡코리아'
@@ -112,7 +111,7 @@ export default function Home() {
             commentCount={10}
             onBookmarkClick={() => {}}
           />
-          <PostCard
+          <ReviewCard
             companyLogo='/logo.svg'
             companyName='이스트소프트'
             difficulty='보통'
