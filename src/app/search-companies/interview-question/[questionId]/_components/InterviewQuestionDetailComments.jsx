@@ -1,9 +1,10 @@
+import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass";
 const sortOptions = ["추천순", "최신순"];
 
 
 export default function InterviewQuestionDetailComments({question}){
   return(
-    <div>
+    <div className={styles.review_card}>
       <span>
         {/* <img src="" alt="프로필 사진" /> */}
         <span>프로필 사진</span>
