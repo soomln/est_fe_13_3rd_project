@@ -1,0 +1,61 @@
+@use '@/app/_variables.sass' as *
+
+.question_panel
+  width: 400px
+  height: 100%
+  padding: 30px
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  align-items: stretch
+  gap: 30px
+  flex-shrink: 0
+  border: 1px solid $stroke2
+  border-radius: 15px
+  background: $white
+
+  h2
+    margin: 0
+    color: $green
+
+.question_list
+  width: 100%
+  margin: 0
+  padding: 0
+  list-style: none
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+.question_list li
+  display: flex
+  align-items: flex-start
+  gap: 10px
+  flex-shrink: 0
+
+  .material-symbols-outlined
+    width: 16px
+    height: 16px
+    flex-shrink: 0
+    margin-top: 3px
+    color: $green
+    font-size: 20px
+    line-height: 1
+
+.question_list li > div
+  display: flex
+  flex-direction: column
+  gap: 5px
+
+.question_list strong
+  color: $black
+
+.question_list p
+  margin: 0
+  color: $gray
+
+.question_list_button
+  width: 100%
+  height: 50px
+  min-height: 50px
+  flex-shrink: 0
