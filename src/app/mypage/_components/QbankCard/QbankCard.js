@@ -1,0 +1,76 @@
+import styles from './QbankCard.module.sass';
+
+// 스크랩한 면접 질문 족보 카드
+export default function QbankCard({ qbank }) {
+  const {
+    companyName,
+    companyLogo,
+    difficulty,
+    result,
+    route,
+    jobInfo,
+    createdAt,
+    questions,
+    bookmark,
+    comment,
+  } = qbank;
+
+  return (
+    <div className={styles.qbank_card}>
+      <div className={styles.qbank_card_company}>
+        {companyLogo ? (
+          <img src={companyLogo} alt='' className={styles.qbank_card_logo} />
+        ) : (
+          <span className={styles.qbank_card_logo_dummy} />
+        )}
+        <p className={`${styles.qbank_card_company_name} font_body_s_r`}>{companyName}</p>
+      </div>
+
+      <div className={styles.qbank_card_meta}>
+        <div className={styles.qbank_card_tags}>
+          <span className={styles.qbank_card_tag}>
+            <span className='font_body_m_b'>면접 난이도</span>
+            <span className={`${styles.qbank_card_tag_green} font_body_m_r`}>{difficulty}</span>
+          </span>
+
+          <span className={styles.qbank_card_tag}>
+            <span className='font_body_m_b'>합격 여부</span>
+            <span className='font_body_m_r'>{result}</span>
+          </span>
+
+          <span className={styles.qbank_card_tag}>
+            <span className='font_body_m_b'>면접 경로</span>
+            <span className='font_body_m_r'>{route}</span>
+          </span>
+        </div>
+
+        <div className={styles.qbank_card_writer}>
+          <span className='material-symbols-rounded' aria-hidden='true'>
+            account_circle
+          </span>
+          <span className='font_body_s_r'>{jobInfo}</span>
+          <span className='font_body_s_r'>{createdAt}</span>
+        </div>
+      </div>
+
+      <ol className={styles.qbank_card_questions}>
+        {questions.map((question, index) => (
+          <li key={question} className='font_body_m_r'>
+            {index + 1}. {question}
+          </li>
+        ))}
+      </ol>
+
+      <div className={styles.qbank_card_counts}>
+        <span className={styles.qbank_card_count}>
+          <span className='material-symbols-sharp' aria-hidden='true'>
+            bookmark
+          </span>
+          <span className='font_body_m_r'>퍼가요</span>
+          <span className='font_body_m_r'>{bookmark}</span>
+        </span>
+        <span className={`${styles.qbank_card_count} font_body_m_r`}>댓글 {comment}</span>
+      </div>
+    </div>
+  );
+}
