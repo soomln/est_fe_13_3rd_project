@@ -1,6 +1,7 @@
 @use '@/app/_variables.sass' as *
 
 .spotlight
+  box-sizing: border-box
   display: flex
   flex-direction: column
   gap: 10px
@@ -28,6 +29,7 @@
 // ===== 연봉 · 점수 카드 =====
 
 .card
+  box-sizing: border-box
   display: flex
   flex-direction: column
   gap: 32px
@@ -45,9 +47,11 @@
   color: $black
 
 .salary_row
+  box-sizing: border-box
   display: flex
   align-items: center
   gap: 16px
+  width: 100%
   padding: 16px 30px
   background: $light_gray
   border-radius: 16px
@@ -59,6 +63,7 @@
   justify-content: space-between
   gap: 16px
   padding-right: 16px
+  white-space: nowrap
   border-right: 1px solid $stroke1
 
   &:last-child
@@ -68,6 +73,7 @@
   display: flex
   align-items: center
   gap: 4px
+  white-space: nowrap
 
 .salary_value
   color: $black
@@ -136,10 +142,12 @@
 // ===== 복지 리스트 =====
 
 .benefit_row
+  box-sizing: border-box
   display: flex
   align-items: flex-start
   justify-content: space-between
   gap: 16px
+  width: 100%
   padding: 0 29px
 
   @media (max-width: 768px)
