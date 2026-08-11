@@ -27,6 +27,60 @@ export default function Home() {
     { id: 1, thumbnailUrl: '', title: '포트폴리오 예시 1', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
     { id: 2, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
   ];
+  const review = {
+    id: 1,
+    job: '개발',
+    education: '대졸',
+    date: '2026.07.23',
+    difficulty: '보통',
+    result: '합격',
+    route: '잡코리아',
+    title: '생각보다 편했던 면접',
+    content: '면접관분들이 편하게 분위기를 만들어 주셔서 긴장이 많이 풀렸습니다.',
+    summary: '난이도는 보통이었지만 면접관분들이 편안한 분위기를 만들어 주셔서 긴장하지 않고 면접을 볼 수 있었습니다.',
+    questions: ['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.'],
+    comments: [
+      {
+        id: 1,
+        job: '개발',
+        education: '대졸',
+        date: '2026.07.24',
+        time: '22:50',
+        content: '저도 최근에 봤는데 분위기가 정말 편안했어요. 프로젝트만 잘 준비하면 충분히 답변 가능합니다!',
+        likes: 50,
+      },
+      {
+        id: 2,
+        job: '개발',
+        education: '대졸',
+        date: '2026.07.24',
+        time: '22:50',
+        content: '저도 최종 합격했습니다! 면접관분들이 친절하셔서 긴장이 많이 풀렸어요.',
+        likes: 50,
+      },
+      {
+        id: 3,
+        job: '개발',
+        education: '대졸',
+        date: '2026.07.24',
+        time: '22:50',
+        content: '프로젝트 위주로 준비했는데 비슷하게 나왔습니다. 후기 공감돼요!',
+        likes: 50,
+      },
+      {
+        id: 4,
+        job: '개발',
+        education: '대졸',
+        date: '2026.07.24',
+        time: '22:50',
+        content:
+          '저도 이번에 합격했는데 거의 비슷한 질문 받았습니다. 준비하시는 분들 너무 걱정 안 하셔도 될 것 같아요.',
+        likes: 50,
+      },
+    ],
+    bookmark: 500,
+    comment: 10,
+  };
   return (
     <>
       {/* 1. 상단 공통 헤더 */}
@@ -100,30 +154,8 @@ export default function Home() {
         {/* 6. 포스트(면접 후기) 카드 테스트 */}
         <section style={{}}>
           <h2>6. 포스트 카드 (면접 후기)</h2>
-          <ReviewCard
-            difficulty='보통'
-            result='합격'
-            channel='잡코리아'
-            jobInfo='개발 / 사원 / 대졸'
-            date='2026. 07. 23'
-            questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
-            saveCount={500}
-            commentCount={10}
-            onBookmarkClick={() => {}}
-          />
-          <ReviewCard
-            companyLogo='/logo.svg'
-            companyName='이스트소프트'
-            difficulty='보통'
-            result='합격'
-            channel='잡코리아'
-            jobInfo='개발 / 사원 / 대졸'
-            date='2026. 07. 23'
-            questions={['1. 이스트소프트에 지원한 이유는 무엇인가요?', '2. 본인의 장점과 단점을 말씀해주세요.']}
-            saveCount={500}
-            commentCount={10}
-            onBookmarkClick={() => {}}
-          />
+          <ReviewCard review={review} onBookmarkClick={() => {}} />
+          <ReviewCard companyLogo='/logo.svg' companyName='이스트소프트' review={review} onBookmarkClick={() => {}} />
         </section>
 
         {/*7. 원형 배지 (CircleBadge) 테스트 */}
