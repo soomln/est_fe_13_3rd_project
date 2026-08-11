@@ -6,13 +6,13 @@ import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
 import StatItem from '@/app/_components/main/StatItem';
 import HeroVisual from '@/app/_components/main/HeroVisual';
-import ServiceIntro from '@/app/components_home/ServiceIntro';
-import ServiceCard from '@/app/components_home/ServiceCard';
-import CompanySpotlight from '@/app/components_home/CompanySpotlight';
-import FeatureHeader from '@/app/components_home/FeatureHeader';
-import StepListItem from '@/app/components_home/StepListItem';
-import QaListItem from '@/app/components_home/QaListItem';
-import CommunityPostItem from '@/app/components_home/CommunityPostItem';
+import ServiceIntro from '@/app/_components/main/ServiceIntro';
+import ServiceCard from '@/app/_components/main/ServiceCard';
+import CompanySpotlight from '@/app/_components/main/CompanySpotlight';
+import FeatureHeader from '@/app/_components/main/FeatureHeader';
+import StepListItem from '@/app/_components/main/StepListItem';
+import QaListItem from '@/app/_components/main/QaListItem';
+import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
 
 const HERO_STATS = [
   { icon: 'group', value: '10,000+', label: '회원', tone: 'green' },
@@ -278,7 +278,9 @@ export default function Home() {
             </div>
 
             <div className={styles.company_row}>
-              <CompanySpotlight />
+              <div className={styles.company_spotlight_wrap}>
+                <CompanySpotlight />
+              </div>
 
               <div className={styles.company_search}>
                 <h3 className={`font_h3 ${styles.company_search_heading}`}>맞춤 기업 탐색</h3>
