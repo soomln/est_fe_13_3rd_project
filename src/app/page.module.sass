@@ -399,13 +399,19 @@ $company_mint_border: #B9F8CF
   @media (max-width: 1439px)
     flex-direction: column
 
+.company_spotlight_wrap
+  flex: 1
+  min-width: 0
+
 // ----- 좌측: CompanySpotlight는 컴포넌트 자체 스타일 사용 -----
 
 // ----- 우측: 맞춤 기업 탐색 -----
 
 .company_search
+  box-sizing: border-box
   display: flex
   flex-direction: column
+  flex-shrink: 0
   gap: 16px
   width: 426px
   max-width: 100%
