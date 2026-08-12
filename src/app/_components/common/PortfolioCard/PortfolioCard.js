@@ -48,8 +48,8 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
         </div>
 
         <div className={styles.actions}>
-          <ActionBtn iconText={'thumb_up_alt'} count={50} />
-          <ActionBtn iconText={'bookmark'} count={50} />
+          <ActionBtn iconText={'thumb_up_alt'} count={item.likeCount} />
+          <ActionBtn iconText={'bookmark'} count={item.bookmarkCount} />
         </div>
       </div>
     </li>
