@@ -18,26 +18,29 @@ import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import QuickBtns from './_components/QuickBtns';
 import Window from '@/app/portfolio/_components/Modal/Window';
 
+import { listPortfolios } from '@backend/lib/api/portfolio';
+
 export default function Portpolio() {
-  //================test================/
-  const items = [
-    { id: 1, thumbnailUrl: '', title: '포트폴리오 예시 1', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 2, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 3, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 4, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 5, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 6, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 7, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 8, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 9, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 10, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 11, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 12, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 13, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 14, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-    { id: 15, thumbnailUrl: '', title: '포트폴리오 예시 2', authorName: '이름', likeCount: 50, bookmarkCount: 50 },
-  ];
-  //================test================/
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const data = await listPortfolios({
+          sort: 'latest',
+          page: 1,
+        });
+
+        console.log('listPortfolios 결과:', data);
+
+        setItems(data.items);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchItems();
+  }, []);
 
   const bestPortfolioList = [];
   items.map((item) => {
@@ -53,8 +56,8 @@ export default function Portpolio() {
   const searchParams = useSearchParams();
 
   const modalId = searchParams.get('modal');
-  const selectedItem = items.find((item) => item.id === Number(modalId)) ?? null;
-  const isModalOpen = !!selectedItem;
+  const selectedItemID = modalId;
+  const isModalOpen = !!selectedItemID;
 
   const galleryRef = useRef(null);
   const [showQuickBtns, setShowQuickBtns] = useState(false);
@@ -94,7 +97,15 @@ export default function Portpolio() {
 
   const portfolioList = [];
   items.map((item) => {
-    portfolioList.push(<PortfolioCard key={item.id} item={item} onClick={onOpenDetail} />);
+    portfolioList.push(
+      <PortfolioCard
+        key={item.id}
+        item={item}
+        onClick={() => {
+          onOpenDetail(item);
+        }}
+      />,
+    );
   });
 
   const handleMoveTop = () => {
@@ -147,7 +158,7 @@ export default function Portpolio() {
           </section>
         </div>
 
-        <Window isOpen={isModalOpen} onClose={onCloseDetail} data={selectedItem} />
+        <Window isOpen={isModalOpen} onClose={onCloseDetail} itemID={selectedItemID} />
 
         <Footer />
       </main>
