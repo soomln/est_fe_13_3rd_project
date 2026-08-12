@@ -2,6 +2,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import styles from './ServiceCard.module.sass';
 
+const ACCENT_COLORS = {
+  green: '#a7f3d0',
+  sky: '#7dd3fc',
+  amber: '#fde68a',
+  orange: '#ffe2b6',
+  violet: '#c4b5fd',
+};
+
 export default function ServiceCard({
   iconSrc = '/images/services/resume.svg',
   title = '이력서/자소서',
@@ -10,7 +18,7 @@ export default function ServiceCard({
   tone = 'green',
 }) {
   return (
-    <div className={styles.card}>
+    <div className={styles.card} style={{ '--accent': ACCENT_COLORS[tone] }}>
       <div className={`${styles.icon_box} ${styles[`tone_${tone}`]}`}>
         <Image src={iconSrc} alt='' width={50} height={50} className={styles.icon} />
       </div>
@@ -22,6 +30,9 @@ export default function ServiceCard({
 
       <Link href={href} className={`font_caption_b ${styles.link}`}>
         작성하기
+        <span className={`material-symbols-rounded ${styles.link_arrow}`} aria-hidden='true'>
+          arrow_forward
+        </span>
       </Link>
     </div>
   );
