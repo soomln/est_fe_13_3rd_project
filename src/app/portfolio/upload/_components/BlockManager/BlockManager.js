@@ -12,7 +12,7 @@ export default function BlockManager({ block, isEditMode = false, updateBlock, r
       return <TextBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 
     case 'image':
-      return <ImageBlock block={block} isEditMode={isEditMode} pdateBlock={updateBlock} removeBlock={removeBlock} />;
+      return <ImageBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 
     case 'video':
       return <VideoBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
