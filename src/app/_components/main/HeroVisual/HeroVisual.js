@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import styles from './HeroVisual.module.sass';
 
 const QUESTION_CARD = {
@@ -63,9 +64,7 @@ export default function HeroVisual() {
       <div className={`${styles.card} ${styles.review_card}`}>
         <div className={styles.mini_head}>
           <div className={`${styles.mini_icon} ${styles.icon_yellow}`}>
-            <span className='material-symbols-rounded' aria-hidden='true'>
-              forum
-            </span>
+            <Image src='/images/hero/card-review.svg' alt='' width={16} height={16} />
           </div>
           <p className={`font_body_m_r ${styles.mini_title}`}>{REVIEW_CARD.title}</p>
         </div>
@@ -83,9 +82,7 @@ export default function HeroVisual() {
         <div className={styles.qna_head}>
           <div className={styles.qna_head_left}>
             <div className={styles.qna_icon}>
-              <span className='material-symbols-rounded' aria-hidden='true'>
-                quiz
-              </span>
+              <Image src='/images/hero/card-question.svg' alt='' width={20} height={20} />
             </div>
             <div>
               <p className={`font_body_s_b ${styles.qna_title}`}>{QUESTION_CARD.title}</p>
@@ -120,9 +117,7 @@ export default function HeroVisual() {
       <div className={`${styles.card} ${styles.portfolio_card}`}>
         <div className={styles.mini_head}>
           <div className={`${styles.mini_icon} ${styles.icon_green}`}>
-            <span className='material-symbols-rounded' aria-hidden='true'>
-              work
-            </span>
+            <Image src='/images/hero/card-portfolio.svg' alt='' width={16} height={16} />
           </div>
           <p className={`font_body_m_r ${styles.mini_title}`}>{PORTFOLIO_CARD.title}</p>
         </div>
@@ -145,9 +140,7 @@ export default function HeroVisual() {
       <div className={`${styles.card} ${styles.team_card}`}>
         <div className={styles.mini_head}>
           <div className={`${styles.mini_icon} ${styles.icon_purple}`}>
-            <span className='material-symbols-rounded' aria-hidden='true'>
-              group_add
-            </span>
+            <Image src='/images/hero/card-team.svg' alt='' width={16} height={16} />
           </div>
           <p className={`font_body_m_r ${styles.mini_title}`}>{TEAM_CARD.title}</p>
         </div>
@@ -171,9 +164,7 @@ export default function HeroVisual() {
       <div className={`${styles.card} ${styles.resume_card}`}>
         <div className={styles.mini_head}>
           <div className={`${styles.mini_icon} ${styles.icon_blue}`}>
-            <span className='material-symbols-rounded' aria-hidden='true'>
-              description
-            </span>
+            <Image src='/images/hero/card-resume.svg' alt='' width={16} height={16} />
           </div>
           <p className={`font_body_m_r ${styles.mini_title}`}>{RESUME_CARD.title}</p>
         </div>

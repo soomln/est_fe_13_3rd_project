@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import styles from './CompanySpotlight.module.sass';
 
@@ -21,8 +24,41 @@ const DEFAULT_BENEFITS = [
   { icon: 'travel', title: '근무 방식 및 휴가', description: '반반차·재택·휴가' },
 ];
 
-function ScoreDonut({ label, value, color }) {
-  const percent = (value / 5) * 100;
+const ANIMATION_DURATION = 900;
+
+function easeOutCubic(t) {
+  return 1 - (1 - t) ** 3;
+}
+
+function ScoreDonut({ label, value, color, animate, delay }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!animate) return undefined;
+
+    let raf;
+    let startTime = null;
+
+    const tick = (now) => {
+      if (startTime === null) startTime = now;
+      const elapsed = now - startTime - delay;
+
+      if (elapsed < 0) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+      setDisplayValue(value * easeOutCubic(progress));
+
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [animate, value, delay]);
+
+  const percent = (displayValue / 5) * 100;
 
   return (
     <div className={styles.score_item}>
@@ -30,7 +66,7 @@ function ScoreDonut({ label, value, color }) {
 
       <div className={styles.donut} style={{ '--percent': `${percent}%`, '--color': `var(--donut-${color})` }}>
         <div className={styles.donut_inner}>
-          <span className={`font_h2 ${styles.donut_value}`}>{value}</span>
+          <span className={`font_h2 ${styles.donut_value}`}>{displayValue.toFixed(1)}</span>
           <span className={`font_body_l_r ${styles.donut_unit}`}>점</span>
         </div>
       </div>
@@ -45,6 +81,27 @@ export default function CompanySpotlight({
   scores = DEFAULT_SCORES,
   benefits = DEFAULT_BENEFITS,
 }) {
+  const rowRef = useRef(null);
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setAnimate(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className={styles.spotlight}>
       <div className={styles.brand}>
@@ -71,9 +128,9 @@ export default function CompanySpotlight({
           </div>
         </div>
 
-        <div className={styles.score_row}>
-          {scores.map((item) => (
-            <ScoreDonut key={item.label} label={item.label} value={item.value} color={item.color} />
+        <div className={styles.score_row} ref={rowRef}>
+          {scores.map((item, i) => (
+            <ScoreDonut key={item.label} label={item.label} value={item.value} color={item.color} animate={animate} delay={i * 120} />
           ))}
         </div>
       </div>
