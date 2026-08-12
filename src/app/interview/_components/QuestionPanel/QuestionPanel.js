@@ -1,7 +1,13 @@
+'use client';
+
+import { useState } from 'react';
+
 import './QuestionPanel.sass';
 import QuestionListButton from '../QuestionListButton';
 
-export default function QuestionList() {
+export default function QuestionPanel({ onStart }) {
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+
   const questions = [
     {
       title: '전체',
@@ -29,29 +35,74 @@ export default function QuestionList() {
     },
   ];
 
+  // 실제로 면접에 사용할 질문
+  const questionTitles = questions
+    .filter((question) => question.title !== '전체')
+    .map((question) => question.title);
+
+  const handleSelect = (title) => {
+    // 전체 선택
+    if (title === '전체') {
+      setSelectedQuestions((prev) =>
+        prev.length === questionTitles.length
+          ? []
+          : questionTitles,
+      );
+
+      return;
+    }
+
+    // 개별 질문 선택 / 해제
+    setSelectedQuestions((prev) => {
+      if (prev.includes(title)) {
+        return prev.filter((item) => item !== title);
+      }
+
+      return [...prev, title];
+    });
+  };
+
   return (
     <aside className="question_panel">
       <h2 className="font_h3">질문 리스트</h2>
-      <ul className="question_list">
-        {questions.map((question) => (
-          <li key={question.title}>
-            <span className="material-symbols-outlined">
-              check_box_outline_blank
-            </span>
-            <div>
-              <strong className="font_h4">
-                {question.title}
-              </strong>
 
-              <p className="font_body_m_r">
-                {question.description}
-              </p>
-            </div>
-          </li>
-        ))}
+      <ul className="question_list">
+        {questions.map((question) => {
+          const isSelected =
+            question.title === '전체'
+              ? selectedQuestions.length === questionTitles.length
+              : selectedQuestions.includes(question.title);
+
+          return (
+            <li key={question.title}>
+              <button
+                type="button"
+                onClick={() => handleSelect(question.title)}
+              >
+                <span className="material-symbols-outlined">
+                  {isSelected
+                    ? 'check_box'
+                    : 'check_box_outline_blank'}
+                </span>
+
+                <div>
+                  <strong className="font_h4">
+                    {question.title}
+                  </strong>
+
+                  <p className="font_body_m_r">
+                    {question.description}
+                  </p>
+                </div>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
-      <QuestionListButton>
+      <QuestionListButton
+        onClick={() => onStart(selectedQuestions)}
+      >
         선택한 질문으로 시작하기
       </QuestionListButton>
     </aside>

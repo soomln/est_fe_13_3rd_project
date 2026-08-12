@@ -264,6 +264,7 @@ export default function InterviewPage() {
 
               <ActionButton
                 text="AI 면접 시작하기"
+                href="/interview/chat"
                 variant="purple"
                 className="font_body_s_b"
               />
