@@ -1,12 +1,15 @@
+import Image from 'next/image';
 import './AiChatBubble.sass';
 
 export default function AiChatBubble({ message }) {
   return (
     <div className="ai_chat_bubble">
       <div className="ai_profile">
-        <img
+        <Image
           src="/images/ai-interviewer.png"
           alt="AI 면접관"
+          width={80}
+          height={80}
         />
       </div>
 
