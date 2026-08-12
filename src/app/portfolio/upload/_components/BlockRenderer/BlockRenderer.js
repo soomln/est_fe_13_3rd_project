@@ -1,11 +1,11 @@
-import styles from './BlockManager.module.sass';
+import styles from './BlockRenderer.module.sass';
 
 import TextBlock from '../TextBlock';
 import ImageBlock from '../ImageBlock';
 import VideoBlock from '../VideoBlock';
 // import CodeBlock from '../CodeBlock';
 
-export default function BlockManager({ block, isEditMode = false, updateBlock, removeBlock }) {
+export default function BlockRenderer({ block, isEditMode = false, updateBlock, removeBlock }) {
   console.log(block.type);
   switch (block.type) {
     case 'text':
