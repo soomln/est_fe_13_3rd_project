@@ -1,0 +1,31 @@
+@use '@/app/_variables' as *
+
+.ai_btn
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  padding: 0.5rem 1rem
+  border: solid 1px $stroke2
+  border-radius: 999px
+  background: none
+  cursor: pointer
+  transition: 0.3s ease
+
+  &:hover
+    color: $green
+    border-color: transparent
+    background: linear-gradient(
+      to right,
+      $sub_green,
+      $light_yellow,
+      $sub_green
+    )
+    background-size: 200% 100%
+    animation: gradientMove 2s linear infinite
+
+@keyframes gradientMove
+  0%
+    background-position: 200% 50%
+
+  100%
+    background-position: 0% 50%

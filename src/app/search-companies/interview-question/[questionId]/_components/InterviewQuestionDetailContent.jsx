@@ -1,25 +1,23 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 import InterviewQuestionDetailHeader from "./InterviewQuestionDetailHeader";
 import InterviewQuestionDetailFooter from "./InterviewQuestionDetailFooter";
-import InterviewQuestionDetailSummary from "./InterviewQuestionDetailSummary";
 import InterviewQuestionDetailComments from "./InterviewQuestionDetailComments";
 
 
-export default function InterviewQuestionDetailContent({review}){
+export default function InterviewQuestionDetailContent({question}){
    return (
     <div>
       <div className={styles.review_card}>
         <h1>면접 후기</h1>
-        <h2>{review.title}</h2>
-        <InterviewQuestionDetailHeader review={review}/>
-        <InterviewQuestionDetailFooter review={review}/>
-        <InterviewQuestionDetailSummary review={review}/>
+        <h2>{question.title}</h2>
+        <InterviewQuestionDetailHeader question={question}/>
+        <InterviewQuestionDetailFooter question={question}/>
         
         <div className={styles.content}>
-          <p>{review.content}</p>
+          <p>{question.content}</p>
         </div>
 
-        <InterviewQuestionDetailComments review={review}/>
+        <InterviewQuestionDetailComments question={question}/>
       </div>
     </div>
   );

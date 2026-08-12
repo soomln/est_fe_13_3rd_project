@@ -1,6 +1,10 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 
+
 export default function InterviewReviewDetailComments({review}){
+  
+  const sortOptions = ["추천순", "최신순"];
+
   return(
     <div>
       <span>
@@ -8,6 +12,11 @@ export default function InterviewReviewDetailComments({review}){
         <span>프로필 사진</span>
         <input type="text" placeholder="댓글을 입력해주세요." id="" /><button type="button">등록</button>
       </span>
+      <select>
+        {sortOptions.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
+      </select>
       {review.comments.map((comment) => (
       <div key={comment.id}>
         <p>{comment.job} / {comment.education} {comment.date} {comment.time}</p>

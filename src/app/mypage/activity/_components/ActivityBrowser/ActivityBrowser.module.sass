@@ -1,0 +1,152 @@
+@use '@/app/_variables.sass' as *
+
+.activity_browser_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 24px
+
+.activity_browser_head_text
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.activity_browser_head_title
+  color: $black
+
+.activity_browser_head_desc
+  color: $gray
+
+.activity_browser_head_btns
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+
+.activity_browser_ghost_btn
+  flex-shrink: 0
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  color: $gray
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+  text-decoration: none
+  white-space: nowrap
+  transition: color 0.2s ease, border-color 0.2s ease
+
+  &:hover
+    color: $green
+    border-color: $green
+
+  :global(.material-symbols-sharp)
+    font-size: 24px
+
+.activity_browser_delete_btn
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  padding: 12px 16px
+  color: $white
+  background-color: $warning
+  border: 1px solid $warning
+  border-radius: 8px
+  cursor: pointer
+  white-space: nowrap
+
+  &:disabled
+    color: $stroke1
+    background-color: $stroke3
+    border-color: $stroke3
+    cursor: not-allowed
+
+// 삭제모드 안내
+.activity_browser_notice
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  gap: 12px
+  padding: 16px 21px
+  color: $brown
+  background-color: $light_yellow
+  border: 1px solid $amber
+  border-radius: 12px
+
+  :global(.material-symbols-sharp)
+    font-size: 20px
+
+.activity_browser_guide
+  color: $green
+
+.activity_browser
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 20px
+  padding: 32px 33px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 20px
+
+.activity_browser_filter
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 16px
+
+.activity_browser_chips
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 8px
+
+.activity_browser_tools
+  display: flex
+  align-items: center
+  gap: 8px
+
+.activity_browser_grid
+  display: grid
+  grid-template-columns: repeat(3, 219px)
+  justify-content: center
+  gap: 40px
+
+  @media (max-width: 1439px)
+    grid-template-columns: repeat(3, 1fr)
+
+.activity_browser_list
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+.activity_browser_link
+  display: block
+  text-decoration: none
+  color: inherit
+
+.activity_browser_empty
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding: 100px 0
+  text-align: center
+
+.activity_browser_empty_icon
+  font-size: 48px
+  color: $stroke1
+
+.activity_browser_empty_title
+  margin-top: 16px
+  color: $black
+
+.activity_browser_empty_desc
+  margin-top: 8px
+  color: $gray
+
+.activity_browser_pagination
+  display: flex
+  justify-content: center
+  padding: 12px 0 16px
