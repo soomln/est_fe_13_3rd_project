@@ -1,3 +1,4 @@
+'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Window.module.sass';
@@ -7,7 +8,9 @@ import TabGroup from '../TabGroup';
 import Contents from '../Contents';
 import ActionBtnGroup from '../ActionBtnGroup';
 
-export default function DetailModal({ isOpen, onClose, data }) {
+import { getPortfolio } from '@backend/lib/api/portfolio';
+
+export default function DetailModal({ isOpen, onClose, itemID }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('ai');
   const contentsRef = useRef(null);
@@ -15,10 +18,29 @@ export default function DetailModal({ isOpen, onClose, data }) {
   const [isToastVisible, setIsToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const [item, setItem] = useState(null);
+  const getItem = async () => {
+    setItem(await getPortfolio(itemID));
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!itemID) return;
+
+    const getItem = async () => {
+      setItem(null);
+
+      const data = await getPortfolio(itemID);
+      setItem(data);
+    };
+
+    getItem();
+  }, [itemID]);
+
+  console.log(item);
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset';
 
@@ -27,7 +49,7 @@ export default function DetailModal({ isOpen, onClose, data }) {
     };
   }, [isOpen]);
 
-  if (!mounted || !isOpen || !data) return null;
+  if (!mounted || !isOpen || !item) return null;
 
   const showShareToast = (message) => {
     setToastMessage(message);
@@ -43,14 +65,14 @@ export default function DetailModal({ isOpen, onClose, data }) {
       <div
         className={styles.backdrop}
         onClick={() => {
-          onClose(data);
+          onClose(item);
         }}
       ></div>
       <ToastMessage isVisible={isToastVisible} message={toastMessage} />
       <div className={`container ${styles.modalBox}`}>
         <div className={`${styles.contents_wrapper}`}>
-          <TabGroup activeTab={activeTab} onChangeTab={setActiveTab} />
-          <Contents contentsRef={contentsRef} />
+          <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
+          <Contents item={item} contentsRef={contentsRef} />
         </div>
         <ActionBtnGroup contentsRef={contentsRef} showToast={showShareToast} />
       </div>

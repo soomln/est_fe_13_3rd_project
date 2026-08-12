@@ -1,96 +1,159 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
+import { Placeholder } from '@tiptap/extensions';
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details';
 
 import styles from './TextBlock.module.sass';
 
-export default function TextBlock({ block, updateBlock, removeBlock }) {
+export default function TextBlock({ block, isEditMode, updateBlock, removeBlock }) {
+  if (!isEditMode) {
+    return (
+      <div
+        className={styles.viewer}
+        dangerouslySetInnerHTML={{
+          __html: block.html ?? '',
+        }}
+      />
+    );
+  }
+
+  return <TextEditor block={block} updateBlock={updateBlock} removeBlock={removeBlock} />;
+}
+
+function TextEditor({ block, updateBlock, removeBlock }) {
   const blockRef = useRef(null);
-  const editorRef = useRef(null);
-  const savedRangeRef = useRef(null);
 
   const [isFocused, setIsFocused] = useState(false);
 
-  useEffect(() => {
-    if (!editorRef.current) return;
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+        },
+      }),
 
-    editorRef.current.innerHTML = block.content ?? '';
-  }, []);
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
 
-  const saveSelection = () => {
-    const selection = window.getSelection();
+      Placeholder.configure({
+        placeholder: '여기에 텍스트 입력...',
+      }),
 
-    if (!selection || selection.rangeCount === 0) return;
+      Details.configure({
+        persist: true,
+        renderToggleButton: ({ element, isOpen }) => {
+          element.innerHTML = `
+            <span class="material-symbols-sharp">
+              ${isOpen ? 'arrow_drop_down' : 'arrow_right'}
+            </span>
+          `;
 
-    const range = selection.getRangeAt(0);
+          element.setAttribute('aria-label', isOpen ? '토글 접기' : '토글 펼치기');
+        },
+      }),
 
-    if (!editorRef.current?.contains(range.commonAncestorContainer)) {
+      DetailsSummary,
+      DetailsContent,
+    ],
+
+    content: block.html ?? '',
+
+    immediatelyRender: false,
+  });
+
+  if (!editor) return null;
+
+  const handleLink = () => {
+    const previousUrl = editor.getAttributes('link').href ?? '';
+
+    const url = window.prompt('URL을 입력해주세요.', previousUrl);
+
+    if (url === null) return;
+
+    if (url.trim() === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+
       return;
     }
 
-    savedRangeRef.current = range.cloneRange();
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({
+        href: url,
+        target: '_blank',
+      })
+      .run();
   };
 
-  const restoreSelection = () => {
-    const selection = window.getSelection();
-    const range = savedRangeRef.current;
+  const handleHeadingChange = (e) => {
+    const value = e.target.value;
 
-    if (!selection || !range) return false;
+    if (value === 'p') {
+      editor.chain().focus().setParagraph().run();
 
-    editorRef.current?.focus();
-
-    selection.removeAllRanges();
-    selection.addRange(range);
-
-    return true;
-  };
-
-  const handleInput = (e) => {
-    const editor = e.currentTarget;
-
-    if (editor.textContent.trim() === '') {
-      editor.innerHTML = '';
+      return;
     }
+
+    const level = Number(value.replace('h', ''));
+
+    editor
+      .chain()
+      .focus()
+      .setHeading({
+        level,
+      })
+      .run();
   };
 
-  const applyCommand = (command, value = null) => {
-    if (!restoreSelection()) return;
+  const getCurrentTextType = () => {
+    if (
+      editor.isActive('heading', {
+        level: 1,
+      })
+    ) {
+      return 'h1';
+    }
 
-    document.execCommand(command, false, value);
+    if (
+      editor.isActive('heading', {
+        level: 2,
+      })
+    ) {
+      return 'h2';
+    }
 
-    saveSelection();
+    if (
+      editor.isActive('heading', {
+        level: 3,
+      })
+    ) {
+      return 'h3';
+    }
+
+    return 'p';
   };
 
-  const handleBold = () => {
-    applyCommand('bold');
+  const handleToggle = () => {
+    if (editor.isActive('details')) {
+      editor.chain().focus().unsetDetails().run();
+
+      return;
+    }
+
+    editor.chain().focus().setDetails().run();
   };
 
-  const handleUnderline = () => {
-    applyCommand('underline');
-  };
-
-  const handleAlignLeft = () => {
-    applyCommand('justifyLeft');
-  };
-
-  const handleAlignCenter = () => {
-    applyCommand('justifyCenter');
-  };
-
-  const handleAlignRight = () => {
-    applyCommand('justifyRight');
-  };
-
-  const handleLink = () => {
-    const url = window.prompt('URL을 입력해주세요.');
-
-    if (!url) return;
-
-    applyCommand('createLink', url);
-  };
-
-  const handleFontSize = (e) => {
-    applyCommand('fontSize', e.target.value);
+  const handleFocus = () => {
+    setIsFocused(true);
   };
 
   const handleBlur = (e) => {
@@ -103,73 +166,109 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
     setIsFocused(false);
 
     updateBlock(block.id, {
-      content: editorRef.current?.innerHTML ?? '',
+      html: editor.getHTML(),
     });
   };
 
   return (
-    <div ref={blockRef} className={styles.block} onBlur={handleBlur}>
+    <div ref={blockRef} className={styles.block} onFocusCapture={handleFocus} onBlurCapture={handleBlur}>
       {isFocused && (
         <div className={styles.toolbar}>
+          {/* 굵게 */}
           <button
             type='button'
+            className={editor.isActive('bold') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-              handleBold();
+
+              editor.chain().focus().toggleBold().run();
             }}
             aria-label='굵게'
           >
             <span className='material-symbols-sharp'>format_bold</span>
           </button>
 
+          {/* 밑줄 */}
           <button
             type='button'
+            className={editor.isActive('underline') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-              handleUnderline();
+
+              editor.chain().focus().toggleUnderline().run();
             }}
             aria-label='밑줄'
           >
             <span className='material-symbols-sharp'>format_underlined</span>
           </button>
 
+          {/* 왼쪽 정렬 */}
           <button
             type='button'
+            className={
+              editor.isActive({
+                textAlign: 'left',
+              })
+                ? styles.active
+                : ''
+            }
             onMouseDown={(e) => {
               e.preventDefault();
-              handleAlignLeft();
+
+              editor.chain().focus().setTextAlign('left').run();
             }}
             aria-label='왼쪽 정렬'
           >
             <span className='material-symbols-sharp'>format_align_left</span>
           </button>
 
+          {/* 가운데 정렬 */}
           <button
             type='button'
+            className={
+              editor.isActive({
+                textAlign: 'center',
+              })
+                ? styles.active
+                : ''
+            }
             onMouseDown={(e) => {
               e.preventDefault();
-              handleAlignCenter();
+
+              editor.chain().focus().setTextAlign('center').run();
             }}
             aria-label='가운데 정렬'
           >
             <span className='material-symbols-sharp'>format_align_center</span>
           </button>
 
+          {/* 오른쪽 정렬 */}
           <button
             type='button'
+            className={
+              editor.isActive({
+                textAlign: 'right',
+              })
+                ? styles.active
+                : ''
+            }
             onMouseDown={(e) => {
               e.preventDefault();
-              handleAlignRight();
+
+              editor.chain().focus().setTextAlign('right').run();
             }}
             aria-label='오른쪽 정렬'
           >
             <span className='material-symbols-sharp'>format_align_right</span>
           </button>
 
+          {/* 링크 */}
           <button
             type='button'
+            className={editor.isActive('link') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
+
               handleLink();
             }}
             aria-label='링크'
@@ -177,52 +276,75 @@ export default function TextBlock({ block, updateBlock, removeBlock }) {
             <span className='material-symbols-sharp'>link</span>
           </button>
 
+          {/* 불릿 리스트 */}
+          <button
+            type='button'
+            className={editor.isActive('bulletList') ? styles.active : ''}
+            onMouseDown={(e) => {
+              e.preventDefault();
+
+              editor.chain().focus().toggleBulletList().run();
+            }}
+            aria-label='불릿 리스트'
+          >
+            <span className='material-symbols-sharp'>format_list_bulleted</span>
+          </button>
+
+          {/* 숫자 리스트 */}
+          <button
+            type='button'
+            className={editor.isActive('orderedList') ? styles.active : ''}
+            onMouseDown={(e) => {
+              e.preventDefault();
+
+              editor.chain().focus().toggleOrderedList().run();
+            }}
+            aria-label='숫자 리스트'
+          >
+            <span className='material-symbols-sharp'>format_list_numbered</span>
+          </button>
+
+          {/* 토글 */}
+          <button
+            type='button'
+            className={editor.isActive('details') ? styles.active : ''}
+            onMouseDown={(e) => {
+              e.preventDefault();
+
+              handleToggle();
+            }}
+            aria-label='토글'
+          >
+            <span className='material-symbols-sharp'>arrow_drop_down</span>
+          </button>
+
+          {/* 본문 / 제목 */}
           <select
             className='font_body_s_r'
-            defaultValue='3'
-            onMouseDown={saveSelection}
-            onChange={handleFontSize}
-            aria-label='글자 크기'
+            value={getCurrentTextType()}
+            onChange={handleHeadingChange}
+            aria-label='글자 스타일'
           >
-            <option className='font_body_s_r' value='1'>
-              10pt
-            </option>
-            <option className='font_body_s_r' value='2'>
-              12pt
-            </option>
-            <option className='font_body_s_r' value='3'>
-              14pt
-            </option>
-            <option className='font_body_s_r' value='4'>
-              18pt
-            </option>
-            <option className='font_body_s_r' value='5'>
-              24pt
-            </option>
-            <option className='font_body_s_r' value='6'>
-              32pt
-            </option>
+            <option value='p'>본문</option>
+
+            <option value='h1'>제목 1</option>
+
+            <option value='h2'>제목 2</option>
+
+            <option value='h3'>제목 3</option>
           </select>
         </div>
       )}
 
-      <div className={styles.editor_wrapper}>
-        <div
-          ref={editorRef}
-          className={styles.editor}
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder='여기에 텍스트 입력...'
-          onFocus={() => setIsFocused(true)}
-          onInput={handleInput}
-          onMouseUp={saveSelection}
-          onKeyUp={saveSelection}
-        />
+      <div className={`${styles.editor_wrapper} ${styles.edit_mode}`}>
+        <EditorContent editor={editor} className={styles.editor} />
+
         <button
           type='button'
           className={styles.close_btn}
           onMouseDown={(e) => {
             e.preventDefault();
+
             removeBlock(block.id);
           }}
           aria-label='삭제'
