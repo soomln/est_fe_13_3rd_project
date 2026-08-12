@@ -30,7 +30,7 @@ function toItem(row, labels) {
   const jobInfo = [
     label('job_role', row.job_role_code),
     row.position_level,
-    row.education_level,
+    label('education_level', row.education_level),
   ]
     .filter(Boolean)
     .join(' / ');
@@ -61,8 +61,8 @@ function toItem(row, labels) {
     jobRole: label('job_role', row.job_role_code),
     job: label('job_role', row.job_role_code),
     positionLevel: row.position_level,
-    educationLevel: row.education_level,
-    education: row.education_level,
+    educationLevel: label('education_level', row.education_level),
+    education: label('education_level', row.education_level),
     jobInfo,
 
     tags: row.tags ?? [],
@@ -102,7 +102,6 @@ const WRITABLE = {
   difficultyCode: 'difficulty_code',
   difficultyScore: 'difficulty_score',
   problemScore: 'problem_score',
-  questionCount: 'question_count',
   passResultCode: 'pass_result_code',
   channelCode: 'channel_code',
   channelEtc: 'channel_etc',
@@ -118,8 +117,9 @@ function toColumns(body) {
   for (const [key, column] of Object.entries(WRITABLE)) {
     if (key in body) patch[column] = body[key];
   }
-  if ('questions' in body && !Array.isArray(body.questions)) {
-    throw badRequest('questions 는 배열이어야 합니다.');
+  if ('questions' in body) {
+    if (!Array.isArray(body.questions)) throw badRequest('questions 는 배열이어야 합니다.');
+    patch.question_count = body.questions.length;
   }
   if ('tags' in body && !Array.isArray(body.tags)) {
     throw badRequest('tags 는 배열이어야 합니다.');
