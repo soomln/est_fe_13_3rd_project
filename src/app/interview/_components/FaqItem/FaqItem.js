@@ -15,6 +15,7 @@ export default function FaqItem({
         type="button"
         className="faq_header"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
       >
         <div className="faq_left">
           <span className="question_mark">

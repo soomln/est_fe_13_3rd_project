@@ -11,7 +11,7 @@ export default function CoreFeatureCard({
   return (
     <article className={`core_feature_card ${variant}`}>
       <div className="feature_content">
-        <h3 className="font_h3">
+        <h3 className="font_h3 feature_title">
           {title}
         </h3>
 
@@ -22,7 +22,7 @@ export default function CoreFeatureCard({
         <ul className="feature_list">
           {features.map((feature) => (
             <li key={feature}>
-              <span className="material-symbols-rounded">
+              <span className="material-symbols-rounded feature_check_icon">
                 check
               </span>
 

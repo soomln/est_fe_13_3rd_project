@@ -9,7 +9,6 @@ import CoverLetterSelect from '../CoverLetterSelect';
 import CompanySearch from '../CompanySearch';
 import ActionButton from '../ActionButton';
 
-// 임시 데이터
 const dummyResumes = [
   { id: 1, title: '이력서_2026.pdf' },
   { id: 2, title: '이력서_최종.pdf' },
