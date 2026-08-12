@@ -14,6 +14,7 @@ import StepListItem from '@/app/_components/main/StepListItem';
 import QaListItem from '@/app/_components/main/QaListItem';
 import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
 import PortfolioSlider from '@/app/_components/main/PortfolioSlider';
+import Reveal from '@/app/_components/main/Reveal';
 
 const HERO_STATS = [
   { iconSrc: '/images/hero/stat-member.svg', value: '10,000+', label: '회원', tone: 'green' },
@@ -183,7 +184,9 @@ export default function Home() {
         {/* 2. 서비스 소개 */}
         <section className={styles.services}>
           <div className={styles.services_inner}>
-            <ServiceIntro />
+            <Reveal>
+              <ServiceIntro />
+            </Reveal>
 
             <ul className={styles.service_grid}>
               {SERVICES.map((item) => (
@@ -197,15 +200,17 @@ export default function Home() {
         <section className={styles.showcase}>
           <div className={styles.showcase_inner}>
             <div className={styles.showcase_intro}>
-              <div className={styles.showcase_text_group}>
-                <p className={`font_h4 ${styles.showcase_eyebrow}`}>PORTFOLIO</p>
-                <h2 className={`font_h1 ${styles.showcase_title}`}>나의 포트폴리오로 가능성을 보여주세요</h2>
-                <p className={`font_body_l_r ${styles.showcase_desc}`}>
-                  Demo 자료, 기술 문서, 핵심 코드까지
-                  <br />
-                  흩어진 자료를 한 곳에 정리하고 채용 기회를 잡아보세요
-                </p>
-              </div>
+              <Reveal>
+                <div className={styles.showcase_text_group}>
+                  <p className={`font_h4 ${styles.showcase_eyebrow}`}>PORTFOLIO</p>
+                  <h2 className={`font_h1 ${styles.showcase_title}`}>나의 포트폴리오로 가능성을 보여주세요</h2>
+                  <p className={`font_body_l_r ${styles.showcase_desc}`}>
+                    Demo 자료, 기술 문서, 핵심 코드까지
+                    <br />
+                    흩어진 자료를 한 곳에 정리하고 채용 기회를 잡아보세요
+                  </p>
+                </div>
+              </Reveal>
 
               <ul className={styles.showcase_points}>
                 <li className={`font_body_l_r ${styles.showcase_point}`}>
@@ -241,11 +246,13 @@ export default function Home() {
         {/* 4. 기업 정보 / 탐색 */}
         <section className={styles.company}>
           <div className={styles.company_inner}>
-            <div className={styles.company_text_group}>
-              <p className={`font_h4 ${styles.company_eyebrow}`}>HOW IT WORKS</p>
-              <h2 className={`font_h1 ${styles.company_title}`}>나에게 맞는 기업 탐색</h2>
-              <p className={`font_body_l_r ${styles.company_desc}`}>나의 데이터와 AI 피드백으로 확실한 결과를 만들어보세요</p>
-            </div>
+            <Reveal>
+              <div className={styles.company_text_group}>
+                <p className={`font_h4 ${styles.company_eyebrow}`}>HOW IT WORKS</p>
+                <h2 className={`font_h1 ${styles.company_title}`}>나에게 맞는 기업 탐색</h2>
+                <p className={`font_body_l_r ${styles.company_desc}`}>나의 데이터와 AI 피드백으로 확실한 결과를 만들어보세요</p>
+              </div>
+            </Reveal>
 
             <div className={styles.company_row}>
               <div className={styles.company_spotlight_wrap}>
@@ -315,11 +322,13 @@ export default function Home() {
         {/* 5. 3단 기능 소개 */}
         <section className={styles.features}>
           <div className={styles.features_inner}>
-            <div className={styles.features_text_group}>
-              <p className={`font_h4 ${styles.features_eyebrow}`}>FEATURES</p>
-              <h2 className={`font_h1 ${styles.features_title}`}>핵심 기능 살펴보기</h2>
-              <p className={`font_body_l_r ${styles.features_desc}`}>저장한 데이터는 CallBack의 모든 서비스와 연결돼요</p>
-            </div>
+            <Reveal>
+              <div className={styles.features_text_group}>
+                <p className={`font_h4 ${styles.features_eyebrow}`}>FEATURES</p>
+                <h2 className={`font_h1 ${styles.features_title}`}>핵심 기능 살펴보기</h2>
+                <p className={`font_body_l_r ${styles.features_desc}`}>저장한 데이터는 CallBack의 모든 서비스와 연결돼요</p>
+              </div>
+            </Reveal>
 
             <div className={styles.features_grid}>
               {/* 이력서·자기소개서 작성 */}
