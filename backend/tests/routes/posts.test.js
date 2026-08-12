@@ -44,7 +44,7 @@ const ROW = {
   channel_etc: null,
   job_role_code: 'fe',
   position_level: '신입',
-  education_level: '대졸',
+  education_level: 'bachelor',
   tags: ['#CS'],
   overall_comment: '준비 잘하세요',
   user_id: 'u2',
@@ -143,6 +143,22 @@ describe('GET /api/posts', () => {
     const { body } = await callRoute(GET, { request: makeRequest(url()) });
 
     expect(body.items[0].channel).toBe('기타');
+  });
+
+  it('turns the education code into its label', async () => {
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].educationLevel).toBe('대졸');
+    expect(body.items[0].education).toBe('대졸');
+  });
+
+  it('shows an unknown education code as-is', async () => {
+    setSupabase(listStub([{ ...ROW, education_level: 'phd' }]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].educationLevel).toBe('phd');
+    expect(body.items[0].jobInfo).toBe('프론트엔드 / 신입 / phd');
   });
 
   it('shows an unknown code as-is', async () => {
@@ -397,13 +413,12 @@ describe('POST /api/posts', () => {
           difficultyCode: 'hard',
           difficultyScore: 4.5,
           problemScore: 3,
-          questionCount: 5,
           passResultCode: 'pass',
           channelCode: 'etc',
           channelEtc: '잡코리아',
           jobRoleCode: 'fe',
           positionLevel: '신입',
-          educationLevel: '대졸',
+          educationLevel: 'bachelor',
           tags: ['#CS'],
           overallComment: '총평',
           questions: ['Q1'],
@@ -421,15 +436,48 @@ describe('POST /api/posts', () => {
       difficulty_code: 'hard',
       difficulty_score: 4.5,
       problem_score: 3,
-      question_count: 5,
+      question_count: 1,
       pass_result_code: 'pass',
       channel_code: 'etc',
       channel_etc: '잡코리아',
       job_role_code: 'fe',
       position_level: '신입',
-      education_level: '대졸',
+      education_level: 'bachelor',
       tags: ['#CS'],
       overall_comment: '총평',
+    });
+  });
+
+  it('counts the questions instead of trusting the client', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'qbank', questions: ['Q1', 'Q2', 'Q3'], questionCount: 99 },
+      }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      question_count: 3,
+    });
+  });
+
+  it('ignores questionCount when no questions are sent', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', questionCount: 99 } }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toEqual({
+      user_id: 'u1',
+      post_type: 'qbank',
+    });
+  });
+
+  it('counts an empty question list as zero', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', questions: [] } }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      question_count: 0,
     });
   });
 
@@ -600,6 +648,17 @@ describe('PATCH /api/posts/:id', () => {
     });
 
     expect(status).toBe(400);
+  });
+
+  it('recounts the questions on update', async () => {
+    await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { questions: ['Q1', 'Q2'], questionCount: 99 } }),
+      params: { id: 'p1' },
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'update')[0]).toEqual([
+      { questions: ['Q1', 'Q2'], question_count: 2 },
+    ]);
   });
 
   it('updates only my own post', async () => {

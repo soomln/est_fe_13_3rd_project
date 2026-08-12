@@ -41,7 +41,7 @@ const writeReview = (overrides = {}) =>
     channelCode: 'online',
     jobRoleCode: 'fe',
     positionLevel: '신입',
-    educationLevel: '대졸',
+    educationLevel: 'bachelor',
     tags: ['#CS'],
     overallComment: '준비 잘하세요',
     ...overrides,
@@ -70,6 +70,13 @@ describe('writing an interview review', () => {
     });
   });
 
+  it('reads back the education level as a label, not a code', async () => {
+    const post = await writeReview();
+
+    expect(post.educationLevel).toBe('대졸');
+    expect(post.education).toBe('대졸');
+  });
+
   it('keeps a free-text interview channel', async () => {
     const post = await writeReview({ channelCode: 'etc', channelEtc: '잡코리아' });
 
@@ -87,10 +94,31 @@ describe('writing an interview review', () => {
       postType: 'qbank',
       companyId: naver().id,
       questions: ['REST API 의 장점은?', 'CORS 란?'],
-      questionCount: 2,
     });
 
     expect(post).toMatchObject({ postType: 'qbank', questions: ['REST API 의 장점은?', 'CORS 란?'] });
+  });
+
+  it('counts the questions without being told how many there are', async () => {
+    const post = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: ['REST API 의 장점은?', 'CORS 란?', '클로저란?'],
+    });
+
+    expect(post.questionCount).toBe(3);
+  });
+
+  it('recounts the questions after an edit', async () => {
+    const post = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: ['Q1', 'Q2', 'Q3'],
+    });
+
+    const edited = await updatePost(post.id, { questions: ['Q1'] });
+
+    expect(edited.questionCount).toBe(1);
   });
 
   it('rejects an unknown post type', async () => {
