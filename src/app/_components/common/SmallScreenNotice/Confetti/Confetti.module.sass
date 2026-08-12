@@ -1,0 +1,96 @@
+@use '@/app/_variables.sass' as *
+
+// 부모(.hero_visual)를 덮는 층. 인물을 피해 가장자리에만 흩어 놓는다
+.confetti_layer
+  position: absolute
+  inset: 0
+  pointer-events: none
+
+.confetti
+  position: absolute
+  border-radius: 2px
+
+  &:nth-child(1)
+    top: 4%
+    left: 19%
+    width: 7px
+    height: 7px
+    background-color: $green
+    transform: rotate(25deg)
+
+  &:nth-child(2)
+    top: 20%
+    left: 11%
+    width: 6px
+    height: 11px
+    background-color: $amber
+    transform: rotate(-18deg)
+
+  &:nth-child(3)
+    top: 2%
+    left: 33%
+    width: 6px
+    height: 6px
+    background-color: #4163E7
+    border-radius: 50%
+
+  &:nth-child(4)
+    top: 6%
+    left: 74%
+    width: 8px
+    height: 8px
+    background-color: $purple
+    border-radius: 50%
+
+  &:nth-child(5)
+    top: 24%
+    left: 84%
+    width: 7px
+    height: 7px
+    background-color: #4163E7
+    transform: rotate(40deg)
+
+  &:nth-child(6)
+    top: 46%
+    left: 6%
+    width: 6px
+    height: 6px
+    background-color: $amber
+    border-radius: 50%
+
+  &:nth-child(7)
+    top: 40%
+    left: 90%
+    width: 6px
+    height: 11px
+    background-color: $green
+    transform: rotate(32deg)
+
+  &:nth-child(8)
+    top: 64%
+    left: 13%
+    width: 7px
+    height: 7px
+    background-color: $purple
+    transform: rotate(-22deg)
+
+  &:nth-child(9)
+    top: 60%
+    left: 93%
+    width: 5px
+    height: 10px
+    background-color: $amber
+    transform: rotate(-38deg)
+
+  &:nth-child(10)
+    top: 78%
+    left: 84%
+    width: 6px
+    height: 6px
+    background-color: $green
+    border-radius: 50%
+
+// 태블릿. scale 은 transform 과 따로 먹어서 회전각을 건드리지 않는다
+@media (min-width: 768px)
+  .confetti
+    scale: 1.5
