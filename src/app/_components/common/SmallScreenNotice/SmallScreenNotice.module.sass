@@ -3,8 +3,6 @@
 // 1280px 이상에서는 실제 화면이 나오므로 이 안내는 감춘다
 .notice_page
   width: 100%
-  max-width: 390px
-  margin: 0 auto
   background-color: $white
 
   @media (min-width: 1280px)
@@ -19,20 +17,24 @@
   align-items: center
   justify-content: center
   box-sizing: border-box
-  height: 56px
+  height: 64px
   padding: 0 20px
   background-color: $white
   border-bottom: 1px solid $stroke3
 
+.head_home
+  display: flex
+
 .head_logo
-  width: 104px
+  width: 124px
   height: auto
 
 // ─── PC 안내 ─────────────────────────────────
 // 헤더 밑에 붙어 따라다니는 알림 띠. 이 페이지에서 가장 중요한 문장이라 계속 보인다
+// top 은 .head 높이와 같아야 한다
 .guide
   position: sticky
-  top: 56px
+  top: 64px
   z-index: 9
   display: flex
   flex-direction: column
@@ -101,10 +103,14 @@
 // ─── 태블릿 ──────────────────────────────────
 // 폭과 여백만 키운다. 구조는 모바일과 같다
 @media (min-width: 768px)
-  .notice_page
-    max-width: 720px
+  .head
+    height: 72px
+
+  .head_logo
+    width: 140px
 
   .guide
+    top: 72px
     padding: 14px 32px
 
   .cta
