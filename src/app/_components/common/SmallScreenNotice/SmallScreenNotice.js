@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import Hero from '@/app/_components/common/SmallScreenNotice/Hero';
 import FeatureSection from '@/app/_components/common/SmallScreenNotice/FeatureSection';
 import CopyUrlBtn from '@/app/_components/common/SmallScreenNotice/CopyUrlBtn';
@@ -67,7 +69,9 @@ export default function SmallScreenNotice() {
   return (
     <div className={styles.notice_page}>
       <header className={styles.head}>
-        <img src='/logo.svg' alt='CallBack' className={styles.head_logo} />
+        <Link href='/' className={styles.head_home}>
+          <img src='/logo.svg' alt='CallBack 홈으로' className={styles.head_logo} />
+        </Link>
       </header>
 
       <section className={styles.guide}>
