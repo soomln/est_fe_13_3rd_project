@@ -7,61 +7,81 @@ import TabGroup from '../_components/Modal/TabGroup';
 import Contents from '../_components/Modal/Contents';
 import UploadBtn from './_components/UploadBtn';
 import CustomSetting from './_components/CustomSetting';
-import EditorBlock from './_components/EditorBlock';
+import BlockManager from './_components/BlockManager';
 import AiChatPanel from './_components/AiChatPanel';
 import AiChatBtn from './_components/AiChatBtn';
 import BackBtn from './_components/BackBtn';
 import SaveBtn from './_components/SaveBtn';
 
 export default function Upload() {
+  const [item, setItem] = useState({
+    id: crypto.randomUUID(),
+    bgColor: '#ffffff',
+    gap: 16,
+    content: [],
+  });
   const [activeTab, setActiveTab] = useState('ai');
-  const [blocks, setBlocks] = useState([]);
-  const [bgColor, setBgColor] = useState('#ffffff');
-  const [gap, setGap] = useState(Number(16));
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
 
-  const addBlock = (type) => {
+  const addBlock = (_type) => {
     const newBlock = {
       id: crypto.randomUUID(),
-      type,
+      type: _type,
     };
 
-    if (type === 'text') {
-      newBlock.content = '';
+    if (_type === 'text') {
+      newBlock.html = '';
     }
 
-    if (type === 'image') {
-      newBlock.file = null;
-      newBlock.previewUrl = '';
-    }
-
-    if (type === 'video') {
+    if (_type === 'image') {
+      // newBlock.file = null;
       newBlock.url = '';
     }
 
-    if (type === 'code') {
+    if (_type === 'video') {
+      newBlock.url = '';
+    }
+
+    if (_type === 'code') {
       newBlock.code = '';
     }
 
-    setBlocks((prev) => [...prev, newBlock]);
+    setItem((prev) => ({ ...prev, content: [...prev.content, newBlock] }));
+
+    console.log(_type, newBlock);
   };
 
-  const updateBlock = (id, newData) => {
-    setBlocks((prev) =>
-      prev.map((block) =>
-        block.id === id
+  const updateBlock = (index, newData) => {
+    setItem((prev) => ({
+      ...prev,
+      content: prev.content.map((block, idx) =>
+        idx === index
           ? {
               ...block,
               ...newData,
             }
           : block,
       ),
-    );
+    }));
   };
 
   const removeBlock = (id) => {
-    setBlocks((prev) => prev.filter((block) => block.id !== id));
+    setContent((prev) => prev.filter((block) => block.id !== id));
+  };
+
+  const setBgColor = (bgColor) => {
+    setItem((prev) => ({
+      ...prev,
+      bgColor,
+    }));
+  };
+
+  const setGap = (gap) => {
+    setItem((prev) => ({
+      ...prev,
+      gap,
+    }));
   };
 
   return (
@@ -90,12 +110,8 @@ export default function Upload() {
             </div>
           </header>
           <main>
-            <TabGroup bgColor={bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
-            <Contents bgColor={bgColor} gap={gap} blocks={blocks} updateBlock={updateBlock} removeBlock={removeBlock}>
-              {blocks.map((block) => (
-                <EditorBlock key={block.id} block={block} updateBlock={updateBlock} removeBlock={removeBlock} />
-              ))}
-            </Contents>
+            <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
+            <Contents item={item} isEditMode={true} updateBlock={updateBlock} removeBlock={removeBlock} />
           </main>
           <aside className={styles.btns_wrapper}>
             <div className={styles.add_btns}>
@@ -105,7 +121,7 @@ export default function Upload() {
               <UploadBtn iconText='code' text='코드' onClick={() => addBlock('code')} />
             </div>
             <UploadBtn iconText='import_export' text='순서 바꾸기' />
-            <CustomSetting bgColor={bgColor} onSetColor={setBgColor} gap={gap} onSetGap={setGap} />
+            <CustomSetting bgColor={item.bgColor} onSetColor={setBgColor} gap={item.gap} onSetGap={setGap} />
             <div className={styles.save_btns}></div>
           </aside>
         </div>

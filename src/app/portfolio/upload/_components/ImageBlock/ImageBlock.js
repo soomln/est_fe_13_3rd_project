@@ -1,14 +1,14 @@
 import styles from './ImageBlock.module.sass';
 
-export default function ImageBlock({ block, removeBlock }) {
+export default function ImageBlock({ block, isEditMode = false, removeBlock }) {
   const onUploadImage = () => {};
 
   return (
     <div className={styles.block}>
-      <div className={styles.upload}>
-        {block.src ? (
+      <div className={`${styles.upload} ${isEditMode ? styles.edit_mode : ''}`}>
+        {block.url ? (
           <div className={styles.preview}>
-            <img src={block.src} alt={block.alt || '업로드 이미지'} />
+            <img src={block.url} alt={block.alt || '업로드 이미지'} />
           </div>
         ) : (
           <label>
@@ -19,17 +19,19 @@ export default function ImageBlock({ block, removeBlock }) {
           </label>
         )}
       </div>
-      <button
-        type='button'
-        className={styles.close_btn}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          removeBlock(block.id);
-        }}
-        aria-label='삭제'
-      >
-        <span className='material-symbols-sharp'>close</span>
-      </button>
+      {isEditMode && (
+        <button
+          type='button'
+          className={styles.close_btn}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            removeBlock(block.id);
+          }}
+          aria-label='삭제'
+        >
+          <span className='material-symbols-sharp'>close</span>
+        </button>
+      )}
     </div>
   );
 }
