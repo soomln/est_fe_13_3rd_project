@@ -6,6 +6,8 @@ import 'material-symbols/rounded.css';
 import 'material-symbols/sharp.css';
 
 import { AuthProvider } from './_components/auth';
+import SmallScreenNotice from './_components/common/SmallScreenNotice';
+import styles from './layout.module.sass';
 
 const pretendard = localFont({
   src: '../../public/fonts/PretendardVariable.woff2',
@@ -24,7 +26,11 @@ export default function RootLayout({ children }) {
     <html lang='ko' className={pretendard.variable}>
       <head></head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <SmallScreenNotice />
+
+          <div className={styles.app_wide}>{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );
