@@ -16,10 +16,10 @@ import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
 import PortfolioSlider from '@/app/_components/main/PortfolioSlider';
 
 const HERO_STATS = [
-  { icon: 'group', value: '10,000+', label: '회원', tone: 'green' },
-  { icon: 'folder_open', value: '5,000+', label: '포트폴리오', tone: 'blue' },
-  { icon: 'forum', value: '10,000+', label: '면접 후기', tone: 'yellow' },
-  { icon: 'sentiment_satisfied', value: '10,000+', label: '만족도', tone: 'purple' },
+  { iconSrc: '/images/hero/stat-member.svg', value: '10,000+', label: '회원', tone: 'green' },
+  { iconSrc: '/images/hero/stat-portfolio.svg', value: '5,000+', label: '포트폴리오', tone: 'blue' },
+  { iconSrc: '/images/hero/stat-review.svg', value: '10,000+', label: '면접 후기', tone: 'yellow' },
+  { iconSrc: '/images/hero/stat-satisfaction.svg', value: '10,000+', label: '만족도', tone: 'purple' },
 ];
 
 const SERVICES = [
@@ -91,9 +91,9 @@ const COMMUNITY_POSTS = [
 const POPULAR_KEYWORDS = ['카카오', '네이버', '토스', 'SK 하이닉스', '삼성SDS', '배민'];
 
 const RECOMMENDED_COMPANIES = [
-  { name: '토스', desc: '채용중 4건 · IT/개발, 디자인', logo: '/images/companies/toss.svg' },
-  { name: '네이버', desc: '채용중 8건 · IT/개발, 데이터', logo: '/images/companies/naver.svg' },
-  { name: '카카오', desc: '채용중 12건 · IT/개발, 기획', logo: '/images/companies/kakao.svg' },
+  { name: '토스', desc: '채용중 4건 · IT/개발, 디자인', logo: '/images/main/company-toss.png' },
+  { name: '네이버', desc: '채용중 8건 · IT/개발, 데이터', logo: '/images/main/company-naver.png' },
+  { name: '카카오', desc: '채용중 12건 · IT/개발, 기획', logo: '/images/main/company-kakao.png' },
 ];
 
 const PORTFOLIO_ITEMS = [
@@ -171,7 +171,7 @@ export default function Home() {
 
               <div className={styles.hero_stats}>
                 {HERO_STATS.map((item) => (
-                  <StatItem key={item.label} icon={item.icon} value={item.value} label={item.label} tone={item.tone} />
+                  <StatItem key={item.label} iconSrc={item.iconSrc} value={item.value} label={item.label} tone={item.tone} />
                 ))}
               </div>
             </div>
@@ -291,7 +291,7 @@ export default function Home() {
                   <ul className={styles.company_list}>
                     {RECOMMENDED_COMPANIES.map((company) => (
                       <li key={company.name} className={styles.company_list_item}>
-                        <Image src={company.logo} alt={`${company.name} 로고`} width={28} height={28} className={styles.company_list_logo} />
+                        <Image src={company.logo} alt={`${company.name} 로고`} width={50} height={38} className={styles.company_list_logo} />
                         <div>
                           <p className={`font_body_m_b ${styles.company_list_name}`}>{company.name}</p>
                           <p className={`font_body_s_r ${styles.company_list_desc}`}>{company.desc}</p>

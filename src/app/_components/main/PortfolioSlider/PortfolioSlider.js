@@ -3,11 +3,12 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectCards, Navigation, Pagination } from 'swiper/modules';
+import { EffectCards, Navigation, Pagination, Parallax } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/effect-cards';
 import 'swiper/css/pagination';
+import 'swiper/css/parallax';
 
 import styles from './PortfolioSlider.module.sass';
 
@@ -35,8 +36,9 @@ export default function PortfolioSlider({ items }) {
 
       <Swiper
         className={styles.swiper}
-        modules={[EffectCards, Navigation, Pagination]}
+        modules={[EffectCards, Navigation, Pagination, Parallax]}
         effect='cards'
+        parallax
         grabCursor
         cardsEffect={{ perSlideOffset: 8, perSlideRotate: 2, slideShadows: false }}
         navigation
@@ -48,7 +50,7 @@ export default function PortfolioSlider({ items }) {
       >
         {items.map((item) => (
           <SwiperSlide key={item.title} className={styles.preview_card}>
-            <div className={styles.preview_cover}>
+            <div className={styles.preview_cover} data-swiper-parallax='-18%'>
               <Image
                 src={item.cover}
                 alt={`${item.title} 미리보기`}
@@ -59,7 +61,7 @@ export default function PortfolioSlider({ items }) {
             </div>
 
             <div className={styles.preview_meta}>
-              <div className={styles.preview_meta_top}>
+              <div className={styles.preview_meta_top} data-swiper-parallax='-60'>
                 <div>
                   <p className={`font_h4 ${styles.preview_name}`}>{item.title}</p>
                   <p className={`font_caption_b ${styles.preview_author}`}>{item.author}</p>
@@ -67,7 +69,7 @@ export default function PortfolioSlider({ items }) {
                 <span className={`font_caption_b ${styles.preview_badge}`}>{item.badge}</span>
               </div>
 
-              <div className={styles.preview_meta_bottom}>
+              <div className={styles.preview_meta_bottom} data-swiper-parallax='-30'>
                 <div className={styles.preview_tags}>
                   {item.tags.map((tag) => (
                     <span key={tag} className={`${styles.preview_tag} ${styles[`tag_${TAG_COLORS[tag] ?? 'gray'}`]}`}>

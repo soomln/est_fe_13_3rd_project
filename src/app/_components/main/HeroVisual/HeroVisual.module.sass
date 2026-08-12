@@ -44,6 +44,10 @@ $card-border: rgba(0, 0, 0, 0.06)
   @media (max-width: 1200px)
     display: none
 
+  @media (prefers-reduced-motion: reduce)
+    *
+      animation: none !important
+
 // ===== 장식 (점선 타원 + 별/점) =====
 // 좌표·색상 모두 Figma 장식 레이어(node 275:516)만 격리 스크린샷 떠서
 // 픽셀 샘플링으로 역산한 실측치 (center 405,233 / rx 365 / ry 178 타원,
@@ -60,76 +64,125 @@ $ring-color: #B7B7B7
   position: absolute
   inset: 0
 
+$smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
+
+@keyframes ring_sway
+  0%, 100%
+    transform: rotate(16deg)
+  50%
+    transform: rotate(20deg)
+
+@keyframes star_twinkle
+  0%, 100%
+    opacity: 0.3
+    transform: translate(0, 0)
+  50%
+    opacity: 0.55
+    transform: translate(3px, -4px)
+
+@keyframes card_float
+  0%, 100%
+    transform: translateY(0)
+  50%
+    transform: translateY(-6px)
+
+@keyframes dot_drift
+  0%, 100%
+    transform: translate(0, 0)
+    opacity: 1
+  50%
+    transform: translate(-3px, 4px)
+    opacity: 0.75
+
 .deco_ring
   position: absolute
-  left: 40px
-  top: 55px
-  width: 730px
-  height: 356px
+  left: 20px
+  top: 100px
+  width: 800px
+  height: 335px
+  transform: rotate(18deg)
   border: 2px dashed $ring-color
   border-radius: 50%
+  animation: ring_sway 12s $smooth-ease infinite
+  will-change: transform
 
 .deco_star
   position: absolute
   font-size: 16px
   opacity: 0.44
   font-variation-settings: 'FILL' 1
+  animation: star_twinkle 8s $smooth-ease infinite
+  will-change: transform, opacity
 
 .star_0
   left: 618px
   top: 289px
   color: $star-sky
+  animation-delay: 0s
 .star_1
   left: 627px
   top: 44px
   color: $star-violet
+  animation-delay: 0.4s
 .star_2
   left: 448px
   top: 394px
   color: $star-emerald
+  animation-delay: 0.8s
 .star_3
   left: 152px
   top: 154px
   color: $star-amber
+  animation-delay: 1.2s
 .star_4
   left: 5px
   top: 58px
   color: $star-emerald
+  animation-delay: 1.6s
 .star_5
   left: 404px
   top: 20px
   color: $star-rose
+  animation-delay: 2s
 .star_6
   left: 135px
   top: 365px
   color: $resume-tag-text
+  animation-delay: 2.4s
 
 .deco_dot
   position: absolute
   width: 10px
   height: 10px
   border-radius: 50%
+  animation: dot_drift 9s $smooth-ease infinite
+  will-change: transform, opacity
 
 .dot_0
   left: 548px
   top: 33px
   background-color: $sub_green
+  animation-delay: 0s
 .dot_1
   left: 91px
   top: 193px
   background-color: $sub_purple
+  animation-delay: 1.4s
 .dot_2
   left: 666px
   top: 264px
   background-color: $sub_green
+  animation-delay: 2.8s
 .dot_3
   left: 254px
   top: 411px
   background-color: $sub_yellow
+  animation-delay: 4.2s
 .dot_4
   left: 275px
   top: 0
   background-color: $sub_yellow
+  animation-delay: 5.6s
 
 // ===== 공용 카드 =====
 
@@ -140,6 +193,8 @@ $ring-color: #B7B7B7
   border: 1px solid $card-border
   border-radius: 16px
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06))
+  animation: card_float 6.5s $smooth-ease infinite
+  will-change: transform
 
 .mini_head
   display: flex
@@ -287,24 +342,32 @@ $ring-color: #B7B7B7
   top: 0
   width: 170px
   padding: 15px
+  animation-duration: 6s
+  animation-delay: 0s
 
 .portfolio_card
   left: 584px
   top: 117px
   width: 172px
   padding: 15px
+  animation-duration: 7s
+  animation-delay: 0.8s
 
 .team_card
   left: 563px
   top: 355px
   width: 171px
   padding: 15px
+  animation-duration: 6.5s
+  animation-delay: 1.6s
 
 .resume_card
   left: 20px
   top: 246px
   width: 172px
   padding: 15px
+  animation-duration: 6.2s
+  animation-delay: 2.4s
 
 // ===== 중앙 AI 예상 질문 카드 =====
 
@@ -318,6 +381,8 @@ $ring-color: #B7B7B7
   gap: 16px
   border-radius: 16px
   box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.13)
+  animation-duration: 7.8s
+  animation-delay: 0.3s
 
 .qna_head
   display: flex
