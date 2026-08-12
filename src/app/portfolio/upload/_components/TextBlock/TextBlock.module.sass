@@ -4,6 +4,7 @@
   position: relative
   width: 100%
 
+
 .toolbar
   position: absolute
   top: -10%
@@ -32,54 +33,219 @@
     &:hover
       background: $sub_yellow
 
+    &.active
+      background: $sub_yellow
+      color: $green
+
   select
     height: 40px
     padding: 0 0.75rem
     border: 0
     background: transparent
     outline: none
+    cursor: pointer
+
 
 .editor_wrapper
   display: flex
   position: relative
-  width: calc(100% + var(--contents-padding) * 2)
-  margin-left: calc(var(--contents-padding) * -1)
-  border: 1px solid transparent
+  width: 100%
+  border: 2px dashed transparent
   box-sizing: border-box
 
-  &:hover
-    border-color: $stroke2
-    border-radius: 5px
+  &.edit_mode
+    width: calc(100% + var(--contents-padding) * 2)
+    margin-left: calc(var(--contents-padding) * -1)
 
-  .editor
+    &:hover
+      border-color: $stroke2
+      border-radius: 8px
+
+
+.editor
+  width: 100%
+
+  :global(.tiptap)
     width: 100%
+    min-height: 48px
     padding: 0.75rem var(--contents-padding)
     outline: none
     box-sizing: border-box
-    line-height: normal
+    line-height: 1.6
 
-    b,
+    :global(.is-empty)::before
+      content: attr(data-placeholder)
+      float: left
+      height: 0
+      color: $gray
+      pointer-events: none
+
+    p
+      margin: 0
+
+    h1
+      margin: 0
+      font-family: 'Pretendard'
+      font-size: 2rem
+      font-weight: 700
+
+    h2
+      margin: 0
+      font-family: 'Pretendard'
+      font-size: 1.5rem
+      font-weight: 700
+
+    h3
+      margin: 0
+      font-family: 'Pretendard'
+      font-size: 1.25rem
+      font-weight: 600
+
     strong
       font-weight: 700
 
-    &:empty::before
-      content: attr(data-placeholder)
-      color: $gray
-      pointer-events: none
-  
-  .close_btn
-    position: absolute
-    top: 0
-    right: 0
-    transform: translateY(35%)
-    border: none
-    background: none
-    color: $warning
-    visibility: hidden
-    transition: opacity 0.2s ease
-    cursor: pointer
+    a
+      color: $green
+      text-decoration: underline
+      cursor: pointer
+
+
+    // 불릿 리스트
+    ul
+      padding-left: 1.5rem
+      margin: 0.5rem 0
+      list-style: disc
+
+
+    // 숫자 리스트
+    ol
+      padding-left: 1.5rem
+      margin: 0.5rem 0
+      list-style: decimal
+
+
+    li
+      margin: 0.25rem 0
+
+      p
+        margin: 0
+
+
+    // 토글
+    :global([data-type='details'])
+      display: flex
+      justify-content: start
+      align-items: flex-start
+      position: relative
+      margin: 0.5rem 0
+      padding: 0
+
+      > button
+        display: flex
+        padding: 0
+        background: none
+        border: none
+      div
+        summary
+          font-weight: 600
+
+        :global([data-type='detailsContent'])
+
+.close_btn
+  position: absolute
+  top: 0
+  right: 0
+  transform: translateY(35%)
+  border: none
+  background: none
+  color: $warning
+  opacity: 0
+  visibility: hidden
+  transition: opacity 0.2s ease
+  cursor: pointer
+
 
 .block:hover
   .close_btn
     opacity: 1
     visibility: visible
+
+
+.viewer
+  width: 100%
+  line-height: 1.6
+
+  h1
+    margin: 0 0 1rem
+    font-family: 'Pretendard'
+    font-size: 2rem
+    font-weight: 700
+
+  h2
+    margin: 0 0 0.75rem
+    font-family: 'Pretendard'
+    font-size: 1.5rem
+    font-weight: 700
+
+  h3
+    margin: 0 0 0.5rem
+    font-family: 'Pretendard'
+    font-size: 1.25rem
+    font-weight: 600
+
+  p
+    margin: 0 0 1rem
+    font-family: 'Pretendard'
+
+  strong
+    font-weight: 700
+
+  a
+    color: $green
+    text-decoration: underline
+
+
+  // 불릿 리스트
+  ul
+    padding-left: 1.5rem
+    margin: 0.5rem 0
+    list-style: disc
+
+
+  // 숫자 리스트
+  ol
+    padding-left: 1.5rem
+    margin: 0.5rem 0
+    list-style: decimal
+
+
+  li
+    margin: 0.25rem 0
+
+    p
+      margin: 0
+
+
+  // 토글
+  details
+    margin: 0.5rem 0
+    padding: 0.5rem 0
+
+  summary
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    cursor: pointer
+    font-weight: 600
+
+    &::marker
+      content: ''
+
+  details > summary::before
+    content: '▶'
+    display: inline-block
+    font-size: 0.75rem
+    transition: transform 0.2s ease
+
+  details[open] > summary::before
+    transform: rotate(90deg)
