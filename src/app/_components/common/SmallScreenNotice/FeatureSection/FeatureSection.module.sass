@@ -1,0 +1,89 @@
+@use '@/app/_variables.sass' as *
+
+.feature
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 12px
+  padding: 48px 24px
+  border-top: 1px solid $stroke3
+
+.feature_head
+  display: flex
+  align-items: center
+  gap: 10px
+  margin-bottom: 4px
+
+.feature_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 44px
+  height: 44px
+  font-size: 24px
+  border-radius: 12px
+
+// 테두리는 글자색을 그대로 따라간다
+.feature_tag
+  padding: 7px 14px
+  border: 1px solid currentColor
+  border-radius: 999px
+
+// 배경은 연하게, 태그는 그보다 진한 톤으로 떠 보이게 한다
+.feature_green
+  background-color: $sub_green
+
+  .feature_icon
+    color: $white
+    background-color: $green
+
+  // $sub_green 보다 한 단계 진한 초록
+  .feature_tag
+    color: $green
+    background-color: #CFF2DE
+
+.feature_amber
+  background-color: $light_yellow
+
+  .feature_icon
+    color: $white
+    background-color: $amber
+
+  .feature_tag
+    color: $amber
+    background-color: $sub_yellow
+
+.feature_purple
+  background-color: $light_purple
+
+  .feature_icon
+    color: $white
+    background-color: $purple
+
+  .feature_tag
+    color: $purple
+    background-color: $sub_purple
+
+// 파랑은 resume 랜딩의 STEP 카드에서 쓰던 값을 그대로 가져왔다
+.feature_blue
+  background-color: #F5F8FE
+
+  .feature_icon
+    color: $white
+    background-color: #4163E7
+
+  .feature_tag
+    color: #4163E7
+    background-color: #DFE9FD
+
+.feature_title
+  color: $black
+
+.feature_desc
+  color: $gray
+
+// ─── 태블릿 ──────────────────────────────────
+@media (min-width: 768px)
+  .feature
+    padding: 72px 32px
