@@ -8,6 +8,7 @@ import Pagination from '@/app/_components/common/Pagination';
 import InterviewStatistics from '../_components/InterviewStatistics';
 import InterviewReviewCard from '../_components/InterviewReviewCard';
 import InterviewFilter from '../_components/InterviewFilter';
+import ReviewCard from '@/app/_components/common/ReviewCard';
 
 const chartData = [
   {
@@ -47,9 +48,13 @@ export default function InterviewReviewPage(){
       <InterviewFilter/>
       <button type='button'>글 작성하기</button>
       {reviews.map((review) => (
-      <InterviewReviewCard
+      // <InterviewReviewCard
+      //   key={review.id} 
+      //   review={review}
+      // />
+      <ReviewCard 
         key={review.id}
-        review={review}
+        review
       />
       ))}
       <Pagination/>
