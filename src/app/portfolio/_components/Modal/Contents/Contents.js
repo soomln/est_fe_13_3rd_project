@@ -1,6 +1,6 @@
 import styles from './Contents.module.sass';
 
-import BlockManager from '@/app/portfolio/upload/_components/BlockManager';
+import BlockManager from '@/app/portfolio/upload/_components/BlockRenderer';
 
 export default function Contents({ item, contentsRef = null, isEditMode = false, updateBlock, removeBlock }) {
   return (
@@ -8,9 +8,8 @@ export default function Contents({ item, contentsRef = null, isEditMode = false,
       <div className={styles.contents} style={{ gap: `${item?.gap}px` }}>
         {item?.content?.map((block, idx) => (
           <BlockManager
-            key={block.id ?? idx}
+            key={block.id}
             block={block}
-            index={idx}
             isEditMode={isEditMode}
             updateBlock={updateBlock}
             removeBlock={removeBlock}
