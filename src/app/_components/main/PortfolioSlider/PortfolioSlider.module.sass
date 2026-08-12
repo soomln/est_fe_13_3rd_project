@@ -1,0 +1,138 @@
+@use '@/app/_variables.sass' as *
+
+// Figma에 정의되지 않은 one-off 컬러 (프리뷰 카드 전용)
+$muted_text: #99A1AF
+
+.preview
+  position: relative
+  width: 100%
+  max-width: 585px
+
+.preview_nav
+  position: absolute
+  top: 50%
+  transform: translateY(-49px)
+  z-index: 2
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 36px
+  height: 36px
+  background-color: $white
+  border: 1px solid rgba(0, 0, 0, 0.08)
+  border-radius: 50%
+  box-shadow: 0 4px 3px rgba(0, 0, 0, 0.1), 0 2px 2px rgba(0, 0, 0, 0.1)
+  cursor: pointer
+
+  span
+    font-size: 16px
+    color: $gray
+
+.preview_nav_prev
+  left: -18px
+
+.preview_nav_next
+  right: -18px
+
+.swiper
+  width: 100%
+  max-width: 585px
+  padding-bottom: 28px
+
+  :global(.swiper-pagination)
+    position: static
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 8px
+    margin-top: 12px
+
+.preview_card
+  box-sizing: border-box
+  overflow: hidden
+  background-color: $white
+  border: 1px solid rgba(0, 0, 0, 0.08)
+  border-radius: 16px
+  box-shadow: 0 12px 56px rgba(0, 0, 0, 0.16)
+
+.preview_cover
+  position: relative
+  width: 100%
+  aspect-ratio: 585 / 465
+  background-color: #f7f4ef
+
+.preview_cover_img
+  object-fit: cover
+  pointer-events: none
+
+.preview_meta
+  display: flex
+  flex-direction: column
+  gap: 10px
+  padding: 16px 24px
+
+.preview_meta_top
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+
+.preview_name
+  color: #101828
+
+.preview_author
+  margin-top: 2px
+  color: $muted_text
+
+.preview_badge
+  flex-shrink: 0
+  padding: 4px 12px
+  color: #bb4d00
+  background-color: #fef3c6
+  border-radius: 999px
+
+.preview_meta_bottom
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+.preview_tags
+  display: flex
+  gap: 8px
+
+.preview_tag
+  padding: 5px 13px
+  font-family: Pretendard, sans-serif
+  font-size: 13px
+  font-weight: 500
+  letter-spacing: -0.4px
+  border-radius: 10px
+
+.tag_blue
+  color: #155dfc
+  background-color: #eff6ff
+  border: 1px solid #dbeafe
+
+.tag_cyan
+  color: #0092b8
+  background-color: #ecfeff
+  border: 1px solid #cefafe
+
+.tag_gray
+  color: $gray
+  background-color: #f3f4f6
+  border: 1px solid $stroke3
+
+.preview_date
+  color: $muted_text
+
+.dot
+  width: 6px
+  height: 6px
+  background-color: #d1d5dc
+  border-radius: 999px
+  cursor: pointer
+  transition: width 0.2s ease
+
+.dot_active
+  width: 24px
+  background-color: $green

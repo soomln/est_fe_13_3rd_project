@@ -1,0 +1,80 @@
+@use '@/app/_variables' as *
+
+.panel
+  display: flex
+  flex-direction: column
+  justify-content: space-between
+  background: $light_green
+  height: 100vh
+  box-shadow: 1px 0 3px rgba(0,0,0,0.25)
+  border-radius: 15px
+  overflow: hidden
+
+  header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 1.5rem 1rem
+    background: $light_yellow
+    border-bottom: solid 1px $stroke2
+
+    button
+      display: flex
+      background: none
+      border: none
+
+  .chat_wrapper
+    height: 100%
+    min-height: 0
+    scrollbar-width: none
+    padding: 1rem
+    overflow-y: auto
+
+    &::-webkit-scrollbar
+      display: none
+    .chat
+      display: flex
+      flex-direction: column
+      justify-content: flex-end
+      gap: 1rem
+      min-height: 100%
+      
+  
+  footer
+    padding: 1.5rem 1rem
+    border-top: solid 1px $stroke2
+
+    form
+      display: flex
+      justify-content: space-between
+      align-items: center
+      gap: 0.5rem
+
+      textarea
+        padding: 0.5rem
+        width: 100%
+        min-height: 3rem
+        max-height: 6rem
+        outline: none
+        border: solid 1px $stroke3
+        border-radius: 5px
+        resize: none
+      
+      button
+        display: flex
+        align-items: center
+        height: fit-content
+        color: $light_yellow
+        background: $amber
+        border: none
+        border-radius: 999px
+        aspect-ratio: 1 / 1
+        cursor: pointer
+        
+        &:disabled
+          opacity: 0.4
+          cursor: default
+
+
+    
+  

@@ -13,6 +13,7 @@ import FeatureHeader from '@/app/_components/main/FeatureHeader';
 import StepListItem from '@/app/_components/main/StepListItem';
 import QaListItem from '@/app/_components/main/QaListItem';
 import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
+import PortfolioSlider from '@/app/_components/main/PortfolioSlider';
 
 const HERO_STATS = [
   { icon: 'group', value: '10,000+', label: '회원', tone: 'green' },
@@ -95,13 +96,32 @@ const RECOMMENDED_COMPANIES = [
   { name: '카카오', desc: '채용중 12건 · IT/개발, 기획', logo: '/images/companies/kakao.svg' },
 ];
 
-const SHOWCASE_PORTFOLIO = {
-  title: '포트폴리오 웹사이트',
-  author: '김지수 · 풀스택 개발자',
-  badge: 'Best',
-  tags: ['React', 'Tailwind'],
-  date: '2024.03',
-};
+const PORTFOLIO_ITEMS = [
+  {
+    cover: '/images/main/portfolio-showcase.png',
+    title: '포트폴리오 웹사이트',
+    author: '김지수 · 풀스택 개발자',
+    badge: 'Best',
+    tags: ['React', 'Tailwind'],
+    date: '2024.03',
+  },
+  {
+    cover: '/images/main/portfolio-showcase.png',
+    title: 'AI 챗봇 서비스',
+    author: '박준호 · 백엔드 개발자',
+    badge: 'New',
+    tags: ['Node.js', 'MongoDB'],
+    date: '2024.05',
+  },
+  {
+    cover: '/images/main/portfolio-showcase.png',
+    title: '커머스 대시보드',
+    author: '이서연 · 프론트엔드 개발자',
+    badge: 'Hot',
+    tags: ['Vue', 'TypeScript'],
+    date: '2024.07',
+  },
+];
 
 export default function Home() {
   return (
@@ -214,57 +234,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className={styles.preview}>
-              <button type='button' className={`${styles.preview_nav} ${styles.preview_nav_prev}`} aria-label='이전 포트폴리오'>
-                <span className='material-symbols-rounded' aria-hidden='true'>
-                  chevron_left
-                </span>
-              </button>
-              <button type='button' className={`${styles.preview_nav} ${styles.preview_nav_next}`} aria-label='다음 포트폴리오'>
-                <span className='material-symbols-rounded' aria-hidden='true'>
-                  chevron_right
-                </span>
-              </button>
-
-              <div className={styles.preview_card}>
-                <div className={styles.preview_cover}>
-                  <Image
-                    src='/images/main/portfolio-showcase.png'
-                    alt='포트폴리오 미리보기'
-                    fill
-                    sizes='(max-width: 1439px) 100vw, 585px'
-                    className={styles.preview_cover_img}
-                  />
-                </div>
-
-                <div className={styles.preview_meta}>
-                  <div className={styles.preview_meta_top}>
-                    <div>
-                      <p className={`font_h4 ${styles.preview_name}`}>{SHOWCASE_PORTFOLIO.title}</p>
-                      <p className={`font_caption_b ${styles.preview_author}`}>{SHOWCASE_PORTFOLIO.author}</p>
-                    </div>
-                    <span className={`font_caption_b ${styles.preview_badge}`}>{SHOWCASE_PORTFOLIO.badge}</span>
-                  </div>
-
-                  <div className={styles.preview_meta_bottom}>
-                    <div className={styles.preview_tags}>
-                      {SHOWCASE_PORTFOLIO.tags.map((tag) => (
-                        <span key={tag} className={`${styles.preview_tag} ${styles[`tag_${tag.toLowerCase()}`]}`}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <span className={`font_caption_b ${styles.preview_date}`}>{SHOWCASE_PORTFOLIO.date}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.preview_dots}>
-                <span className={`${styles.dot} ${styles.dot_active}`} />
-                <span className={styles.dot} />
-                <span className={styles.dot} />
-              </div>
-            </div>
+            <PortfolioSlider items={PORTFOLIO_ITEMS} />
           </div>
         </section>
 

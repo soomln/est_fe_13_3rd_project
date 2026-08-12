@@ -6,7 +6,7 @@ import CompanyHeader from '../../detail/_components/CompanyHeader/CompanyHeader'
 import TabNavigation from '../../detail/_components/TabNavigation/TabNavigation';
 import InterviewReviewDetailContent from './_components/InterviewReviewDetailContent';
 
-export default async function InterviewDetail({ params }) {
+export default async function InterviewReviewDetail({ params }) {
   const { reviewId } = await params;
 
   const review = reviews.find(

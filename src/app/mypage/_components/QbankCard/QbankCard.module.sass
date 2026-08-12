@@ -1,0 +1,143 @@
+@use '@/app/_variables.sass' as *
+
+.qbank_card
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 16px
+  padding: 24px 34px
+  background-color: $white
+  border: 0.5px solid $gray
+  border-radius: 15px
+  cursor: pointer
+  transition: border-color 0.2s ease
+
+  &:hover
+    border-color: $green
+
+.qbank_card_selected
+  border-color: $green
+
+.qbank_card_company
+  display: flex
+  align-items: center
+  gap: 4px
+
+// 선택 체크박스 (onToggle 을 넘겼을 때만 그려진다). 로고 왼쪽에 나란히 놓는다
+.qbank_card_check
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 20px
+  height: 20px
+  margin-right: 12px
+  color: transparent
+  background-color: $white
+  border: 2px solid $stroke1
+  border-radius: 4px
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+  input
+    position: absolute
+    width: 100%
+    height: 100%
+    margin: 0
+    opacity: 0
+    cursor: pointer
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+  &:has(input:checked)
+    color: $white
+    background-color: $green
+    border-color: $green
+
+.qbank_card_logo
+  flex-shrink: 0
+  width: 78px
+  height: 35px
+  object-fit: contain
+
+.qbank_card_logo_dummy
+  flex-shrink: 0
+  width: 78px
+  height: 35px
+  background-color: $stroke3
+  border-radius: 4px
+
+.qbank_card_company_name
+  color: $gray
+
+// 난이도·합격여부·경로와 작성자 정보. 아래로 구분선이 하나 있다
+.qbank_card_meta
+  display: flex
+  align-items: center
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 10px
+  padding-bottom: 14px
+  border-bottom: 1px solid $stroke3
+
+.qbank_card_tags
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 10px
+
+// 항목 사이는 세로선으로 나눈다. 마지막 항목만 선이 없다
+.qbank_card_tag
+  display: flex
+  align-items: center
+  gap: 16px
+  padding-right: 16px
+  color: $black
+  border-right: 1px solid $stroke3
+
+  &:last-child
+    border-right: 0
+
+.qbank_card_difficulty
+  color: $green
+
+.qbank_card_value
+  color: $gray
+
+.qbank_card_writer
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 10px
+  color: $stroke1
+
+  :global(.material-symbols-rounded)
+    font-size: 20px
+    color: $gray
+
+.qbank_card_questions
+  display: flex
+  flex-direction: column
+  gap: 5px
+  padding: 16px 0 16px 24px
+  color: $black
+  list-style: decimal
+
+.qbank_card_counts
+  display: flex
+  align-items: center
+  justify-content: flex-end
+  gap: 23px
+  color: $stroke1
+
+.qbank_card_count
+  display: flex
+  align-items: center
+  gap: 5px
+
+  :global(.material-symbols-sharp)
+    font-size: 18px
+    font-variation-settings: 'FILL' 1
