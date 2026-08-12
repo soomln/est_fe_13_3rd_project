@@ -1,12 +1,12 @@
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
-import company from "../detail/data/company";
-import reviews from "../data/review";
-import CompanyHeader from "../detail/_components/CompanyHeader/CompanyHeader";
-import TabNavigation from "../detail/_components/TabNavigation/TabNavigation";
+import company from "../../data/company";
+import reviews from "../../../data/review";
+import CompanyHeader from "../../_components/CompanyHeader/CompanyHeader";
+import TabNavigation from "../../_components/TabNavigation/TabNavigation";
 import Pagination from '@/app/_components/common/Pagination';
-import InterviewQuestionReviewCard from '../_components/InterviewQuestionReviewCard';
-import InterviewFilter from '../_components/InterviewFilter';
+import InterviewQuestionReviewCard from '../../../_components/InterviewQuestionReviewCard';
+import InterviewFilter from '../../../_components/InterviewFilter';
 import ReviewCard from '@/app/_components/common/ReviewCard';
 
 

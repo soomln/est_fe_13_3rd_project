@@ -50,11 +50,16 @@ export default function ReviewCard({
       </div>
 
       <div className={styles.question_list}>
-        {review.questions.map((q, idx) => (
-          <p key={idx} className={`font_body_m_r ${styles.question_item}`}>
-            {q}
-          </p>
-        ))}
+        {review.postType === "review"? (
+          <>
+            <h1>{review.title}</h1>
+            <p>{review.content}</p>
+          </>
+        ) : (
+          review.questions.map((q, idx) => (
+            <p key={idx}>{q}</p>
+          ))
+        )}
       </div>
 
       <div className={`font_body_m_r ${styles.card_footer}`}>
