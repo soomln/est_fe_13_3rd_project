@@ -7,7 +7,7 @@ export default function CompanyHeader({company}){
 
   const summary = [
     { title: "면접 채용", value: "상시 채용" },
-    { title: "평균 난이도", value: company.rating },
+    { title: "평균 난이도", value: company.difficulty },
     { title: "관심 기업 등록", value: company.favorite },
     { title: "전체 후기", value: company.review },
     { title: "족보", value: company.jokbo },
@@ -35,7 +35,7 @@ export default function CompanyHeader({company}){
 
           <div>
             <span>평균 난이도</span>
-            <strong>{company.rating}/5.0</strong>
+            <strong>{company.difficulty}/5.0</strong>
           </div>
 
           <div>
