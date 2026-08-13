@@ -2,7 +2,32 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { getCompany } from '@backend/lib/api/companies';
 import styles from './CompanySpotlight.module.sass';
+
+const SPOTLIGHT_SLUG = 'estsoft';
+
+const SCORE_META = [
+  { key: 'salary', label: '급여 · 보상', color: 'green' },
+  { key: 'wlb', label: '워라벨', color: 'amber' },
+  { key: 'culture', label: '사내 문화', color: 'purple' },
+  { key: 'growth', label: '성장 가능성', color: 'gray' },
+];
+
+function toSpotlightData(company) {
+  return {
+    companyName: company.name,
+    // 로고는 백엔드 SVG(estsoft.svg)의 viewBox 여백 문제로 실제 그림이 작게 나와서,
+    // 딱 맞게 크롭된 기존 로컬 이미지를 계속 사용 (나머지 필드만 실데이터로 교체)
+    salary: [
+      { label: '전체 평균', value: company.salary.overall.toLocaleString(), labelColor: 'black' },
+      { label: '신입 평균', value: company.salary.entry.toLocaleString(), labelColor: 'green' },
+      { label: '상위 25%', value: company.salary.top25.toLocaleString(), labelColor: 'amber' },
+    ],
+    scores: SCORE_META.map(({ key, label, color }) => ({ label, value: company.ratings[key] ?? 0, color })),
+    benefits: company.benefits.slice(0, 4),
+  };
+}
 
 const DEFAULT_SALARY = [
   { label: '전체 평균', value: '5,240', labelColor: 'black' },
@@ -75,14 +100,35 @@ function ScoreDonut({ label, value, color, animate, delay }) {
 }
 
 export default function CompanySpotlight({
-  companyName = '이스트소프트',
-  logoSrc = '/images/estSoft-1.png',
-  salary = DEFAULT_SALARY,
-  scores = DEFAULT_SCORES,
-  benefits = DEFAULT_BENEFITS,
+  companyName: companyNameProp = '이스트소프트',
+  logoSrc: logoSrcProp = '/images/estSoft-1.png',
+  salary: salaryProp = DEFAULT_SALARY,
+  scores: scoresProp = DEFAULT_SCORES,
+  benefits: benefitsProp = DEFAULT_BENEFITS,
 }) {
   const rowRef = useRef(null);
   const [animate, setAnimate] = useState(false);
+  const [remote, setRemote] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getCompany(SPOTLIGHT_SLUG)
+      .then((company) => {
+        if (!cancelled) setRemote(toSpotlightData(company));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const companyName = remote?.companyName ?? companyNameProp;
+  const logoSrc = remote?.logoSrc ?? logoSrcProp;
+  const salary = remote?.salary ?? salaryProp;
+  const scores = remote?.scores ?? scoresProp;
+  const benefits = remote?.benefits ?? benefitsProp;
 
   useEffect(() => {
     const el = rowRef.current;
