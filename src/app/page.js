@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 import styles from './page.module.sass';
 import Header from '@/app/_components/common/Header';
@@ -15,6 +14,7 @@ import QaListItem from '@/app/_components/main/QaListItem';
 import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
 import PortfolioSlider from '@/app/_components/main/PortfolioSlider';
 import Reveal from '@/app/_components/main/Reveal';
+import RecommendedCompanies from '@/app/_components/main/RecommendedCompanies';
 
 const HERO_STATS = [
   { iconSrc: '/images/hero/stat-member.svg', value: '10,000+', label: '회원', tone: 'green' },
@@ -90,39 +90,6 @@ const COMMUNITY_POSTS = [
 ];
 
 const POPULAR_KEYWORDS = ['카카오', '네이버', '토스', 'SK 하이닉스', '삼성SDS', '배민'];
-
-const RECOMMENDED_COMPANIES = [
-  { name: '토스', desc: '채용중 4건 · IT/개발, 디자인', logo: '/images/main/company-toss.png' },
-  { name: '네이버', desc: '채용중 8건 · IT/개발, 데이터', logo: '/images/main/company-naver.png' },
-  { name: '카카오', desc: '채용중 12건 · IT/개발, 기획', logo: '/images/main/company-kakao.png' },
-];
-
-const PORTFOLIO_ITEMS = [
-  {
-    cover: '/images/main/portfolio-showcase.png',
-    title: '포트폴리오 웹사이트',
-    author: '김지수 · 풀스택 개발자',
-    badge: 'Best',
-    tags: ['React', 'Tailwind'],
-    date: '2024.03',
-  },
-  {
-    cover: '/images/main/portfolio-showcase.png',
-    title: 'AI 챗봇 서비스',
-    author: '박준호 · 백엔드 개발자',
-    badge: 'New',
-    tags: ['Node.js', 'MongoDB'],
-    date: '2024.05',
-  },
-  {
-    cover: '/images/main/portfolio-showcase.png',
-    title: '커머스 대시보드',
-    author: '이서연 · 프론트엔드 개발자',
-    badge: 'Hot',
-    tags: ['Vue', 'TypeScript'],
-    date: '2024.07',
-  },
-];
 
 export default function Home() {
   return (
@@ -239,7 +206,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <PortfolioSlider items={PORTFOLIO_ITEMS} />
+            <PortfolioSlider />
           </div>
         </section>
 
@@ -293,20 +260,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className={styles.company_list_group}>
-                  <p className={`font_caption_b ${styles.company_list_label}`}>추천기업</p>
-                  <ul className={styles.company_list}>
-                    {RECOMMENDED_COMPANIES.map((company) => (
-                      <li key={company.name} className={styles.company_list_item}>
-                        <Image src={company.logo} alt={`${company.name} 로고`} width={50} height={38} className={styles.company_list_logo} />
-                        <div>
-                          <p className={`font_body_m_b ${styles.company_list_name}`}>{company.name}</p>
-                          <p className={`font_body_s_r ${styles.company_list_desc}`}>{company.desc}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <RecommendedCompanies />
 
                 <Link href='/search-companies' className={`font_body_s_b ${styles.company_search_btn}`}>
                   기업 탐색하기

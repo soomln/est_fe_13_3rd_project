@@ -49,6 +49,8 @@ const RESUME_CARD = {
 export default function HeroVisual() {
   return (
     <div className={styles.visual}>
+      <div className={styles.glow} aria-hidden='true' />
+
       <div className={styles.decor} aria-hidden='true'>
         <div className={styles.pos_ring} style={{ animationDelay: '260ms' }}>
           <svg className={styles.ring_svg} viewBox='0 0 800 335'>
@@ -57,12 +59,12 @@ export default function HeroVisual() {
         </div>
 
         <div className={styles.decor_enter} style={{ animationDelay: '320ms' }}>
-          {[...Array(9)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <span key={`star-${i}`} className={`material-symbols-rounded ${styles.deco_star} ${styles[`star_${i}`]}`}>
               star
             </span>
           ))}
-          {[...Array(7)].map((_, i) => (
+          {[...Array(9)].map((_, i) => (
             <span key={`dot-${i}`} className={`${styles.deco_dot} ${styles[`dot_${i}`]}`} />
           ))}
         </div>

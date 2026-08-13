@@ -298,6 +298,7 @@ $company_mint_border: #B9F8CF
 .company_spotlight_wrap
   flex: 1
   min-width: 0
+  height: 100%
 
 // ----- 좌측: CompanySpotlight는 컴포넌트 자체 스타일 사용 -----
 
@@ -401,48 +402,6 @@ $company_mint_border: #B9F8CF
     background-color: $green
     color: $white
     transform: translateY(-2px)
-
-.company_list_group
-  display: flex
-  flex-direction: column
-  align-items: flex-start
-  gap: 8px
-
-.company_list_label
-  color: $gray
-
-.company_list
-  display: flex
-  flex-direction: column
-  gap: 10px
-  width: 100%
-  list-style: none
-
-.company_list_item
-  display: flex
-  align-items: center
-  gap: 8px
-  padding: 9px 17px
-  background-color: $white
-  border: 1px solid $stroke3
-  border-radius: 10px
-  cursor: pointer
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease
-
-  &:hover
-    background-color: $company_mint_bg
-    border-color: $company_mint_border
-    transform: translateX(4px)
-
-.company_list_logo
-  flex-shrink: 0
-  object-fit: contain
-
-.company_list_name
-  color: $black
-
-.company_list_desc
-  color: $gray
 
 .company_search_btn
   display: inline-flex

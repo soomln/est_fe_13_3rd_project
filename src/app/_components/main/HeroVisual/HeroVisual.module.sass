@@ -49,10 +49,14 @@ $card-border: rgba(0, 0, 0, 0.06)
     *
       animation: none !important
 
+// 히어로 비주얼 전체 뒤에 깔리는 은은한 초록 글로우 (밋밋해 보이는 흰 배경에 깊이감)
+.glow
+  position: absolute
+  inset: 0
+  background: radial-gradient(ellipse 420px 280px at 50% 45%, rgba(0, 166, 61, 0.10) 0%, rgba(0, 166, 61, 0.03) 55%, rgba(0, 166, 61, 0) 80%)
+  pointer-events: none
+
 // ===== 장식 (점선 타원 + 별/점) =====
-// 좌표·색상 모두 Figma 장식 레이어(node 275:516)만 격리 스크린샷 떠서
-// 픽셀 샘플링으로 역산한 실측치 (center 405,233 / rx 365 / ry 178 타원,
-// 별은 진한 원색 44% 투명도, 점은 프로젝트 sub_ 변수와 픽셀이 정확히 일치)
 
 $star-sky: #4FB8ED
 $star-violet: #8F4FFE
@@ -135,14 +139,14 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
     transform: translate(0, 0)
   50%
     opacity: 0.55
-    transform: translate(3px, -4px)
+    transform: translate(14px, -16px)
 
 @keyframes dot_drift
   0%, 100%
     transform: translate(0, 0)
     opacity: 1
   50%
-    transform: translate(-3px, 4px)
+    transform: translate(-16px, 14px)
     opacity: 0.75
 
 .deco_star
@@ -150,7 +154,7 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   font-size: 16px
   opacity: 0.44
   font-variation-settings: 'FILL' 1
-  animation: star_twinkle 8s $smooth-ease infinite
+  animation: star_twinkle 10s $smooth-ease infinite
   will-change: transform, opacity
 
 .star_0
@@ -198,13 +202,28 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   top: 300px
   color: $star-rose
   animation-delay: 3.2s
+.star_9
+  left: 300px
+  top: 455px
+  color: $star-sky
+  animation-delay: 3.6s
+.star_10
+  left: 480px
+  top: 470px
+  color: $star-violet
+  animation-delay: 4s
+.star_11
+  left: 55px
+  top: 430px
+  color: $star-emerald
+  animation-delay: 4.4s
 
 .deco_dot
   position: absolute
   width: 10px
   height: 10px
   border-radius: 50%
-  animation: dot_drift 9s $smooth-ease infinite
+  animation: dot_drift 11s $smooth-ease infinite
   will-change: transform, opacity
 
 .dot_0
@@ -242,6 +261,16 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   top: 180px
   background-color: $sub_green
   animation-delay: 8.4s
+.dot_7
+  left: 380px
+  top: 440px
+  background-color: $sub_yellow
+  animation-delay: 9.8s
+.dot_8
+  left: 460px
+  top: 400px
+  background-color: $sub_purple
+  animation-delay: 11.2s
 
 // ===== 공용 카드 =====
 
@@ -252,7 +281,7 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   background-color: $white
   border: 1px solid $card-border
   border-radius: 16px
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06)
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1)
 
 // 주변 4개 카드 — 카드마다 다른 방향·진폭의 은은한 floating
 
@@ -472,7 +501,9 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   display: flex
   flex-direction: column
   gap: 16px
-  box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.13)
+  background: linear-gradient(165deg, $white 55%, $sub_green 145%)
+  border-color: rgba(0, 166, 61, 0.16)
+  box-shadow: 0 16px 44px 0 rgba(0, 166, 61, 0.16)
 
 .qna_head
   display: flex
