@@ -322,6 +322,9 @@ $company_mint_border: #B9F8CF
   @media (max-width: 1439px)
     height: auto
 
+.company_search_form
+  display: contents
+
 .company_search_heading
   color: $black
   text-align: center
@@ -395,6 +398,7 @@ $company_mint_border: #B9F8CF
   background-color: $company_mint_bg
   border: 1px solid $company_mint_border
   border-radius: 15px
+  text-decoration: none
   cursor: pointer
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease
 
@@ -408,11 +412,15 @@ $company_mint_border: #B9F8CF
   align-items: center
   justify-content: center
   gap: 8px
+  width: 100%
   height: 45px
   color: $white
   background-color: $green
+  border: none
   border-radius: 12px
   text-decoration: none
+  cursor: pointer
+  font: inherit
 
   span
     font-size: 14px
