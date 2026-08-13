@@ -7,6 +7,7 @@ $card-body-dark: #1E2939
 $card-body-mid: #364153
 $card-tag-bg: #F3F4F6
 $qa-bg: #F9FAFB
+$qa-highlight-bg: #EEFDF3
 $qa-green-bg: #DCFCE7
 $qa-green-text: #008236
 $qa-tag-bg: #F0FDF4
@@ -60,17 +61,73 @@ $star-amber: #FEB700
 $star-rose: #FB1850
 $ring-color: #B7B7B7
 
+$smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
+
 .decor
   position: absolute
   inset: 0
 
-$smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
+// ===== 진입(entrance) 애니메이션 — 최초 로드 시 1회만 재생 =====
+// 순서: 중앙 AI 카드(0ms) → 주변 카드(140~200ms) → 점선(260ms) → 배경 장식(320ms)
+
+@keyframes enter_fade
+  0%
+    opacity: 0
+    transform: translateY(16px)
+  100%
+    opacity: 1
+    transform: translateY(0)
+
+.pos
+  position: absolute
+  opacity: 1
+  animation: enter_fade 0.5s ease-out both
+
+// ===== 점선 타원 (SVG, 매우 느리게 흐르는 dash 애니메이션) =====
 
 @keyframes ring_sway
   0%, 100%
     transform: rotate(16deg)
   50%
     transform: rotate(20deg)
+
+@keyframes dash_flow
+  to
+    stroke-dashoffset: -140px
+
+.pos_ring
+  position: absolute
+  left: 20px
+  top: 100px
+  width: 800px
+  height: 335px
+  opacity: 1
+  animation: enter_fade 0.5s ease-out both
+
+.ring_svg
+  display: block
+  width: 100%
+  height: 100%
+  overflow: visible
+  transform: rotate(18deg)
+  animation: ring_sway 12s $smooth-ease infinite
+  will-change: transform
+
+.ring_ellipse
+  fill: none
+  stroke: $ring-color
+  stroke-width: 2
+  stroke-dasharray: 8 6
+  animation: dash_flow 45s linear infinite
+  will-change: stroke-dashoffset
+
+// ===== 배경 별 / 점 =====
+
+.decor_enter
+  position: absolute
+  inset: 0
+  opacity: 1
+  animation: enter_fade 0.5s ease-out both
 
 @keyframes star_twinkle
   0%, 100%
@@ -80,12 +137,6 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
     opacity: 0.55
     transform: translate(3px, -4px)
 
-@keyframes card_float
-  0%, 100%
-    transform: translateY(0)
-  50%
-    transform: translateY(-6px)
-
 @keyframes dot_drift
   0%, 100%
     transform: translate(0, 0)
@@ -93,18 +144,6 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   50%
     transform: translate(-3px, 4px)
     opacity: 0.75
-
-.deco_ring
-  position: absolute
-  left: 20px
-  top: 100px
-  width: 800px
-  height: 335px
-  transform: rotate(18deg)
-  border: 2px dashed $ring-color
-  border-radius: 50%
-  animation: ring_sway 12s $smooth-ease infinite
-  will-change: transform
 
 .deco_star
   position: absolute
@@ -149,6 +188,16 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   top: 365px
   color: $resume-tag-text
   animation-delay: 2.4s
+.star_7
+  left: 780px
+  top: 40px
+  color: $star-amber
+  animation-delay: 2.8s
+.star_8
+  left: 795px
+  top: 300px
+  color: $star-rose
+  animation-delay: 3.2s
 
 .deco_dot
   position: absolute
@@ -183,17 +232,71 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   top: 0
   background-color: $sub_yellow
   animation-delay: 5.6s
+.dot_5
+  left: 700px
+  top: 470px
+  background-color: $sub_purple
+  animation-delay: 7s
+.dot_6
+  left: 810px
+  top: 180px
+  background-color: $sub_green
+  animation-delay: 8.4s
 
 // ===== 공용 카드 =====
 
 .card
-  position: absolute
   box-sizing: border-box
+  width: 100%
+  padding: 15px
   background-color: $white
   border: 1px solid $card-border
   border-radius: 16px
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06)
-  animation: card_float 6.5s $smooth-ease infinite
+
+// 주변 4개 카드 — 카드마다 다른 방향·진폭의 은은한 floating
+
+@keyframes float_v4
+  0%, 100%
+    transform: translateY(0)
+  50%
+    transform: translateY(-4px)
+
+@keyframes float_v5
+  0%, 100%
+    transform: translateY(0)
+  50%
+    transform: translateY(-5px)
+
+@keyframes float_h3
+  0%, 100%
+    transform: translateX(0)
+  50%
+    transform: translateX(3px)
+
+@keyframes float_h4
+  0%, 100%
+    transform: translateX(0)
+  50%
+    transform: translateX(4px)
+
+.float_review
+  animation: float_v4 4.6s $smooth-ease infinite
+  will-change: transform
+
+.float_portfolio
+  animation: float_v5 6s $smooth-ease infinite
+  animation-delay: 0.8s
+  will-change: transform
+
+.float_team
+  animation: float_h4 5.4s $smooth-ease infinite
+  animation-delay: 1.6s
+  will-change: transform
+
+.float_resume
+  animation: float_h3 5s $smooth-ease infinite
+  animation-delay: 2.2s
   will-change: transform
 
 .mini_head
@@ -337,52 +440,39 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
 
 // ===== 개별 카드 위치 =====
 
-.review_card
+.pos_review
   left: 55px
   top: 0
   width: 170px
-  padding: 15px
-  animation-duration: 6s
-  animation-delay: 0s
 
-.portfolio_card
+.pos_portfolio
   left: 584px
   top: 117px
   width: 172px
-  padding: 15px
-  animation-duration: 7s
-  animation-delay: 0.8s
 
-.team_card
+.pos_team
   left: 563px
   top: 355px
   width: 171px
-  padding: 15px
-  animation-duration: 6.5s
-  animation-delay: 1.6s
 
-.resume_card
+.pos_resume
   left: 20px
   top: 246px
   width: 172px
-  padding: 15px
-  animation-duration: 6.2s
-  animation-delay: 2.4s
 
 // ===== 중앙 AI 예상 질문 카드 =====
 
-.qna_card
+.pos_qna
   left: 233px
   top: 88px
   width: 314px
+
+.qna_inner
   padding: 17px 21px
   display: flex
   flex-direction: column
   gap: 16px
-  border-radius: 16px
   box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.13)
-  animation-duration: 7.8s
-  animation-delay: 0.3s
 
 .qna_head
   display: flex
@@ -428,6 +518,18 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   flex-direction: column
   gap: 8px
 
+// 4개 질문 행이 3초 간격으로 하나씩 순서대로 은은하게 하이라이트됨 (텍스트/줄 수는 그대로 유지 — 높이 흔들림 없음)
+@keyframes qna_spotlight
+  0%, 100%
+    background-color: $qa-bg
+    box-shadow: none
+  4%, 21%
+    background-color: $qa-highlight-bg
+    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.15)
+  25%
+    background-color: $qa-bg
+    box-shadow: none
+
 .qna_item
   display: flex
   align-items: center
@@ -435,6 +537,8 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   padding: 8px 10px
   background-color: $qa-bg
   border-radius: 14px
+  animation: qna_spotlight 12s ease-in-out infinite
+  will-change: background-color
 
 .qna_q
   display: flex
@@ -463,6 +567,13 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   border: 1px solid $qa-green-bg
   border-radius: 999px
 
+// AI 면접 연습하기 버튼 — 아주 은은한 pulse/glow (3.6초 주기)
+@keyframes btn_glow
+  0%, 100%
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0)
+  50%
+    box-shadow: 0 0 14px 4px rgba(22, 163, 74, 0.28)
+
 .qna_btn
   height: 40px
   color: $white
@@ -470,3 +581,5 @@ $smooth-ease: cubic-bezier(0.45, 0, 0.55, 1)
   border: none
   border-radius: 14px
   cursor: pointer
+  animation: btn_glow 3.6s ease-in-out infinite
+  will-change: box-shadow
