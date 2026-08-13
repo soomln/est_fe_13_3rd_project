@@ -18,7 +18,7 @@ export default function ServiceCard({
   tone = 'green',
 }) {
   return (
-    <div className={styles.card} style={{ '--accent': ACCENT_COLORS[tone] }}>
+    <Link href={href} className={styles.card} style={{ '--accent': ACCENT_COLORS[tone] }}>
       <div className={`${styles.icon_box} ${styles[`tone_${tone}`]}`}>
         <Image src={iconSrc} alt='' width={50} height={50} className={styles.icon} />
       </div>
@@ -28,12 +28,12 @@ export default function ServiceCard({
         <p className={`font_body_s_r ${styles.description}`}>{description}</p>
       </div>
 
-      <Link href={href} className={`font_caption_b ${styles.link}`}>
+      <span className={`font_caption_b ${styles.link}`}>
         작성하기
         <span className={`material-symbols-rounded ${styles.link_arrow}`} aria-hidden='true'>
           arrow_forward
         </span>
-      </Link>
-    </div>
+      </span>
+    </Link>
   );
 }
