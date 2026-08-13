@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards, Navigation, Pagination, Parallax } from 'swiper/modules';
+import { listPortfolios } from '@backend/lib/api/portfolio';
 
 import 'swiper/css';
 import 'swiper/css/effect-cards';
@@ -12,14 +13,50 @@ import 'swiper/css/parallax';
 
 import styles from './PortfolioSlider.module.sass';
 
-const TAG_COLORS = {
-  React: 'blue',
-  Tailwind: 'cyan',
+const CATEGORY_LABELS = {
+  web: '웹',
+  app: '앱',
 };
 
-export default function PortfolioSlider({ items }) {
+const FALLBACK_COVER = '/images/main/portfolio-showcase.png';
+
+function formatDate(iso) {
+  return iso ? iso.slice(0, 10).replace(/-/g, '.') : '';
+}
+
+function toSlide(item) {
+  return {
+    id: item.id,
+    cover: item.thumbnailUrl || FALLBACK_COVER,
+    title: item.title,
+    author: [item.authorName, item.authorRole].filter(Boolean).join(' · '),
+    badge: CATEGORY_LABELS[item.category] ?? '',
+    date: formatDate(item.createdAt),
+  };
+}
+
+export default function PortfolioSlider() {
   const prevRef = useRef(null);
   const nextRef = useRef(null);
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listPortfolios({ sort: 'latest', pageSize: 5 })
+      .then(({ items: fetched }) => {
+        if (!cancelled) setItems(fetched.map(toSlide));
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (items.length === 0) return null;
 
   return (
     <div className={styles.preview}>
@@ -49,7 +86,7 @@ export default function PortfolioSlider({ items }) {
         pagination={{ clickable: true, bulletClass: styles.dot, bulletActiveClass: styles.dot_active }}
       >
         {items.map((item) => (
-          <SwiperSlide key={item.title} className={styles.preview_card}>
+          <SwiperSlide key={item.id} className={styles.preview_card}>
             <div className={styles.preview_cover} data-swiper-parallax='-18%'>
               <Image
                 src={item.cover}
@@ -66,17 +103,11 @@ export default function PortfolioSlider({ items }) {
                   <p className={`font_h4 ${styles.preview_name}`}>{item.title}</p>
                   <p className={`font_caption_b ${styles.preview_author}`}>{item.author}</p>
                 </div>
-                <span className={`font_caption_b ${styles.preview_badge}`}>{item.badge}</span>
+                {item.badge && <span className={`font_caption_b ${styles.preview_badge}`}>{item.badge}</span>}
               </div>
 
               <div className={styles.preview_meta_bottom} data-swiper-parallax='-30'>
-                <div className={styles.preview_tags}>
-                  {item.tags.map((tag) => (
-                    <span key={tag} className={`${styles.preview_tag} ${styles[`tag_${TAG_COLORS[tag] ?? 'gray'}`]}`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                <div className={styles.preview_tags} />
                 <span className={`font_caption_b ${styles.preview_date}`}>{item.date}</span>
               </div>
             </div>
