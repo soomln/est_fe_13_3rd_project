@@ -11,6 +11,7 @@ export default function Contents({ item, contentsRef = null, isEditMode = false,
             key={block.id}
             block={block}
             isEditMode={isEditMode}
+            portfolioID={item.id}
             updateBlock={updateBlock}
             removeBlock={removeBlock}
           />
