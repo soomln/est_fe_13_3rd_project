@@ -29,14 +29,14 @@
   gap: 15px
 
 
-.question_list li
+.question_item
   width: 100%
   display: flex
   align-items: flex-start
   flex-shrink: 0
 
 
-.question_list li button
+.question_button
   width: 100%
   padding: 0
   display: flex
@@ -48,27 +48,24 @@
   text-align: left
   cursor: pointer
 
+  .material-symbols-outlined
+    width: 20px
+    height: 20px
+    flex-shrink: 0
+    margin-top: 3px
+    color: $green
+    font-size: 20px
+    line-height: 1
 
-.question_list li button .material-symbols-outlined
-  width: 20px
-  height: 20px
-  flex-shrink: 0
-  margin-top: 3px
-  color: $green
-  font-size: 20px
-  line-height: 1
 
-
-.question_list li button > div
+.question_info
   display: flex
   flex-direction: column
   gap: 5px
 
+  strong
+    color: $black
 
-.question_list strong
-  color: $black
-
-
-.question_list p
-  margin: 0
-  color: $gray
+  p
+    margin: 0
+    color: $gray
