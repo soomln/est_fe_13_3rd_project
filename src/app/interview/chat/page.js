@@ -21,13 +21,16 @@ import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
 export default function InterviewPage() {
   const router = useRouter();
 
-  const [isSettingOpen, setIsSettingOpen] = useState(false);
-  const [isQuestionList, setIsQuestionList] = useState(false);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [messages, setMessages] = useState([]);
-  const [isInterviewFinished, setIsInterviewFinished] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+const [isSettingOpen, setIsSettingOpen] = useState(false);
+const [isQuestionList, setIsQuestionList] = useState(false);
+const [selectedQuestions, setSelectedQuestions] = useState([]);
+const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+const [messages, setMessages] = useState([]);
+const [isInterviewFinished, setIsInterviewFinished] = useState(false);
+const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+const [selectedResumeId, setSelectedResumeId] = useState(null);
+const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
+const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
   const questionData = {
     전체: '안녕하세요. 간단하게 자기소개 부탁드립니다.',
@@ -162,21 +165,33 @@ export default function InterviewPage() {
               <h2 className="font_h4">
                 면접에 필요한 정보를 선택해주세요.
               </h2>
-
               <DocumentOption
                 title="이력서"
                 type="resume"
+                selectedId={selectedResumeId}
+                onSelect={setSelectedResumeId}
               />
-
               <DocumentOption
                 title="자소서"
                 type="cover_letter"
+                selectedId={selectedCoverLetterId}
+                onSelect={setSelectedCoverLetterId}
               />
-
-              <CompanySearch />
-
+              <CompanySearch
+                selectedId={selectedCompanyId}
+                onSelect={setSelectedCompanyId}
+              />
               <QuestionListButton
-                onClick={() => setIsQuestionList(true)}
+                onClick={() => {
+                  if (
+                    !selectedResumeId ||
+                    !selectedCoverLetterId ||
+                    !selectedCompanyId
+                  ) {
+                    return;
+                  }
+                  setIsQuestionList(true);
+                }}
               >
                 질문 리스트 불러오기
               </QuestionListButton>
