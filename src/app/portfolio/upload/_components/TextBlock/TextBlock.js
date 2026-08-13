@@ -10,31 +10,19 @@ import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-detai
 
 import styles from './TextBlock.module.sass';
 
-export default function TextBlock({ block, isEditMode, updateBlock, removeBlock }) {
-  if (!isEditMode) {
-    return (
-      <div
-        className={styles.viewer}
-        dangerouslySetInnerHTML={{
-          __html: block.html ?? '',
-        }}
-      />
-    );
-  }
-
-  return <TextEditor block={block} updateBlock={updateBlock} removeBlock={removeBlock} />;
+export default function TextBlock({ block, isEditMode = false, updateBlock, removeBlock }) {
+  return <TextEditor block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 }
 
-function TextEditor({ block, updateBlock, removeBlock }) {
+function TextEditor({ block, isEditMode, updateBlock, removeBlock }) {
   const blockRef = useRef(null);
-
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         link: {
-          openOnClick: false,
+          openOnClick: !isEditMode,
         },
       }),
 
@@ -65,6 +53,8 @@ function TextEditor({ block, updateBlock, removeBlock }) {
 
     content: block.html ?? '',
 
+    editable: isEditMode,
+
     immediatelyRender: false,
   });
 
@@ -79,7 +69,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
 
     if (url.trim() === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
-
       return;
     }
 
@@ -99,7 +88,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
 
     if (value === 'p') {
       editor.chain().focus().setParagraph().run();
-
       return;
     }
 
@@ -115,27 +103,15 @@ function TextEditor({ block, updateBlock, removeBlock }) {
   };
 
   const getCurrentTextType = () => {
-    if (
-      editor.isActive('heading', {
-        level: 1,
-      })
-    ) {
+    if (editor.isActive('heading', { level: 1 })) {
       return 'h1';
     }
 
-    if (
-      editor.isActive('heading', {
-        level: 2,
-      })
-    ) {
+    if (editor.isActive('heading', { level: 2 })) {
       return 'h2';
     }
 
-    if (
-      editor.isActive('heading', {
-        level: 3,
-      })
-    ) {
+    if (editor.isActive('heading', { level: 3 })) {
       return 'h3';
     }
 
@@ -145,7 +121,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
   const handleToggle = () => {
     if (editor.isActive('details')) {
       editor.chain().focus().unsetDetails().run();
-
       return;
     }
 
@@ -153,10 +128,14 @@ function TextEditor({ block, updateBlock, removeBlock }) {
   };
 
   const handleFocus = () => {
+    if (!isEditMode) return;
+
     setIsFocused(true);
   };
 
   const handleBlur = (e) => {
+    if (!isEditMode) return;
+
     const nextFocusedElement = e.relatedTarget;
 
     if (nextFocusedElement && blockRef.current?.contains(nextFocusedElement)) {
@@ -165,14 +144,14 @@ function TextEditor({ block, updateBlock, removeBlock }) {
 
     setIsFocused(false);
 
-    updateBlock(block.id, {
+    updateBlock?.(block.id, {
       html: editor.getHTML(),
     });
   };
 
   return (
     <div ref={blockRef} className={styles.block} onFocusCapture={handleFocus} onBlurCapture={handleBlur}>
-      {isFocused && (
+      {isEditMode && isFocused && (
         <div className={styles.toolbar}>
           {/* 굵게 */}
           <button
@@ -180,7 +159,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('bold') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().toggleBold().run();
             }}
             aria-label='굵게'
@@ -194,7 +172,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('underline') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().toggleUnderline().run();
             }}
             aria-label='밑줄'
@@ -205,16 +182,9 @@ function TextEditor({ block, updateBlock, removeBlock }) {
           {/* 왼쪽 정렬 */}
           <button
             type='button'
-            className={
-              editor.isActive({
-                textAlign: 'left',
-              })
-                ? styles.active
-                : ''
-            }
+            className={editor.isActive({ textAlign: 'left' }) ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().setTextAlign('left').run();
             }}
             aria-label='왼쪽 정렬'
@@ -225,16 +195,9 @@ function TextEditor({ block, updateBlock, removeBlock }) {
           {/* 가운데 정렬 */}
           <button
             type='button'
-            className={
-              editor.isActive({
-                textAlign: 'center',
-              })
-                ? styles.active
-                : ''
-            }
+            className={editor.isActive({ textAlign: 'center' }) ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().setTextAlign('center').run();
             }}
             aria-label='가운데 정렬'
@@ -245,16 +208,9 @@ function TextEditor({ block, updateBlock, removeBlock }) {
           {/* 오른쪽 정렬 */}
           <button
             type='button'
-            className={
-              editor.isActive({
-                textAlign: 'right',
-              })
-                ? styles.active
-                : ''
-            }
+            className={editor.isActive({ textAlign: 'right' }) ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().setTextAlign('right').run();
             }}
             aria-label='오른쪽 정렬'
@@ -268,7 +224,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('link') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               handleLink();
             }}
             aria-label='링크'
@@ -282,7 +237,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('bulletList') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().toggleBulletList().run();
             }}
             aria-label='불릿 리스트'
@@ -296,7 +250,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('orderedList') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               editor.chain().focus().toggleOrderedList().run();
             }}
             aria-label='숫자 리스트'
@@ -310,7 +263,6 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             className={editor.isActive('details') ? styles.active : ''}
             onMouseDown={(e) => {
               e.preventDefault();
-
               handleToggle();
             }}
             aria-label='토글'
@@ -326,31 +278,29 @@ function TextEditor({ block, updateBlock, removeBlock }) {
             aria-label='글자 스타일'
           >
             <option value='p'>본문</option>
-
             <option value='h1'>제목 1</option>
-
             <option value='h2'>제목 2</option>
-
             <option value='h3'>제목 3</option>
           </select>
         </div>
       )}
 
-      <div className={`${styles.editor_wrapper} ${styles.edit_mode}`}>
+      <div className={`${styles.editor_wrapper} ${isEditMode ? styles.edit_mode : ''}`}>
         <EditorContent editor={editor} className={styles.editor} />
 
-        <button
-          type='button'
-          className={styles.close_btn}
-          onMouseDown={(e) => {
-            e.preventDefault();
-
-            removeBlock(block.id);
-          }}
-          aria-label='삭제'
-        >
-          <span className='material-symbols-sharp'>close</span>
-        </button>
+        {isEditMode && (
+          <button
+            type='button'
+            className={styles.close_btn}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              removeBlock?.(block.id);
+            }}
+            aria-label='삭제'
+          >
+            <span className='material-symbols-sharp'>close</span>
+          </button>
+        )}
       </div>
     </div>
   );

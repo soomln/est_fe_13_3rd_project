@@ -5,14 +5,22 @@ import ImageBlock from '../ImageBlock';
 import VideoBlock from '../VideoBlock';
 // import CodeBlock from '../CodeBlock';
 
-export default function BlockRenderer({ block, isEditMode = false, updateBlock, removeBlock }) {
+export default function BlockRenderer({ block, isEditMode = false, portfolioID, updateBlock, removeBlock }) {
   console.log(block.type);
   switch (block.type) {
     case 'text':
       return <TextBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 
     case 'image':
-      return <ImageBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
+      return (
+        <ImageBlock
+          block={block}
+          isEditMode={isEditMode}
+          portfolioID={portfolioID}
+          updateBlock={updateBlock}
+          removeBlock={removeBlock}
+        />
+      );
 
     case 'video':
       return <VideoBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
