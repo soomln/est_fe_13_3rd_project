@@ -35,13 +35,11 @@ export default function QuestionPanel({ onStart }) {
     },
   ];
 
-  // 실제로 면접에 사용할 질문
   const questionTitles = questions
     .filter((question) => question.title !== '전체')
     .map((question) => question.title);
 
   const handleSelect = (title) => {
-    // 전체 선택
     if (title === '전체') {
       setSelectedQuestions((prev) =>
         prev.length === questionTitles.length
@@ -52,7 +50,6 @@ export default function QuestionPanel({ onStart }) {
       return;
     }
 
-    // 개별 질문 선택 / 해제
     setSelectedQuestions((prev) => {
       if (prev.includes(title)) {
         return prev.filter((item) => item !== title);
@@ -74,9 +71,10 @@ export default function QuestionPanel({ onStart }) {
               : selectedQuestions.includes(question.title);
 
           return (
-            <li key={question.title}>
+            <li key={question.title} className="question_item">
               <button
                 type="button"
+                className="question_button"
                 onClick={() => handleSelect(question.title)}
               >
                 <span className="material-symbols-outlined">
@@ -85,7 +83,7 @@ export default function QuestionPanel({ onStart }) {
                     : 'check_box_outline_blank'}
                 </span>
 
-                <div>
+                <div className="question_info">
                   <strong className="font_h4">
                     {question.title}
                   </strong>
