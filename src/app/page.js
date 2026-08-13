@@ -229,45 +229,52 @@ export default function Home() {
               <div className={styles.company_search}>
                 <h3 className={`font_h3 ${styles.company_search_heading}`}>맞춤 기업 탐색</h3>
 
-                <div className={styles.company_search_panel}>
-                  <div className={styles.company_search_intro}>
-                    <p className={`font_body_m_b ${styles.company_search_title}`}>어느 기업이 궁금하신가요?</p>
-                    <p className={`font_body_s_r ${styles.company_search_desc}`}>
-                      평균 연봉부터 기업의 평가, 면접 질문 족보까지 확인해보세요.
-                    </p>
-                  </div>
+                <form action='/search-companies' method='GET' className={styles.company_search_form}>
+                  <div className={styles.company_search_panel}>
+                    <div className={styles.company_search_intro}>
+                      <p className={`font_body_m_b ${styles.company_search_title}`}>어느 기업이 궁금하신가요?</p>
+                      <p className={`font_body_s_r ${styles.company_search_desc}`}>
+                        평균 연봉부터 기업의 평가, 면접 질문 족보까지 확인해보세요.
+                      </p>
+                    </div>
 
-                  <div className={styles.company_search_box}>
-                    <span className='material-symbols-rounded' aria-hidden='true'>
-                      search
-                    </span>
-                    <input
-                      type='text'
-                      placeholder='원하시는 기업, 직무, 기술 스택을 검색해보세요.'
-                      className={`font_caption_b ${styles.company_search_input}`}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.company_keyword_group}>
-                  <p className={`font_caption_b ${styles.company_keyword_label}`}>인기 검색어</p>
-                  <div className={styles.company_keywords}>
-                    {POPULAR_KEYWORDS.map((keyword) => (
-                      <span key={keyword} className={`font_caption_b ${styles.company_keyword}`}>
-                        {keyword}
+                    <div className={styles.company_search_box}>
+                      <span className='material-symbols-rounded' aria-hidden='true'>
+                        search
                       </span>
-                    ))}
+                      <input
+                        type='text'
+                        name='q'
+                        placeholder='원하시는 기업, 직무, 기술 스택을 검색해보세요.'
+                        className={`font_caption_b ${styles.company_search_input}`}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <RecommendedCompanies />
+                  <div className={styles.company_keyword_group}>
+                    <p className={`font_caption_b ${styles.company_keyword_label}`}>인기 검색어</p>
+                    <div className={styles.company_keywords}>
+                      {POPULAR_KEYWORDS.map((keyword) => (
+                        <Link
+                          key={keyword}
+                          href={`/search-companies?q=${encodeURIComponent(keyword)}`}
+                          className={`font_caption_b ${styles.company_keyword}`}
+                        >
+                          {keyword}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
 
-                <Link href='/search-companies' className={`font_body_s_b ${styles.company_search_btn}`}>
-                  기업 탐색하기
-                  <span className='material-symbols-rounded' aria-hidden='true'>
-                    arrow_forward
-                  </span>
-                </Link>
+                  <RecommendedCompanies />
+
+                  <button type='submit' className={`font_body_s_b ${styles.company_search_btn}`}>
+                    기업 탐색하기
+                    <span className='material-symbols-rounded' aria-hidden='true'>
+                      arrow_forward
+                    </span>
+                  </button>
+                </form>
               </div>
             </div>
           </div>
