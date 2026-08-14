@@ -1,4 +1,5 @@
 'use client';
+
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -21,7 +22,21 @@ import Window from '@/app/portfolio/_components/Modal/Window';
 import { listPortfolios } from '@backend/lib/api/portfolio';
 
 export default function Portpolio() {
+  const categoryList = ['all', 'web', 'app'];
+
   const [items, setItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showQuickBtns, setShowQuickBtns] = useState(false);
+
+  const galleryRef = useRef(null);
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const modalId = searchParams.get('modal');
+  const selectedItemID = modalId;
+  const isModalOpen = !!selectedItemID;
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -30,8 +45,6 @@ export default function Portpolio() {
           sort: 'latest',
           page: 1,
         });
-
-        console.log('listPortfolios 결과:', data);
 
         setItems(data.items);
       } catch (error) {
@@ -42,41 +55,33 @@ export default function Portpolio() {
     fetchItems();
   }, []);
 
-  const bestPortfolioList = items.map((item) => (
-    <SwiperSlide key={item.id}>
-      <PortfolioCard item={item} onClick={() => {}} />
-    </SwiperSlide>
-  ));
-
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const modalId = searchParams.get('modal');
-  const selectedItemID = modalId;
-  const isModalOpen = !!selectedItemID;
-
-  const galleryRef = useRef(null);
-  const [showQuickBtns, setShowQuickBtns] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
       const gallery = galleryRef.current;
+
       if (!gallery) return;
 
       const { top, bottom } = gallery.getBoundingClientRect();
+
       const isActive = top <= 0 && bottom > 0;
+
       setShowQuickBtns(isActive);
     };
+
     handleScroll();
+
     window.addEventListener('scroll', handleScroll);
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
+  const filteredItems = items.filter((item) => selectedCategory === 'all' || item.category === selectedCategory);
+
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set('modal', item.id);
 
     router.push(`${pathname}?${params.toString()}`, {
@@ -86,6 +91,7 @@ export default function Portpolio() {
 
   const onCloseDetail = () => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.delete('modal');
 
     const queryString = params.toString();
@@ -95,6 +101,7 @@ export default function Portpolio() {
       scroll: false,
     });
   };
+
   const updateReactionCount = (portfolioId, field, amount) => {
     setItems((prev) =>
       prev.map((item) =>
@@ -108,7 +115,14 @@ export default function Portpolio() {
     );
   };
 
-  const portfolioList = items.map((item) => (
+  const handleMoveTop = () => {
+    galleryRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  const portfolioList = filteredItems.map((item) => (
     <PortfolioCard
       key={item.id}
       item={item}
@@ -119,53 +133,73 @@ export default function Portpolio() {
     />
   ));
 
-  const handleMoveTop = () => {
-    galleryRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  };
+  const bestPortfolioList = items.map((item) => (
+    <SwiperSlide key={item.id}>
+      <PortfolioCard
+        item={item}
+        onClick={() => {
+          onOpenDetail(item);
+        }}
+        updateReactionCount={updateReactionCount}
+      />
+    </SwiperSlide>
+  ));
 
   return (
     <>
       <Header />
+
       <main className={styles.page}>
         <div className={`container ${styles.container}`}>
-          <section className={`${styles.hero}`}>
+          <section className={styles.hero}>
             <Swiper
               className={`mySwiper ${styles.swiper_slider}`}
               modules={[Scrollbar, Autoplay, EffectCoverflow]}
               scrollbar={{
                 hide: false,
               }}
-              autoplay={{ delay: 3000, pauseOnMouseEnter: true }}
-              effect={'coverflow'}
+              autoplay={{
+                delay: 3000,
+                pauseOnMouseEnter: true,
+              }}
+              effect='coverflow'
               grabCursor={true}
               centeredSlides={true}
               slidesPerView={2}
               coverflowEffect={{
                 rotate: 0,
-                stretch: 0, // 슬라이드 간 거리 (px)
+                stretch: 0,
                 depth: 150,
-                modifier: 2, // 효과 배율
-                slideShadows: true, // 슬라이드 그림자 표시 여부
+                modifier: 2,
+                slideShadows: true,
               }}
             >
               {bestPortfolioList}
             </Swiper>
           </section>
+
           <section className={styles.gallery} ref={galleryRef}>
             <div className={styles.btns_wrapper}>
               <div className={styles.radio_btns}>
-                <CategoryBtn category={'all'} initChecked={true} />
-                <CategoryBtn category={'web'} />
-                <CategoryBtn category={'app'} />
+                {categoryList.map((category) => (
+                  <CategoryBtn
+                    key={category}
+                    category={category}
+                    initChecked={category === 'all'}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                    }}
+                  />
+                ))}
               </div>
-              <div className={`${styles.sort}`}>
+
+              <div className={styles.sort}>
                 <SortBtn />
               </div>
             </div>
+
             <ul className={styles.item_list}>{portfolioList}</ul>
+
             {showQuickBtns && <QuickBtns onMoveTop={handleMoveTop} />}
           </section>
         </div>
