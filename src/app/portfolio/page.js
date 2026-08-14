@@ -70,6 +70,7 @@ export default function Portpolio() {
         return new Date(b.createdAt) - new Date(a.createdAt);
     }
   });
+  const selectedItem = items.find((item) => item.id === selectedItemID);
 
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -195,7 +196,12 @@ export default function Portpolio() {
           </section>
         </div>
 
-        <Window isOpen={isModalOpen} onClose={onCloseDetail} itemID={selectedItemID} />
+        <Window
+          isOpen={isModalOpen}
+          onClose={onCloseDetail}
+          itemID={selectedItemID}
+          updateReactionCount={updateReactionCount}
+        />
 
         <Footer />
       </main>
