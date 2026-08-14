@@ -19,9 +19,6 @@ export default function DetailModal({ isOpen, onClose, itemID }) {
   const [toastMessage, setToastMessage] = useState('');
 
   const [item, setItem] = useState(null);
-  const getItem = async () => {
-    setItem(await getPortfolio(itemID));
-  };
 
   useEffect(() => {
     setMounted(true);
