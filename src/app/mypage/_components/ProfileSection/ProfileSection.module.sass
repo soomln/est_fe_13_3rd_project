@@ -19,16 +19,31 @@
 .profile_section_title
   color: $black
 
-.profile_section_edit
+.profile_section_actions
+  flex-shrink: 0
+  display: flex
+  gap: 8px
+
+.profile_section_edit,
+.profile_section_cancel,
+.profile_section_save
   flex-shrink: 0
   padding: 6px 12px
+  border-radius: 8px
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+.profile_section_edit,
+.profile_section_cancel
   color: $stroke1
   background-color: $white
   border: 1px solid $stroke3
-  border-radius: 8px
-  cursor: pointer
-  transition: color 0.2s ease, border-color 0.2s ease
 
   &:hover
     color: $green
     border-color: $green
+
+.profile_section_save
+  color: $white
+  background-color: $green
+  border: 1px solid $green
