@@ -842,6 +842,7 @@ export default function BackendTestPage() {
                   overallComment: '준비한 만큼 나옵니다',
                 });
                 await reloadPosts();
+                console.log(p);
                 return `${p.companyName} · ${p.difficulty} · ${p.result} · ${p.route}`;
               })
             }
