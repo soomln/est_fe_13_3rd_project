@@ -50,16 +50,20 @@
   display: flex
   position: relative
   width: 100%
-  border: 2px dashed transparent
   box-sizing: border-box
 
   &.edit_mode
     width: calc(100% + var(--contents-padding) * 2)
     margin-left: calc(var(--contents-padding) * -1)
+    border: 2px dashed transparent
 
     &:hover
       border-color: $stroke2
       border-radius: 8px
+
+    .editor
+      :global(.tiptap)
+        padding: 0.75rem var(--contents-padding)
 
 
 .editor
@@ -68,7 +72,7 @@
   :global(.tiptap)
     width: 100%
     min-height: 48px
-    padding: 0.75rem var(--contents-padding)
+    padding: 0.75rem 0
     outline: none
     box-sizing: border-box
     line-height: 1.6
@@ -109,20 +113,17 @@
       text-decoration: underline
       cursor: pointer
 
-
     // 불릿 리스트
     ul
-      padding-left: 1.5rem
       margin: 0.5rem 0
+      padding-left: 1.5rem
       list-style: disc
-
 
     // 숫자 리스트
     ol
-      padding-left: 1.5rem
       margin: 0.5rem 0
+      padding-left: 1.5rem
       list-style: decimal
-
 
     li
       margin: 0.25rem 0
@@ -130,11 +131,9 @@
       p
         margin: 0
 
-
     // 토글
     :global([data-type='details'])
       display: flex
-      justify-content: start
       align-items: flex-start
       position: relative
       margin: 0.5rem 0
@@ -143,20 +142,20 @@
       > button
         display: flex
         padding: 0
+        border: 0
         background: none
-        border: none
-      div
-        summary
-          font-weight: 600
+        cursor: pointer
 
-        :global([data-type='detailsContent'])
+      summary
+        font-weight: 600
+
 
 .close_btn
   position: absolute
   top: 0
   right: 0
   transform: translateY(35%)
-  border: none
+  border: 0
   background: none
   color: $warning
   opacity: 0
@@ -169,83 +168,3 @@
   .close_btn
     opacity: 1
     visibility: visible
-
-
-.viewer
-  width: 100%
-  line-height: 1.6
-
-  h1
-    margin: 0 0 1rem
-    font-family: 'Pretendard'
-    font-size: 2rem
-    font-weight: 700
-
-  h2
-    margin: 0 0 0.75rem
-    font-family: 'Pretendard'
-    font-size: 1.5rem
-    font-weight: 700
-
-  h3
-    margin: 0 0 0.5rem
-    font-family: 'Pretendard'
-    font-size: 1.25rem
-    font-weight: 600
-
-  p
-    margin: 0 0 1rem
-    font-family: 'Pretendard'
-
-  strong
-    font-weight: 700
-
-  a
-    color: $green
-    text-decoration: underline
-
-
-  // 불릿 리스트
-  ul
-    padding-left: 1.5rem
-    margin: 0.5rem 0
-    list-style: disc
-
-
-  // 숫자 리스트
-  ol
-    padding-left: 1.5rem
-    margin: 0.5rem 0
-    list-style: decimal
-
-
-  li
-    margin: 0.25rem 0
-
-    p
-      margin: 0
-
-
-  // 토글
-  details
-    margin: 0.5rem 0
-    padding: 0.5rem 0
-
-  summary
-    display: flex
-    align-items: center
-    gap: 0.5rem
-    cursor: pointer
-    font-weight: 600
-
-    &::marker
-      content: ''
-
-  details > summary::before
-    content: '▶'
-    display: inline-block
-    font-size: 0.75rem
-    transition: transform 0.2s ease
-
-  details[open] > summary::before
-    transform: rotate(90deg)
