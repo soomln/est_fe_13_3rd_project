@@ -26,6 +26,7 @@ export default function Portpolio() {
 
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSort, setSelectedSort] = useState('latest');
   const [showQuickBtns, setShowQuickBtns] = useState(false);
 
   const galleryRef = useRef(null);
@@ -62,7 +63,6 @@ export default function Portpolio() {
       if (!gallery) return;
 
       const { top, bottom } = gallery.getBoundingClientRect();
-
       const isActive = top <= 0 && bottom > 0;
 
       setShowQuickBtns(isActive);
@@ -78,6 +78,20 @@ export default function Portpolio() {
   }, []);
 
   const filteredItems = items.filter((item) => selectedCategory === 'all' || item.category === selectedCategory);
+
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    switch (selectedSort) {
+      case 'popular':
+        return b.likeCount - a.likeCount;
+
+      case 'bookmarks':
+        return b.bookmarkCount - a.bookmarkCount;
+
+      case 'latest':
+      default:
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+  });
 
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -122,7 +136,7 @@ export default function Portpolio() {
     });
   };
 
-  const portfolioList = filteredItems.map((item) => (
+  const portfolioList = sortedItems.map((item) => (
     <PortfolioCard
       key={item.id}
       item={item}
@@ -194,7 +208,7 @@ export default function Portpolio() {
               </div>
 
               <div className={styles.sort}>
-                <SortBtn />
+                <SortBtn selectedSort={selectedSort} onChange={setSelectedSort} />
               </div>
             </div>
 
