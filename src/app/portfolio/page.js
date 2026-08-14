@@ -157,7 +157,8 @@ export default function Portpolio() {
           <section className={styles.gallery} ref={galleryRef}>
             <div className={styles.btns_wrapper}>
               <div className={styles.radio_btns}>
-                <CategoryBtn category={'web'} initChecked={true} />
+                <CategoryBtn category={'all'} initChecked={true} />
+                <CategoryBtn category={'web'} />
                 <CategoryBtn category={'app'} />
               </div>
               <div className={`${styles.sort}`}>
