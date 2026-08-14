@@ -4,6 +4,9 @@ import SummaryCard from "../SummaryCard/SummaryCard";
 
 
 export default function CompanyHeader({company}){
+  if (!company) {
+  return <div>로딩 중...</div>;
+  }
 
   const summary = [
     { title: "면접 채용", value: "상시 채용" },
@@ -12,6 +15,7 @@ export default function CompanyHeader({company}){
     { title: "전체 후기", value: company.review },
     { title: "족보", value: company.jokbo },
   ];
+
 
   return(
     <>

@@ -1,7 +1,7 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 
 
-export default function InterviewReviewDetailComments({review}){
+export default function InterviewReviewDetailComments({comments}){
   
   const sortOptions = ["추천순", "최신순"];
 
@@ -17,11 +17,16 @@ export default function InterviewReviewDetailComments({review}){
           <option key={option}>{option}</option>
         ))}
       </select>
-      {review.comments.map((comment) => (
-      <div key={comment.id}>
-        <p>{comment.job} / {comment.education} {comment.date} {comment.time}</p>
-        <p>{comment.content} 좋아요 수: {comment.likes}</p>
-      </div>
+      {comments.map((comment) => (
+        <div key={comment.id}>
+          <p>
+            {comment.authorName} · {comment.date}
+          </p>
+
+          <p>{comment.body}</p>
+
+          <p>좋아요 {comment.likeCount}</p>
+        </div>
       ))}
     </div>
   );

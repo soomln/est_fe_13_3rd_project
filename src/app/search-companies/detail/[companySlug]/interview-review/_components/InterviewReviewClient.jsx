@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-
-import { getCompany } from "@backend/lib/api/companies";
+import Link from "next/link";
 import { listPosts } from "@backend/lib/api/posts";
+import { getCompany } from "@backend/lib/api/companies";
 import CompanyHeader from "../../../_components/CompanyHeader/CompanyHeader";
 import TabNavigation from "../../../_components/TabNavigation/TabNavigation";
 import InterviewStatistics from "@/app/search-companies/_components/InterviewStatistics";
@@ -64,9 +64,10 @@ export default function InterviewReviewClient({companySlug}){
     }
   }
 
+
+
   fetchData();
 }, [companySlug]);
-  
 
   return (
     <>
@@ -78,8 +79,10 @@ export default function InterviewReviewClient({companySlug}){
       {reviews.map((review) => (
       <ReviewCard
         key={review.id}
+        href={`/search-companies/detail/${companySlug}/interview-review/${review.id}`}
         review={review}
       />
+
       ))}
       <Pagination/>
     </>
