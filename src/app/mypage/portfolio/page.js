@@ -16,7 +16,7 @@ const PORTFOLIOS = [
   { id: 'pf-06', title: '디자인 시스템 정리', authorName: '김소영', thumbnailUrl: '', authorAvatar: '', likeCount: 61, createdAt: '2026.07.24', isScrapped: true },
   { id: 'pf-07', title: '커머스 상세 페이지', authorName: '박소영', thumbnailUrl: '', authorAvatar: '', likeCount: 55, createdAt: '2026.07.18', isScrapped: true },
   { id: 'pf-08', title: '실시간 채팅 클론', authorName: '장도담', thumbnailUrl: '', authorAvatar: '', likeCount: 47, createdAt: '2026.07.09', isScrapped: true },
-  { id: 'pf-09', title: '사내 관리자 페이지', authorName: '송주영', thumbnailUrl: '', authorAvatar: '', likeCount: 39, createdAt: '2026.07.02', isScrapped: true },
+  { id: 'pf-09', title: '사내 관리자 페이지', authorName: '송주윤', thumbnailUrl: '', authorAvatar: '', likeCount: 39, createdAt: '2026.07.02', isScrapped: true },
   { id: 'pf-10', title: '모바일 가계부 앱', authorName: '최수민', thumbnailUrl: '', authorAvatar: '', likeCount: 33, createdAt: '2026.06.25', isScrapped: true },
 ];
 
