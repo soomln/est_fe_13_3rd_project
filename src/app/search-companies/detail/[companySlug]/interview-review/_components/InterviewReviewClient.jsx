@@ -64,8 +64,6 @@ export default function InterviewReviewClient({companySlug}){
     }
   }
 
-
-
   fetchData();
 }, [companySlug]);
 

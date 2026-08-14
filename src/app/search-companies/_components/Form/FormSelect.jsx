@@ -1,6 +1,5 @@
 export default function FormSelect({
   name,
-  value,
   label,
   options,
   onChange
@@ -12,8 +11,8 @@ export default function FormSelect({
 
       <select key={label} name={name} onChange={onChange}>
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.label} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

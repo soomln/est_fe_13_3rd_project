@@ -14,6 +14,8 @@ export default function ReviewCard({
   onClick,
 }) {
 
+  console.log(review);
+
 const card = (
   <li key={review.id} className={styles.review_card} onClick={onClick}>
       <div className={styles.bookmark_wrapper}>
@@ -31,7 +33,12 @@ const card = (
         <div className={styles.meta_line}>
           <div className={styles.meta_tags}>
             <div className={styles.meta_item}>
-              <span className={`font_body_m_b ${styles.label}`}>면접 난이도</span>
+              {review.postType === "review"? (
+                <span className={`font_body_m_b ${styles.label}`}>면접 난이도</span>
+              ) : (
+                <span className={`font_body_m_b ${styles.label}`}>문제 난이도</span>
+              )}
+              
               <span className={`font_body_m_r ${styles.value} ${styles.green}`}>{review.difficulty}</span>
             </div>
             <div className={styles.meta_item}>
@@ -59,9 +66,12 @@ const card = (
             <p>{review.content}</p>
           </>
         ) : (
-          review.questions.map((q, idx) => (
-            <p key={idx}>{idx+1}. {q}</p>
-          ))
+          <>
+            <h1>{review.title}</h1>
+            {review.questions.map((q, idx) => (
+              <p key={idx}>{idx+1}. {q}</p>
+            ))}
+          </>
         )}
       </div>
 
