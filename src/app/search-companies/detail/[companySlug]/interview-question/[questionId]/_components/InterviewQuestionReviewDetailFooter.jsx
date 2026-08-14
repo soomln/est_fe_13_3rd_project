@@ -1,6 +1,6 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 
-export default function InterviewQuestionDetailFooter({question}){
+export default function InterviewQuestionReviewDetailFooter({question}){
   return(
     <div className={`font_body_m_r ${styles.card_footer}`}>
       <div className={styles.save_box}>
