@@ -6,7 +6,7 @@ import styles from './Window.module.sass';
 import ToastMessage from '../ToastMessage';
 import TabGroup from '../TabGroup';
 import Contents from '../Contents';
-import ActionBtnGroup from '../ActionBtnGroup';
+import ReactionBtnGroup from '../ReactionBtnGroup';
 
 import { getPortfolio } from '@backend/lib/api/portfolio';
 
@@ -62,7 +62,7 @@ export default function DetailModal({ isOpen, onClose, itemID }) {
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
           <Contents item={item} contentsRef={contentsRef} />
         </div>
-        <ActionBtnGroup contentsRef={contentsRef} showToast={showShareToast} />
+        <ReactionBtnGroup contentsRef={contentsRef} showToast={showShareToast} />
       </div>
     </div>,
     document.body,
