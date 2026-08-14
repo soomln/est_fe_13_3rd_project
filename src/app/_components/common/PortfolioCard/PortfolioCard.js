@@ -30,14 +30,14 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
 
       {/* 썸네일 & 제목 영역 */}
       <div className={styles.thumb_box}>
-        {item.thumbnailUrl !== '' ? (
-          <Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />
-        ) : (
-          <div className={styles.thumb_dummy} />
-        )}
+        {<Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />}
         <div className={styles.img_hover}>
-          <h4 className='font_h4'>{item.title}</h4>
-        </div>{' '}
+          <div className={styles.label}>
+            <span>{item.category}</span>
+            <h4 className='font_h4'>{item.title}</h4>
+          </div>
+          <p className='font_body_r_b'>{item.description}</p>
+        </div>
       </div>
 
       {/* 카드 하단 정보 영역 */}
