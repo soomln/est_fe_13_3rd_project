@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import styles from './ActionBtn.module.sass';
-export default function ActionBtn({ iconText, value, isActiveBtn = false, onClick }) {
+import styles from './ReactionBtn.module.sass';
+export default function ReactionBtn({ iconText, value, isActiveBtn = false, onClick }) {
   const [isActive, setIsActive] = useState(false);
   return (
     <button
