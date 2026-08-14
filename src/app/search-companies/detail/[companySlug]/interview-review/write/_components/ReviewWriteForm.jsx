@@ -3,70 +3,112 @@
 import FormSelect from "@/app/search-companies/_components/Form/FormSelect";
 import FormInput from "@/app/search-companies/_components/Form/FormInput";
 import FormTextarea from "@/app/search-companies/_components/Form/FormTextarea";
-import FormWriteButton from "@/app/search-companies/_components/Form/WriteButtons";
+import FormWriteButton from "@/app/search-companies/_components/Form/FormWriteButton";
 import { useState } from "react";
 import { createPost } from "@backend/lib/api/posts";
+import { useRouter } from "next/navigation";
 
-const reviewDifficultyOption = ["쉬움", "보통", "어려움"];
-const questionDifficultyOption = ["쉬움", "보통", "어려움"];
-const resultOption = ["합격", "불합격"];
+const reviewDifficultyOption = [
+  { value: "easy", label: "쉬움" },
+  { value: "normal", label: "보통" },
+  { value: "hard", label: "어려움" },
+];
+const resultOption = [
+  { value: "pass", label: "합격" },
+  { value: "fail", label: "불합격" },
+  { value: "waiting", label: "대기중" },
+];
 
 
 export default function ReviewWriteForm({company}){
+  const router = useRouter();
   const [form, setForm] = useState({
     title: "",
     body: "",
-    difficulty_code: "",
-    pass_result_code: "",
-    channel_code: "",
+    difficultyCode: "easy",
+    passResultCode: "pass",
+    channelCode: "",
   });
 
-  const handleChange = (e) => {
+const handleChange = (e) => {
   const { name, value } = e.target;
 
-  setForm((prev) => ({
-    ...prev,
-    [name]: value,
-    }));
-    console.log(name + ": "+ value)
-  };  
-  const handleSubmit = async () => {
+  setForm((prev) => {
+    const next = {
+      ...prev,
+      [name]: value,
+    };
+
+    console.log("next =", next);
+
+    return next;
+  });
+};
+
+
+
+
+const handleSubmit = async () => {
+  try {
     await createPost({
       postType: "review",
       companyId: company.id,
+      title: form.title,
       body: form.body,
-
-      // 나머지는 일단 하나씩 채워 넣기
+      difficultyCode: form.difficultyCode,
+      passResultCode: form.passResultCode,
+      channelCode: form.channelCode,
     });
-    console.log(form);
-  };
+
+    if (!form.difficultyCode) {
+      alert("난이도를 선택해주세요.");
+      return;
+    }
+    if (!form.passResultCode) {
+      alert("합격 여부를 선택해주세요.");
+      return;
+    }
+    if (!form.channelCode) {
+      alert("면접 경로를 입력해주세요.");
+      return;
+    }
+    if (!form.title) {
+      alert("제목을 입력해주세요.");
+      return;
+    }
+    if (!form.body) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
+    router.push(
+      `/search-companies/detail/${company.slug}/interview-review`
+    );
+  } catch (err) {
+    console.error(err);
+    alert("후기 등록에 실패했습니다.");
+  }
+};
 
   return(
     <>
       <FormSelect 
-      name="difficulty_code"
-      value={form.reviewDifficulty}
+      name="difficultyCode"
+      value={form.difficultyCode}
       onChange={handleChange}
       label="면접 난이도"
       options={reviewDifficultyOption}
       />
       <FormSelect 
-      name="questionDifficulty"
-      value={form.questionDifficulty}
-      onChange={handleChange}
-      label="문제 난이도"
-      options={questionDifficultyOption}
-      />
-      <FormSelect 
-      name="pass_result_code"
-      value={form.pass_result_code}
+      name="passResultCode"
+      value={form.passResultCode}
       onChange={handleChange}
       label="합격 여부"
       options={resultOption}
       />
       <FormInput 
-      name="channel_code"
-      value={form.channel_code}
+      name="channelCode"
+      value={form.channelCode}
       onChange={handleChange}
       label="면접 경로"
       placeholder="면접 경로를 작성해주세요."
@@ -78,7 +120,7 @@ export default function ReviewWriteForm({company}){
       onChange={handleChange}
       label="제목"
       placeholder="제목을 작성해주세요."
-      />      {/* 제목 */}
+      /> {/* 제목 */}
 
       <FormTextarea 
       name="body"
