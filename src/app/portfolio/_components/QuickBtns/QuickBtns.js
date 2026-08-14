@@ -15,7 +15,7 @@ export default function QuickBtnGroup({ onMoveTop }) {
           <span className={`${styles.text} font_body_m_b`}>이동</span>
         </button>
         <button className={styles.btn}>
-          <span className={`${styles.icon} material-symbols-outlined`}>add</span>
+          <span className={`${styles.icon} material-symbols-outlined`}>cloud_upload</span>
           <Link href='/portfolio/upload' className={`${styles.text} font_body_m_b`}>
             업로드
           </Link>
