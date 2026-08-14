@@ -1,17 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
+import { getMyAccount, deleteMyAccount, uploadAvatar } from '@backend/lib/api/mypage';
+import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './AccountPanel.module.sass';
 
 // 탈퇴하려면 이 문구를 글자 그대로 입력해야 한다
 const CONFIRM_TEXT = '회원탈퇴 하겠습니다';
 
-export default function AccountPanel({ account }) {
-  const { email, joinedAt, avatarUrl } = account;
-  const [confirmText, setConfirmText] = useState('');
+const AVATAR_TYPES = 'image/jpeg,image/png,image/webp';
 
-  const canLeave = confirmText === CONFIRM_TEXT;
+export default function AccountPanel() {
+  const router = useRouter();
+  const { profile, setProfile } = useMyProfile();
+  const [account, setAccount] = useState(null);
+  const [confirmText, setConfirmText] = useState('');
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    getMyAccount()
+      .then((result) => {
+        if (alive) setAccount(result);
+      })
+      .catch(() => {
+        if (alive) setAccount(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const email = account?.email ?? '불러오는 중이에요…';
+  const joinedAt = formatDate(account?.createdAt);
+  const avatarUrl = profile?.avatar_url ?? '';
+
+  // 용량·형식 검사는 uploadAvatar 가 하고 메시지를 그대로 보여준다
+  const handlePickPhoto = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setIsUploading(true);
+    setPhotoError('');
+
+    try {
+      const url = await uploadAvatar(file);
+      setProfile((prev) => ({ ...prev, avatar_url: url }));
+    } catch (error) {
+      setPhotoError(error?.message ?? '사진을 올리지 못했어요.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const canLeave = confirmText === CONFIRM_TEXT && !isLeaving;
+
+  // 탈퇴하면 계정과 올린 파일이 모두 지워지고 되돌릴 수 없다
+  const handleLeave = async () => {
+    if (!canLeave) return;
+
+    setIsLeaving(true);
+    setLeaveError('');
+
+    try {
+      await deleteMyAccount();
+      router.replace('/');
+    } catch {
+      setLeaveError('탈퇴에 실패했어요. 잠시 뒤 다시 시도해주세요.');
+      setIsLeaving(false);
+    }
+  };
 
   return (
     <>
@@ -44,10 +112,30 @@ export default function AccountPanel({ account }) {
             </div>
           </dl>
 
-          <button type='button' className={`${styles.account_photo_btn} font_body_s_b`}>
-            사진 변경
+          <input
+            ref={fileInputRef}
+            type='file'
+            accept={AVATAR_TYPES}
+            className={styles.account_photo_input}
+            onChange={handlePickPhoto}
+            aria-label='프로필 사진 파일 선택'
+          />
+
+          <button
+            type='button'
+            className={`${styles.account_photo_btn} font_body_s_b`}
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {isUploading ? '올리는 중…' : '사진 변경'}
           </button>
         </div>
+
+        {photoError && (
+          <p className={`${styles.account_photo_error} font_body_s_b`} role='alert'>
+            {photoError}
+          </p>
+        )}
       </section>
 
       <section className={styles.account_card}>
@@ -81,10 +169,17 @@ export default function AccountPanel({ account }) {
               type='button'
               className={`${styles.account_leave_btn} font_body_l_b`}
               disabled={!canLeave}
+              onClick={handleLeave}
             >
-              탈퇴
+              {isLeaving ? '처리 중…' : '탈퇴'}
             </button>
           </div>
+
+          {leaveError && (
+            <p className={`${styles.account_leave_error} font_body_s_b`} role='alert'>
+              {leaveError}
+            </p>
+          )}
         </div>
       </section>
     </>

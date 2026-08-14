@@ -1,6 +1,7 @@
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
 import MyPageNav from '@/app/mypage/_components/MyPageNav';
+import MyProfileProvider from '@/app/mypage/_components/MyProfileProvider';
 import styles from './layout.module.sass';
 
 export default function MyPageLayout({ children }) {
@@ -8,12 +9,14 @@ export default function MyPageLayout({ children }) {
     <>
       <Header />
 
-      <div className={styles.mypage}>
-        <div className={`container ${styles.mypage_inner}`}>
-          <MyPageNav />
-          <main className={styles.mypage_main}>{children}</main>
+      <MyProfileProvider>
+        <div className={styles.mypage}>
+          <div className={`container ${styles.mypage_inner}`}>
+            <MyPageNav />
+            <main className={styles.mypage_main}>{children}</main>
+          </div>
         </div>
-      </div>
+      </MyProfileProvider>
 
       <Footer />
     </>

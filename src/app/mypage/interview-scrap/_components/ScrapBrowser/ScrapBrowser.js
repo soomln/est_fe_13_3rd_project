@@ -1,38 +1,39 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import { listMyScraps, removeQaScraps } from '@backend/lib/api/interview';
 import Pagination from '@/app/_components/common/Pagination';
 import SearchPill from '@/app/mypage/_components/SearchPill';
 import SortPill from '@/app/mypage/_components/SortPill';
 import ScrapRow from '@/app/mypage/_components/ScrapRow';
+import Toast from '@/app/mypage/_components/Toast';
 import styles from './ScrapBrowser.module.sass';
 
 const PAGE_SIZE = 10;
 
 const SORTS = { 최신순: 'latest', 오래된순: 'oldest' };
 
-const SORTERS = {
-  latest: (a, b) => b.createdAt.localeCompare(a.createdAt),
-  oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
-};
-
 // 쿼리에서 생략하는 기본값
 const DEFAULTS = { q: '', sort: 'latest', page: '1' };
 
-export default function ScrapBrowser({ scraps }) {
+export default function ScrapBrowser() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [openIds, setOpenIds] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [data, setData] = useState({ items: [], total: 0 });
+  const [status, setStatus] = useState('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [toast, setToast] = useState('');
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
-  const sort = SORTERS[sortParam] ? sortParam : 'latest';
+  const sort = Object.values(SORTS).includes(sortParam) ? sortParam : 'latest';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
 
@@ -49,24 +50,30 @@ export default function ScrapBrowser({ scraps }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  // 질문·내 답변·AI 피드백을 모두 훑는다
-  const filtered = useMemo(() => {
-    const text = keyword.trim().toLowerCase();
+  // 거르기·정렬·쪽 나누기는 서버가 한다
+  useEffect(() => {
+    let alive = true;
+    setStatus('loading');
 
-    return scraps
-      .filter((item) =>
-        text
-          ? [item.question, item.answer, item.feedback].some((field) =>
-              field.toLowerCase().includes(text),
-            )
-          : true,
-      )
-      .sort(SORTERS[sort]);
-  }, [scraps, keyword, sort]);
+    listMyScraps({ q: keyword || undefined, sort, page, pageSize: PAGE_SIZE })
+      .then((result) => {
+        if (!alive) return;
+        setData(result);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStatus('error');
+      });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    return () => {
+      alive = false;
+    };
+  }, [keyword, sort, page, reloadKey]);
+
+  const items = data.items;
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
 
@@ -89,6 +96,23 @@ export default function ScrapBrowser({ scraps }) {
   const resetView = () => {
     setSelectedIds([]);
     setOpenIds([]);
+  };
+
+  // 지운 뒤에는 삭제모드를 빠져나가고 알림을 띄운다
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+
+    try {
+      await removeQaScraps(selectedIds);
+      resetView();
+      setToast(`${count}개 질문의 스크랩을 해제했어요`);
+      updateQuery({ mode: '' });
+      setReloadKey((prev) => prev + 1);
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -124,6 +148,7 @@ export default function ScrapBrowser({ scraps }) {
                 type='button'
                 className={`${styles.scrap_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
+                onClick={handleDelete}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -155,6 +180,8 @@ export default function ScrapBrowser({ scraps }) {
         </div>
       </div>
 
+      <Toast message={toast} onHide={() => setToast('')} />
+
       {isDeleteMode && (
         <p className={`${styles.scrap_browser_notice} font_body_m_b`} role='status'>
           <span className='material-symbols-sharp' aria-hidden='true'>
@@ -167,7 +194,7 @@ export default function ScrapBrowser({ scraps }) {
       <div className={styles.scrap_browser}>
         <div className={styles.scrap_browser_filter}>
           <div className={styles.scrap_browser_labels}>
-            <p className={`${styles.scrap_browser_count} font_h4`}>총 {filtered.length}개</p>
+            <p className={`${styles.scrap_browser_count} font_h4`}>총 {data.total}개</p>
 
             {isDeleteMode && (
               <span className={`${styles.scrap_browser_guide} font_body_m_b`}>
@@ -190,7 +217,35 @@ export default function ScrapBrowser({ scraps }) {
           </div>
         </div>
 
-        {items.length > 0 ? (
+        {status === 'loading' && (
+          <p className={`${styles.scrap_browser_state} font_body_m_r`} role='status'>
+            불러오는 중이에요…
+          </p>
+        )}
+
+        {status === 'error' && (
+          <div className={styles.scrap_browser_empty}>
+            <span
+              className={`material-symbols-sharp ${styles.scrap_browser_empty_icon}`}
+              aria-hidden='true'
+            >
+              error
+            </span>
+            <p className={`${styles.scrap_browser_empty_title} font_h4`}>불러오지 못했어요</p>
+            <p className={`${styles.scrap_browser_empty_desc} font_body_m_r`}>
+              잠시 뒤 다시 시도해주세요.
+            </p>
+            <button
+              type='button'
+              className={`${styles.scrap_browser_ghost_btn} ${styles.scrap_browser_retry} font_body_l_b`}
+              onClick={() => setReloadKey((prev) => prev + 1)}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {status === 'ready' && items.length > 0 ? (
           <ul className={styles.scrap_browser_list}>
             {items.map((item, index) => (
               <ScrapRow
@@ -198,8 +253,8 @@ export default function ScrapBrowser({ scraps }) {
                 index={(currentPage - 1) * PAGE_SIZE + index + 1}
                 question={item.question}
                 answer={item.answer}
-                feedback={item.feedback}
-                createdAt={item.createdAt}
+                feedback={item.feedbackText}
+                createdAt={item.date}
                 isOpen={isRowOpen(item.id)}
                 onToggleOpen={() => toggleOpen(item.id)}
                 isSelected={selectedIds.includes(item.id)}
@@ -207,7 +262,7 @@ export default function ScrapBrowser({ scraps }) {
               />
             ))}
           </ul>
-        ) : (
+        ) : status === 'ready' ? (
           <div className={styles.scrap_browser_empty}>
             <span
               className={`material-symbols-sharp ${styles.scrap_browser_empty_icon}`}
@@ -224,7 +279,7 @@ export default function ScrapBrowser({ scraps }) {
                 : 'AI 면접 연습 중 마음에 드는 질문을 스크랩해보세요.'}
             </p>
           </div>
-        )}
+        ) : null}
 
         {!isDeleteMode && (
         <div className={styles.scrap_browser_cta}>
@@ -253,7 +308,7 @@ export default function ScrapBrowser({ scraps }) {
         </div>
         )}
 
-        {items.length > 0 && (
+        {status === 'ready' && items.length > 0 && (
           <div className={styles.scrap_browser_pagination}>
             <Pagination
               currentPage={currentPage}
