@@ -2,19 +2,22 @@ import { useState } from 'react';
 import styles from './ActionBtn.module.sass';
 
 export default function LikeBtn({ iconText, count, onClick }) {
-  const [isSelected, setIsSelected] = useState(false);
-  const [currentCount, setCurrentCount] = useState(count);
+  const [isActive, setIsActive] = useState(false);
+  const handleClick = async (e) => {
+    e.stopPropagation();
+
+    try {
+      await onClick(isActive);
+      setIsActive((prev) => !prev);
+    } catch (error) {
+      console.error('액션 처리 실패:', error);
+    }
+  };
+
   return (
-    <button
-      className={`${styles.action_btn}`}
-      onClick={() => {
-        setCurrentCount((prev) => (isSelected ? --prev : ++prev));
-        setIsSelected(!isSelected);
-        // onClick();
-      }}
-    >
-      <span className={`${styles.icon} material-symbols-rounded ${isSelected ? styles.active : ''}`}>{iconText}</span>
-      <span className={`count font_body_m_b`}>{currentCount}</span>
+    <button className={`${styles.action_btn}`} onClick={handleClick}>
+      <span className={`${styles.icon} material-symbols-rounded ${isActive ? styles.active : ''}`}>{iconText}</span>
+      <span className={`count font_body_m_b`}>{count}</span>
     </button>
   );
 }

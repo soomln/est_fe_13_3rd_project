@@ -42,14 +42,11 @@ export default function Portpolio() {
     fetchItems();
   }, []);
 
-  const bestPortfolioList = [];
-  items.map((item) => {
-    bestPortfolioList.push(
-      <SwiperSlide key={item.id}>
-        <PortfolioCard item={item} onClick={() => {}} />
-      </SwiperSlide>,
-    );
-  });
+  const bestPortfolioList = items.map((item) => (
+    <SwiperSlide key={item.id}>
+      <PortfolioCard item={item} onClick={() => {}} />
+    </SwiperSlide>
+  ));
 
   const router = useRouter();
   const pathname = usePathname();
@@ -98,19 +95,29 @@ export default function Portpolio() {
       scroll: false,
     });
   };
-
-  const portfolioList = [];
-  items.map((item) => {
-    portfolioList.push(
-      <PortfolioCard
-        key={item.id}
-        item={item}
-        onClick={() => {
-          onOpenDetail(item);
-        }}
-      />,
+  const updateReactionCount = (portfolioId, field, amount) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === portfolioId
+          ? {
+              ...item,
+              [field]: item[field] + amount,
+            }
+          : item,
+      ),
     );
-  });
+  };
+
+  const portfolioList = items.map((item) => (
+    <PortfolioCard
+      key={item.id}
+      item={item}
+      onClick={() => {
+        onOpenDetail(item);
+      }}
+      updateReactionCount={updateReactionCount}
+    />
+  ));
 
   const handleMoveTop = () => {
     galleryRef.current?.scrollIntoView({
