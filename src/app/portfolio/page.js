@@ -82,7 +82,9 @@ export default function Portpolio() {
     const params = new URLSearchParams(searchParams.toString());
     params.set('modal', item.id);
 
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    });
   };
 
   const onCloseDetail = () => {
@@ -92,7 +94,9 @@ export default function Portpolio() {
     const queryString = params.toString();
     const cleanUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
-    router.replace(cleanUrl);
+    router.replace(cleanUrl, {
+      scroll: false,
+    });
   };
 
   const portfolioList = [];
