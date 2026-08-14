@@ -1,8 +1,12 @@
-import styles from './PortfolioCard.module.sass';
-import ActionBtn from '@/app/_components/common/ActionBtn';
+import Image from 'next/image';
 
-// onToggle 을 넘길 때만 선택용 체크박스가 나온다 (마이페이지 삭제모드)
-export default function PortfolioCard({ item, onClick, isSelected = false, onToggle }) {
+import ActionBtn from '../ActionBtn';
+
+import { togglePortfolioLike, togglePortfolioBookmark } from '@backend/lib/api/portfolio';
+
+import styles from './PortfolioCard.module.sass';
+
+export default function PortfolioCard({ item, onClick, isSelected = false, onToggle, updateReactionCount }) {
   return (
     <li
       className={`${styles.portfolio_card} ${isSelected ? styles.is_selected : ''}`}
@@ -27,7 +31,7 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
       {/* 썸네일 & 제목 영역 */}
       <div className={styles.thumb_box}>
         {item.thumbnailUrl !== '' ? (
-          <img src={item.thumbnailUrl} alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />
+          <Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />
         ) : (
           <div className={styles.thumb_dummy} />
         )}
@@ -47,9 +51,30 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
           <span className={`${styles.author_name} font_body_s_b`}>{item.authorName}</span>
         </div>
 
-        <div className={styles.actions}>
-          <ActionBtn iconText={'thumb_up_alt'} count={item.likeCount} />
-          <ActionBtn iconText={'bookmark'} count={item.bookmarkCount} />
+        <div
+          className={styles.actions}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <ActionBtn
+            iconText='thumb_up_alt'
+            count={item.likeCount}
+            onClick={async (isActive) => {
+              await togglePortfolioLike(item.id);
+
+              updateReactionCount(item.id, 'likeCount', isActive ? -1 : 1);
+            }}
+          />
+          <ActionBtn
+            iconText='bookmark'
+            count={item.bookmarkCount}
+            onClick={async (isActive) => {
+              await togglePortfolioBookmark(item.id);
+
+              updateReactionCount(item.id, 'bookmarkCount', isActive ? -1 : 1);
+            }}
+          />
         </div>
       </div>
     </li>
