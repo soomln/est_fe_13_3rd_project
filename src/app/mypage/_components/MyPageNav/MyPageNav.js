@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
+import { useAuth } from '@/app/_components/auth';
+import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
 import styles from './MyPageNav.module.sass';
 
 const MENUS = [
@@ -14,25 +16,33 @@ const MENUS = [
   { href: '/mypage/account', icon: 'settings', label: '계정 설정' },
 ];
 
-// 주의: supabase 연결 전까지 쓰는 임시 정보
-const USER = { name: '홍길동', role: '프론트엔드 개발자', avatarUrl: '' };
-
 export default function MyPageNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { profile } = useMyProfile();
+  const { signOut } = useAuth();
+
   const isActive = (href) => (href === '/mypage' ? pathname === href : pathname.startsWith(href));
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/');
+  };
 
   return (
     <aside className={styles.mypage_nav}>
       <div className={styles.mypage_nav_profile}>
-        {USER.avatarUrl ? (
-          <img src={USER.avatarUrl} alt='' className={styles.mypage_nav_avatar} />
+        {profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt='' className={styles.mypage_nav_avatar} />
         ) : (
           <span className={styles.mypage_nav_avatar} />
         )}
 
         <span className={styles.mypage_nav_names}>
-          <span className={`${styles.mypage_nav_name} font_body_l_b`}>{USER.name}</span>
-          <span className={`${styles.mypage_nav_role} font_body_l_r`}>{USER.role}</span>
+          <span className={`${styles.mypage_nav_name} font_body_l_b`}>{profile?.name ?? ''}</span>
+          <span className={`${styles.mypage_nav_role} font_body_l_r`}>
+            {profile?.desired_role ?? ''}
+          </span>
         </span>
       </div>
 
@@ -56,7 +66,11 @@ export default function MyPageNav() {
 
       <span className={styles.mypage_nav_divider} aria-hidden='true' />
 
-      <button type='button' className={`${styles.mypage_nav_logout} font_body_l_b`}>
+      <button
+        type='button'
+        className={`${styles.mypage_nav_logout} font_body_l_b`}
+        onClick={handleSignOut}
+      >
         <span className='material-symbols-sharp' aria-hidden='true'>
           logout
         </span>

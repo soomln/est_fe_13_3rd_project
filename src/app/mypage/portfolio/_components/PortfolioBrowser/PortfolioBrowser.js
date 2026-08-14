@@ -1,14 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import {
+  listMyPortfolios,
+  listMyBookmarkedPortfolios,
+  deletePortfolios,
+  removePortfolioBookmarks,
+} from '@backend/lib/api/portfolio';
 import Pagination from '@/app/_components/common/Pagination';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
+import PortfolioDetailModal from '@/app/portfolio/_components/Modal/Window';
 import FilterChip from '@/app/mypage/_components/FilterChip';
-import SearchPill from '@/app/mypage/_components/SearchPill';
 import SortPill from '@/app/mypage/_components/SortPill';
+import Toast from '@/app/mypage/_components/Toast';
 import styles from './PortfolioBrowser.module.sass';
 
 const PAGE_SIZE = 6;
@@ -18,28 +25,27 @@ const SCOPES = [
   { value: 'scrapped', label: '스크랩한 포트폴리오' },
 ];
 
-const SORTS = { 등록순: 'created', 최신순: 'latest', 인기순: 'popular' };
-
-const SORTERS = {
-  created: (a, b) => a.order - b.order,
-  latest: (a, b) => b.createdAt.localeCompare(a.createdAt),
-  popular: (a, b) => b.likeCount - a.likeCount,
-};
+// 주의: 등록순(오래된순)과 이름 검색은 서버가 아직 지원하지 않는다 (docs/plans/backend_requests.md)
+const SORTS = { 최신순: 'latest', 인기순: 'popular' };
 
 // 쿼리에서 생략하는 기본값
-const DEFAULTS = { scope: '', q: '', sort: 'created', page: '1' };
+const DEFAULTS = { scope: '', sort: 'latest', page: '1' };
 
-export default function PortfolioBrowser({ portfolios }) {
+export default function PortfolioBrowser() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
+  const [data, setData] = useState({ items: [], total: 0 });
+  const [status, setStatus] = useState('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [toast, setToast] = useState('');
+  const [previewId, setPreviewId] = useState(null);
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
   const scope = searchParams.get('scope') ?? '';
-  const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
-  const sort = SORTERS[sortParam] ? sortParam : 'created';
+  const sort = Object.values(SORTS).includes(sortParam) ? sortParam : 'latest';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
 
@@ -56,19 +62,36 @@ export default function PortfolioBrowser({ portfolios }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const filtered = useMemo(() => {
-    const text = keyword.trim().toLowerCase();
+  const isScrapped = scope === 'scrapped';
 
-    return portfolios
-      .map((item, index) => ({ ...item, order: index }))
-      .filter((item) => (scope === 'scrapped' ? item.isScrapped : !item.isScrapped))
-      .filter((item) => (text ? item.title.toLowerCase().includes(text) : true))
-      .sort(SORTERS[sort]);
-  }, [portfolios, scope, keyword, sort]);
+  // 거르기·정렬·쪽 나누기는 서버가 한다
+  useEffect(() => {
+    let alive = true;
+    setStatus('loading');
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const load = isScrapped
+      ? listMyBookmarkedPortfolios({ page, pageSize: PAGE_SIZE })
+      : listMyPortfolios({ sort, page, pageSize: PAGE_SIZE });
+
+    load
+      .then((result) => {
+        if (!alive) return;
+        setData(result);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStatus('error');
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [isScrapped, sort, page, reloadKey]);
+
+  const items = data.items;
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
 
@@ -76,8 +99,37 @@ export default function PortfolioBrowser({ portfolios }) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
   };
 
+  // 카드 안 좋아요·북마크 숫자를 화면에서만 맞춰준다
+  const updateReactionCount = (id, field, amount) => {
+    setData((prev) => ({
+      ...prev,
+      items: prev.items.map((item) =>
+        item.id === id ? { ...item, [field]: item[field] + amount } : item,
+      ),
+    }));
+  };
+
   const toggleAll = () => {
     setSelectedIds(isAllSelected ? [] : items.map((item) => item.id));
+  };
+
+  // 내 포트폴리오는 지우고, 스크랩한 것은 스크랩만 해제한다
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+
+    try {
+      if (isScrapped) await removePortfolioBookmarks(selectedIds);
+      else await deletePortfolios(selectedIds);
+
+      setSelectedIds([]);
+      setToast(isScrapped ? `${count}개 스크랩을 해제했어요` : `${count}개 포트폴리오를 삭제했어요`);
+      updateQuery({ mode: '' });
+      setReloadKey((prev) => prev + 1);
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -113,6 +165,7 @@ export default function PortfolioBrowser({ portfolios }) {
                 type='button'
                 className={`${styles.portfolio_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
+                onClick={handleDelete}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -139,6 +192,16 @@ export default function PortfolioBrowser({ portfolios }) {
           )}
         </div>
       </div>
+
+      <Toast message={toast} onHide={() => setToast('')} />
+
+      {/* key 를 주면 다른 카드를 열 때 이전 내용이 잠깐 보이지 않는다 */}
+      <PortfolioDetailModal
+        key={previewId}
+        isOpen={Boolean(previewId)}
+        itemID={previewId}
+        onClose={() => setPreviewId(null)}
+      />
 
       {isDeleteMode && (
         <p className={`${styles.portfolio_browser_notice} font_body_m_b`} role='status'>
@@ -168,12 +231,8 @@ export default function PortfolioBrowser({ portfolios }) {
             )}
           </div>
 
+          {/* 주의: 이름 검색은 서버가 아직 지원하지 않아 뺐다 (docs/plans/backend_requests.md) */}
           <div className={styles.portfolio_browser_tools}>
-            <SearchPill
-              key={keyword}
-              placeholder='포트폴리오 이름으로 검색'
-              onSearch={(text) => updateQuery({ q: text, page: 1 })}
-            />
             <SortPill
               options={Object.keys(SORTS)}
               value={sortLabel}
@@ -182,7 +241,35 @@ export default function PortfolioBrowser({ portfolios }) {
           </div>
         </div>
 
-        {items.length > 0 ? (
+        {status === 'loading' && (
+          <p className={`${styles.portfolio_browser_state} font_body_m_r`} role='status'>
+            불러오는 중이에요…
+          </p>
+        )}
+
+        {status === 'error' && (
+          <div className={styles.portfolio_browser_empty}>
+            <span
+              className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`}
+              aria-hidden='true'
+            >
+              error
+            </span>
+            <p className={`${styles.portfolio_browser_empty_title} font_h4`}>불러오지 못했어요</p>
+            <p className={`${styles.portfolio_browser_empty_desc} font_body_m_r`}>
+              잠시 뒤 다시 시도해주세요.
+            </p>
+            <button
+              type='button'
+              className={`${styles.portfolio_browser_ghost_btn} ${styles.portfolio_browser_retry} font_body_l_b`}
+              onClick={() => setReloadKey((prev) => prev + 1)}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {status === 'ready' && items.length > 0 ? (
           <ul className={styles.portfolio_browser_grid}>
             {items.map((item) => (
               <PortfolioCard
@@ -190,14 +277,15 @@ export default function PortfolioBrowser({ portfolios }) {
                 item={item}
                 onClick={() => {
                   if (isDeleteMode) toggleOne(item.id);
-                  else router.push(`/portfolio/${item.id}`);
+                  else setPreviewId(item.id);
                 }}
                 isSelected={selectedIds.includes(item.id)}
                 onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
+                updateReactionCount={updateReactionCount}
               />
             ))}
           </ul>
-        ) : (
+        ) : status === 'ready' ? (
           <div className={styles.portfolio_browser_empty}>
             <span
               className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`}
@@ -214,9 +302,9 @@ export default function PortfolioBrowser({ portfolios }) {
                 : '등록하기를 눌러 작업물을 올려보세요.'}
             </p>
           </div>
-        )}
+        ) : null}
 
-        {items.length > 0 && (
+        {status === 'ready' && items.length > 0 && (
           <div className={styles.portfolio_browser_pagination}>
             <Pagination
               currentPage={currentPage}

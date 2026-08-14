@@ -1,0 +1,38 @@
+@use '@/app/_variables.sass' as *
+
+// 화면 가운데 잠깐 떴다 사라지는 알림. 클릭은 통과시킨다
+.toast
+  position: fixed
+  top: 50%
+  left: 50%
+  z-index: 100
+  display: flex
+  align-items: center
+  gap: 8px
+  box-sizing: border-box
+  padding: 20px 28px
+  color: $white
+  background-color: rgba(0, 0, 0, 0.85)
+  border-radius: 12px
+  pointer-events: none
+  animation: toast_in 0.25s ease both, toast_out 0.4s ease 2.1s both
+
+  :global(.material-symbols-sharp)
+    font-size: 22px
+    font-variation-settings: 'FILL' 1
+
+@keyframes toast_in
+  from
+    opacity: 0
+    transform: translate(-50%, -46%)
+  to
+    opacity: 1
+    transform: translate(-50%, -50%)
+
+@keyframes toast_out
+  from
+    opacity: 1
+    transform: translate(-50%, -50%)
+  to
+    opacity: 0
+    transform: translate(-50%, -54%)

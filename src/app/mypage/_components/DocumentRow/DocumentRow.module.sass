@@ -19,6 +19,7 @@
   border-color: $green
 
 // 삭제모드에서는 label 이라 이 영역 아무 곳이나 누르면 체크된다
+// 미리보기가 있을 때는 button 으로 그려진다
 .document_row_body
   flex: 1
   min-width: 0
@@ -26,6 +27,9 @@
   align-items: center
   gap: 20px
   padding: 21px 13px 21px 22px
+  text-align: left
+  background: none
+  border: 0
 
 .document_row_pickable
   cursor: pointer
