@@ -3,41 +3,35 @@
 .btns
   width: fit-content
   display: flex
-  padding: 1rem 0
-  border-radius: 999px
-  gap: 1rem
   position: sticky
   left: 50%
   bottom: 3rem
   transform: translateX(-50%)
   background: $sub_green
+  border-radius: 999px
+  overflow: hidden
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15)
   
   .btn
     position: relative
     display: flex
     justify-content: center
     align-items: center
-    padding-left: 1rem
-    background: none
+    padding: 0.5rem 1rem
+    gap: 4px
     border: none
+    background: transparent
     cursor: pointer
+
 
     .icon
       color: $green
-      font-variation-settings: 'FILL' 1
     .text
       color: $black
       text-decoration: none
 
-    &:last-child
-      padding-right: 1rem
+    &:not(:last-child)
+      border-right: solid 2px $stroke3
 
-    &:not(:last-child)::after
-        content: ''
-        position: absolute
-        top: 50%
-        right: -1rem
-        width: 2px
-        height: 20px
-        background-color: $stroke2
-        transform: translateY(-50%)
+    &:hover
+      background: $sub_yellow
