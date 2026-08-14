@@ -2,10 +2,11 @@ import Image from 'next/image';
 
 import ActionBtn from '../ActionBtn';
 
+import { togglePortfolioLike, togglePortfolioBookmark } from '@backend/lib/api/portfolio';
+
 import styles from './PortfolioCard.module.sass';
 
-// onToggle 을 넘길 때만 선택용 체크박스가 나온다 (마이페이지 삭제모드)
-export default function PortfolioCard({ item, onClick, isSelected = false, onToggle }) {
+export default function PortfolioCard({ item, onClick, isSelected = false, onToggle, updateReactionCount }) {
   return (
     <li
       className={`${styles.portfolio_card} ${isSelected ? styles.is_selected : ''}`}
@@ -56,8 +57,24 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
             e.stopPropagation();
           }}
         >
-          <ActionBtn iconText={'thumb_up_alt'} count={item.likeCount} />
-          <ActionBtn iconText={'bookmark'} count={item.bookmarkCount} />
+          <ActionBtn
+            iconText='thumb_up_alt'
+            count={item.likeCount}
+            onClick={async (isActive) => {
+              await togglePortfolioLike(item.id);
+
+              updateReactionCount(item.id, 'likeCount', isActive ? -1 : 1);
+            }}
+          />
+          <ActionBtn
+            iconText='bookmark'
+            count={item.bookmarkCount}
+            onClick={async (isActive) => {
+              await togglePortfolioBookmark(item.id);
+
+              updateReactionCount(item.id, 'bookmarkCount', isActive ? -1 : 1);
+            }}
+          />
         </div>
       </div>
     </li>
