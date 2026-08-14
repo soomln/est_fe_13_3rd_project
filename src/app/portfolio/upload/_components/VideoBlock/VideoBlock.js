@@ -46,7 +46,7 @@ export default function VideoBlock({ block, isEditMode = false, updateBlock, rem
 
     setVideoUrl(value);
 
-    updateBlock({
+    updateBlock(block.id, {
       src: value,
     });
   };
@@ -55,7 +55,7 @@ export default function VideoBlock({ block, isEditMode = false, updateBlock, rem
 
   return (
     <div className={styles.block}>
-      <div className={styles.upload}>
+      <div className={`${styles.upload} ${isEditMode ? styles.edit_mode : ''}`}>
         {embedUrl ? (
           <iframe src={embedUrl} title='YouTube video' allowFullScreen />
         ) : isEditMode ? (
