@@ -24,6 +24,9 @@ function TextEditor({ block, isEditMode, updateBlock, removeBlock }) {
         link: {
           openOnClick: !isEditMode,
         },
+
+        // 제목 뒤에 빈 <p></p>가 자동으로 생기는 것 방지
+        trailingNode: false,
       }),
 
       TextAlign.configure({
@@ -52,9 +55,7 @@ function TextEditor({ block, isEditMode, updateBlock, removeBlock }) {
     ],
 
     content: block.html ?? '',
-
     editable: isEditMode,
-
     immediatelyRender: false,
   });
 
