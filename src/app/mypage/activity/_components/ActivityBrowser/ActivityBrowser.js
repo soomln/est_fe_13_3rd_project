@@ -1,15 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import Pagination from '@/app/_components/common/Pagination';
+import { listMyScrappedCompanies, removeCompanyBookmarks } from '@backend/lib/api/mypage';
+import { listMyScrappedPosts, removePostScraps } from '@backend/lib/api/posts';
 import CompanyCard from '@/app/mypage/_components/CompanyCard';
 import FilterChip from '@/app/mypage/_components/FilterChip';
 import QbankCard from '@/app/mypage/_components/QbankCard';
-import SearchPill from '@/app/mypage/_components/SearchPill';
-import SortPill from '@/app/mypage/_components/SortPill';
+import Toast from '@/app/mypage/_components/Toast';
 import styles from './ActivityBrowser.module.sass';
 
 // 카드 높이가 달라서 탭마다 개수를 다르게 둔다
@@ -20,25 +21,25 @@ const TABS = [
   { value: 'qbank', label: '면접 질문 족보' },
 ];
 
-const SORTS = { 최신순: 'latest', 오래된순: 'oldest', 이름순: 'name' };
+// 주의: 정렬과 검색은 서버가 아직 지원하지 않는다 (docs/plans/backend_requests.md)
 
 // 쿼리에서 생략하는 기본값
-const DEFAULTS = { tab: '', q: '', sort: 'latest', page: '1' };
+const DEFAULTS = { tab: '', page: '1' };
 
-export default function ActivityBrowser({ companies, qbanks }) {
+export default function ActivityBrowser() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [selectedIds, setSelectedIds] = useState([]);
+  const [data, setData] = useState({ items: [], total: 0 });
+  const [status, setStatus] = useState('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [toast, setToast] = useState('');
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
   const isQbank = searchParams.get('tab') === 'qbank';
-  const keyword = searchParams.get('q') ?? '';
-  const sortParam = searchParams.get('sort') ?? '';
-  const sort = Object.values(SORTS).includes(sortParam) ? sortParam : 'latest';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
-  const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
   const pageSize = isQbank ? PAGE_SIZE.qbank : PAGE_SIZE.company;
 
   const updateQuery = (changes) => {
@@ -54,34 +55,69 @@ export default function ActivityBrowser({ companies, qbanks }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const filtered = useMemo(() => {
-    const text = keyword.trim().toLowerCase();
+  // 기업·족보 모두 스크랩한 목록이다
+  useEffect(() => {
+    let alive = true;
+    setStatus('loading');
 
-    // 기업은 이름, 족보는 회사명과 질문 전체를 훑는다
-    const source = isQbank ? qbanks : companies;
-    const matches = (item) =>
-      isQbank
-        ? [item.companyName, ...item.questions].some((field) => field.toLowerCase().includes(text))
-        : item.name.toLowerCase().includes(text);
-    const nameOf = (item) => (isQbank ? item.companyName : item.name);
+    const load = isQbank
+      ? listMyScrappedPosts({ type: 'qbank', page, pageSize })
+      : listMyScrappedCompanies({ page, pageSize });
 
-    const sorters = {
-      latest: (a, b) => b.createdAt.localeCompare(a.createdAt),
-      oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
-      name: (a, b) => nameOf(a).localeCompare(nameOf(b), 'ko'),
+    load
+      .then((result) => {
+        if (!alive) return;
+        setData(result);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStatus('error');
+      });
+
+    return () => {
+      alive = false;
     };
+  }, [isQbank, page, pageSize, reloadKey]);
 
-    return source.filter((item) => (text ? matches(item) : true)).sort(sorters[sort]);
-  }, [companies, qbanks, isQbank, keyword, sort]);
+  // 서버가 주는 이름과 카드가 쓰는 이름이 달라서 맞춰준다
+  const items = isQbank
+    ? data.items.map((item) => ({ ...item, createdAt: item.date }))
+    : data.items.map((item) => ({
+        ...item,
+        industry: item.category,
+        logoUrl: item.logo,
+        employeeCount: item.employees,
+        reviewCount: item.review,
+        qbankCount: item.jokbo,
+      }));
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(data.total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const items = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
 
   const toggleOne = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((one) => one !== id) : [...prev, id]));
+  };
+
+  // 스크랩 해제만 한다. 원본 글이나 기업은 지우지 않는다
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+
+    try {
+      if (isQbank) await removePostScraps(selectedIds);
+      else await removeCompanyBookmarks(selectedIds);
+
+      setSelectedIds([]);
+      setToast(`${count}개 스크랩을 해제했어요`);
+      updateQuery({ mode: '' });
+      setReloadKey((prev) => prev + 1);
+    } catch {
+      setStatus('error');
+    }
   };
 
   const toggleAll = () => {
@@ -127,6 +163,7 @@ export default function ActivityBrowser({ companies, qbanks }) {
                 type='button'
                 className={`${styles.activity_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
+                onClick={handleDelete}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -146,6 +183,8 @@ export default function ActivityBrowser({ companies, qbanks }) {
           )}
         </div>
       </div>
+
+      <Toast message={toast} onHide={() => setToast('')} />
 
       {isDeleteMode && (
         <p className={`${styles.activity_browser_notice} font_body_m_b`} role='status'>
@@ -175,21 +214,37 @@ export default function ActivityBrowser({ companies, qbanks }) {
             )}
           </div>
 
-          <div className={styles.activity_browser_tools}>
-            <SearchPill
-              key={`${isQbank}-${keyword}`}
-              placeholder={isQbank ? '질문 내용으로 검색' : '기업 이름으로 검색'}
-              onSearch={(text) => updateQuery({ q: text, page: 1 })}
-            />
-            <SortPill
-              options={Object.keys(SORTS)}
-              value={sortLabel}
-              onChange={(label) => updateQuery({ sort: SORTS[label], page: 1 })}
-            />
-          </div>
         </div>
 
-        {items.length > 0 ? (
+        {status === 'loading' && (
+          <p className={`${styles.activity_browser_state} font_body_m_r`} role='status'>
+            불러오는 중이에요…
+          </p>
+        )}
+
+        {status === 'error' && (
+          <div className={styles.activity_browser_empty}>
+            <span
+              className={`material-symbols-sharp ${styles.activity_browser_empty_icon}`}
+              aria-hidden='true'
+            >
+              error
+            </span>
+            <p className={`${styles.activity_browser_empty_title} font_h4`}>불러오지 못했어요</p>
+            <p className={`${styles.activity_browser_empty_desc} font_body_m_r`}>
+              잠시 뒤 다시 시도해주세요.
+            </p>
+            <button
+              type='button'
+              className={`${styles.activity_browser_ghost_btn} ${styles.activity_browser_retry} font_body_l_b`}
+              onClick={() => setReloadKey((prev) => prev + 1)}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {status === 'ready' && items.length > 0 ? (
           <div className={isQbank ? styles.activity_browser_list : styles.activity_browser_grid}>
             {items.map((item) => {
               const card = isQbank ? (
@@ -219,14 +274,13 @@ export default function ActivityBrowser({ companies, qbanks }) {
                 );
               }
 
-              // 주의: 기업 상세가 고정 경로라 slug 를 못 넘긴다. 동적 라우트가 생기면 교체
               return (
                 <Link
                   key={item.id}
                   href={
                     isQbank
-                      ? `/search-companies/interview-question/${item.id}`
-                      : '/search-companies/detail'
+                      ? `/search-companies/detail/${item.companySlug}/interview-question/${item.id}`
+                      : `/search-companies/detail/${item.slug}`
                   }
                   className={styles.activity_browser_link}
                 >
@@ -235,7 +289,7 @@ export default function ActivityBrowser({ companies, qbanks }) {
               );
             })}
           </div>
-        ) : (
+        ) : status === 'ready' ? (
           <div className={styles.activity_browser_empty}>
             <span
               className={`material-symbols-sharp ${styles.activity_browser_empty_icon}`}
@@ -244,23 +298,17 @@ export default function ActivityBrowser({ companies, qbanks }) {
               {isQbank ? 'quiz' : 'apartment'}
             </span>
             <p className={`${styles.activity_browser_empty_title} font_h4`}>
-              {keyword
-                ? '검색 결과가 없습니다'
-                : isQbank
-                  ? '스크랩한 족보가 없습니다'
-                  : '스크랩한 기업이 없습니다'}
+              {isQbank ? '스크랩한 족보가 없습니다' : '스크랩한 기업이 없습니다'}
             </p>
             <p className={`${styles.activity_browser_empty_desc} font_body_m_r`}>
-              {keyword
-                ? '다른 키워드로 찾아보세요.'
-                : isQbank
-                  ? '기업 탐색에서 마음에 드는 족보를 스크랩해보세요.'
-                  : '기업 탐색에서 관심 있는 기업을 스크랩해보세요.'}
+              {isQbank
+                ? '기업 탐색에서 마음에 드는 족보를 스크랩해보세요.'
+                : '기업 탐색에서 관심 있는 기업을 스크랩해보세요.'}
             </p>
           </div>
-        )}
+        ) : null}
 
-        {items.length > 0 && (
+        {status === 'ready' && items.length > 0 && (
           <div className={styles.activity_browser_pagination}>
             <Pagination
               currentPage={currentPage}
