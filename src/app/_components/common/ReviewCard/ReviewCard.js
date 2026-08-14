@@ -1,5 +1,6 @@
 import Bookmark from '../Bookmark';
 import styles from './ReviewCard.module.sass';
+import Link from 'next/link';
 
 /**
  * [공통] 면접 후기/포스트 카드 컴포넌트
@@ -8,11 +9,13 @@ export default function ReviewCard({
   companyLogo = null,
   companyName = '',
   review,
+  href,
   onBookmarkClick, // 백엔드 구현 시 수정 필요
   onClick,
 }) {
-  return (
-    <li key={review.id} className={styles.review_card} onClick={onClick}>
+
+const card = (
+  <li key={review.id} className={styles.review_card} onClick={onClick}>
       <div className={styles.bookmark_wrapper}>
         <Bookmark size='large' onClick={onBookmarkClick} />
       </div>
@@ -57,7 +60,7 @@ export default function ReviewCard({
           </>
         ) : (
           review.questions.map((q, idx) => (
-            <p key={idx}>{q}</p>
+            <p key={idx}>{idx+1}. {q}</p>
           ))
         )}
       </div>
@@ -73,5 +76,15 @@ export default function ReviewCard({
         </div>
       </div>
     </li>
-  );
+)
+
+ if (href) {
+    return (
+      <Link href={href} className={styles.link}>
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
 }

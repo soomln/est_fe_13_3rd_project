@@ -1,6 +1,6 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 
-export default function InterviewQuestionDetailHeader({question}){
+export default function InterviewQuestionReviewDetailHeader({question}){
   return(
     <div className={styles.card_header}>
       <div className={styles.meta_line}>

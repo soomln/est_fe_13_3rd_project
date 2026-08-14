@@ -5,20 +5,20 @@ import FormInput from "@/app/search-companies/_components/Form/FormInput";
 import FormTextarea from "@/app/search-companies/_components/Form/FormTextarea";
 import FormWriteButton from "@/app/search-companies/_components/Form/WriteButtons";
 import { useState } from "react";
+import { createPost } from "@backend/lib/api/posts";
 
 const reviewDifficultyOption = ["쉬움", "보통", "어려움"];
 const questionDifficultyOption = ["쉬움", "보통", "어려움"];
 const resultOption = ["합격", "불합격"];
 
 
-export default function ReviewWriteForm(){
+export default function ReviewWriteForm({company}){
   const [form, setForm] = useState({
-    reviewDifficulty: "",
-    questionDifficulty: "",
-    result: "",
-    route: "",
     title: "",
-    content: "",
+    body: "",
+    difficulty_code: "",
+    pass_result_code: "",
+    channel_code: "",
   });
 
   const handleChange = (e) => {
@@ -30,14 +30,21 @@ export default function ReviewWriteForm(){
     }));
     console.log(name + ": "+ value)
   };  
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    await createPost({
+      postType: "review",
+      companyId: company.id,
+      body: form.body,
+
+      // 나머지는 일단 하나씩 채워 넣기
+    });
     console.log(form);
   };
 
   return(
     <>
       <FormSelect 
-      name="reviewDifficulty"
+      name="difficulty_code"
       value={form.reviewDifficulty}
       onChange={handleChange}
       label="면접 난이도"
@@ -51,15 +58,15 @@ export default function ReviewWriteForm(){
       options={questionDifficultyOption}
       />
       <FormSelect 
-      name="result"
-      value={form.result}
+      name="pass_result_code"
+      value={form.pass_result_code}
       onChange={handleChange}
       label="합격 여부"
       options={resultOption}
       />
       <FormInput 
-      name="route"
-      value={form.route}
+      name="channel_code"
+      value={form.channel_code}
       onChange={handleChange}
       label="면접 경로"
       placeholder="면접 경로를 작성해주세요."
@@ -74,8 +81,8 @@ export default function ReviewWriteForm(){
       />      {/* 제목 */}
 
       <FormTextarea 
-      name="content"
-      value={form.content}
+      name="body"
+      value={form.body}
       onChange={handleChange}
       label="내용"
       placeholder="내용을 작성해주세요."

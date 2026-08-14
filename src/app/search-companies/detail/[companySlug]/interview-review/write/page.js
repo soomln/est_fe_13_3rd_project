@@ -1,17 +1,18 @@
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer'; 
-import company from "../../detail/data/company";
-import CompanyHeader from '../../detail/_components/CompanyHeader/CompanyHeader';
-import TabNavigation from '../../detail/_components/TabNavigation/TabNavigation';
-import ReviewWriteForm from './_components/ReviewWriteForm';
+import { getCompany } from '@backend/lib/api/companies';
+import { createPost } from '@backend/lib/api/posts';
 
-export default function InterviewReviewWrite(){
+import ReviewWriteClient from './_components/ReviewWriteClient';
+
+
+export default async function InterviewReviewWrite({ params }){
+   const { companySlug } = await params;
+
   return(
     <>
       <Header/>
-      <CompanyHeader company={company}/>
-      <TabNavigation/>
-      <ReviewWriteForm/>
+      <ReviewWriteClient companySlug={companySlug}/>
       <Footer/>
     </>
   );
