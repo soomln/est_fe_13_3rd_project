@@ -5,7 +5,7 @@ import InterviewReviewDetailSummary from "./InterviewReviewDetailSummary";
 import InterviewReviewDetailComments from "./InterviewReviewDetailComments";
 
 
-export default function InterviewReviewDetailContent({review}){
+export default function InterviewReviewDetailContent({review, comments}){
   return (
     <div>
       <div className={styles.review_card}>
@@ -19,7 +19,7 @@ export default function InterviewReviewDetailContent({review}){
           <p>{review.content}</p>
         </div>
 
-        <InterviewReviewDetailComments review={review}/>
+        <InterviewReviewDetailComments comments={comments}/>
       </div>
     </div>
   );
