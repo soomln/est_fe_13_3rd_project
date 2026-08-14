@@ -1,8 +1,8 @@
-import styles from './ActionBtnGroup.module.sass';
+import styles from './ReactionBtnGroup.module.sass';
 import CircleBadge from '@/app/_components/common/CircleBadge';
-import ActionBtn from '@/app/portfolio/_components/Modal/ActionBtn';
+import ReactionBtn from '@/app/portfolio/_components/Modal/ReactionBtn';
 
-export default function ActionBtnGroup({ contentsRef, showToast }) {
+export default function ReactionBtnGroup({ contentsRef, showToast }) {
   const onMoveTop = () => {
     contentsRef?.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -20,10 +20,10 @@ export default function ActionBtnGroup({ contentsRef, showToast }) {
   return (
     <div className={styles.group}>
       <CircleBadge src='/images/estSoft 1.png' name='박소영' size='medium' textColor='#ffffff' />
-      <ActionBtn iconText='thumb_up_off_alt' value={50} isActiveBtn={true} onClick={() => {}} />
-      <ActionBtn iconText='bookmark_border' value={50} isActiveBtn={true} onClick={() => {}} />
-      <ActionBtn iconText='share' value={'공유'} onClick={onCopyUrl} />
-      <ActionBtn iconText='arrow_upward' value={'이동'} onClick={onMoveTop} />
+      <ReactionBtn iconText='thumb_up_off_alt' value={50} isActiveBtn={true} onClick={() => {}} />
+      <ReactionBtn iconText='bookmark_border' value={50} isActiveBtn={true} onClick={() => {}} />
+      <ReactionBtn iconText='share' value={'공유'} onClick={onCopyUrl} />
+      <ReactionBtn iconText='arrow_upward' value={'이동'} onClick={onMoveTop} />
     </div>
   );
 }
