@@ -223,7 +223,7 @@ export default function Upload() {
         <main>
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
 
-          <Contents item={item} isEditMode={true} updateBlock={updateBlock} removeBlock={removeBlock} />
+          <Contents item={item} setItem={setItem} isEditMode updateBlock={updateBlock} removeBlock={removeBlock} />
         </main>
 
         <aside className={styles.btns_wrapper}>
