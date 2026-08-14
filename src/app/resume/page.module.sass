@@ -1,4 +1,5 @@
 @use '@/app/_variables.sass' as *
+@use '@/app/_mixin.sass' as *
 
 // hero
 
@@ -49,9 +50,9 @@
   .hero_title_point
     color: $green
 
+  // 좁은 화면에서는 h1 크기로 내린다
   @media (max-width: 768px)
-    font-size: 36px
-    line-height: 48px
+    +setFont(36px, 48px, 700)
 
 .hero_desc
   margin-top: 32px
@@ -189,10 +190,12 @@
   border-radius: 16px
   overflow: hidden
 
+// 원본 이미지에 그려진 테두리가 모서리에 비쳐서 살짝 키워 잘라낸다
 .ai_chat_img
   width: 100%
   height: 100%
   object-fit: cover
+  scale: 1.03
 
 .ai_chat_rank
   flex: 0 0 calc(50% - 14px)
@@ -367,6 +370,20 @@
   line-height: 15px
   color: $gray
 
+// 포트폴리오 카드는 좋아요 수, 팀 매칭 카드는 모집 상태를 보여준다
+.next_mock_project_like
+  display: flex
+  align-items: center
+  gap: 2px
+  font-size: 10px
+  line-height: 15px
+  font-weight: 700
+  color: $amber
+
+  :global(.material-symbols-sharp)
+    font-size: 11px
+    font-variation-settings: 'FILL' 1
+
 .next_mock_project_tag
   padding: 2px 8px
   font-size: 10px
@@ -497,9 +514,9 @@
   .section_title_point
     color: $green
 
+  // 좁은 화면에서는 h2 크기로 내린다
   @media (max-width: 768px)
-    font-size: 28px
-    line-height: 36px
+    +setFont(28px, 36px, 700)
 
 .section_desc
   margin-top: 16px

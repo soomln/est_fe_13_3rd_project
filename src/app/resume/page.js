@@ -68,7 +68,13 @@ const AI_RANKS = [
 ];
 
 // 주의: supabase 연결 전까지 쓰는 임시 목록
-const NEXT_PROJECTS = ['프로젝트명', '프로젝트명', '프로젝트명'];
+const NEXT_PORTFOLIOS = [
+  { name: '이스트캠프 리뉴얼', likes: 128 },
+  { name: 'Rounz 리뉴얼', likes: 94 },
+  { name: 'CallBack 팀 프로젝트', likes: 76 },
+];
+
+const NEXT_TEAMS = ['React 스터디원 모집', '사이드 프로젝트 팀원', '면접 스터디 3인'];
 
 const CTA_POINTS = ['무료 양식 12종', '설치 없이 웹에서', '평균 40분 완성'];
 
@@ -324,7 +330,19 @@ export default function Resume() {
                     다른 개발자들의 프로젝트에서 <b>영감</b>과 <b>피드백</b>을 받아보세요
                   </>
                 }
-              />
+              >
+                {NEXT_PORTFOLIOS.map((item) => (
+                  <div key={item.name} className={styles.next_mock_project}>
+                    <p className={styles.next_mock_project_name}>{item.name}</p>
+                    <span className={styles.next_mock_project_like}>
+                      <span className='material-symbols-sharp' aria-hidden='true'>
+                        favorite
+                      </span>
+                      {item.likes}
+                    </span>
+                  </div>
+                ))}
+              </LinkCard>
 
               <LinkCard
                 tone='purple'
@@ -341,8 +359,8 @@ export default function Resume() {
                   </>
                 }
               >
-                {NEXT_PROJECTS.map((name, index) => (
-                  <div key={`${name}-${index}`} className={styles.next_mock_project}>
+                {NEXT_TEAMS.map((name) => (
+                  <div key={name} className={styles.next_mock_project}>
                     <p className={styles.next_mock_project_name}>{name}</p>
                     <span className={styles.next_mock_project_tag}>모집중</span>
                   </div>
