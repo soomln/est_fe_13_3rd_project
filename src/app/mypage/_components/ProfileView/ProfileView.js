@@ -1,13 +1,47 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 
 import ProfileSection from '@/app/mypage/_components/ProfileSection';
+import ProfileForm from '@/app/mypage/_components/ProfileForm';
 import InfoRow from '@/app/mypage/_components/InfoRow';
 import AwardRow from '@/app/mypage/_components/AwardRow';
 import LogoItem from '@/app/mypage/_components/LogoItem';
 import styles from './ProfileView.module.sass';
 
-export default function ProfileView({ profile }) {
+// 주의: supabase 연결 전까지는 화면에만 반영된다. 새로고침하면 되돌아간다
+export default function ProfileView({ profile: initialProfile }) {
+  const [profile, setProfile] = useState(initialProfile);
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState(null);
+
   const { stats, educations, careers, languages, awards, skills, companies, interests } = profile;
+
+  // 한 번에 한 섹션만 연다. 다른 섹션을 열면 이전 수정은 버린다
+  const startEdit = (section) => {
+    setEditing(section);
+    setDraft(profile);
+  };
+
+  const cancelEdit = () => {
+    setEditing(null);
+    setDraft(null);
+  };
+
+  const saveEdit = () => {
+    setProfile(draft);
+    cancelEdit();
+  };
+
+  // 섹션마다 같은 prop 묶음이 들어가서 한 곳에서 만든다
+  const sectionProps = (section) => ({
+    isEditing: editing === section,
+    onEdit: () => startEdit(section),
+    onCancel: cancelEdit,
+    onSave: saveEdit,
+    editChildren: <ProfileForm section={section} draft={draft} onChange={setDraft} />,
+  });
 
   return (
     <>
@@ -57,43 +91,43 @@ export default function ProfileView({ profile }) {
         </div>
       </section>
 
-      <ProfileSection title='자기소개'>
+      <ProfileSection title='자기소개' {...sectionProps('bio')}>
         <p className={`${styles.profile_view_bio} font_body_m_r`}>{profile.bio}</p>
       </ProfileSection>
 
-      <ProfileSection title='학력'>
+      <ProfileSection title='학력' {...sectionProps('educations')}>
         <div className={styles.profile_view_rows}>
-          {educations.map((item) => (
-            <InfoRow key={item.title} {...item} />
+          {educations.map((item, index) => (
+            <InfoRow key={index} {...item} />
           ))}
         </div>
       </ProfileSection>
 
-      <ProfileSection title='경력'>
+      <ProfileSection title='경력' {...sectionProps('careers')}>
         <div className={styles.profile_view_rows}>
-          {careers.map((item) => (
-            <InfoRow key={item.title} {...item} />
+          {careers.map((item, index) => (
+            <InfoRow key={index} {...item} />
           ))}
         </div>
       </ProfileSection>
 
-      <ProfileSection title='언어'>
+      <ProfileSection title='언어' {...sectionProps('languages')}>
         <div className={styles.profile_view_rows}>
-          {languages.map((item) => (
-            <InfoRow key={item.title} {...item} />
+          {languages.map((item, index) => (
+            <InfoRow key={index} {...item} />
           ))}
         </div>
       </ProfileSection>
 
-      <ProfileSection title='수상 내역'>
+      <ProfileSection title='수상 내역' {...sectionProps('awards')}>
         <div className={styles.profile_view_awards}>
           {awards.map((item, index) => (
-            <AwardRow key={item.title} rank={index + 1} title={item.title} date={item.date} />
+            <AwardRow key={index} rank={index + 1} title={item.title} date={item.date} />
           ))}
         </div>
       </ProfileSection>
 
-      <ProfileSection title='기술 스택'>
+      <ProfileSection title='기술 스택' {...sectionProps('skills')}>
         <ul className={styles.profile_view_skills}>
           {skills.map((label) => (
             <LogoItem key={label} label={label} />
@@ -101,7 +135,7 @@ export default function ProfileView({ profile }) {
         </ul>
       </ProfileSection>
 
-      <ProfileSection title='관심 회사'>
+      <ProfileSection title='관심 회사' {...sectionProps('companies')}>
         <ul className={styles.profile_view_companies}>
           {companies.map((label) => (
             <LogoItem key={label} label={label} />
@@ -109,7 +143,7 @@ export default function ProfileView({ profile }) {
         </ul>
       </ProfileSection>
 
-      <ProfileSection title='관심 분야'>
+      <ProfileSection title='관심 분야' {...sectionProps('interests')}>
         <ul className={styles.profile_view_interests}>
           {interests.map((label) => (
             <li key={label} className={`${styles.profile_view_interest} font_body_m_b`}>
