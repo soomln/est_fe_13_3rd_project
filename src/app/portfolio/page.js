@@ -27,7 +27,6 @@ export default function Portpolio() {
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSort, setSelectedSort] = useState('latest');
-  const [showQuickBtns, setShowQuickBtns] = useState(false);
 
   const galleryRef = useRef(null);
 
@@ -54,27 +53,6 @@ export default function Portpolio() {
     };
 
     fetchItems();
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const gallery = galleryRef.current;
-
-      if (!gallery) return;
-
-      const { top, bottom } = gallery.getBoundingClientRect();
-      const isActive = top <= 0 && bottom > 0;
-
-      setShowQuickBtns(isActive);
-    };
-
-    handleScroll();
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
   }, []);
 
   const filteredItems = items.filter((item) => selectedCategory === 'all' || item.category === selectedCategory);
@@ -213,8 +191,7 @@ export default function Portpolio() {
             </div>
 
             <ul className={styles.item_list}>{portfolioList}</ul>
-
-            {showQuickBtns && <QuickBtns onMoveTop={handleMoveTop} />}
+            <QuickBtns onMoveTop={handleMoveTop} />
           </section>
         </div>
 
