@@ -19,9 +19,6 @@ export default function DetailModal({ isOpen, onClose, itemID }) {
   const [toastMessage, setToastMessage] = useState('');
 
   const [item, setItem] = useState(null);
-  const getItem = async () => {
-    setItem(await getPortfolio(itemID));
-  };
 
   useEffect(() => {
     setMounted(true);
@@ -31,8 +28,6 @@ export default function DetailModal({ isOpen, onClose, itemID }) {
     if (!itemID) return;
 
     const getItem = async () => {
-      setItem(null);
-
       const data = await getPortfolio(itemID);
       setItem(data);
     };
@@ -41,13 +36,6 @@ export default function DetailModal({ isOpen, onClose, itemID }) {
   }, [itemID]);
 
   console.log(item);
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'unset';
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
 
   if (!mounted || !isOpen || !item) return null;
 
