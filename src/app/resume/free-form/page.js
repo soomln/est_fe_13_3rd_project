@@ -37,7 +37,7 @@ export default function FreeForm() {
       <main className='container'>
         <div className={styles.free_form_head}>
           <div className={styles.free_form_intro}>
-            <span className={`${styles.free_form_badge} font_body_m_b`}>양식 선택하고 편집하기</span>
+            <span className={`${styles.free_form_badge} font_body_s_b`}>양식 선택하고 편집하기</span>
 
             <h1 className={`${styles.free_form_title} font_subtitle`}>무료 양식 모음</h1>
 

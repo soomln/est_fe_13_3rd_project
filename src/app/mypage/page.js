@@ -16,8 +16,16 @@ const PROFILE = {
     { value: 6, label: '면접 스크랩', tone: 'amber' },
   ],
 
+  educationLevel: '대졸',
   educations: [
-    { title: '서울개발대학교', sub: '소프트웨어학과', meta: '2020.03 – 2024.02', badge: '졸업' },
+    { level: '고등학교', title: '서울고등학교', sub: '', meta: '2017.03 – 2020.02', badge: '졸업' },
+    {
+      level: '대학교',
+      title: '서울개발대학교',
+      sub: '소프트웨어학과',
+      meta: '2020.03 – 2024.02',
+      badge: '졸업',
+    },
   ],
 
   careers: [
