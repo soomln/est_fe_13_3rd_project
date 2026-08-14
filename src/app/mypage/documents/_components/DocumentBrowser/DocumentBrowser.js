@@ -1,14 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import { listMyDocuments, deleteDocuments } from '@backend/lib/api/documents';
 import Pagination from '@/app/_components/common/Pagination';
 import FilterChip from '@/app/mypage/_components/FilterChip';
 import SearchPill from '@/app/mypage/_components/SearchPill';
 import SortPill from '@/app/mypage/_components/SortPill';
 import DocumentRow from '@/app/mypage/_components/DocumentRow';
+import DocumentPreview from '@/app/mypage/_components/DocumentPreview';
+import Toast from '@/app/mypage/_components/Toast';
+import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './DocumentBrowser.module.sass';
 
 const PAGE_SIZE = 10;
@@ -21,28 +25,48 @@ const DOC_TYPES = [
 
 const SORTS = { 등록순: 'created', 최신순: 'latest', 이름순: 'title' };
 
-const SORTERS = {
-  created: (a, b) => a.order - b.order,
-  latest: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
-  title: (a, b) => a.title.localeCompare(b.title, 'ko'),
-};
-
 // 쿼리에서 생략하는 기본값
 const DEFAULTS = { docType: '', q: '', sort: 'created', page: '1' };
 
-export default function DocumentBrowser({ documents }) {
+export default function DocumentBrowser() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
+  const [data, setData] = useState({ items: [], total: 0 });
+  const [status, setStatus] = useState('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [toast, setToast] = useState('');
+  const [previewId, setPreviewId] = useState(null);
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
   const docType = searchParams.get('docType') ?? '';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
-  const sort = SORTERS[sortParam] ? sortParam : 'created';
+  const sort = Object.values(SORTS).includes(sortParam) ? sortParam : 'created';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
+
+  // 거르기·정렬·쪽 나누기는 서버가 한다
+  useEffect(() => {
+    let alive = true;
+    setStatus('loading');
+
+    listMyDocuments({ docType: docType || undefined, q: keyword || undefined, sort, page, pageSize: PAGE_SIZE })
+      .then((result) => {
+        if (!alive) return;
+        setData(result);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStatus('error');
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [docType, keyword, sort, page, reloadKey]);
 
   const updateQuery = (changes) => {
     const next = new URLSearchParams(searchParams);
@@ -57,19 +81,9 @@ export default function DocumentBrowser({ documents }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const filtered = useMemo(() => {
-    const text = keyword.trim().toLowerCase();
-
-    return documents
-      .map((item, index) => ({ ...item, order: index }))
-      .filter((item) => (docType ? item.docType === docType : true))
-      .filter((item) => (text ? item.title.toLowerCase().includes(text) : true))
-      .sort(SORTERS[sort]);
-  }, [documents, docType, keyword, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const items = data.items;
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const isAllSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
 
@@ -79,6 +93,23 @@ export default function DocumentBrowser({ documents }) {
 
   const toggleAll = () => {
     setSelectedIds(isAllSelected ? [] : items.map((item) => item.id));
+  };
+
+  // 지운 뒤에는 삭제모드를 빠져나가고 알림을 띄운다
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+
+    try {
+      await deleteDocuments(selectedIds);
+      setSelectedIds([]);
+      setToast(`${count}개 문서를 삭제했어요`);
+      updateQuery({ mode: '' });
+      setReloadKey((prev) => prev + 1);
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -114,6 +145,7 @@ export default function DocumentBrowser({ documents }) {
                 type='button'
                 className={`${styles.document_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
+                onClick={handleDelete}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -143,6 +175,9 @@ export default function DocumentBrowser({ documents }) {
           )}
         </div>
       </div>
+
+      <Toast message={toast} onHide={() => setToast('')} />
+      <DocumentPreview id={previewId} onClose={() => setPreviewId(null)} />
 
       {isDeleteMode && (
         <p className={`${styles.document_browser_notice} font_body_m_b`} role='status'>
@@ -186,7 +221,35 @@ export default function DocumentBrowser({ documents }) {
           </div>
         </div>
 
-        {items.length > 0 ? (
+        {status === 'loading' && (
+          <p className={`${styles.document_browser_state} font_body_m_r`} role='status'>
+            불러오는 중이에요…
+          </p>
+        )}
+
+        {status === 'error' && (
+          <div className={styles.document_browser_empty}>
+            <span
+              className={`material-symbols-sharp ${styles.document_browser_empty_icon}`}
+              aria-hidden='true'
+            >
+              error
+            </span>
+            <p className={`${styles.document_browser_empty_title} font_h4`}>불러오지 못했어요</p>
+            <p className={`${styles.document_browser_empty_desc} font_body_m_r`}>
+              잠시 뒤 다시 시도해주세요.
+            </p>
+            <button
+              type='button'
+              className={`${styles.document_browser_ghost_btn} ${styles.document_browser_retry} font_body_l_b`}
+              onClick={() => setReloadKey((prev) => prev + 1)}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {status === 'ready' && items.length > 0 && (
           <ul className={styles.document_browser_list}>
             {items.map((item, index) => (
               <DocumentRow
@@ -195,13 +258,16 @@ export default function DocumentBrowser({ documents }) {
                 index={(currentPage - 1) * PAGE_SIZE + index + 1}
                 docType={item.docType}
                 title={item.title}
-                updatedAt={item.updatedAt}
+                updatedAt={formatDate(item.updatedAt)}
                 isSelected={selectedIds.includes(item.id)}
                 onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
+                onPreview={() => setPreviewId(item.id)}
               />
             ))}
           </ul>
-        ) : (
+        )}
+
+        {status === 'ready' && items.length === 0 && (
           <div className={styles.document_browser_empty}>
             <span
               className={`material-symbols-sharp ${styles.document_browser_empty_icon}`}
@@ -216,7 +282,7 @@ export default function DocumentBrowser({ documents }) {
           </div>
         )}
 
-        {items.length > 0 && (
+        {status === 'ready' && items.length > 0 && (
           <div className={styles.document_browser_pagination}>
             <Pagination
               currentPage={currentPage}
