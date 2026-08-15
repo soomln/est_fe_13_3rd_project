@@ -12,7 +12,7 @@ import {
 } from '@backend/lib/api/portfolio';
 import Pagination from '@/app/_components/common/Pagination';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
-import PortfolioDetailModal from '@/app/portfolio/_components/Modal/Window';
+import PortfolioDetailModal from '@/app/portfolio/_components/DetailModal';
 import FilterChip from '@/app/mypage/_components/FilterChip';
 import SortPill from '@/app/mypage/_components/SortPill';
 import Toast from '@/app/mypage/_components/Toast';
@@ -109,9 +109,7 @@ export default function PortfolioBrowser() {
   const updateReactionCount = (id, field, amount) => {
     setData((prev) => ({
       ...prev,
-      items: prev.items.map((item) =>
-        item.id === id ? { ...item, [field]: item[field] + amount } : item,
-      ),
+      items: prev.items.map((item) => (item.id === id ? { ...item, [field]: item[field] + amount } : item)),
     }));
   };
 
@@ -265,16 +263,11 @@ export default function PortfolioBrowser() {
 
         {status === 'error' && (
           <div className={styles.portfolio_browser_empty}>
-            <span
-              className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`}
-              aria-hidden='true'
-            >
+            <span className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`} aria-hidden='true'>
               error
             </span>
             <p className={`${styles.portfolio_browser_empty_title} font_h4`}>불러오지 못했어요</p>
-            <p className={`${styles.portfolio_browser_empty_desc} font_body_m_r`}>
-              잠시 뒤 다시 시도해주세요.
-            </p>
+            <p className={`${styles.portfolio_browser_empty_desc} font_body_m_r`}>잠시 뒤 다시 시도해주세요.</p>
             <button
               type='button'
               className={`${styles.portfolio_browser_ghost_btn} ${styles.portfolio_browser_retry} font_body_l_b`}
@@ -303,10 +296,7 @@ export default function PortfolioBrowser() {
           </ul>
         ) : status === 'ready' ? (
           <div className={styles.portfolio_browser_empty}>
-            <span
-              className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`}
-              aria-hidden='true'
-            >
+            <span className={`material-symbols-sharp ${styles.portfolio_browser_empty_icon}`} aria-hidden='true'>
               folder_open
             </span>
             <p className={`${styles.portfolio_browser_empty_title} font_h4`}>
