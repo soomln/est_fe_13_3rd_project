@@ -1,7 +1,7 @@
 import styles from './ToastMessage.module.sass';
-export default function ToastMessage({ isVisible, message = '' }) {
+export default function ToastMessage({ message }) {
   return (
-    <p className={`font_h4 ${styles.message} ${isVisible ? styles.visible : ''}`} role='status'>
+    <p className={`font_h4 ${styles.message}`} role='status'>
       {message}
     </p>
   );

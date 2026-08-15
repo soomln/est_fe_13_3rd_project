@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-
-import styles from './DetailModal.module.sass';
+import useToast from '@/hooks/useToast';
 
 import ToastMessage from '../ToastMessage';
 import TabGroup from '../TabGroup';
@@ -12,14 +11,14 @@ import ReactionBtnGroup from '../ReactionBtnGroup';
 
 import { getPortfolio } from '@backend/lib/api/portfolio';
 
+import styles from './DetailModal.module.sass';
+
 export default function DetailModal({ isOpen, onClose, itemID, updateReactionCount }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('ai');
-
-  const [isToastVisible, setIsToastVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-
   const [item, setItem] = useState(null);
+
+  const { isToastVisible, toastMessage, showToast } = useToast();
 
   const contentsRef = useRef(null);
 
@@ -57,22 +56,13 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
     });
   };
 
-  const showShareToast = (message) => {
-    setToastMessage(message);
-    setIsToastVisible(true);
-
-    setTimeout(() => {
-      setIsToastVisible(false);
-    }, 2000);
-  };
-
   if (!mounted || !isOpen || !item) return null;
 
   return createPortal(
     <div className={styles.overlay}>
       <div className={styles.backdrop} onClick={onClose} />
 
-      <ToastMessage isVisible={isToastVisible} message={toastMessage} />
+      {isToastVisible && <ToastMessage message={toastMessage} />}
 
       <div className={`container ${styles.modalBox}`}>
         <div className={styles.contents_wrapper}>
@@ -84,7 +74,7 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
         <ReactionBtnGroup
           item={item}
           contentsRef={contentsRef}
-          showToast={showShareToast}
+          showToast={showToast}
           updateReactionCount={handleUpdateReactionCount}
         />
       </div>
