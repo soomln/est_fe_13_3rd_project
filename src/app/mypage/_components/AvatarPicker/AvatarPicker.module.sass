@@ -1,0 +1,66 @@
+@use '@/app/_variables.sass' as *
+
+.avatar_picker_overlay
+  position: fixed
+  inset: 0
+  z-index: 110
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 24px
+  background-color: rgba(0, 0, 0, 0.5)
+
+.avatar_picker
+  box-sizing: border-box
+  width: 100%
+  max-width: 420px
+  padding: 32px
+  background-color: $white
+  border-radius: 16px
+
+.avatar_picker_title
+  margin-bottom: 20px
+  color: $black
+
+.avatar_picker_list
+  display: grid
+  grid-template-columns: repeat(3, 1fr)
+  gap: 16px
+
+.avatar_picker_item
+  display: block
+  width: 100%
+  padding: 4px
+  cursor: pointer
+  background: none
+  border: 2px solid transparent
+  border-radius: 20px
+
+  &:hover
+    border-color: $stroke2
+
+.avatar_picker_item_on
+  border-color: $green
+
+.avatar_picker_img
+  display: block
+  width: 100%
+  aspect-ratio: 1
+  border-radius: 16px
+
+.avatar_picker_foot
+  display: flex
+  justify-content: flex-end
+  margin-top: 24px
+
+.avatar_picker_close
+  height: 48px
+  padding: 0 20px
+  color: $black
+  cursor: pointer
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 10px
+
+  &:hover
+    background-color: $light_gray
