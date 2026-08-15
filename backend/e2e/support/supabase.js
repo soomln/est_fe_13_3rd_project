@@ -745,9 +745,90 @@ const RPCS = {
   save_portfolio_collaborators: savePortfolioCollaborators,
 };
 
+const OBJECTS = Symbol.for('callback.e2e.storage');
+
+function objects() {
+  if (!globalThis[OBJECTS]) globalThis[OBJECTS] = new Map();
+  return globalThis[OBJECTS];
+}
+
+export function resetStorage() {
+  objects().clear();
+}
+
+export function putObject(bucket, path, body = 'x', createdAt = new Date().toISOString()) {
+  objects().set(`${bucket}/${path}`, { body, createdAt });
+}
+
+export function ageObject(bucket, path, createdAt) {
+  const found = objects().get(`${bucket}/${path}`);
+  if (found) found.createdAt = createdAt;
+}
+
+function stampOf(key) {
+  return objects().get(key)?.createdAt ?? new Date().toISOString();
+}
+
+export function listObjects(bucket) {
+  return [...objects().keys()]
+    .filter((key) => key.startsWith(`${bucket}/`))
+    .map((key) => key.slice(bucket.length + 1))
+    .sort();
+}
+
+function createStorage(user) {
+  return {
+    from: (bucket) => ({
+      async upload(path, file) {
+        if (!user) return { data: null, error: { message: 'not authenticated' } };
+        putObject(bucket, path, file);
+        return { data: { path }, error: null };
+      },
+      async list(prefix) {
+        const owned = listObjects(bucket).filter(
+          (path) => !user || path.startsWith(`${user.id}/`)
+        );
+
+        const seen = new Map();
+        for (const path of owned) {
+          if (!path.startsWith(`${prefix}/`)) continue;
+          const rest = path.slice(prefix.length + 1);
+          const slash = rest.indexOf('/');
+          const name = slash === -1 ? rest : rest.slice(0, slash);
+          if (seen.has(name)) continue;
+          seen.set(name, {
+            name,
+            id: slash === -1 ? 'file' : null,
+            created_at: stampOf(`${bucket}/${path}`),
+          });
+        }
+        return { data: [...seen.values()], error: null };
+      },
+      async remove(paths) {
+        for (const path of paths) {
+          if (user && !path.startsWith(`${user.id}/`)) continue;
+          objects().delete(`${bucket}/${path}`);
+        }
+        return { data: paths.map((name) => ({ name })), error: null };
+      },
+      async download(path) {
+        if (!user || !path.startsWith(`${user.id}/`)) {
+          return { data: null, error: { message: 'not found' } };
+        }
+        const found = objects().get(`${bucket}/${path}`);
+        if (found === undefined) return { data: null, error: { message: 'not found' } };
+        return { data: new Blob([String(found.body)], { type: 'image/png' }), error: null };
+      },
+      getPublicUrl: (path) => ({ data: { publicUrl: `https://storage.test/${bucket}/${path}` } }),
+    }),
+  };
+}
+
 export function createSupabase(user) {
   return {
     from: (table) => new Query(table, user),
+
+    storage: createStorage(user),
 
     rpc(name, args) {
       const fault = takeFault('rpcs', name);

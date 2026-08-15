@@ -20,7 +20,8 @@ export function defineRoute(handler, { auth = false } = {}) {
 
       const params = context?.params ? await context.params : {};
 
-      return jsonOk(await handler({ request, params, supabase, user }));
+      const result = await handler({ request, params, supabase, user });
+      return result instanceof Response ? result : jsonOk(result);
     } catch (error) {
       return jsonError(error);
     }

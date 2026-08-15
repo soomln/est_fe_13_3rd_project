@@ -31,6 +31,11 @@ export const UPLOAD_LIMIT = {
     maxCount: 15,
     mimes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   },
+  document: {
+    maxBytes: 5 * 1024 * 1024,
+    maxCount: 10,
+    mimes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  },
 };
 
 export const REACTION = {

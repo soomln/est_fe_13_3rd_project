@@ -1,3 +1,5 @@
+import { putObject } from './supabase';
+
 const KEY = Symbol.for('callback.e2e.browser');
 
 function state() {
@@ -53,6 +55,7 @@ export function createBrowserSupabase() {
             return { data: null, error };
           }
           s.uploads.push({ bucket, path, type: file.type, size: file.size, options });
+          putObject(bucket, path, file.name ?? 'x');
           return { data: { path }, error: null };
         },
         getPublicUrl: (path) => ({
