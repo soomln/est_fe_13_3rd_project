@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import useDialog from '@/app/mypage/_lib/useDialog';
 import styles from './UnsavedGuard.module.sass';
 
 // 수정 중일 때 다른 곳으로 나가려 하면 한 번 물어본다
-export default function UnsavedGuard({ isDirty }) {
+export default function UnsavedGuard({ isDirty, onLeave }) {
   const router = useRouter();
   const [pendingHref, setPendingHref] = useState(null);
+
+  useDialog(Boolean(pendingHref), () => setPendingHref(null));
 
   // 새로고침·탭 닫기는 브라우저가 대신 물어본다
   useEffect(() => {
@@ -72,9 +75,10 @@ export default function UnsavedGuard({ isDirty }) {
           <button
             type='button'
             className={`${styles.unsaved_guard_leave} font_body_l_b`}
-            onClick={() => {
+            onClick={async () => {
               const href = pendingHref;
               setPendingHref(null);
+              await onLeave?.();
               router.push(href);
             }}
           >

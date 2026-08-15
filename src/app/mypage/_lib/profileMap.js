@@ -76,6 +76,7 @@ export function toPatch(section, draft, codes) {
     case 'basic':
       return {
         name: draft.name,
+        avatar_url: draft.avatarUrl || null,
         github_url: draft.github,
         desired_role: toCodes(codes.job_role ?? [], [draft.desiredRole])[0] ?? null,
         career_level: toCodes(codes.career_level ?? [], [draft.careerLevel])[0] ?? null,
