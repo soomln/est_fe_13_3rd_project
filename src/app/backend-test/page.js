@@ -1,8 +1,15 @@
 'use client';
 
 import { getCurrentUser, OAUTH_PROVIDERS, onAuthChange, signInWith, signOut } from '@backend/lib/api/auth';
-import { getCodes } from '@backend/lib/api/codes';
-import { getCompany, listCompanies } from '@backend/lib/api/companies';
+import { getCodeGroups, getCodes, labelOf } from '@backend/lib/api/codes';
+import {
+  getCompany,
+  getMyBookmarkedCompanyIds,
+  getRecommendedCompanies,
+  incrementCompanyView,
+  listCompanies,
+  toggleCompanyBookmark,
+} from '@backend/lib/api/companies';
 import {
   createDocument,
   createDocumentFromTemplate,
@@ -13,16 +20,25 @@ import {
 import {
   createPortfolio,
   deletePortfolios,
+  findMemberByEmail,
   getPortfolio,
+  incrementPortfolioView,
   listMyPortfolios,
   listPortfolios,
   publishPortfolio,
+  setPortfolioCollaborators,
   togglePortfolioBookmark,
   togglePortfolioLike,
   updatePortfolio,
   uploadPortfolioImages,
 } from '@backend/lib/api/portfolio';
-import { createComment, deleteComment, listComments, toggleCommentLike } from '@backend/lib/api/comments';
+import {
+  createComment,
+  deleteComment,
+  listComments,
+  toggleCommentLike,
+  updateComment,
+} from '@backend/lib/api/comments';
 import {
   createSession,
   deleteSession,
@@ -38,14 +54,19 @@ import {
 import {
   createPost,
   deletePosts,
+  getPost,
+  incrementPostView,
   listMyPosts,
   listPosts,
   togglePostLike,
   togglePostScrap,
+  updatePost,
 } from '@backend/lib/api/posts';
 import {
   getMyAccount,
   getMySummary,
+  listMyQbanks,
+  listMyReviews,
   listMyScrappedCompanies,
   listMyScrappedPortfolios,
   removeCompanyBookmarks,
@@ -53,10 +74,21 @@ import {
   removePostScraps,
   removeQaScraps,
 } from '@backend/lib/api/mypage';
-import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
+import {
+  getMyProfile,
+  getProfileStats,
+  removeAvatar,
+  updateProfile,
+  uploadAvatar,
+} from '@backend/lib/api/profile';
 import { listMyScrappedPosts } from '@backend/lib/api/posts';
 import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
-import { listTemplates } from '@backend/lib/api/templates';
+import {
+  getTemplate,
+  incrementTemplateView,
+  listTemplates,
+  toggleTemplateBookmark,
+} from '@backend/lib/api/templates';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function BackendTestPage() {
@@ -81,6 +113,42 @@ export default function BackendTestPage() {
   const [account, setAccount] = useState(null);
   const [summary, setSummary] = useState(null);
   const [myScraps, setMyScraps] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileForm, setProfileForm] = useState(null);
+  const [recommended, setRecommended] = useState(null);
+  const [templateDetail, setTemplateDetail] = useState(null);
+  const [postDetail, setPostDetail] = useState(null);
+  const [collabTarget, setCollabTarget] = useState(null);
+  const [collabEmail, setCollabEmail] = useState('');
+  const [collabFound, setCollabFound] = useState(null);
+  const [myWritings, setMyWritings] = useState(null);
+  const [codeGroups, setCodeGroups] = useState(null);
+
+  const patchForm = useCallback((patch) => setProfileForm((prev) => ({ ...prev, ...patch })), []);
+
+  const patchRow = useCallback((field, index, patch) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      [field]: prev[field].map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }, []);
+
+  const addRow = useCallback((field, blank) => {
+    setProfileForm((prev) => ({ ...prev, [field]: [...prev[field], blank] }));
+  }, []);
+
+  const removeRow = useCallback((field, index) => {
+    setProfileForm((prev) => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
+  }, []);
+
+  const toggleCode = useCallback((field, code) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      [field]: prev[field].includes(code)
+        ? prev[field].filter((c) => c !== code)
+        : [...prev[field], code],
+    }));
+  }, []);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -121,6 +189,38 @@ export default function BackendTestPage() {
     }
   }, []);
 
+  const reloadCompanies = useCallback(async () => {
+    const { items } = await listCompanies({ sort: 'name', pageSize: 50 });
+    setCompanies(items);
+  }, []);
+
+  const reloadTemplates = useCallback(async () => {
+    setTemplates(await listTemplates({ sort: 'popular', pageSize: 20 }));
+  }, []);
+
+  const reloadProfile = useCallback(async () => {
+    const me = await getMyProfile();
+    setProfile(me);
+    setProfileForm(
+      me
+        ? {
+            name: me.name ?? '',
+            desired_role: me.desired_role ?? '',
+            career_level: me.career_level ?? '',
+            github_url: me.github_url ?? '',
+            bio: me.bio ?? '',
+            education_level: me.education_level ?? '',
+            educations: me.educations ?? [],
+            careers: me.careers ?? [],
+            languages: me.languages ?? [],
+            awards: me.awards ?? [],
+            skill_codes: me.skill_codes ?? [],
+            interest_codes: me.interest_codes ?? [],
+          }
+        : null
+    );
+  }, []);
+
   const runChecks = useCallback(async () => {
     setBusy(true);
     const results = [];
@@ -153,10 +253,49 @@ export default function BackendTestPage() {
       return `${roles.slice(0, 3).map((r) => r.label).join(', ')} … (총 ${roles.length}개)`;
     });
 
-    await step('[client] getMyProfile()', async () => {
-      const profile = await getMyProfile();
-      return profile ? `name=${profile.name ?? '(없음)'}` : '비로그인 또는 프로필 없음';
+    await step('[client] getCodeGroups(프로필 편집 8종)', async () => {
+      const groups = await getCodeGroups([
+        'job_role',
+        'career_level',
+        'education_level',
+        'school_type',
+        'edu_status',
+        'language_level',
+        'tech_stack',
+        'interest_field',
+      ]);
+      setCodeGroups(groups);
+      return Object.entries(groups)
+        .map(([g, list]) => `${g} ${list.length}`)
+        .join(' · ');
     });
+
+    await step('[client] labelOf(education_level, bachelor)', async () => {
+      const label = await labelOf('education_level', 'bachelor');
+      if (label !== '대졸') throw new Error(`'대졸' 이 나와야 하는데 '${label}'`);
+      return label;
+    });
+
+    await step('[client] getMyProfile()', async () => {
+      const me = await getMyProfile();
+      return me ? `name=${me.name ?? '(없음)'}` : '비로그인 또는 프로필 없음';
+    });
+
+    await step('[client] getRecommendedCompanies(6)', async () => {
+      const items = await getRecommendedCompanies(6);
+      setRecommended(items);
+      return `${items.length}곳 — ${items.slice(0, 3).map((c) => c.name).join(', ')}`;
+    });
+
+    await step('[client] getMyBookmarkedCompanyIds()', async () => {
+      const me = await getCurrentUser();
+      if (!me) return '비로그인 - 건너뜀';
+      const { items } = await listCompanies({ pageSize: 50 });
+      const marked = await getMyBookmarkedCompanyIds(items.map((c) => c.id));
+      return `${marked.size}곳 관심 등록됨`;
+    });
+
+    await reloadProfile().catch(() => {});
 
     await step('[client] getProfileStats(me)', async () => {
       const me = await getCurrentUser();
@@ -217,7 +356,7 @@ export default function BackendTestPage() {
 
     setChecks(results);
     setBusy(false);
-  }, [loadMypage]);
+  }, [loadMypage, reloadProfile]);
 
   const reloadInterview = useCallback(async () => {
     setSessions(await listMySessions({ pageSize: 10 }).catch((e) => ({ error: e.message })));
@@ -261,6 +400,42 @@ export default function BackendTestPage() {
       }
     },
     [log, reloadDocuments]
+  );
+
+  const runProfileAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadProfile().catch(() => {});
+    },
+    [log, reloadProfile]
+  );
+
+  const runCompanyAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadCompanies().catch(() => {});
+    },
+    [log, reloadCompanies]
+  );
+
+  const runTemplateAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadTemplates().catch(() => {});
+    },
+    [log, reloadTemplates]
   );
 
   const runMypageAction = useCallback(
@@ -375,12 +550,7 @@ export default function BackendTestPage() {
 
             <div style={S.grid}>
               {companies.map((c) => (
-                <button
-                  key={c.id}
-                  type='button'
-                  style={S.companyCard}
-                  onClick={() => getCompany(c.slug).then(setDetail)}
-                >
+                <div key={c.id} style={S.companyCard}>
                   <span style={S.logoBox}>
                     {c.logo ? (
                       <img src={c.logo} alt='' style={S.logoImg} />
@@ -393,9 +563,46 @@ export default function BackendTestPage() {
                   <span style={S.companyMeta}>
                     ★ {c.rating ?? '-'} · 관심 {c.favorite} · 후기 {c.review}
                   </span>
-                </button>
+                  <span style={S.companyMeta}>
+                    {c.bookmarkedByMe ? '★ 내가 관심 등록함' : '☆ 관심 없음'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runCompanyAction(`상세 열기 + 조회수 (${c.name})`, async () => {
+                          await incrementCompanyView(c.id);
+                          const full = await getCompany(c.slug);
+                          setDetail(full);
+                          return `조회 ${full.views}`;
+                        })
+                      }
+                    >
+                      상세 + 조회수
+                    </button>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runCompanyAction(`관심 토글 (${c.name})`, async () =>
+                          (await toggleCompanyBookmark(c.id)) ? '등록됨' : '해제됨'
+                        )
+                      }
+                    >
+                      {c.bookmarkedByMe ? '관심 해제' : '관심 등록'}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
+
+            {recommended && (
+              <p style={S.mono}>
+                추천 기업 {recommended.length}곳 —{' '}
+                {recommended.map((c) => c.name).join(', ') || '없음'}
+              </p>
+            )}
 
             {detail && (
               <div style={S.detailBox}>
@@ -479,6 +686,9 @@ export default function BackendTestPage() {
                   </span>
                   <span style={S.companyName}>{t.title}</span>
                   <span style={S.companyMeta}>조회 {t.views.toLocaleString()}</span>
+                  <span style={S.companyMeta}>
+                    {t.bookmarkedByMe ? '★ 내가 북마크함' : '☆ 북마크 없음'}
+                  </span>
                   <button
                     type='button'
                     style={S.miniBtn}
@@ -491,9 +701,60 @@ export default function BackendTestPage() {
                   >
                     이 양식으로 문서 만들기
                   </button>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runTemplateAction(`양식 상세 + 조회수 (${t.title})`, async () => {
+                          await incrementTemplateView(t.id);
+                          const full = await getTemplate(t.id);
+                          setTemplateDetail(full);
+                          return `조회 ${full.views} · content ${full.content ? '있음' : '없음'}`;
+                        })
+                      }
+                    >
+                      상세 + 조회수
+                    </button>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runTemplateAction(`양식 북마크 토글 (${t.title})`, async () =>
+                          (await toggleTemplateBookmark(t.id)) ? '등록됨' : '해제됨'
+                        )
+                      }
+                    >
+                      {t.bookmarkedByMe ? '북마크 해제' : '북마크'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {templateDetail && (
+              <div style={S.detailBox}>
+                <p style={S.detailTitle}>{templateDetail.title} — 상세</p>
+                <ul style={S.list}>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>조회수</span>
+                    <span style={S.itemDetail}>{templateDetail.views}</span>
+                  </li>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>북마크</span>
+                    <span style={S.itemDetail}>
+                      {templateDetail.bookmarkedByMe ? '내가 함' : '안 함'}
+                    </span>
+                  </li>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>contentHtml</span>
+                    <span style={S.itemDetail}>
+                      {templateDetail.contentHtml ? `${templateDetail.contentHtml.length}자` : '없음'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -730,6 +991,12 @@ export default function BackendTestPage() {
               <span style={S.itemDetail}>
                 {p.category ?? '-'} · 👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
               </span>
+              <span style={S.itemDetail}>
+                공동작업자{' '}
+                {p.collaborators?.length
+                  ? p.collaborators.map((m) => m.name ?? m.id.slice(0, 6)).join(', ')
+                  : '없음'}
+              </span>
               {p.status !== 'published' && (
                 <button
                   type='button'
@@ -745,9 +1012,26 @@ export default function BackendTestPage() {
                   공개
                 </button>
               )}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => {
+                  setCollabTarget(p);
+                  setCollabFound(null);
+                }}
+              >
+                공동작업자
+              </button>
             </li>
           ))}
         </ul>
+
+        {user && (myPortfolios?.items?.length ?? 0) === 0 && (
+          <p style={S.hint}>
+            공동작업자는 <b>내가 만든 포트폴리오에만</b> 추가할 수 있습니다. 위에서 먼저 하나
+            만들어주세요.
+          </p>
+        )}
 
         <div style={S.grid}>
           {(gallery?.items ?? []).map((p) => (
@@ -764,9 +1048,17 @@ export default function BackendTestPage() {
                 {p.authorName ?? '작성자 없음'} · {p.category ?? '-'}
               </span>
               <span style={S.companyMeta}>
-                👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
+                👍 {p.likeCount}
+                {p.likedByMe ? '(내가)' : ''} · 🔖 {p.bookmarkCount}
+                {p.bookmarkedByMe ? '(내가)' : ''} · 👁 {p.viewCount}
               </span>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <span style={S.companyMeta}>
+                공동작업자{' '}
+                {p.collaborators?.length
+                  ? p.collaborators.map((m) => m.name ?? m.id.slice(0, 6)).join(', ')
+                  : '없음'}
+              </span>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 <button
                   type='button'
                   style={S.miniBtn}
@@ -793,10 +1085,131 @@ export default function BackendTestPage() {
                 >
                   북마크
                 </button>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('조회수 +1', async () => {
+                      await incrementPortfolioView(p.id);
+                      await reloadPortfolios();
+                      const full = await getPortfolio(p.id);
+                      return `조회 ${full.viewCount}`;
+                    })
+                  }
+                >
+                  조회수 +1
+                </button>
+                {p.authorId === user?.id ? (
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() => {
+                      setCollabTarget(p);
+                      setCollabFound(null);
+                    }}
+                  >
+                    공동작업자
+                  </button>
+                ) : (
+                  <span style={S.itemDetail}>공동작업자는 소유자만</span>
+                )}
               </div>
             </div>
           ))}
         </div>
+
+        {collabTarget && (
+          <div style={S.detailBox}>
+            <p style={S.detailTitle}>공동작업자 — {collabTarget.title}</p>
+
+            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type='email'
+                placeholder='초대할 사람의 로그인 이메일'
+                value={collabEmail}
+                onChange={(e) => setCollabEmail(e.target.value)}
+                style={{ ...S.input, minWidth: 260 }}
+              />
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction(`이메일 조회 (${collabEmail})`, async () => {
+                    const member = await findMemberByEmail(collabEmail);
+                    setCollabFound(member);
+                    return member ? `찾음 — ${member.name ?? '(이름없음)'}` : '가입자 없음';
+                  })
+                }
+              >
+                이메일로 찾기
+              </button>
+              <button type='button' style={S.miniBtn} onClick={() => setCollabTarget(null)}>
+                닫기
+              </button>
+            </p>
+
+            {collabFound && (
+              <p style={S.mono}>
+                {collabFound.avatarUrl && (
+                  <img
+                    src={collabFound.avatarUrl}
+                    alt=''
+                    style={{ width: 24, height: 24, borderRadius: '50%', verticalAlign: 'middle' }}
+                  />
+                )}{' '}
+                {collabFound.name ?? '(이름 없음)'} · {collabFound.id.slice(0, 8)}…{' '}
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('공동작업자 추가', async () => {
+                      const current = (collabTarget.collaborators ?? []).map((m) => m.id);
+                      const saved = await setPortfolioCollaborators(collabTarget.id, [
+                        ...current,
+                        collabFound.id,
+                      ]);
+                      await reloadPortfolios();
+                      setCollabTarget(saved);
+                      return `${saved.collaborators.length}명`;
+                    })
+                  }
+                >
+                  이 사람 추가
+                </button>
+              </p>
+            )}
+
+            <ul style={S.list}>
+              {(collabTarget.collaborators ?? []).map((m) => (
+                <li key={m.id} style={S.item}>
+                  <span style={S.itemLabel}>{m.name ?? '(이름 없음)'}</span>
+                  <span style={S.itemDetail}>{m.id.slice(0, 8)}…</span>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('공동작업자 제거', async () => {
+                        const rest = collabTarget.collaborators
+                          .filter((x) => x.id !== m.id)
+                          .map((x) => x.id);
+                        const saved = await setPortfolioCollaborators(collabTarget.id, rest);
+                        await reloadPortfolios();
+                        setCollabTarget(saved);
+                        return `${saved.collaborators.length}명 남음`;
+                      })
+                    }
+                  >
+                    제거
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <p style={S.hint}>
+              이메일은 정확히 일치해야 찾힙니다. 응답에는 이름과 사진만 들어 있고 이메일은 없습니다.
+            </p>
+          </div>
+        )}
       </section>
 
       <section style={S.card}>
@@ -907,8 +1320,45 @@ export default function BackendTestPage() {
                 {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo}
               </span>
               <span style={S.itemDetail}>
-                👍 {p.likeCount} · 🔖 {p.scrapCount} · 💬 {p.commentCount}
+                👍 {p.likeCount}
+                {p.likedByMe ? '(내가)' : ''} · 🔖 {p.scrapCount}
+                {p.scrappedByMe ? '(내가)' : ''} · 💬 {p.commentCount} · 👁 {p.viewCount}
               </span>
+              {p.postType === 'qbank' && (
+                <span style={S.itemDetail}>
+                  질문 {p.questionCount ?? 0}개 — {(p.questionList ?? []).join(' / ') || '없음'}
+                </span>
+              )}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('상세 + 조회수', async () => {
+                    await incrementPostView(p.id);
+                    const full = await getPost(p.id);
+                    setPostDetail(full);
+                    await reloadPosts();
+                    return `조회 ${full.viewCount} · 질문 ${full.questionList?.length ?? 0}개`;
+                  })
+                }
+              >
+                상세 + 조회수
+              </button>
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('글 제목 수정', async () => {
+                    const edited = await updatePost(p.id, {
+                      title: `${p.title || '제목 없음'} (수정 ${new Date().toLocaleTimeString()})`,
+                    });
+                    await reloadPosts();
+                    return edited.title;
+                  })
+                }
+              >
+                제목 수정
+              </button>
               <button
                 type='button'
                 style={S.miniBtn}
@@ -980,7 +1430,23 @@ export default function BackendTestPage() {
                       })
                     }
                   >
-                    좋아요
+                    좋아요{c.likedByMe ? ' ✓' : ''}
+                  </button>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('댓글 수정', async () => {
+                        const edited = await updateComment(
+                          c.id,
+                          `${c.body} (수정 ${new Date().toLocaleTimeString()})`
+                        );
+                        await openComments(openPostId);
+                        return edited.body;
+                      })
+                    }
+                  >
+                    수정
                   </button>
                   <button
                     type='button'
@@ -1005,6 +1471,40 @@ export default function BackendTestPage() {
           </div>
         )}
       </section>
+
+      {postDetail && (
+        <section style={S.card}>
+          <h2 style={S.h2}>7-1. 글 상세 (getPost)</h2>
+          <ul style={S.list}>
+            <li style={S.item}>
+              <span style={S.itemLabel}>제목</span>
+              <span style={S.itemDetail}>{postDetail.title || '(없음)'}</span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>라벨 변환</span>
+              <span style={S.itemDetail}>
+                난이도 {postDetail.difficulty || '-'} · 결과 {postDetail.result || '-'} · 경로{' '}
+                {postDetail.channel || '-'} · 학력 {postDetail.educationLevel || '-'}
+              </span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>내 반응</span>
+              <span style={S.itemDetail}>
+                도움돼요 {String(postDetail.likedByMe)} · 퍼가요 {String(postDetail.scrappedByMe)}
+              </span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>질문</span>
+              <span style={S.itemDetail}>
+                {postDetail.questionCount ?? 0}개 — {(postDetail.questionList ?? []).join(' / ') || '없음'}
+              </span>
+            </li>
+          </ul>
+          <button type='button' style={S.miniBtn} onClick={() => setPostDetail(null)}>
+            닫기
+          </button>
+        </section>
+      )}
 
       <section style={S.card}>
         <h2 style={S.h2}>8. AI 면접 (저장·조회)</h2>
@@ -1172,7 +1672,410 @@ export default function BackendTestPage() {
       </section>
 
       <section style={S.card}>
-        <h2 style={S.h2}>9. 마이페이지 (요약·스크랩·계정)</h2>
+        <div style={S.headRow}>
+          <div>
+            <h2 style={S.h2}>9. 프로필 편집</h2>
+            <p style={S.sub}>여기서 채운 정보로 이력서를 자동으로 채울 수 있어요.</p>
+          </div>
+          {user && profileForm && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type='button' style={S.cancelBtn} onClick={() => reloadProfile()}>
+                수정 취소
+              </button>
+              <button
+                type='button'
+                style={S.saveBtn}
+                onClick={() =>
+                  runProfileAction('프로필 저장', async () => {
+                    const f = profileForm;
+                    const saved = await updateProfile({
+                      name: f.name || null,
+                      desired_role: f.desired_role || null,
+                      career_level: f.career_level || null,
+                      github_url: f.github_url || null,
+                      bio: f.bio || null,
+                      education_level: f.education_level || null,
+                      educations: f.educations,
+                      careers: f.careers,
+                      languages: f.languages,
+                      awards: f.awards,
+                      skill_codes: f.skill_codes,
+                      interest_codes: f.interest_codes,
+                    });
+                    return `학력 ${saved.educations.length} · 경력 ${saved.careers.length} · 어학 ${saved.languages.length} · 수상 ${saved.awards.length} · 기술 ${saved.skill_codes.length}`;
+                  })
+                }
+              >
+                수정 완료
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!user && <p style={S.hint}>로그인하면 편집할 수 있습니다.</p>}
+
+        {user && profileForm && (
+          <>
+            <p style={S.notice}>
+              실제 마이페이지 수정 화면과 같은 구성입니다. 저장하면 백엔드 응답이 로그에 남습니다.
+            </p>
+
+            <div style={S.basicRow}>
+              <div style={S.avatarCol}>
+                <span style={S.avatarBox}>
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt='' style={S.avatarImg} />
+                  ) : (
+                    <span style={S.itemDetail}>사진 없음</span>
+                  )}
+                </span>
+                <label style={{ ...S.miniBtn, cursor: 'pointer', textAlign: 'center' }}>
+                  사진 변경
+                  <input
+                    type='file'
+                    accept='image/jpeg,image/png,image/webp'
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (!file) return;
+                      runProfileAction('사진 변경', async () => await uploadAvatar(file));
+                    }}
+                  />
+                </label>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() => runProfileAction('사진 삭제', async () => (await removeAvatar()) ?? '삭제됨')}
+                >
+                  사진 삭제
+                </button>
+              </div>
+
+              <div style={S.fieldGrid}>
+                <Field label='이름'>
+                  <input
+                    style={S.input}
+                    placeholder='홍길동'
+                    value={profileForm.name}
+                    onChange={(e) => patchForm({ name: e.target.value })}
+                  />
+                </Field>
+                <Field label='희망 직무'>
+                  <CodeSelect
+                    group={codeGroups?.job_role}
+                    value={profileForm.desired_role}
+                    onChange={(v) => patchForm({ desired_role: v })}
+                  />
+                </Field>
+                <Field label='경력 구분'>
+                  <CodeSelect
+                    group={codeGroups?.career_level}
+                    value={profileForm.career_level}
+                    onChange={(v) => patchForm({ career_level: v })}
+                  />
+                </Field>
+                <Field label='링크 (선택)'>
+                  <input
+                    style={S.input}
+                    placeholder='github.com/아이디'
+                    value={profileForm.github_url}
+                    onChange={(e) => patchForm({ github_url: e.target.value })}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>자기소개</p>
+              <textarea
+                style={{ ...S.input, minHeight: 90, resize: 'vertical' }}
+                placeholder='어떤 사람인지 짧게 적어주세요.'
+                value={profileForm.bio}
+                onChange={(e) => patchForm({ bio: e.target.value })}
+              />
+              <p style={S.hint}>{profileForm.bio.length} / 1000자</p>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>학력</p>
+              <div style={{ maxWidth: 240 }}>
+                <Field label='최종학력'>
+                  <CodeSelect
+                    group={codeGroups?.education_level}
+                    value={profileForm.education_level}
+                    onChange={(v) => patchForm({ education_level: v })}
+                  />
+                </Field>
+              </div>
+              <p style={S.hint}>고등학교부터 순서대로 적어요.</p>
+
+              {profileForm.educations.map((item, i) => (
+                <div key={`edu-${i}`} style={S.rowBox}>
+                  <Field label='구분'>
+                    <CodeSelect
+                      group={codeGroups?.school_type}
+                      value={item.type ?? ''}
+                      onChange={(v) => patchRow('educations', i, { type: v })}
+                    />
+                  </Field>
+                  <Field label='학교명'>
+                    <input
+                      style={S.input}
+                      value={item.school ?? ''}
+                      onChange={(e) => patchRow('educations', i, { school: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='전공'>
+                    <input
+                      style={S.input}
+                      value={item.major ?? ''}
+                      onChange={(e) => patchRow('educations', i, { major: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='상태'>
+                    <CodeSelect
+                      group={codeGroups?.edu_status}
+                      value={item.status ?? ''}
+                      onChange={(v) => patchRow('educations', i, { status: v })}
+                    />
+                  </Field>
+                  <Field label='입학'>
+                    <input
+                      style={S.input}
+                      placeholder='2015-03'
+                      value={item.admission ?? ''}
+                      onChange={(e) => patchRow('educations', i, { admission: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='졸업'>
+                    <input
+                      style={S.input}
+                      placeholder='2019-02'
+                      value={item.graduation ?? ''}
+                      onChange={(e) => patchRow('educations', i, { graduation: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('educations', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('educations', { type: '', school: '', major: '', status: '', admission: '', graduation: '' })}
+              >
+                학력 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>경력</p>
+              {profileForm.careers.map((item, i) => (
+                <div key={`car-${i}`} style={S.rowBox}>
+                  <Field label='회사명'>
+                    <input
+                      style={S.input}
+                      value={item.company ?? ''}
+                      onChange={(e) => patchRow('careers', i, { company: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='직무'>
+                    <input
+                      style={S.input}
+                      value={item.role ?? ''}
+                      onChange={(e) => patchRow('careers', i, { role: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='시작'>
+                    <input
+                      style={S.input}
+                      placeholder='2024-03'
+                      value={item.start ?? ''}
+                      onChange={(e) => patchRow('careers', i, { start: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='종료'>
+                    <input
+                      style={S.input}
+                      placeholder='재직 중'
+                      value={item.end ?? ''}
+                      onChange={(e) => patchRow('careers', i, { end: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('careers', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('careers', { company: '', role: '', start: '', end: '재직 중' })}
+              >
+                경력 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>언어</p>
+              {profileForm.languages.map((item, i) => (
+                <div key={`lan-${i}`} style={S.rowBox}>
+                  <Field label='언어'>
+                    <input
+                      style={S.input}
+                      placeholder='영어'
+                      value={item.language ?? ''}
+                      onChange={(e) => patchRow('languages', i, { language: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='설명 (예: TOEIC 800점)'>
+                    <input
+                      style={S.input}
+                      value={item.detail ?? ''}
+                      onChange={(e) => patchRow('languages', i, { detail: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='수준'>
+                    <CodeSelect
+                      group={codeGroups?.language_level}
+                      value={item.level ?? ''}
+                      onChange={(v) => patchRow('languages', i, { level: v })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('languages', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('languages', { language: '', detail: '', level: '' })}
+              >
+                언어 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>수상 내역</p>
+              {profileForm.awards.map((item, i) => (
+                <div key={`awd-${i}`} style={S.rowBox}>
+                  <Field label='수상명'>
+                    <input
+                      style={S.input}
+                      value={item.name ?? ''}
+                      onChange={(e) => patchRow('awards', i, { name: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='수상일'>
+                    <input
+                      style={S.input}
+                      placeholder='2026-05'
+                      value={item.date ?? ''}
+                      onChange={(e) => patchRow('awards', i, { date: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('awards', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button type='button' style={S.miniBtn} onClick={() => addRow('awards', { name: '', date: '' })}>
+                수상 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>기술 스택</p>
+              <div style={S.chipWrap}>
+                {(codeGroups?.tech_stack ?? []).map((c) => (
+                  <button
+                    key={c.code}
+                    type='button'
+                    style={profileForm.skill_codes.includes(c.code) ? S.chipOn : S.chip}
+                    onClick={() => toggleCode('skill_codes', c.code)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>관심 분야</p>
+              <div style={S.chipWrap}>
+                {(codeGroups?.interest_field ?? []).map((c) => (
+                  <button
+                    key={c.code}
+                    type='button'
+                    style={profileForm.interest_codes.includes(c.code) ? S.chipOn : S.chip}
+                    onClick={() => toggleCode('interest_codes', c.code)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p style={S.hint}>
+              저장된 값: 최종학력 <b>{profile?.education_level ?? '-'}</b> · 학력{' '}
+              <b>{profile?.educations?.length ?? 0}</b> · 경력 <b>{profile?.careers?.length ?? 0}</b> ·
+              어학 <b>{profile?.languages?.length ?? 0}</b> · 수상{' '}
+              <b>{profile?.awards?.length ?? 0}</b> · 이메일 <b>{profile?.email ?? '(없음)'}</b>
+            </p>
+
+            <button
+              type='button'
+              style={S.miniBtn}
+              onClick={() =>
+                runProfileAction('잘못된 코드 거부 확인 (구분=대학교)', async () => {
+                  try {
+                    await updateProfile({ educations: [{ type: '대학교', school: 'x' }] });
+                    throw new Error('거부되지 않았습니다 — FK 확인 필요');
+                  } catch (e) {
+                    if (e.message.includes('거부되지 않았습니다')) throw e;
+                    return `정상 거부됨 (${e.status}) ${e.message}`;
+                  }
+                })
+              }
+            >
+              잘못된 코드 거부 확인
+            </button>
+          </>
+        )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>10. 마이페이지 (요약·스크랩·계정)</h2>
+
+        {user && (
+          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type='button'
+              style={S.miniBtn}
+              onClick={() =>
+                runMypageAction('내가 쓴 후기·족보 조회', async () => {
+                  const [reviews, qbanks] = await Promise.all([listMyReviews(), listMyQbanks()]);
+                  setMyWritings({ reviews, qbanks });
+                  return `후기 ${reviews.total} · 족보 ${qbanks.total}`;
+                })
+              }
+            >
+              내가 쓴 후기·족보
+            </button>
+            {myWritings && (
+              <span style={S.itemDetail}>
+                후기 {myWritings.reviews.total}건 · 족보 {myWritings.qbanks.total}건 —{' '}
+                {[...myWritings.reviews.items, ...myWritings.qbanks.items]
+                  .map((p) => p.title || `질문 ${p.questionCount ?? 0}개`)
+                  .slice(0, 3)
+                  .join(', ') || '없음'}
+              </span>
+            )}
+          </p>
+        )}
 
         {account?.error && (
           <p className='font_body_s_r' style={S.error} role='alert'>
@@ -1397,6 +2300,28 @@ export default function BackendTestPage() {
   );
 }
 
+function Field({ label, children }) {
+  return (
+    <label style={S.field}>
+      <span style={S.fieldLabel}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function CodeSelect({ group, value, onChange }) {
+  return (
+    <select style={S.input} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value=''>선택 안 함</option>
+      {(group ?? []).map((c) => (
+        <option key={c.code} value={c.code}>
+          {c.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 const S = {
   page: { maxWidth: 820, margin: '0 auto', padding: '48px 24px', fontFamily: 'system-ui, sans-serif' },
   h1: { fontSize: 24, fontWeight: 700, marginBottom: 8 },
@@ -1471,6 +2396,104 @@ const S = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+  },
+  input: {
+    padding: '6px 8px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 6,
+    fontSize: 13,
+    fontFamily: 'inherit',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  headRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  saveBtn: {
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: 8,
+    background: '#8635F6',
+    color: '#fff',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  cancelBtn: {
+    padding: '8px 16px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 8,
+    background: '#fff',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  notice: {
+    margin: '10px 0',
+    padding: '8px 12px',
+    background: '#F4FCFE',
+    borderRadius: 8,
+    fontSize: 13,
+    color: '#3C3C3C',
+  },
+  basicRow: { display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', margin: '12px 0' },
+  avatarCol: { display: 'grid', gap: 6, width: 120 },
+  avatarBox: {
+    width: 120,
+    height: 120,
+    borderRadius: '50%',
+    background: '#F2F2F2',
+    display: 'grid',
+    placeItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  fieldGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: 12,
+    flex: 1,
+    minWidth: 280,
+  },
+  field: { display: 'grid', gap: 4 },
+  fieldLabel: { fontSize: 12, color: '#6D6D6D', fontWeight: 700 },
+  sectionBox: {
+    border: '1px solid #EDEDED',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 12,
+    display: 'grid',
+    gap: 8,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: 700, margin: 0 },
+  rowBox: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 10,
+    alignItems: 'end',
+    padding: 10,
+    background: '#FAFAFA',
+    borderRadius: 8,
+  },
+  chipWrap: { display: 'flex', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    padding: '4px 10px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 999,
+    background: '#fff',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  chipOn: {
+    padding: '4px 10px',
+    border: '1px solid #8635F6',
+    borderRadius: 999,
+    background: '#8635F6',
+    color: '#fff',
+    fontSize: 12,
+    cursor: 'pointer',
   },
   miniBtn: {
     padding: '4px 8px',
