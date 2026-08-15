@@ -257,12 +257,29 @@ import { toggleReaction, getMyReactionIds } from '@backend/lib/api/reactions';
 
 // 누르기 / 취소  →  true = 켜짐, false = 꺼짐
 const on = await toggleReaction(...REACTION.companyBookmark, companyId);
-
-// 목록 화면에서 "내가 누른 것"에 색 채우기
-// ⚠️ 카드마다 호출하지 말고, 목록을 받은 뒤 한 번만 호출하세요
-const liked = await getMyReactionIds('portfolio', 'like', items.map((i) => i.id));
-liked.has(item.id);
 ```
+
+**"내가 이미 눌렀는지"는 목록·상세 응답에 이미 들어 있습니다.** 따로 물어볼 필요가 없습니다.
+
+```js
+const { items } = await listPortfolios();
+items[0].likedByMe;        // true 면 아이콘을 채운 상태로 그리세요
+items[0].bookmarkedByMe;
+```
+
+| 리소스 | 필드 |
+|---|---|
+| 포트폴리오 | `likedByMe` · `bookmarkedByMe` |
+| 면접 후기·족보 | `likedByMe`(도움이 되었어요) · `scrappedByMe`(퍼가요) |
+| 댓글 | `likedByMe` |
+| 기업 | `bookmarkedByMe` |
+| AI 면접 질문 | `scrappedByMe` |
+| 무료 양식 | `bookmarkedByMe` |
+
+비로그인이면 전부 `false` 입니다. **다른 사람이 누른 것은 절대 `true` 로 오지 않습니다.**
+
+> ⚠️ 토글 버튼의 초기 상태를 `useState(false)` 로 두면, 다른 페이지를 갔다 돌아왔을 때
+> **이미 누른 것이 꺼진 채로 보입니다.** 반드시 이 필드로 초기값을 잡아주세요.
 
 | `REACTION.___` | 화면 | `targetType` / `kind` |
 |---|---|---|
@@ -276,9 +293,11 @@ liked.has(item.id);
 | `templateBookmark` | 양식 북마크 | `template` / `bookmark` |
 
 ⚠️ **`reactions` 테이블을 직접 조회하지 마세요.** 보안 점검(D11) 이후 **본인 행만** 읽을 수 있습니다.
-목록의 좋아요·스크랩 **숫자**는 이미 `listPortfolios()` / `listPosts()` / `listCompanies()` 응답에
-`likeCount` `bookmarkCount` `scrapCount` 로 들어 있으니 그대로 쓰면 됩니다.
-직접 세면 "내가 누른 것"만 세어져 전부 0 또는 1로 나옵니다.
+**숫자**(`likeCount` `bookmarkCount` `scrapCount`)와 **내가 눌렀는지**(`likedByMe` 등) 모두 목록 응답에
+이미 들어 있습니다. 직접 세면 "내가 누른 것"만 세어져 전부 0 또는 1로 나옵니다.
+
+`getMyReactionIds()` / `getMyPortfolioReactions()` / `getMyScrappedQaIds()` / `getMyBookmarkedTemplateIds()` 는
+호환을 위해 남겨 뒀지만 **이제 부를 필요가 없습니다.** 반응 대상 7종 전부 목록·상세 응답에 들어 있습니다.
 
 ### 기업 탐색 — `@backend/lib/api/companies`
 
@@ -840,6 +859,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `employees` | number \| null | 사원 수 |
 | `avgSalary` | string \| null | 평균 연봉 **표시 문자열** (`"5,800만원"`) |
 | `favorite` | number | 관심 등록 수 |
+| `bookmarkedByMe` | boolean | **내가 관심 등록했는지.** 비로그인이면 `false` |
 | `review` | number | 면접 후기 수 |
 | `jokbo` | number | 면접 족보 수 |
 | `passrate` | number \| null | 합격률 **퍼센트 정수** `0~100`. 합/불 후기가 없으면 `null` |
@@ -882,6 +902,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `category` | string \| null | 분류 코드 |
 | `thumbnail` | string \| null | 미리보기 이미지 URL |
 | `views` | number | 조회수 |
+| `bookmarkedByMe` | boolean | **내가 북마크했는지.** 비로그인이면 `false` |
 | `content` | object \| null | **상세에서만.** 에디터 원본 JSON (Tiptap `getJSON()` 형식) |
 | `contentHtml` | string \| null | **상세에서만.** 렌더링용 HTML |
 
@@ -933,8 +954,10 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `authorId` | uuid | ● | ● | |
 | `authorName` | string \| null | ● | ● | |
 | `authorAvatar` | string \| null | ● | ● | |
-| `likeCount` | number | ● | ● | "도움이 되었어요" |
-| `scrapCount` | number | ● | ● | "퍼가요" |
+| `likeCount` | number | ● | ● | "도움이 되었어요" 수 |
+| `likedByMe` | boolean | ● | ● | **내가 눌렀는지.** 비로그인이면 `false` |
+| `scrapCount` | number | ● | ● | "퍼가요" 수 |
+| `scrappedByMe` | boolean | ● | ● | **내가 퍼갔는지.** 비로그인이면 `false` |
 | `commentCount` | number | ● | ● | |
 | `viewCount` | number | ● | ● | |
 | `date` | date | ● | ● | 표시용 `"2026.08.12"` |
@@ -965,7 +988,8 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `authorId` | uuid | |
 | `authorName` | string \| null | |
 | `authorAvatar` | string \| null | |
-| `likeCount` | number | |
+| `likeCount` | number | 좋아요 수 |
+| `likedByMe` | boolean | **내가 눌렀는지.** 비로그인이면 `false` |
 | `date` | date | 표시용 `"2026.08.12"` |
 | `createdAt` / `updatedAt` | datetime | |
 
@@ -983,8 +1007,10 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `authorName` | string \| null | |
 | `authorAvatar` | string \| null | |
 | `authorRole` | string \| null | 작성자의 희망 직무 |
-| `likeCount` | number | 좋아요 |
-| `bookmarkCount` | number | 스크랩 |
+| `likeCount` | number | 좋아요 수 |
+| `likedByMe` | boolean | **내가 눌렀는지.** 비로그인이면 `false` |
+| `bookmarkCount` | number | 스크랩 수 |
+| `bookmarkedByMe` | boolean | **내가 스크랩했는지.** 비로그인이면 `false` |
 | `viewCount` | number | |
 | `createdAt` / `updatedAt` | datetime | |
 | `content` | Block[] | **상세에서만.** 아래 블록 배열 |
@@ -1035,6 +1061,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `feedback` | object | AI 피드백 원본. 권장 모양 `{ summary, strengths[], improvements[] }`. 기본 `{}` |
 | `feedbackText` | string | 서버가 `feedback` 을 **한 줄 문자열로 요약**한 것. 아코디언 요약줄에 그대로 쓰세요 |
 | `score` | number \| null | 이 답변의 점수 |
+| `scrappedByMe` | boolean | **내가 스크랩했는지.** 스크랩 아이콘 초기 상태에 쓰세요 |
 | `date` | date | 표시용 |
 | `createdAt` | datetime | |
 
@@ -2153,7 +2180,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 819개 + E2E 380개 = 1,199개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 833개 + E2E 402개 = 1,235개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all

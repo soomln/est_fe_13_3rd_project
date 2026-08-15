@@ -1,5 +1,10 @@
 import { badRequest, notFound } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+const NO_MINE = { like: new Set(), bookmark: new Set() };
+
+const withMine = (item, mine) => ({ ...item, likedByMe: mine.like.has(item.id) });
 
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
@@ -31,7 +36,7 @@ async function readJson(request) {
   }
 }
 
-export const GET = defineRoute(async ({ request, params, supabase }) => {
+export const GET = defineRoute(async ({ request, params, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
@@ -49,7 +54,10 @@ export const GET = defineRoute(async ({ request, params, supabase }) => {
     .range(from, from + pageSize - 1);
   if (error) throw error;
 
-  return { items: (data ?? []).map(toItem), total: count ?? 0, page, pageSize };
+  const items = (data ?? []).map(toItem);
+  const mine = await loadMyReactions(supabase, user, 'comment', items.map((i) => i.id));
+
+  return { items: items.map((item) => withMine(item, mine)), total: count ?? 0, page, pageSize };
 });
 
 export const POST = defineRoute(
@@ -68,7 +76,7 @@ export const POST = defineRoute(
     );
 
     const row = unwrap(await supabase.from('v_comments').select('*').eq('id', inserted.id).single());
-    return toItem(row);
+    return withMine(toItem(row), NO_MINE);
   },
   { auth: true }
 );
@@ -92,7 +100,8 @@ export const PATCH_DETAIL = defineRoute(
     if (!updated) throw notFound('댓글을 찾을 수 없습니다.');
 
     const row = unwrap(await supabase.from('v_comments').select('*').eq('id', updated.id).single());
-    return toItem(row);
+    const mine = await loadMyReactions(supabase, user, 'comment', [row.id]);
+    return withMine(toItem(row), mine);
   },
   { auth: true }
 );
