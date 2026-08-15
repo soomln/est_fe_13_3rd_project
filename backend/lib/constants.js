@@ -22,6 +22,8 @@ export const SORT = {
 
 export const DOCUMENT_LIMIT = 10;
 
+export const SCORE_SCALE = { min: 1, max: 5, step: 1 };
+
 export const UPLOAD_LIMIT = {
   avatar: { maxBytes: 2 * 1024 * 1024, mimes: ['image/jpeg', 'image/png', 'image/webp'] },
   portfolio: {
