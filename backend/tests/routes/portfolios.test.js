@@ -68,6 +68,7 @@ describe('GET /api/portfolios', () => {
       likedByMe: false,
       bookmarkCount: 4,
       bookmarkedByMe: false,
+      collaborators: [],
       viewCount: 88,
       createdAt: '2026-08-01T00:00:00Z',
       updatedAt: '2026-08-02T00:00:00Z',
@@ -703,5 +704,118 @@ describe('DELETE /api/portfolios/:id', () => {
     const { status } = await callRoute(DELETE_DETAIL, { params: { id: 'other' } });
 
     expect(status).toBe(403);
+  });
+});
+
+describe('portfolio collaborators', () => {
+  const LINKS = [
+    { portfolio_id: 'f1', user_id: 'u9', sort_order: 0 },
+    { portfolio_id: 'f1', user_id: 'u8', sort_order: 1 },
+  ];
+  const MEMBERS = [
+    { id: 'u9', name: '김공동', avatar_url: 'https://cdn/9.png' },
+    { id: 'u8', name: '박공동', avatar_url: null },
+  ];
+
+  const withLinks = (extra = {}) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        v_portfolios: { data: [ROW], error: null, count: 1 },
+        portfolios: { data: ROW, error: null },
+        portfolio_collaborators: { data: LINKS, error: null },
+        profiles: { data: MEMBERS, error: null },
+      },
+      rpc: { save_portfolio_collaborators: { data: null, error: null } },
+      ...extra,
+    });
+
+  it('builds the collaborator list in saved order', async () => {
+    setSupabase(withLinks());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].collaborators).toEqual([
+      { id: 'u9', name: '김공동', avatarUrl: 'https://cdn/9.png' },
+      { id: 'u8', name: '박공동', avatarUrl: null },
+    ]);
+  });
+
+  it('skips a link whose member row is gone', async () => {
+    setSupabase(
+      withLinks({
+        tables: {
+          v_portfolios: { data: [ROW], error: null, count: 1 },
+          portfolio_collaborators: { data: LINKS, error: null },
+          profiles: { data: [MEMBERS[0]], error: null },
+        },
+      })
+    );
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].collaborators.map((c) => c.id)).toEqual(['u9']);
+  });
+
+  it('saves the list when the patch carries nothing else', async () => {
+    const supabaseWithLinks = withLinks();
+    setSupabase(supabaseWithLinks);
+
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds: ['u9'] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(200);
+    expect(supabaseWithLinks.rpcCalls[0]).toEqual({
+      name: 'save_portfolio_collaborators',
+      args: { p_portfolio_id: 'f1', p_user_ids: ['u9'] },
+    });
+  });
+
+  it('answers 404 when the collaborator-only patch is for someone else portfolio', async () => {
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { portfolios: { data: null, error: null } },
+      })
+    );
+
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds: ['u9'] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(404);
+  });
+
+  it.each([
+    ['nope', 'collaboratorIds 는 배열이어야 합니다.'],
+    [[''], 'collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.'],
+    [[1, 2], 'collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.'],
+  ])('answers 400 for %p', async (collaboratorIds, message) => {
+    setSupabase(withLinks());
+
+    const { status, body } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toBe(message);
+  });
+
+  it('answers 400 beyond twenty collaborators', async () => {
+    setSupabase(withLinks());
+
+    const { status, body } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), {
+        body: { collaboratorIds: Array.from({ length: 21 }, (_, i) => `u${i}`) },
+      }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('20명');
   });
 });

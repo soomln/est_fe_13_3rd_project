@@ -408,6 +408,7 @@ import {
   uploadPortfolioImages, incrementPortfolioView,
   togglePortfolioLike, togglePortfolioBookmark, getMyPortfolioReactions,
   listMyBookmarkedPortfolios, removePortfolioBookmarks,
+  findMemberByEmail, setPortfolioCollaborators,
 } from '@backend/lib/api/portfolio';
 
 // 갤러리 (공개된 것만)
@@ -430,6 +431,36 @@ await publishPortfolio(draft.id);   // 임시저장 → 공개
 // 목록에서 내가 누른 것 표시 (카드마다 호출 금지)
 const { liked, bookmarked } = await getMyPortfolioReactions(items.map((p) => p.id));
 ```
+
+**공동작업자** — 이메일로 찾아서 id 배열로 저장합니다.
+
+```js
+// 1) 이메일로 찾기 (정확히 일치해야 하고, 로그인 필요)
+const member = await findMemberByEmail('teammate@example.com');
+// { id, name, avatarUrl }  ·  가입자가 없으면 null
+
+// 2) N명을 통째로 저장 (목록 교체 방식)
+const saved = await setPortfolioCollaborators(portfolioId, [member.id, another.id]);
+saved.collaborators;   // [{ id, name, avatarUrl }, ...]
+
+// 생성할 때 한 번에 넣어도 됩니다
+await createPortfolio({ title: '작업', collaboratorIds: [member.id] });
+```
+
+| 규칙 | 동작 |
+|---|---|
+| 저장 방식 | **통째로 교체.** 한 명만 빼려면 나머지 전체를 다시 보내세요 |
+| 본인 id | 자동으로 제외됩니다 (소유자는 공동작업자가 아님) |
+| 중복 id | 자동으로 한 번만 저장 |
+| 없는 사용자 id | **400** |
+| 최대 인원 | **20명** |
+| 남의 포트폴리오 | **404** — 소유자만 수정할 수 있습니다 |
+
+응답의 `collaborators` 는 **목록·상세 모두**에 들어 있어 따로 조회할 필요가 없습니다.
+비공개(`draft`) 포트폴리오의 공동작업자는 소유자에게만 보입니다.
+
+> ⚠️ `findMemberByEmail` 은 **이메일을 되돌려주지 않습니다.** 이름과 사진만 옵니다.
+> 부분 검색도 안 됩니다 — 정확한 이메일 전체를 알아야 찾을 수 있습니다.
 
 **content 블록 형식** — `[{ type, ... }]`
 
@@ -1011,6 +1042,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `likedByMe` | boolean | **내가 눌렀는지.** 비로그인이면 `false` |
 | `bookmarkCount` | number | 스크랩 수 |
 | `bookmarkedByMe` | boolean | **내가 스크랩했는지.** 비로그인이면 `false` |
+| `collaborators` | Collaborator[] | 공동작업자. 없으면 `[]`. 목록·상세 모두 포함 |
 | `viewCount` | number | |
 | `createdAt` / `updatedAt` | datetime | |
 | `content` | Block[] | **상세에서만.** 아래 블록 배열 |
@@ -1027,6 +1059,16 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `code` | `{ type:'code', lang, body }` | |
 
 > `type` 외의 내부 키는 서버가 검증하지 않습니다. 위 모양은 **프론트와의 약속**입니다.
+
+**Collaborator** — `collaborators` 배열의 원소
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | uuid | 공동작업자의 유저 id |
+| `name` | string | null | 이름 |
+| `avatarUrl` | string | null | 프로필 사진 |
+
+> 이메일은 포함되지 않습니다.
 
 ### 5.10 InterviewSession
 
@@ -1077,6 +1119,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 |---|---|---|:---:|---|
 | 1 | GET | `/api/health` | — | (진단 페이지 전용) |
 | 2 | GET | `/api/me` | — | `getCurrentUser()` |
+| 2-1 | GET | `/api/members/lookup` | ✔ | `findMemberByEmail()` |
 | 3 | DELETE | `/api/me` | ✔ | `deleteMyAccount()` |
 | 4 | GET | `/api/me/account` | ✔ | `getMyAccount()` |
 | 5 | GET | `/api/me/summary` | ✔ | `getMySummary()` |
@@ -2180,7 +2223,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 833개 + E2E 402개 = 1,235개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 856개 + E2E 417개 = 1,273개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all

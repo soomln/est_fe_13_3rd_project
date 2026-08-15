@@ -41,6 +41,15 @@ export async function updatePortfolio(id, patch) {
   return apiFetch(`/api/portfolios/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch });
 }
 
+export async function findMemberByEmail(email) {
+  const { member } = await apiFetch('/api/members/lookup', { query: { email } });
+  return member;
+}
+
+export async function setPortfolioCollaborators(id, collaboratorIds) {
+  return updatePortfolio(id, { collaboratorIds });
+}
+
 export async function publishPortfolio(id) {
   return updatePortfolio(id, { status: 'published' });
 }
