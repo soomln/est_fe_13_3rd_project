@@ -114,6 +114,11 @@ insert into public.code_master (group_name, code, label, sort_order) values
   ('education_level', 'master',      '석사',   4),
   ('education_level', 'doctor',      '박사',   5),
 
+  ('school_type', 'high_school', '고등학교', 1),
+  ('school_type', 'college',     '전문대',   2),
+  ('school_type', 'university',  '대학교',   3),
+  ('school_type', 'graduate',    '대학원',   4),
+
   ('career_level', 'entry',  '신입',   1),
   ('career_level', '1_3',    '1~3년',  2),
   ('career_level', '3_5',    '3~5년',  3),

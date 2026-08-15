@@ -13,6 +13,7 @@ import {
   uploadAvatar,
 } from '@backend/lib/api/profile';
 import { getMyAccount, getMySummary } from '@backend/lib/api/mypage';
+import { getCodeGroups } from '@backend/lib/api/codes';
 import { createDocument } from '@backend/lib/api/documents';
 import { createPortfolio, publishPortfolio, togglePortfolioBookmark } from '@backend/lib/api/portfolio';
 import { createPost, togglePostScrap } from '@backend/lib/api/posts';
@@ -103,6 +104,53 @@ describe('editing my profile', () => {
     signOutOfBrowser();
 
     await expect(updateProfile({ name: 'x' })).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('the education fields on a profile', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it('saves the final education level and the school type together', async () => {
+    const saved = await updateProfile({
+      education_level: 'bachelor',
+      educations: [
+        {
+          type: 'university',
+          school: 'OO대학교',
+          major: '컴퓨터공학',
+          status: 'graduated',
+          admission: '2015-03',
+          graduation: '2019-02',
+        },
+      ],
+    });
+
+    expect(saved.education_level).toBe('bachelor');
+    expect(saved.educations[0]).toMatchObject({ type: 'university', school: 'OO대학교' });
+  });
+
+  it('shows both to another member', async () => {
+    await updateProfile({ education_level: 'master', educations: [{ type: 'graduate' }] });
+
+    signInAs(USERS.b);
+    const profile = await getProfile(USERS.a.id);
+
+    expect(profile.education_level).toBe('master');
+    expect(profile.educations[0].type).toBe('graduate');
+  });
+
+  it('offers the dropdown options through the code API', async () => {
+    const { education_level, school_type } = await getCodeGroups(['education_level', 'school_type']);
+
+    expect(education_level).toContainEqual({ code: 'bachelor', label: '대졸' });
+    expect(school_type).toContainEqual({ code: 'university', label: '대학교' });
+    expect(school_type).toContainEqual({ code: 'graduate', label: '대학원' });
+  });
+
+  it('is empty until the member fills it in', async () => {
+    const profile = await getProfile('me');
+
+    expect(profile.education_level).toBeNull();
   });
 });
 

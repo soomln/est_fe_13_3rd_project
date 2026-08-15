@@ -176,6 +176,17 @@ describe('PATCH /api/profiles/:userId', () => {
     }
   );
 
+  it('saves the education level chosen from the dropdown', async () => {
+    await callRoute(PATCH, {
+      request: patchRequest({ education_level: 'master' }),
+      params: { userId: 'me' },
+    });
+
+    expect(argsOf(queryFor(supabase, 'profiles'), 'update')[0]).toEqual([
+      { education_level: 'master' },
+    ]);
+  });
+
   it('saves only the editable columns', async () => {
     await callRoute(PATCH, {
       request: patchRequest({ name: '새이름', id: 'hack', bio: '소개' }),
