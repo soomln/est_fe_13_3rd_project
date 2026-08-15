@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import useToast from '@/hooks/useToast';
 
 import styles from './page.module.sass';
 
@@ -13,6 +14,7 @@ import AiChatBtn from './_components/AiChatBtn';
 import BackBtn from './_components/BackBtn';
 import SaveBtn from './_components/SaveBtn';
 import SettingModal from './_components/SettingModal';
+import ToastMessage from '../_components/ToastMessage';
 
 import { getCurrentUser } from '@backend/lib/api/auth';
 import { createPortfolio, updatePortfolio } from '@backend/lib/api/portfolio';
@@ -40,6 +42,8 @@ export default function Upload() {
 
   const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const { isToastVisible, toastMessage, showToast } = useToast();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -162,7 +166,7 @@ export default function Upload() {
         setIsCreated(true);
 
         console.log('최초 임시 저장 완료:', createdItem);
-
+        showToast('임시 저장되었습니다.');
         return;
       }
 
@@ -175,9 +179,10 @@ export default function Upload() {
       }));
 
       console.log('임시 저장 완료:', updatedItem);
+      showToast('임시 저장되었습니다.');
     } catch (error) {
       console.error('임시 저장 실패:', error);
-      alert('임시 저장에 실패했습니다.');
+      showToast('임시 저장에 실패했습니다.');
     } finally {
       setIsSaving(false);
     }
@@ -193,6 +198,8 @@ export default function Upload() {
 
   return (
     <div className={`${styles.page} ${isChatOpen ? styles.chat_open : ''}`}>
+      {isToastVisible && <ToastMessage message={toastMessage} />}
+
       {isChatOpen && (
         <aside className={styles.ai_chat}>
           <AiChatPanel onClose={() => setIsChatOpen(false)} messages={messages} setMessages={setMessages} />
