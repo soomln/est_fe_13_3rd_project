@@ -16,6 +16,7 @@ import PortfolioDetailModal from '@/app/portfolio/_components/Modal/Window';
 import FilterChip from '@/app/mypage/_components/FilterChip';
 import SortPill from '@/app/mypage/_components/SortPill';
 import Toast from '@/app/mypage/_components/Toast';
+import ConfirmDialog from '@/app/mypage/_components/ConfirmDialog';
 import styles from './PortfolioBrowser.module.sass';
 
 const PAGE_SIZE = 6;
@@ -41,6 +42,7 @@ export default function PortfolioBrowser() {
   const [reloadKey, setReloadKey] = useState(0);
   const [toast, setToast] = useState('');
   const [previewId, setPreviewId] = useState(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
   const scope = searchParams.get('scope') ?? '';
@@ -78,6 +80,10 @@ export default function PortfolioBrowser() {
         if (!alive) return;
         setData(result);
         setStatus('ready');
+
+        // 마지막 쪽 항목을 다 지우면 빈 화면이 되니 있는 쪽으로 되돌린다
+        const lastPage = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
+        if (page > lastPage) updateQuery({ page: lastPage });
       })
       .catch(() => {
         if (!alive) return;
@@ -118,6 +124,7 @@ export default function PortfolioBrowser() {
     if (selectedIds.length === 0) return;
 
     const count = selectedIds.length;
+    setIsConfirming(false);
 
     try {
       if (isScrapped) await removePortfolioBookmarks(selectedIds);
@@ -165,7 +172,7 @@ export default function PortfolioBrowser() {
                 type='button'
                 className={`${styles.portfolio_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
-                onClick={handleDelete}
+                onClick={() => (isScrapped ? handleDelete() : setIsConfirming(true))}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -194,6 +201,15 @@ export default function PortfolioBrowser() {
       </div>
 
       <Toast message={toast} onHide={() => setToast('')} />
+
+      <ConfirmDialog
+        isOpen={isConfirming}
+        title={`포트폴리오 ${selectedIds.length}개를 삭제할까요?`}
+        desc='지운 포트폴리오는 되돌릴 수 없어요.'
+        confirmLabel='삭제하기'
+        onConfirm={handleDelete}
+        onCancel={() => setIsConfirming(false)}
+      />
 
       {/* key 를 주면 다른 카드를 열 때 이전 내용이 잠깐 보이지 않는다 */}
       <PortfolioDetailModal

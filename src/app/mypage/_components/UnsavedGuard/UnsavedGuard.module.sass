@@ -1,0 +1,55 @@
+@use '@/app/_variables.sass' as *
+
+.unsaved_guard_overlay
+  position: fixed
+  inset: 0
+  z-index: 110
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 24px
+  background-color: rgba(0, 0, 0, 0.5)
+
+.unsaved_guard
+  box-sizing: border-box
+  width: 100%
+  max-width: 420px
+  padding: 32px
+  background-color: $white
+  border-radius: 16px
+
+.unsaved_guard_title
+  margin-bottom: 8px
+  color: $black
+
+.unsaved_guard_desc
+  color: $gray
+
+.unsaved_guard_btns
+  display: flex
+  justify-content: flex-end
+  gap: 12px
+  margin-top: 28px
+
+.unsaved_guard_stay,
+.unsaved_guard_leave
+  height: 48px
+  padding: 0 20px
+  border-radius: 10px
+  cursor: pointer
+
+.unsaved_guard_stay
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+
+  &:hover
+    background-color: $light_gray
+
+.unsaved_guard_leave
+  color: $white
+  background-color: $warning
+  border: 1px solid $warning
+
+  &:hover
+    opacity: 0.9

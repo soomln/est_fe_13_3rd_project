@@ -12,6 +12,7 @@ import SortPill from '@/app/mypage/_components/SortPill';
 import DocumentRow from '@/app/mypage/_components/DocumentRow';
 import DocumentPreview from '@/app/mypage/_components/DocumentPreview';
 import Toast from '@/app/mypage/_components/Toast';
+import ConfirmDialog from '@/app/mypage/_components/ConfirmDialog';
 import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './DocumentBrowser.module.sass';
 
@@ -37,6 +38,7 @@ export default function DocumentBrowser() {
   const [status, setStatus] = useState('loading');
   const [reloadKey, setReloadKey] = useState(0);
   const [toast, setToast] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
   const [previewId, setPreviewId] = useState(null);
 
   const isDeleteMode = searchParams.get('mode') === 'delete';
@@ -57,6 +59,10 @@ export default function DocumentBrowser() {
         if (!alive) return;
         setData(result);
         setStatus('ready');
+
+        // 마지막 쪽 항목을 다 지우면 빈 화면이 되니 있는 쪽으로 되돌린다
+        const lastPage = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
+        if (page > lastPage) updateQuery({ page: lastPage });
       })
       .catch(() => {
         if (!alive) return;
@@ -100,6 +106,7 @@ export default function DocumentBrowser() {
     if (selectedIds.length === 0) return;
 
     const count = selectedIds.length;
+    setIsConfirming(false);
 
     try {
       await deleteDocuments(selectedIds);
@@ -145,7 +152,7 @@ export default function DocumentBrowser() {
                 type='button'
                 className={`${styles.document_browser_delete_btn} font_body_l_b`}
                 disabled={selectedIds.length === 0}
-                onClick={handleDelete}
+                onClick={() => setIsConfirming(true)}
               >
                 선택 삭제{selectedIds.length > 0 && ` ${selectedIds.length}`}
               </button>
@@ -177,6 +184,15 @@ export default function DocumentBrowser() {
       </div>
 
       <Toast message={toast} onHide={() => setToast('')} />
+
+      <ConfirmDialog
+        isOpen={isConfirming}
+        title={`문서 ${selectedIds.length}개를 삭제할까요?`}
+        desc='지운 문서는 되돌릴 수 없어요.'
+        confirmLabel='삭제하기'
+        onConfirm={handleDelete}
+        onCancel={() => setIsConfirming(false)}
+      />
       <DocumentPreview id={previewId} onClose={() => setPreviewId(null)} />
 
       {isDeleteMode && (
