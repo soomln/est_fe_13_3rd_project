@@ -177,6 +177,7 @@ export default function BackendTestPage() {
   const [codeGroups, setCodeGroups] = useState(null);
   const [listOpts, setListOpts] = useState(DEFAULT_LIST_OPTS);
   const [docDraft, setDocDraft] = useState(null);
+  const [postJobRole, setPostJobRole] = useState('frontend');
   const [alan, setAlan] = useState(null);
   const [alanBusy, setAlanBusy] = useState(false);
   const [alanPrompt, setAlanPrompt] = useState('한 문장으로: 좋은 이력서의 조건은?');
@@ -1528,6 +1529,83 @@ export default function BackendTestPage() {
         </ul>
 
         <div style={S.sortBar}>
+          <label style={S.sortLabel}>
+            직무 (작성 시 기입)
+            <select
+              style={S.sortSelect}
+              value={postJobRole}
+              onChange={(e) => setPostJobRole(e.target.value)}
+            >
+              <option value=''>미기입 (null)</option>
+              {(codeGroups?.job_role ?? []).map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label} ({c.code})
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type='button'
+            style={S.miniBtn}
+            onClick={() =>
+              runDocAction('없는 직무 코드로 작성 시도', async () => {
+                try {
+                  await createPost({
+                    postType: 'review',
+                    companyId: companies[0]?.id ?? null,
+                    title: '거부돼야 하는 글',
+                    jobRoleCode: 'frontned',
+                  });
+                  return '저장됨 — 문제 (검증이 안 걸림)';
+                } catch (e) {
+                  return `거부됨 (정상) — ${e.message}`;
+                }
+              })
+            }
+          >
+            없는 직무 코드 거부 확인
+          </button>
+          <button
+            type='button'
+            style={S.miniBtn}
+            onClick={() =>
+              runDocAction('코드 자리에 라벨 투입 (5개 필드)', async () => {
+                const cases = [
+                  ['jobRoleCode', '프론트엔드'],
+                  ['difficultyCode', '어려움'],
+                  ['passResultCode', '합격'],
+                  ['channelCode', '온라인'],
+                  ['educationLevel', '대졸'],
+                ];
+
+                const leaked = [];
+                for (const [field, label] of cases) {
+                  try {
+                    const p = await createPost({
+                      postType: 'review',
+                      companyId: companies[0]?.id ?? null,
+                      title: `라벨 투입 ${field}`,
+                      [field]: label,
+                    });
+                    leaked.push(field);
+                    await deletePosts([p.id]);
+                  } catch {
+                    /* 400 이 정상 */
+                  }
+                }
+
+                await reloadPosts();
+                return leaked.length === 0
+                  ? `5개 필드 모두 차단됨 (정상)`
+                  : `통과해버림 — 문제: ${leaked.join(', ')}`;
+              })
+            }
+          >
+            라벨 투입 거부 확인
+          </button>
+        </div>
+
+        <div style={S.sortBar}>
           <SortSelect label='정렬' name='posts' value={listOpts.posts} onChange={changeSort} />
           <span style={S.sortLabel}>
             {(posts?.items ?? [])
@@ -1552,15 +1630,14 @@ export default function BackendTestPage() {
                   difficultyScore: 3,
                   passResultCode: 'pass',
                   channelCode: 'online',
-                  jobRoleCode: 'frontend',
+                  jobRoleCode: postJobRole || null,
                   positionLevel: '신입',
-                  educationLevel: '대졸',
+                  educationLevel: 'bachelor',
                   tags: ['CS', '기술면접'],
                   overallComment: '준비한 만큼 나옵니다',
                 });
                 await reloadPosts();
-                console.log(p);
-                return `${p.companyName} · ${p.difficulty} · ${p.result} · ${p.route}`;
+                return `${p.companyName} · ${p.difficulty} · ${p.result} · 직무 "${p.jobRole || '미기입'}"(${p.jobRoleCode ?? 'null'})`;
               })
             }
           >
@@ -1581,12 +1658,12 @@ export default function BackendTestPage() {
                   passResultCode: 'waiting',
                   channelCode: 'etc',
                   channelEtc: '잡코리아',
-                  jobRoleCode: 'backend',
+                  jobRoleCode: postJobRole || null,
                   positionLevel: '신입',
-                  educationLevel: '대졸',
+                  educationLevel: 'bachelor',
                 });
                 await reloadPosts();
-                return `질문 ${p.questionCount}개 · 경로 "${p.route}" (기타 처리 확인)`;
+                return `질문 ${p.questionCount}개 · 직무 "${p.jobRole || '미기입'}" · 경로 "${p.route}"`;
               })
             }
           >
@@ -1621,7 +1698,8 @@ export default function BackendTestPage() {
                 {p.title || `질문 ${p.questionCount}개`}
               </span>
               <span style={S.itemDetail}>
-                {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo}
+                {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo} · 직무코드{' '}
+                <code>{p.jobRoleCode ?? 'null'}</code>
               </span>
               <span style={S.itemDetail}>
                 👍 {p.likeCount}

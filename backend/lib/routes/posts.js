@@ -1,6 +1,7 @@
 import { SCORE_SCALE } from '../constants';
 import { badRequest, notFound, unauthorized } from '../http/errors';
 import { defineRoute, pageOf, unwrap } from '../http/route';
+import { assertCodes } from './codeGuard';
 import { loadMyReactions, loadScrapMarks } from './reactions';
 
 const NO_MINE = { like: new Set(), bookmark: new Set() };
@@ -87,6 +88,13 @@ function toItem(row, labels) {
     education: label('education_level', row.education_level),
     jobInfo,
 
+    jobRoleCode: row.job_role_code ?? null,
+    educationLevelCode: row.education_level ?? null,
+    difficultyCode: row.difficulty_code ?? null,
+    passResultCode: row.pass_result_code ?? null,
+    channelCode: row.channel_code ?? null,
+    channelEtc: row.channel_etc ?? null,
+
     tags: row.tags ?? [],
     overallComment: row.overall_comment ?? '',
 
@@ -139,6 +147,14 @@ const SCORE_KEYS = ['difficultyScore', 'problemScore'];
 const isScore = (value) =>
   value === null ||
   (Number.isInteger(value) && value >= SCORE_SCALE.min && value <= SCORE_SCALE.max);
+
+const CODE_FIELDS = {
+  jobRoleCode: 'job_role',
+  difficultyCode: 'difficulty',
+  passResultCode: 'pass_result',
+  channelCode: 'interview_channel',
+  educationLevel: 'education_level',
+};
 
 function toColumns(body) {
   const patch = {};
@@ -215,6 +231,9 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
     query = query.eq('user_id', user.id);
   }
 
+  const jobRole = q.get('jobRole');
+  if (jobRole) query = query.eq('job_role_code', jobRole);
+
   const companyId = q.get('companyId');
   if (companyId) query = query.eq('company_id', companyId);
 
@@ -253,6 +272,8 @@ export const POST = defineRoute(
       throw badRequest(`postType 은 ${POST_TYPES.join(' | ')} 중 하나여야 합니다.`);
     }
 
+    await assertCodes(supabase, body, CODE_FIELDS);
+
     const inserted = unwrap(
       await supabase
         .from('posts')
@@ -290,7 +311,10 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
 
 export const PATCH_DETAIL = defineRoute(
   async ({ request, params, supabase, user }) => {
-    const patch = toColumns(await readJson(request));
+    const body = await readJson(request);
+    await assertCodes(supabase, body, CODE_FIELDS);
+
+    const patch = toColumns(body);
     if (Object.keys(patch).length === 0) throw badRequest('수정할 내용이 없습니다.');
 
     const updated = unwrap(

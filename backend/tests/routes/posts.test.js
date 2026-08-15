@@ -19,6 +19,7 @@ const CODES = {
     { group_name: 'difficulty', code: 'hard', label: '어려움' },
     { group_name: 'pass_result', code: 'pass', label: '합격' },
     { group_name: 'interview_channel', code: 'online', label: '온라인 지원' },
+    { group_name: 'interview_channel', code: 'etc', label: '기타' },
     { group_name: 'job_role', code: 'fe', label: '프론트엔드' },
     { group_name: 'education_level', code: 'bachelor', label: '대졸' },
   ],
@@ -78,7 +79,7 @@ describe('loadLabels', () => {
     await expect(loadLabels(stub)).resolves.toEqual({
       difficulty: { hard: '어려움' },
       pass_result: { pass: '합격' },
-      interview_channel: { online: '온라인 지원' },
+      interview_channel: { online: '온라인 지원', etc: '기타' },
       job_role: { fe: '프론트엔드' },
       education_level: { bachelor: '대졸' },
     });
@@ -937,5 +938,138 @@ describe('GET /api/posts?scrapped=1', () => {
     const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
 
     expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 10 });
+  });
+});
+
+describe('직무(jobRoleCode)', () => {
+  const JOB_CODES = {
+    data: [
+      { group_name: 'job_role', code: 'fe', label: '프론트엔드', is_active: true },
+      { group_name: 'job_role', code: 'be', label: '백엔드', is_active: true },
+    ],
+    error: null,
+  };
+
+  const writeStub = () =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        code_master: JOB_CODES,
+        posts: { data: { id: 'p1' }, error: null },
+        v_posts: { data: ROW, error: null },
+      },
+    });
+
+  beforeEach(() => {
+    supabase = writeStub();
+    setSupabase(supabase);
+  });
+
+  it('saves the job role on a new review', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'be' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      job_role_code: 'be',
+    });
+  });
+
+  it('saves the job role on a qbank too', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', jobRoleCode: 'fe' } }),
+    });
+
+    expect(status).toBe(200);
+  });
+
+  it('rejects a job role that is not in code_master', async () => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'frontned' } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('fe | be');
+  });
+
+  it('never writes the row when the job role is wrong', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'nope' } }),
+    });
+
+    expect(queriesFor(supabase, 'posts')).toHaveLength(0);
+  });
+
+  it('leaves the job role alone when it is not sent', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).not.toHaveProperty(
+      'job_role_code'
+    );
+  });
+
+  it('accepts null to clear the job role', async () => {
+    const { status } = await callRoute(PATCH_DETAIL, {
+      params: { id: 'p1' },
+      request: makeRequest(url('/p1'), { body: { jobRoleCode: null } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'update')[0][0]).toEqual({
+      job_role_code: null,
+    });
+  });
+
+  it('validates the job role on edit as well', async () => {
+    const { status } = await callRoute(PATCH_DETAIL, {
+      params: { id: 'p1' },
+      request: makeRequest(url('/p1'), { body: { jobRoleCode: 'nope' } }),
+    });
+
+    expect(status).toBe(400);
+  });
+});
+
+describe('직무 코드를 응답에 함께 준다', () => {
+  it('hands back the raw code so an edit form can preselect it', async () => {
+    setSupabase(
+      createSupabaseStub({ tables: { v_posts: { data: ROW, error: null }, code_master: CODES } })
+    );
+
+    const { body } = await callRoute(GET_DETAIL, { params: { id: 'p1' } });
+
+    expect(body).toMatchObject({
+      jobRole: '프론트엔드',
+      jobRoleCode: 'fe',
+      educationLevelCode: 'bachelor',
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+    });
+  });
+
+  it('answers null for a post with no job role', async () => {
+    setSupabase(listStub([{ ...ROW, job_role_code: null }]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0]).toMatchObject({ jobRole: '', jobRoleCode: null });
+  });
+
+  it('narrows the list by job role', async () => {
+    await callRoute(GET, { request: makeRequest(url('?jobRole=be')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual(['job_role_code', 'be']);
+  });
+
+  it('does not filter when jobRole is absent', async () => {
+    await callRoute(GET, { request: makeRequest(url()) });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq').map(([column]) => column);
+    expect(eqs).not.toContain('job_role_code');
   });
 });
