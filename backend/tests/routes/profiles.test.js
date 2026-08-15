@@ -22,16 +22,41 @@ beforeEach(() => {
   supabase = createSupabaseStub({
     user: { id: 'u1' },
     tables: { profiles: { data: PROFILE, error: null } },
+    rpc: { my_profile_email: { data: 'me@example.com', error: null } },
   });
   setSupabase(supabase);
 });
 
 describe('GET /api/profiles/:userId', () => {
-  it('returns the profile as-is', async () => {
+  it('adds my own contact email to my profile', async () => {
     const { status, body } = await callRoute(GET, { params: { userId: 'u1' } });
 
     expect(status).toBe(200);
-    expect(body).toEqual(PROFILE);
+    expect(body).toEqual({ ...PROFILE, email: 'me@example.com' });
+  });
+
+  it('hides the contact email of someone else', async () => {
+    const { status, body } = await callRoute(GET, { params: { userId: 'u2' } });
+
+    expect(status).toBe(200);
+    expect(body).toEqual({ ...PROFILE, email: null });
+    expect(supabase.rpcCalls).toEqual([]);
+  });
+
+  it('hides the contact email while signed out', async () => {
+    setSupabase(
+      createSupabaseStub({ tables: { profiles: { data: PROFILE, error: null } } })
+    );
+
+    const { body } = await callRoute(GET, { params: { userId: 'u1' } });
+
+    expect(body.email).toBeNull();
+  });
+
+  it('never selects the email column from the table', async () => {
+    await callRoute(GET, { params: { userId: 'u1' } });
+
+    expect(argsOf(queryFor(supabase, 'profiles'), 'select')[0][0]).not.toContain('email');
   });
 
   it("resolves 'me' to the signed-in user before querying", async () => {
@@ -162,13 +187,14 @@ describe('PATCH /api/profiles/:userId', () => {
     expect(argsOf(query, 'eq')[0]).toEqual(['id', 'u1']);
   });
 
-  it('returns the updated profile', async () => {
+  it('returns the updated profile with my contact email', async () => {
     const { status, body } = await callRoute(PATCH, {
       request: patchRequest({ name: '새이름' }),
       params: { userId: 'me' },
     });
 
     expect(status).toBe(200);
-    expect(body).toEqual(PROFILE);
+    expect(body).toEqual({ ...PROFILE, email: 'me@example.com' });
+    expect(supabase.rpcCalls).toEqual([{ name: 'my_profile_email', args: undefined }]);
   });
 });
