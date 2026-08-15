@@ -69,6 +69,10 @@ export default function ActivityBrowser() {
         if (!alive) return;
         setData(result);
         setStatus('ready');
+
+        // 마지막 쪽 항목을 다 지우면 빈 화면이 되니 있는 쪽으로 되돌린다
+        const lastPage = Math.max(1, Math.ceil(result.total / pageSize));
+        if (page > lastPage) updateQuery({ page: lastPage });
       })
       .catch(() => {
         if (!alive) return;
