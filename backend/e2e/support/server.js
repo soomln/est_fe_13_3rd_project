@@ -10,6 +10,8 @@ const ROUTES = [
   ['/api/reactions', () => import('@/app/api/reactions/route.js')],
   ['/api/interview-qas', () => import('@/app/api/interview-qas/route.js')],
 
+  ['/api/members/lookup', () => import('@/app/api/members/lookup/route.js')],
+
   ['/api/me/account', () => import('@/app/api/me/account/route.js')],
   ['/api/me/summary', () => import('@/app/api/me/summary/route.js')],
   ['/api/me', () => import('@/app/api/me/route.js')],

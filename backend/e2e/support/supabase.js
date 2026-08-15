@@ -1,4 +1,5 @@
 import { ensureProfile, nextId, nextTimestamp, rows, SCHEMA } from './database';
+import { registeredUsers } from './session';
 
 const VIEW_BASE = {
   v_posts: 'posts',
@@ -6,6 +7,8 @@ const VIEW_BASE = {
   v_portfolios: 'portfolios',
   v_companies: 'companies',
 };
+
+const COLLABORATORS = 'portfolio_collaborators';
 
 const PROFILE_LISTS = [
   'profile_educations',
@@ -21,7 +24,7 @@ const PUBLIC_READ = [
 const OWNER_READ = ['documents', 'reactions', 'interview_sessions', 'interview_qas'];
 const OWNER_WRITE = [
   'profiles', 'documents', 'portfolios', 'posts', 'comments', 'reactions',
-  'interview_sessions', 'interview_qas', ...PROFILE_LISTS,
+  'interview_sessions', 'interview_qas', COLLABORATORS, ...PROFILE_LISTS,
 ];
 
 const FAULTS = Symbol.for('callback.e2e.faults');
@@ -82,6 +85,10 @@ const notFound = () => ({
 });
 
 function canRead(table, row, user) {
+  if (table === COLLABORATORS) {
+    const owner = rows('portfolios').find((p) => p.id === row.portfolio_id);
+    return Boolean(owner) && (owner.status === 'published' || owner.user_id === user?.id);
+  }
   if (PUBLIC_READ.includes(table)) return true;
   if (OWNER_READ.includes(table)) return Boolean(user) && row.user_id === user.id;
   if (table === 'portfolios') return row.status === 'published' || (user && row.user_id === user.id);
@@ -229,7 +236,10 @@ function cascadeDelete(table, row) {
     drop('reactions', (r) => r.target_type === 'post' && r.target_id === row.id);
   }
   if (table === 'comments') drop('reactions', (r) => r.target_type === 'comment' && r.target_id === row.id);
-  if (table === 'portfolios') drop('reactions', (r) => r.target_type === 'portfolio' && r.target_id === row.id);
+  if (table === 'portfolios') {
+    drop('reactions', (r) => r.target_type === 'portfolio' && r.target_id === row.id);
+    drop(COLLABORATORS, (l) => l.portfolio_id === row.id);
+  }
   if (table === 'interview_sessions') {
     drop('interview_qas', (q) => q.session_id === row.id);
     drop('reactions', (r) => r.target_type === 'interview_qa');
@@ -665,6 +675,59 @@ function saveProfileLists(user, args = {}) {
   return { data: null, error: null };
 }
 
+function findMemberByEmail(user, { p_email } = {}) {
+  if (!user) return { data: [], error: null };
+
+  const wanted = String(p_email ?? '').trim().toLowerCase();
+  const found = registeredUsers().find((u) => (u.email ?? '').toLowerCase() === wanted);
+  if (!found) return { data: [], error: null };
+
+  const profile = rows('profiles').find((p) => p.id === found.id);
+  if (!profile) return { data: [], error: null };
+
+  return {
+    data: [{ id: profile.id, name: profile.name ?? null, avatar_url: profile.avatar_url ?? null }],
+    error: null,
+  };
+}
+
+function savePortfolioCollaborators(user, { p_portfolio_id, p_user_ids } = {}) {
+  if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
+
+  const portfolio = rows('portfolios').find((p) => p.id === p_portfolio_id);
+  if (!portfolio || portfolio.user_id !== user.id) {
+    return { data: null, error: { message: 'PORTFOLIO_NOT_MINE' } };
+  }
+
+  const store = rows('portfolio_collaborators');
+  for (const link of store.filter((l) => l.portfolio_id === p_portfolio_id)) {
+    store.splice(store.indexOf(link), 1);
+  }
+
+  const seen = new Set();
+  let order = 0;
+
+  for (const id of p_user_ids ?? []) {
+    if (!id || id === user.id || seen.has(id)) continue;
+    if (!rows('profiles').some((p) => p.id === id)) {
+      return {
+        data: null,
+        error: { code: '23503', message: 'violates foreign key constraint on user_id' },
+      };
+    }
+    seen.add(id);
+    store.push({
+      portfolio_id: p_portfolio_id,
+      user_id: id,
+      sort_order: order,
+      created_at: nextTimestamp(),
+    });
+    order += 1;
+  }
+
+  return { data: null, error: null };
+}
+
 function myProfileEmail(user) {
   if (!user) return { data: null, error: { code: '42501', message: 'permission denied' } };
   const profile = rows('profiles').find((p) => p.id === user.id);
@@ -678,6 +741,8 @@ const RPCS = {
   get_recommended_companies: recommendedCompanies,
   my_profile_email: myProfileEmail,
   save_profile_lists: saveProfileLists,
+  find_member_by_email: findMemberByEmail,
+  save_portfolio_collaborators: savePortfolioCollaborators,
 };
 
 export function createSupabase(user) {

@@ -6,6 +6,8 @@ import {
   createPortfolio,
   deletePortfolio,
   deletePortfolios,
+  findMemberByEmail,
+  setPortfolioCollaborators,
   getMyPortfolioReactions,
   getPortfolio,
   incrementPortfolioView,
@@ -21,6 +23,8 @@ import {
   uploadPortfolioImages,
 } from '@backend/lib/api/portfolio';
 import { listMyScrappedPortfolios } from '@backend/lib/api/mypage';
+import { updateProfile } from '@backend/lib/api/profile';
+import { rows } from './support/database';
 
 const imageFile = (name = 'shot.PNG', type = 'image/png', size = 1024) => ({ name, type, size });
 
@@ -503,5 +507,126 @@ describe('deleting portfolios', () => {
     await deletePortfolio(item.id);
 
     await expect(listMyBookmarkedPortfolios()).resolves.toMatchObject({ total: 0 });
+  });
+});
+
+describe('portfolio collaborators', () => {
+  const invite = async (email) => findMemberByEmail(email);
+
+  beforeEach(async () => {
+    signInAs(USERS.b);
+    await updateProfile({ name: 'User B' });
+    signInAs(USERS.a);
+  });
+
+  it('finds a member by their exact email', async () => {
+    const member = await invite(USERS.b.email);
+
+    expect(member).toEqual({ id: USERS.b.id, name: 'User B', avatarUrl: null });
+  });
+
+  it('ignores case and padding around the email', async () => {
+    const member = await invite(`  ${USERS.b.email.toUpperCase()}  `);
+
+    expect(member.id).toBe(USERS.b.id);
+  });
+
+  it('never leaks the email back', async () => {
+    const member = await invite(USERS.b.email);
+
+    expect(member).not.toHaveProperty('email');
+  });
+
+  it('answers null for an email nobody signed up with', async () => {
+    await expect(invite('nobody@callback.test')).resolves.toBeNull();
+  });
+
+  it('rejects a malformed email', async () => {
+    await expect(invite('not-an-email')).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('turns a visitor away from the lookup', async () => {
+    signOutOfBrowser();
+
+    await expect(invite(USERS.b.email)).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('adds collaborators found by email', async () => {
+    const item = await publish('공동 작업');
+    const member = await invite(USERS.b.email);
+
+    const saved = await setPortfolioCollaborators(item.id, [member.id]);
+
+    expect(saved.collaborators).toEqual([{ id: USERS.b.id, name: 'User B', avatarUrl: null }]);
+  });
+
+  it('keeps the collaborators on the gallery card and the detail page', async () => {
+    const item = await publish('공동 작업');
+    const member = await invite(USERS.b.email);
+    await setPortfolioCollaborators(item.id, [member.id]);
+
+    const { items } = await listPortfolios();
+    expect(items.find((p) => p.id === item.id).collaborators).toHaveLength(1);
+    await expect(getPortfolio(item.id)).resolves.toMatchObject({
+      collaborators: [{ id: USERS.b.id, name: 'User B' }],
+    });
+  });
+
+  it('replaces the whole list instead of piling names up', async () => {
+    const item = await publish('공동 작업');
+    await setPortfolioCollaborators(item.id, [USERS.b.id]);
+
+    const saved = await setPortfolioCollaborators(item.id, []);
+
+    expect(saved.collaborators).toEqual([]);
+  });
+
+  it('drops the owner and duplicates from the list', async () => {
+    const item = await publish('공동 작업');
+
+    const saved = await setPortfolioCollaborators(item.id, [USERS.a.id, USERS.b.id, USERS.b.id]);
+
+    expect(saved.collaborators.map((c) => c.id)).toEqual([USERS.b.id]);
+  });
+
+  it('accepts collaborators while creating the portfolio', async () => {
+    const draft = await createPortfolio({ title: '초안', collaboratorIds: [USERS.b.id] });
+
+    expect(draft.collaborators.map((c) => c.id)).toEqual([USERS.b.id]);
+  });
+
+  it('rejects a member id that does not exist', async () => {
+    const item = await publish('공동 작업');
+
+    await expect(
+      setPortfolioCollaborators(item.id, ['00000000-0000-4000-8000-000000000999'])
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects a list that is not a list', async () => {
+    const item = await publish('공동 작업');
+
+    await expect(updatePortfolio(item.id, { collaboratorIds: 'nope' })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('never lets another member edit the list', async () => {
+    const item = await publish('공동 작업');
+
+    signInAs(USERS.b);
+
+    await expect(setPortfolioCollaborators(item.id, [USERS.a.id])).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('goes away with the portfolio', async () => {
+    const item = await publish('공동 작업');
+    await setPortfolioCollaborators(item.id, [USERS.b.id]);
+
+    await deletePortfolio(item.id);
+
+    expect(rows('portfolio_collaborators')).toEqual([]);
   });
 });

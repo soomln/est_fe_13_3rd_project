@@ -14,6 +14,8 @@ const {
   createPortfolio,
   deletePortfolio,
   deletePortfolios,
+  findMemberByEmail,
+  setPortfolioCollaborators,
   getMyPortfolioReactions,
   getPortfolio,
   incrementPortfolioView,
@@ -334,5 +336,39 @@ describe('uploadPortfolioImages', () => {
       '이미지는 최대 15장까지 올릴 수 있습니다.'
     );
     expect(storage.uploads).toHaveLength(0);
+  });
+});
+
+describe('findMemberByEmail', () => {
+  it('asks the lookup endpoint with the email', async () => {
+    mockApiFetch(apiFetch, {
+      'GET /api/members/lookup': { member: { id: 'u2', name: '김프론트', avatarUrl: null } },
+    });
+
+    await expect(findMemberByEmail('a@b.com')).resolves.toEqual({
+      id: 'u2',
+      name: '김프론트',
+      avatarUrl: null,
+    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/members/lookup', { query: { email: 'a@b.com' } });
+  });
+
+  it('unwraps a miss into null', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/members/lookup': { member: null } });
+
+    await expect(findMemberByEmail('nobody@b.com')).resolves.toBeNull();
+  });
+});
+
+describe('setPortfolioCollaborators', () => {
+  it('patches the portfolio with the id list', async () => {
+    mockApiFetch(apiFetch, { 'PATCH /api/portfolios/f1': { id: 'f1', collaborators: [] } });
+
+    await setPortfolioCollaborators('f1', ['u2', 'u3']);
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios/f1', {
+      method: 'PATCH',
+      body: { collaboratorIds: ['u2', 'u3'] },
+    });
   });
 });

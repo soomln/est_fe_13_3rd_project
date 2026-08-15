@@ -29,6 +29,9 @@ export function describeError(error) {
   if (raw.includes('NOT_AUTHENTICATED')) {
     return { status: 401, code: 'NOT_AUTHENTICATED', message: '로그인이 필요합니다.' };
   }
+  if (raw.includes('PORTFOLIO_NOT_MINE')) {
+    return { status: 403, code: 'FORBIDDEN', message: '본인 포트폴리오만 수정할 수 있습니다.' };
+  }
 
   switch (error?.code) {
     case '23505':

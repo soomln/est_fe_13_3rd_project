@@ -10,9 +10,54 @@ const withMine = (item, mine) => ({
   bookmarkedByMe: mine.bookmark.has(item.id),
 });
 
+export const COLLABORATOR_LIMIT = 20;
+
+export async function loadCollaborators(supabase, portfolioIds) {
+  const ids = [...new Set(portfolioIds.filter(Boolean))];
+  if (ids.length === 0) return new Map();
+
+  const links = unwrap(
+    await supabase
+      .from('portfolio_collaborators')
+      .select('portfolio_id, user_id, sort_order')
+      .in('portfolio_id', ids)
+      .order('sort_order', { ascending: true })
+  );
+
+  const memberIds = [...new Set((links ?? []).map((l) => l.user_id))];
+  if (memberIds.length === 0) return new Map();
+
+  const members = unwrap(
+    await supabase.from('profiles').select('id, name, avatar_url').in('id', memberIds)
+  );
+
+  const byId = new Map((members ?? []).map((m) => [m.id, m]));
+  const grouped = new Map();
+
+  for (const link of links ?? []) {
+    const member = byId.get(link.user_id);
+    if (!member) continue;
+    if (!grouped.has(link.portfolio_id)) grouped.set(link.portfolio_id, []);
+    grouped.get(link.portfolio_id).push({
+      id: member.id,
+      name: member.name,
+      avatarUrl: member.avatar_url,
+    });
+  }
+
+  return grouped;
+}
+
 async function attachMine(items, supabase, user) {
-  const mine = await loadMyReactions(supabase, user, 'portfolio', items.map((i) => i.id));
-  return items.map((item) => withMine(item, mine));
+  const [mine, collaborators] = await Promise.all([
+    loadMyReactions(supabase, user, 'portfolio', items.map((i) => i.id)),
+    loadCollaborators(supabase, items.map((i) => i.id)),
+  ]);
+
+  return items.map((item) => ({
+    ...withMine(item, mine),
+    collaborators: collaborators.get(item.id) ?? [],
+  }));
 }
 
 const CATEGORIES = ['web', 'app'];
@@ -61,6 +106,32 @@ async function readJson(request) {
   } catch {
     throw badRequest('JSON 본문이 필요합니다.');
   }
+}
+
+function validateCollaborators(ids) {
+  if (ids === undefined) return undefined;
+  if (!Array.isArray(ids)) throw badRequest('collaboratorIds 는 배열이어야 합니다.');
+  if (ids.some((id) => typeof id !== 'string' || !id.trim())) {
+    throw badRequest('collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.');
+  }
+  if (new Set(ids).size > COLLABORATOR_LIMIT) {
+    throw badRequest(`공동작업자는 최대 ${COLLABORATOR_LIMIT}명까지 추가할 수 있습니다.`);
+  }
+  return ids;
+}
+
+async function saveCollaborators(supabase, portfolioId, ids) {
+  unwrap(
+    await supabase.rpc('save_portfolio_collaborators', {
+      p_portfolio_id: portfolioId,
+      p_user_ids: ids,
+    })
+  );
+}
+
+async function detailWithExtras(row, supabase, user, mine) {
+  const collaborators = await loadCollaborators(supabase, [row.id]);
+  return { ...withMine(toDetail(row), mine), collaborators: collaborators.get(row.id) ?? [] };
 }
 
 function validateContent(content) {
@@ -145,6 +216,8 @@ export const POST = defineRoute(
       throw badRequest(`status 는 ${STATUSES.join(' | ')} 중 하나여야 합니다.`);
     }
 
+    const collaboratorIds = validateCollaborators(body.collaboratorIds);
+
     const row = unwrap(
       await supabase
         .from('portfolios')
@@ -163,8 +236,12 @@ export const POST = defineRoute(
         .single()
     );
 
-    return withMine(
-      toDetail({ ...row, author_name: null, like_count: 0, bookmark_count: 0 }),
+    if (collaboratorIds) await saveCollaborators(supabase, row.id, collaboratorIds);
+
+    return detailWithExtras(
+      { ...row, author_name: null, like_count: 0, bookmark_count: 0 },
+      supabase,
+      user,
       NO_MINE
     );
   },
@@ -194,7 +271,7 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   }
 
   const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
-  return withMine(toDetail(row), mine);
+  return detailWithExtras(row, supabase, user, mine);
 });
 
 export const PATCH_DETAIL = defineRoute(
@@ -221,7 +298,28 @@ export const PATCH_DETAIL = defineRoute(
       patch.status = body.status;
     }
 
-    if (Object.keys(patch).length === 0) throw badRequest('수정할 내용이 없습니다.');
+    const collaboratorIds = validateCollaborators(body.collaboratorIds);
+
+    if (Object.keys(patch).length === 0 && !collaboratorIds) {
+      throw badRequest('수정할 내용이 없습니다.');
+    }
+
+    if (Object.keys(patch).length === 0) {
+      const owned = unwrap(
+        await supabase
+          .from('portfolios')
+          .select('*')
+          .eq('id', params.id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      );
+      if (!owned) throw notFound('포트폴리오를 찾을 수 없습니다.');
+
+      await saveCollaborators(supabase, owned.id, collaboratorIds);
+
+      const mine = await loadMyReactions(supabase, user, 'portfolio', [owned.id]);
+      return detailWithExtras(owned, supabase, user, mine);
+    }
 
     const row = unwrap(
       await supabase
@@ -234,8 +332,10 @@ export const PATCH_DETAIL = defineRoute(
     );
     if (!row) throw notFound('포트폴리오를 찾을 수 없습니다.');
 
+    if (collaboratorIds) await saveCollaborators(supabase, row.id, collaboratorIds);
+
     const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
-    return withMine(toDetail(row), mine);
+    return detailWithExtras(row, supabase, user, mine);
   },
   { auth: true }
 );
