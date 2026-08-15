@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import styles from './Window.module.sass';
+import styles from './DetailModal.module.sass';
 
 import ToastMessage from '../ToastMessage';
 import TabGroup from '../TabGroup';
