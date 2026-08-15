@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { getMyAccount, deleteMyAccount, uploadAvatar } from '@backend/lib/api/mypage';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import AvatarPicker from '@/app/mypage/_components/AvatarPicker';
 import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './AccountPanel.module.sass';
 
@@ -15,13 +16,14 @@ const AVATAR_TYPES = 'image/jpeg,image/png,image/webp';
 
 export default function AccountPanel() {
   const router = useRouter();
-  const { profile, setProfile } = useMyProfile();
+  const { profile, setProfile, saveProfile } = useMyProfile();
   const [account, setAccount] = useState(null);
   const [confirmText, setConfirmText] = useState('');
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [isPicking, setIsPicking] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -60,6 +62,17 @@ export default function AccountPanel() {
       setPhotoError(error?.message ?? '사진을 올리지 못했어요.');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const pickDefault = async (url) => {
+    setIsPicking(false);
+    setPhotoError('');
+
+    try {
+      await saveProfile({ avatar_url: url });
+    } catch {
+      setPhotoError('사진을 바꾸지 못했어요.');
     }
   };
 
@@ -121,15 +134,32 @@ export default function AccountPanel() {
             aria-label='프로필 사진 파일 선택'
           />
 
-          <button
-            type='button'
-            className={`${styles.account_photo_btn} font_body_s_b`}
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {isUploading ? '올리는 중…' : '사진 변경'}
-          </button>
+          <div className={styles.account_photo_btns}>
+            <button
+              type='button'
+              className={`${styles.account_photo_btn} font_body_s_b`}
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? '올리는 중…' : '사진 변경'}
+            </button>
+
+            <button
+              type='button'
+              className={`${styles.account_photo_btn} font_body_s_b`}
+              onClick={() => setIsPicking(true)}
+            >
+              기본 이미지
+            </button>
+          </div>
         </div>
+
+        <AvatarPicker
+          isOpen={isPicking}
+          current={avatarUrl}
+          onSelect={pickDefault}
+          onClose={() => setIsPicking(false)}
+        />
 
         {photoError && (
           <p className={`${styles.account_photo_error} font_body_s_b`} role='alert'>
