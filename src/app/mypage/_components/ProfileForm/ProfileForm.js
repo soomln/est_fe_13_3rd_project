@@ -8,24 +8,15 @@ import LogoItem from '@/app/mypage/_components/LogoItem';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
 import LANGUAGES from '@/app/mypage/_lib/languages';
 import techIcon from '@/app/mypage/_lib/techIcon';
-import { isOngoing, dateHint, monthValue } from '@/app/mypage/_lib/profileMap';
+import { isOngoing, dateHint, monthValue, FINAL_EDUCATIONS } from '@/app/mypage/_lib/profileMap';
 import styles from './ProfileForm.module.sass';
 
-const EDU_STATES = ['졸업', '재학 중', '휴학', '중퇴'];
 
-// 학교 구분. 순서대로 정렬한다
-const SCHOOL_LEVELS = ['고등학교', '전문대', '대학교', '대학원'];
 
-// 최종학력을 고르면 이 구분들이 채워진다. 백엔드 education_level 코드와 같은 이름
-const FINAL_EDUCATIONS = {
-  고졸: ['고등학교'],
-  초대졸: ['고등학교', '전문대'],
-  대졸: ['고등학교', '대학교'],
-  석사: ['고등학교', '대학교', '대학원'],
-  박사: ['고등학교', '대학교', '대학원'],
-};
+
+
 const CAREER_STATES = ['재직 중', '퇴사'];
-const LANGUAGE_LEVELS = ['상', '중', '하'];
+
 const BIO_MAX = 1000;
 
 // meta 는 "2020.03 – 2024.02" 형태로 저장한다
@@ -47,6 +38,13 @@ function RowActions({ onAdd, addLabel }) {
 // 섹션마다 다른 편집 폼. draft 를 직접 고치지 않고 onChange 로 통째로 넘긴다
 export default function ProfileForm({ section, draft, onChange, errorFields = {} }) {
   const { codes } = useMyProfile();
+
+  // 선택지는 전부 서버 코드표에서 온다
+  const labelsOf = (group) => (codes[group] ?? []).map((item) => item.label);
+  const EDU_STATES = labelsOf('edu_status');
+  const SCHOOL_LEVELS = labelsOf('school_type');
+  const FINAL_LEVELS = labelsOf('education_level');
+  const LANGUAGE_LEVELS = labelsOf('language_level');
 
   // 진행 중이면 종료칸에 상태 글자를 넣고, 끝난 상태로 바꾸면 비운다
   const changeBadge = (key, index, item, badge) => {
@@ -106,7 +104,7 @@ export default function ProfileForm({ section, draft, onChange, errorFields = {}
       const kept = draft.educations.filter((item) => need.includes(item.level) || item.title.trim());
       const missing = need
         .filter((level) => !kept.some((item) => item.level === level))
-        .map((level) => ({ level, title: '', sub: '', meta: ' – ', badge: EDU_STATES[0] }));
+        .map((level) => ({ level, title: '', sub: '', meta: ' – ', badge: '졸업' }));
 
       onChange({
         ...draft,
@@ -120,7 +118,7 @@ export default function ProfileForm({ section, draft, onChange, errorFields = {}
         <div className={styles.profile_form_narrow}>
           <TextField
             label='최종학력'
-            options={Object.keys(FINAL_EDUCATIONS)}
+            options={FINAL_LEVELS}
             value={draft.educationLevel}
             onChange={(event) => changeFinal(event.target.value)}
           />
@@ -227,7 +225,7 @@ export default function ProfileForm({ section, draft, onChange, errorFields = {}
               'educations',
               [
                 ...draft.educations,
-                { level: '대학교', title: '', sub: '', meta: ' – ', badge: EDU_STATES[0] },
+                { level: '대학교', title: '', sub: '', meta: ' – ', badge: '졸업' },
               ].sort(byLevel),
             )
           }

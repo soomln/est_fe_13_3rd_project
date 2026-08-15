@@ -5,7 +5,16 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { getMyProfile, getMyProfileStats, updateProfile } from '@backend/lib/api/mypage';
 import { getCodeGroups } from '@backend/lib/api/codes';
 
-const CODE_GROUPS = ['job_role', 'career_level', 'tech_stack', 'interest_field'];
+const CODE_GROUPS = [
+  'job_role',
+  'career_level',
+  'tech_stack',
+  'interest_field',
+  'education_level',
+  'school_type',
+  'edu_status',
+  'language_level',
+];
 
 const MyProfileContext = createContext(null);
 
