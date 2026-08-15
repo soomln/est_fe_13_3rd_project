@@ -253,7 +253,7 @@ describe('the profile counters', () => {
     signInAs(USERS.a);
     await createDocument({ docType: 'resume', title: '이력서' });
     const mine = await createPortfolio({ title: 'A 초안' });
-    await createPost({ postType: 'qbank', questions: ['Q'] });
+    await createPost({ postType: 'qbank', questions: 'Q' });
     await toggleCompanyBookmark(rows('companies')[0].id);
     await togglePortfolioBookmark(theirs.id);
     await togglePostScrap(theirPost.id);

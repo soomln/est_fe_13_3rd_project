@@ -93,17 +93,17 @@ describe('writing an interview review', () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['REST API 의 장점은?', 'CORS 란?'],
+      questions: 'REST API 의 장점은?\nCORS 란?',
     });
 
-    expect(post).toMatchObject({ postType: 'qbank', questions: ['REST API 의 장점은?', 'CORS 란?'] });
+    expect(post.questionList).toEqual(['REST API 의 장점은?', 'CORS 란?']);
   });
 
   it('counts the questions without being told how many there are', async () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['REST API 의 장점은?', 'CORS 란?', '클로저란?'],
+      questions: 'REST API 의 장점은?\nCORS 란?\n클로저란?',
     });
 
     expect(post.questionCount).toBe(3);
@@ -113,10 +113,10 @@ describe('writing an interview review', () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['Q1', 'Q2', 'Q3'],
+      questions: 'Q1\nQ2\nQ3',
     });
 
-    const edited = await updatePost(post.id, { questions: ['Q1'] });
+    const edited = await updatePost(post.id, { questions: 'Q1' });
 
     expect(edited.questionCount).toBe(1);
   });
@@ -135,7 +135,7 @@ describe('writing an interview review', () => {
 
   it('holds the question bank problem score to the same scale', async () => {
     const write = (problemScore) =>
-      createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'], problemScore });
+      createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q', problemScore });
 
     await expect(write(4.5)).rejects.toMatchObject({ status: 400 });
     await expect(write(6)).rejects.toMatchObject({ status: 400 });
@@ -149,7 +149,7 @@ describe('writing an interview review', () => {
   });
 
   it('rejects questions that are not a list', async () => {
-    await expect(createPost({ postType: 'qbank', questions: 'nope' })).rejects.toMatchObject({
+    await expect(createPost({ postType: 'qbank', questions: ['nope'] })).rejects.toMatchObject({
       status: 400,
     });
   });
@@ -182,7 +182,7 @@ describe('reading the board', () => {
   it('separates reviews from question banks', async () => {
     signInAs(USERS.a);
     await writeReview();
-    await createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'] });
+    await createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q' });
 
     await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: 1 });
     await expect(listPosts({ type: 'qbank' })).resolves.toMatchObject({ total: 1 });
@@ -288,7 +288,7 @@ describe('my posts and scraps', () => {
   it('separates my reviews from my question banks', async () => {
     signInAs(USERS.a);
     await writeReview();
-    await createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'] });
+    await createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q' });
 
     await expect(listMyReviews()).resolves.toMatchObject({ total: 1 });
     await expect(listMyQbanks()).resolves.toMatchObject({ total: 1 });
