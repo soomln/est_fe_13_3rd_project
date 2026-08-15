@@ -15,7 +15,7 @@ import styles from './DetailModal.module.sass';
 
 export default function DetailModal({ isOpen, onClose, itemID, updateReactionCount }) {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('ai');
+  const [activeTab, setActiveTab] = useState('overview');
   const [item, setItem] = useState(null);
 
   const { isToastVisible, toastMessage, showToast } = useToast();

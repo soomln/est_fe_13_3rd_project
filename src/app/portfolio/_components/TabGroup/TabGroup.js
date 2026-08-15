@@ -1,14 +1,16 @@
 import Tab from '../Tab';
 
+import styles from './TabGroup.module.sass';
+
 const TABS = [
-  { id: 'ai', iconText: 'auto_awesome' },
-  { id: 'document', iconText: 'article' },
+  { id: 'overview', iconText: 'auto_awesome' },
   { id: 'code', iconText: 'code' },
+  // { id: 'document', iconText: 'article' },
 ];
 
 export default function TabGroup({ bgColor, activeTab, onChangeTab }) {
   return (
-    <div>
+    <div className={styles.tab_group}>
       {TABS.map((tab) => (
         <Tab
           key={tab.id}
