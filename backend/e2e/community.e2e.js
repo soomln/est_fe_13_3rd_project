@@ -745,3 +745,53 @@ describe('면접 후기·족보의 직무', () => {
     expect(mine.jobInfo).toContain('프론트엔드');
   });
 });
+
+describe('코드 컬럼은 라벨을 거부한다', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it.each([
+    ['difficultyCode', '어려움'],
+    ['passResultCode', '합격'],
+    ['channelCode', '온라인'],
+    ['educationLevel', '대졸'],
+    ['jobRoleCode', '프론트엔드'],
+  ])('refuses a label in %s', async (field, label) => {
+    await expect(writeReview({ [field]: label })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('says which value was wrong and what is allowed', async () => {
+    await expect(writeReview({ difficultyCode: '어려움' })).rejects.toThrowError(/어려움/);
+  });
+
+  it('accepts the whole set of real codes', async () => {
+    const post = await writeReview({
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+      educationLevel: 'bachelor',
+      jobRoleCode: 'fe',
+    });
+
+    expect(post).toMatchObject({
+      difficulty: '어려움',
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+      jobRoleCode: 'fe',
+    });
+  });
+
+  it('still allows the free-text channel behind etc', async () => {
+    const post = await writeReview({ channelCode: 'etc', channelEtc: '잡코리아' });
+
+    expect(post).toMatchObject({ channel: '잡코리아', channelCode: 'etc' });
+  });
+
+  it('writes nothing when a code is refused', async () => {
+    const before = (await listPosts({ type: 'review' })).total;
+
+    await expect(writeReview({ passResultCode: '합격' })).rejects.toMatchObject({ status: 400 });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: before });
+  });
+});

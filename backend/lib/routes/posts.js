@@ -1,6 +1,7 @@
 import { SCORE_SCALE } from '../constants';
 import { badRequest, notFound, unauthorized } from '../http/errors';
 import { defineRoute, pageOf, unwrap } from '../http/route';
+import { assertCodes } from './codeGuard';
 import { loadMyReactions, loadScrapMarks } from './reactions';
 
 const NO_MINE = { like: new Set(), bookmark: new Set() };
@@ -147,23 +148,13 @@ const isScore = (value) =>
   value === null ||
   (Number.isInteger(value) && value >= SCORE_SCALE.min && value <= SCORE_SCALE.max);
 
-async function loadCodes(supabase, group) {
-  const rows = unwrap(
-    await supabase.from('code_master').select('code').eq('group_name', group).eq('is_active', true)
-  );
-  return (rows ?? []).map((r) => r.code);
-}
-
-async function assertJobRole(supabase, body) {
-  if (!('jobRoleCode' in body) || body.jobRoleCode == null) return;
-
-  const codes = await loadCodes(supabase, 'job_role');
-  if (!codes.includes(body.jobRoleCode)) {
-    throw badRequest(
-      `jobRoleCode 는 code_master 의 job_role 코드여야 합니다. 사용 가능: ${codes.join(' | ')}`
-    );
-  }
-}
+const CODE_FIELDS = {
+  jobRoleCode: 'job_role',
+  difficultyCode: 'difficulty',
+  passResultCode: 'pass_result',
+  channelCode: 'interview_channel',
+  educationLevel: 'education_level',
+};
 
 function toColumns(body) {
   const patch = {};
@@ -281,7 +272,7 @@ export const POST = defineRoute(
       throw badRequest(`postType 은 ${POST_TYPES.join(' | ')} 중 하나여야 합니다.`);
     }
 
-    await assertJobRole(supabase, body);
+    await assertCodes(supabase, body, CODE_FIELDS);
 
     const inserted = unwrap(
       await supabase
@@ -321,7 +312,7 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
 export const PATCH_DETAIL = defineRoute(
   async ({ request, params, supabase, user }) => {
     const body = await readJson(request);
-    await assertJobRole(supabase, body);
+    await assertCodes(supabase, body, CODE_FIELDS);
 
     const patch = toColumns(body);
     if (Object.keys(patch).length === 0) throw badRequest('수정할 내용이 없습니다.');

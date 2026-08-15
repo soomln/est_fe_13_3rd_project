@@ -1565,6 +1565,44 @@ export default function BackendTestPage() {
           >
             없는 직무 코드 거부 확인
           </button>
+          <button
+            type='button'
+            style={S.miniBtn}
+            onClick={() =>
+              runDocAction('코드 자리에 라벨 투입 (5개 필드)', async () => {
+                const cases = [
+                  ['jobRoleCode', '프론트엔드'],
+                  ['difficultyCode', '어려움'],
+                  ['passResultCode', '합격'],
+                  ['channelCode', '온라인'],
+                  ['educationLevel', '대졸'],
+                ];
+
+                const leaked = [];
+                for (const [field, label] of cases) {
+                  try {
+                    const p = await createPost({
+                      postType: 'review',
+                      companyId: companies[0]?.id ?? null,
+                      title: `라벨 투입 ${field}`,
+                      [field]: label,
+                    });
+                    leaked.push(field);
+                    await deletePosts([p.id]);
+                  } catch {
+                    /* 400 이 정상 */
+                  }
+                }
+
+                await reloadPosts();
+                return leaked.length === 0
+                  ? `5개 필드 모두 차단됨 (정상)`
+                  : `통과해버림 — 문제: ${leaked.join(', ')}`;
+              })
+            }
+          >
+            라벨 투입 거부 확인
+          </button>
         </div>
 
         <div style={S.sortBar}>

@@ -19,6 +19,7 @@ const CODES = {
     { group_name: 'difficulty', code: 'hard', label: '어려움' },
     { group_name: 'pass_result', code: 'pass', label: '합격' },
     { group_name: 'interview_channel', code: 'online', label: '온라인 지원' },
+    { group_name: 'interview_channel', code: 'etc', label: '기타' },
     { group_name: 'job_role', code: 'fe', label: '프론트엔드' },
     { group_name: 'education_level', code: 'bachelor', label: '대졸' },
   ],
@@ -78,7 +79,7 @@ describe('loadLabels', () => {
     await expect(loadLabels(stub)).resolves.toEqual({
       difficulty: { hard: '어려움' },
       pass_result: { pass: '합격' },
-      interview_channel: { online: '온라인 지원' },
+      interview_channel: { online: '온라인 지원', etc: '기타' },
       job_role: { fe: '프론트엔드' },
       education_level: { bachelor: '대졸' },
     });
