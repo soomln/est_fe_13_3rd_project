@@ -38,13 +38,28 @@
 ```bash
 git pull
 npm install
-cp .env.example .env.local   # 값은 팀 노션 참고
 npm run dev
+```
+
+프로젝트 루트에 `.env.local` 을 만들고 아래 4개를 채우세요. **값은 팀 단톡 고정 메시지 참고.**
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_ALAN_BASE_URL=/alan
+NEXT_PUBLIC_ALAN_CLIENT_ID=
 ```
 
 동작 확인: <http://localhost:3000/backend-test> — 전부 초록불이면 준비 완료입니다.
 
 > `.env.local` 이 없어도 앱은 뜹니다. 다만 로그인/데이터 기능은 동작하지 않습니다.
+
+### Alan AI 환경변수 ⚠️ 각자 값이 다릅니다
+
+`NEXT_PUBLIC_ALAN_CLIENT_ID` 는 **사람마다 다르게** 배정돼 있습니다. 팀 단톡의 배정표에서
+본인 것을 찾아 넣으세요. 남의 것을 쓰면 그 사람 할당량이 깎입니다.
+
+`NEXT_PUBLIC_ALAN_BASE_URL` 은 `/alan` 그대로 두세요. 호출법은 [9장 — Alan AI](#9-스펙-제약--미구현) 참고.
 
 ## 1. 구조
 
@@ -2244,10 +2259,63 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 | 모듈 | 내용 | 상태 |
 |---|---|---|
-| `ai.js` | AI 코치, 보조도구 5종, 면접 질문 생성 | **프론트에서 Alan AI 직접 호출** — 백엔드 프록시 없음 |
+| `ai.js` | AI 코치, 보조도구 5종, 면접 질문 생성 | **프론트가 Alan 을 직접 호출** — 래퍼 함수 없음 |
 
-질문 생성·피드백·첨삭은 프론트에서 Alan 을 직접 부르고, 그 **결과만** `@backend/lib/api/interview` 로 저장합니다.
+질문 생성·피드백·첨삭은 프론트에서 Alan 을 부르고, 그 **결과만** `@backend/lib/api/interview` 로 저장합니다.
 그 외 모듈은 전부 사용할 수 있습니다.
+
+### Alan AI 호출
+
+**⚠️ `https://kdt-api-function.azurewebsites.net` 을 브라우저에서 직접 부르면 100% 실패합니다.**
+Alan 서버가 `Access-Control-Allow-Origin` 을 내려주지 않아 CORS 로 차단됩니다.
+
+```
+Access to fetch at 'https://kdt-api-function.azurewebsites.net/...' from origin
+'http://localhost:3000' has been blocked by CORS policy
+```
+
+그래서 `next.config.mjs` 에 same-origin 우회 경로를 열어뒀습니다. **`/alan` 으로 부르세요.**
+
+```
+브라우저 ──► /alan/question ──(Next.js rewrite)──► kdt-api-function.azurewebsites.net/api/v1/question
+```
+
+| 엔드포인트 | 용도 |
+|---|---|
+| `GET /alan/question?content=&client_id=` | 한 번에 답변 (`{ answer, references }`) |
+| `GET /alan/question/sse-streaming?content=&client_id=` | 스트리밍 (`text/event-stream`) |
+| `DELETE /alan/reset-state` (body `{ client_id }`) | 대화 상태 초기화 |
+
+```js
+const BASE = process.env.NEXT_PUBLIC_ALAN_BASE_URL;
+const CLIENT_ID = process.env.NEXT_PUBLIC_ALAN_CLIENT_ID;
+
+export async function askAlan(content) {
+  const q = new URLSearchParams({ content, client_id: CLIENT_ID });
+  const res = await fetch(`${BASE}/question?${q}`);
+  if (!res.ok) throw new Error(`Alan ${res.status}`);
+  const { answer } = await res.json();
+  return answer;
+}
+```
+
+스트리밍은 `event: speak | action | complete` 형태로 내려옵니다.
+
+```
+event: speak
+data: {"type": "speak", "data": "질문의 의도를 이해하고 있어요."}
+event: action
+data: {"type": "action", "data": "search_web"}
+```
+
+**주의할 점**
+
+- **느립니다.** 실측으로 단답형 6초, 웹 검색이 붙으면 **23초**까지 갑니다. 로딩 UI 없이
+  붙이면 멈춘 것처럼 보입니다. 체감이 중요하면 `sse-streaming` 을 쓰세요.
+- `client_id` 는 **할당량 키**입니다. 사람마다 다르고, 브라우저 번들에 그대로 실립니다.
+  공용 계정 키가 아니므로 큰 문제는 아니지만, 배포본에서 남이 가져다 쓰면 본인 할당량이 깎입니다.
+- 답이 빈 문자열(`""`)로 오는 경우가 있습니다. 폴백을 준비하세요.
+- 프롬프트 조립은 전부 프론트 몫입니다. 서버는 관여하지 않습니다.
 
 ### 테스트
 
