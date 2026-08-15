@@ -428,7 +428,7 @@ const { items, total } = await listPosts({
 await createPost({
   postType: 'review',
   companyId, title, body,
-  difficultyCode: 'normal', difficultyScore: 3.5,
+  difficultyCode: 'normal', difficultyScore: 3,
   passResultCode: 'pass',
   channelCode: 'online', channelEtc: null,    // '기타'(etc) 선택 시에만 channelEtc
   jobRoleCode: 'frontend', positionLevel: '신입', educationLevel: 'bachelor',
@@ -441,12 +441,19 @@ await createPost({
   postType: 'qbank',
   companyId,
   questions: ['REST API의 장점은?', '클로저를 설명해주세요.'],
-  problemScore: 4.0,
+  problemScore: 4,
 });
 ```
 
 `questionCount` 는 **서버가 `questions` 길이로 계산**합니다. 보내지 마세요 (보내도 무시됩니다).
 수정으로 질문을 늘리거나 줄이면 개수도 함께 갱신됩니다.
+
+**점수는 전부 1~5 정수만** 받습니다 — 면접 난이도(`difficultyScore`)와 문제 난이도(`problemScore`) 둘 다.
+별 5개짜리 선택 UI를 그대로 보내면 됩니다. `3.5` 같은 반 칸 점수나 범위 밖 값은 **400** 입니다.
+
+```js
+import { SCORE_SCALE } from '@backend/lib/constants';   // { min: 1, max: 5, step: 1 }
+```
 
 ### 댓글 — `@backend/lib/api/comments`
 
@@ -572,10 +579,13 @@ router.replace('/');
 ### 상수 — `@backend/lib/constants`
 
 ```js
-import { PAGE_SIZE, SORT, DOCUMENT_LIMIT, UPLOAD_LIMIT, REACTION } from '@backend/lib/constants';
+import {
+  PAGE_SIZE, SORT, DOCUMENT_LIMIT, SCORE_SCALE, UPLOAD_LIMIT, REACTION,
+} from '@backend/lib/constants';
 
 PAGE_SIZE.companies;   // 20  (디자인 그리드를 세어 정한 값)
 SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
+SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 ```
 
 | 상수 | 값 | 쓰는 곳 |
@@ -593,6 +603,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `PAGE_SIZE.interviewScraps` | 6 | 마이페이지 AI 면접 스크랩 |
 | `PAGE_SIZE.myQbank` | 4 | 마이페이지 내 활동 족보 |
 | `DOCUMENT_LIMIT` | 10 | 이력서·자소서 각각 |
+| `SCORE_SCALE` | `{ min: 1, max: 5, step: 1 }` | 면접 난이도 · 문제 난이도 점수 입력 UI |
 | `UPLOAD_LIMIT.avatar` | 2MB | jpg / png / webp |
 | `UPLOAD_LIMIT.portfolio` | 5MB × 15장 | jpg / png / webp / gif |
 
@@ -796,7 +807,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `review` | number | 면접 후기 수 |
 | `jokbo` | number | 면접 족보 수 |
 | `passrate` | number \| null | 합격률 **퍼센트 정수** `0~100`. 합/불 후기가 없으면 `null` |
-| `difficulty` | number \| null | 후기들의 `difficultyScore` 평균 (소수 1자리). 후기가 없으면 `null` |
+| `difficulty` | number \| null | 후기들의 `difficultyScore` 평균 `1.0~5.0` (소수 1자리). 후기가 없으면 `null` |
 
 > ⚠️ `difficulty` 는 **숫자**입니다. [Post](#57-post) 의 `difficulty` 는 **라벨 문자열**(`"보통"`)입니다. 이름은 같지만 다른 값입니다.
 
@@ -872,8 +883,8 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `questions` | string[] | ✕ | ● | 족보 질문 목록 |
 | `questionCount` | number \| null | ✕ | ● | `questions.length` — **서버가 계산**. 요청으로 못 바꿈 |
 | `difficulty` | string | ● | ● | 난이도 **라벨** (`"쉬움"`/`"보통"`/`"어려움"`). 값 없으면 `""` |
-| `difficultyScore` | number \| null | ● | ● | `0.0~9.9` (소수 1자리) |
-| `problemScore` | number \| null | ✕ | ● | 문제 난이도 `0.0~9.9` |
+| `difficultyScore` | number \| null | ● | ● | 면접 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
+| `problemScore` | number \| null | ✕ | ● | 문제 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
 | `result` | string | ● | ✕ | 합격 여부 **라벨** (`"합격"`/`"대기"`/`"불합격"`) |
 | `channel` | string | ● | ● | 면접 경로 **라벨**. `channelCode='etc'` 면 `channelEtc` 값이 대신 들어감 |
 | `jobRole` | string | ● | ● | 직무 **라벨** (`"프론트엔드"`) |
@@ -1691,8 +1702,8 @@ publishPortfolio(id)
 | `body` | string | ✕ | 후기 | 본문 |
 | `questions` | string[] | ✕ | 족보 | **배열 아니면 400.** 보내면 `questionCount` 도 함께 갱신됨 |
 | `difficultyCode` | string | ✕ | 공통 | `code_master(difficulty)` — `easy`/`normal`/`hard` |
-| `difficultyScore` | number | ✕ | 공통 | 소수 1자리, 최대 9.9 |
-| `problemScore` | number | ✕ | 족보 | 소수 1자리 |
+| `difficultyScore` | number \| null | ✕ | 공통 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
+| `problemScore` | number \| null | ✕ | 족보 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
 | `passResultCode` | string | ✕ | 후기 | `pass` \| `waiting` \| `fail` |
 | `channelCode` | string | ✕ | 공통 | `code_master(interview_channel)` 코드 |
 | `channelEtc` | string | ✕ | 공통 | **`channelCode: 'etc'` 일 때만** 자유 입력값 |
@@ -2099,7 +2110,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 796개 + E2E 367개 = 1,163개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 814개 + E2E 371개 = 1,185개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all
