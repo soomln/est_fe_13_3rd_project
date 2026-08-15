@@ -1,6 +1,6 @@
 import styles from './ReactionBtnGroup.module.sass';
 import CircleBadge from '@/app/_components/common/CircleBadge';
-import ReactionBtn from '@/app/portfolio/_components/Modal/ReactionBtn';
+import ReactionBtn from '../ReactionBtn';
 
 export default function ReactionBtnGroup({ item, contentsRef, showToast, updateReactionCount }) {
   const onMoveTop = () => {

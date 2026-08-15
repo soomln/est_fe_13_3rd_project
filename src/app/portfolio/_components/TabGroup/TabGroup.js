@@ -1,4 +1,4 @@
-import Tab from '@/app/portfolio/_components/Modal/Tab';
+import Tab from '../Tab';
 
 const TABS = [
   { id: 'ai', iconText: 'auto_awesome' },
