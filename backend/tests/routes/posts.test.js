@@ -34,7 +34,7 @@ const ROW = {
   company_slug: 'naver',
   title: '면접 후기',
   body: '분위기 좋았어요',
-  questions: ['REST 란?'],
+  questions: 'REST 란?',
   difficulty_code: 'hard',
   difficulty_score: 4,
   problem_score: 3,
@@ -121,6 +121,15 @@ describe('GET /api/posts', () => {
     });
   });
 
+  it('hands the screen both the raw text and a ready made list', async () => {
+    setSupabase(listStub([{ ...ROW, questions: '  REST 란?  \n\nCORS 란?\n' }]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].questions).toBe('  REST 란?  \n\nCORS 란?\n');
+    expect(body.items[0].questionList).toEqual(['REST 란?', 'CORS 란?']);
+  });
+
   it('exposes the body as both body and content', async () => {
     const { body } = await callRoute(GET, { request: makeRequest(url()) });
 
@@ -196,7 +205,8 @@ describe('GET /api/posts', () => {
       companyLogo: null,
       title: '',
       body: '',
-      questions: [],
+      questions: '',
+      questionList: [],
       tags: [],
       overallComment: '',
       likeCount: 0,
@@ -384,13 +394,13 @@ describe('POST /api/posts', () => {
     expect(status).toBe(400);
   });
 
-  it('answers 400 when questions is not an array', async () => {
+  it('answers 400 when questions is not text', async () => {
     const { status, body } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { postType: 'qbank', questions: 'a' } }),
+      request: makeRequest(url(), { body: { postType: 'qbank', questions: ['a'] } }),
     });
 
     expect(status).toBe(400);
-    expect(body.error.message).toBe('questions 는 배열이어야 합니다.');
+    expect(body.error.message).toBe('questions 는 줄바꿈으로 구분한 텍스트여야 합니다.');
   });
 
   it('answers 400 when tags is not an array', async () => {
@@ -421,7 +431,7 @@ describe('POST /api/posts', () => {
           educationLevel: 'bachelor',
           tags: ['#CS'],
           overallComment: '총평',
-          questions: ['Q1'],
+          questions: 'Q1',
         },
       }),
     });
@@ -432,7 +442,7 @@ describe('POST /api/posts', () => {
       company_id: 'c1',
       title: '후기',
       body: '내용',
-      questions: ['Q1'],
+      questions: 'Q1',
       difficulty_code: 'hard',
       difficulty_score: 4,
       problem_score: 3,
@@ -498,7 +508,7 @@ describe('POST /api/posts', () => {
   it('counts the questions instead of trusting the client', async () => {
     await callRoute(POST, {
       request: makeRequest(url(), {
-        body: { postType: 'qbank', questions: ['Q1', 'Q2', 'Q3'], questionCount: 99 },
+        body: { postType: 'qbank', questions: 'Q1\nQ2\nQ3', questionCount: 99 },
       }),
     });
 
@@ -518,9 +528,21 @@ describe('POST /api/posts', () => {
     });
   });
 
+  it('ignores blank lines and trims each question', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'qbank', questions: '  Q1  \n\n\n  Q2\n   \n' },
+      }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      question_count: 2,
+    });
+  });
+
   it('counts an empty question list as zero', async () => {
     await callRoute(POST, {
-      request: makeRequest(url(), { body: { postType: 'qbank', questions: [] } }),
+      request: makeRequest(url(), { body: { postType: 'qbank', questions: '' } }),
     });
 
     expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
@@ -690,7 +712,7 @@ describe('PATCH /api/posts/:id', () => {
 
   it('the questions check applies to updates too', async () => {
     const { status } = await callRoute(PATCH_DETAIL, {
-      request: makeRequest(url(), { body: { questions: 'a' } }),
+      request: makeRequest(url(), { body: { questions: ['a'] } }),
       params: { id: 'p1' },
     });
 
@@ -712,12 +734,12 @@ describe('PATCH /api/posts/:id', () => {
 
   it('recounts the questions on update', async () => {
     await callRoute(PATCH_DETAIL, {
-      request: makeRequest(url(), { body: { questions: ['Q1', 'Q2'], questionCount: 99 } }),
+      request: makeRequest(url(), { body: { questions: 'Q1\nQ2', questionCount: 99 } }),
       params: { id: 'p1' },
     });
 
     expect(argsOf(queriesFor(supabase, 'posts')[0], 'update')[0]).toEqual([
-      { questions: ['Q1', 'Q2'], question_count: 2 },
+      { questions: 'Q1\nQ2', question_count: 2 },
     ]);
   });
 

@@ -858,7 +858,7 @@ export default function BackendTestPage() {
                 const p = await createPost({
                   postType: 'qbank',
                   companyId: companies[0]?.id ?? null,
-                  questions: ['REST API의 장점은?', '브라우저 렌더링 과정을 설명하세요', '클로저란?'],
+                  questions: 'REST API의 장점은?\n브라우저 렌더링 과정을 설명하세요\n클로저란?',
                   difficultyCode: 'hard',
                   difficultyScore: 5,
                   passResultCode: 'waiting',
@@ -869,7 +869,7 @@ export default function BackendTestPage() {
                   educationLevel: '대졸',
                 });
                 await reloadPosts();
-                return `질문 ${p.questions.length}개 · 경로 "${p.route}" (기타 처리 확인)`;
+                return `질문 ${p.questionCount}개 · 경로 "${p.route}" (기타 처리 확인)`;
               })
             }
           >
@@ -901,7 +901,7 @@ export default function BackendTestPage() {
                 {p.postType === 'review' ? '후기' : '족보'}
               </span>
               <span style={{ ...S.itemLabel, minWidth: 170 }}>
-                {p.title || `질문 ${p.questions.length}개`}
+                {p.title || `질문 ${p.questionCount}개`}
               </span>
               <span style={S.itemDetail}>
                 {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo}
