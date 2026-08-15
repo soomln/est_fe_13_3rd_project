@@ -12,7 +12,7 @@ import {
   updateProfile,
   uploadAvatar,
 } from '@backend/lib/api/profile';
-import { getMyAccount, getMySummary } from '@backend/lib/api/mypage';
+import { deleteMyAccount, getMyAccount, getMySummary } from '@backend/lib/api/mypage';
 import { getCodeGroups } from '@backend/lib/api/codes';
 import { createDocument } from '@backend/lib/api/documents';
 import { createPortfolio, publishPortfolio, togglePortfolioBookmark } from '@backend/lib/api/portfolio';
@@ -151,6 +151,78 @@ describe('the education fields on a profile', () => {
     const profile = await getProfile('me');
 
     expect(profile.education_level).toBeNull();
+  });
+
+  it('keeps every entry in the order it was sent', async () => {
+    await updateProfile({
+      careers: [
+        { start: '2023-01', end: '재직 중', company: '토스', role: '백엔드' },
+        { start: '2020-03', end: '2022-12', company: '네이버', role: '프론트엔드' },
+        { start: '2018-06', end: '2020-02', company: '카카오', role: 'QA' },
+      ],
+    });
+
+    const { careers } = await getProfile('me');
+
+    expect(careers.map((c) => c.company)).toEqual(['토스', '네이버', '카카오']);
+  });
+
+  it('replaces a list instead of piling entries up', async () => {
+    await updateProfile({ awards: [{ date: '2023-05', name: '대상' }, { date: '2022-01', name: '장려상' }] });
+    await updateProfile({ awards: [{ date: '2024-02', name: '금상' }] });
+
+    const { awards } = await getProfile('me');
+
+    expect(awards).toEqual([{ date: '2024-02', name: '금상' }]);
+  });
+
+  it('leaves the other lists alone when only one is sent', async () => {
+    await updateProfile({
+      awards: [{ date: '2023-05', name: '대상' }],
+      languages: [{ language: '영어', level: 'high', detail: 'OPIc AL' }],
+    });
+
+    await updateProfile({ awards: [] });
+
+    const { awards, languages } = await getProfile('me');
+
+    expect(awards).toEqual([]);
+    expect(languages).toHaveLength(1);
+  });
+
+  it('refuses a label where a code belongs', async () => {
+    await expect(
+      updateProfile({ educations: [{ type: '대학교', school: 'OO대학교' }] })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('keeps the old entries when a save is rejected', async () => {
+    await updateProfile({ educations: [{ type: 'university', school: 'OO대학교' }] });
+
+    await expect(
+      updateProfile({ educations: [{ type: '없는코드', school: '새 학교' }] })
+    ).rejects.toMatchObject({ status: 400 });
+
+    const { educations } = await getProfile('me');
+
+    expect(educations).toEqual([
+      {
+        type: 'university',
+        school: 'OO대학교',
+        major: null,
+        status: null,
+        admission: null,
+        graduation: null,
+      },
+    ]);
+  });
+
+  it('goes away with the account', async () => {
+    await updateProfile({ educations: [{ type: 'university', school: 'OO대학교' }] });
+
+    await deleteMyAccount();
+
+    expect(rows('profile_educations')).toEqual([]);
   });
 });
 
