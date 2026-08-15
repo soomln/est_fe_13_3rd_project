@@ -78,6 +78,17 @@ describe('browsing companies', () => {
     expect(page.items.map((c) => c.name)).toEqual(['네이버', '정보없는회사', '카카오']);
   });
 
+  it('remembers my bookmark when the list is loaded again', async () => {
+    signInAs(USERS.a);
+    await toggleCompanyBookmark(naver().id);
+
+    const { items } = await listCompanies();
+    const card = items.find((c) => c.id === naver().id);
+
+    expect(card).toMatchObject({ bookmarkedByMe: true, favorite: 1 });
+    await expect(getCompany('naver')).resolves.toMatchObject({ bookmarkedByMe: true });
+  });
+
   it('rejects an unknown sort', async () => {
     await expect(listCompanies({ sort: 'random' })).rejects.toMatchObject({
       status: 400,

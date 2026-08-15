@@ -121,6 +121,28 @@ describe('writing an interview review', () => {
     expect(edited.questionCount).toBe(1);
   });
 
+  it('remembers my reaction when the board is loaded again', async () => {
+    const post = await writeReview();
+    await togglePostLike(post.id);
+    await togglePostScrap(post.id);
+
+    const { items } = await listPosts({ type: 'review' });
+    const card = items.find((p) => p.id === post.id);
+
+    expect(card).toMatchObject({ likedByMe: true, scrappedByMe: true, likeCount: 1, scrapCount: 1 });
+    await expect(getPost(post.id)).resolves.toMatchObject({ likedByMe: true, scrappedByMe: true });
+  });
+
+  it('never marks another member reaction as mine', async () => {
+    const post = await writeReview();
+    await togglePostLike(post.id);
+
+    signInAs(USERS.b);
+    const { items } = await listPosts({ type: 'review' });
+
+    expect(items.find((p) => p.id === post.id)).toMatchObject({ likedByMe: false, likeCount: 1 });
+  });
+
   it('rejects an unknown post type', async () => {
     await expect(createPost({ postType: 'diary' })).rejects.toMatchObject({ status: 400 });
   });
@@ -480,6 +502,31 @@ describe('commenting on a post', () => {
 
   it('rejects an unknown comment sort', async () => {
     await expect(listComments(post.id, { sort: 'random' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('remembers my comment like when the list is loaded again', async () => {
+    const comment = await createComment(post.id, '댓글');
+    await toggleCommentLike(comment.id);
+
+    const { items } = await listComments(post.id);
+
+    expect(items.find((c) => c.id === comment.id)).toMatchObject({
+      likedByMe: true,
+      likeCount: 1,
+    });
+  });
+
+  it('never marks another member comment like as mine', async () => {
+    const comment = await createComment(post.id, '댓글');
+    await toggleCommentLike(comment.id);
+
+    signInAs(USERS.b);
+    const { items } = await listComments(post.id);
+
+    expect(items.find((c) => c.id === comment.id)).toMatchObject({
+      likedByMe: false,
+      likeCount: 1,
+    });
   });
 
   it('marks which comments the member liked', async () => {

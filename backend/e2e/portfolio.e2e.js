@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { resetWorld, signInAs, startWorld, stopWorld, USERS } from './support/harness';
+import { resetWorld, signInAs, signOutOfBrowser, startWorld, stopWorld, USERS } from './support/harness';
 import { failNextUpload, browserState } from './support/browser';
 import {
   createPortfolio,
@@ -278,6 +278,69 @@ describe('reacting to portfolios', () => {
 
     const gallery = await listPortfolios();
     expect(gallery.items[0]).toMatchObject({ likeCount: 1, bookmarkCount: 1 });
+  });
+
+  it('remembers my reaction when the gallery is loaded again', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    const { items } = await listPortfolios();
+    const card = items.find((p) => p.id === item.id);
+
+    expect(card.likedByMe).toBe(true);
+    expect(card.bookmarkedByMe).toBe(false);
+    expect(card.likeCount).toBe(1);
+  });
+
+  it('remembers my reaction on the detail page too', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioBookmark(item.id);
+
+    await expect(getPortfolio(item.id)).resolves.toMatchObject({
+      likedByMe: false,
+      bookmarkedByMe: true,
+    });
+  });
+
+  it('forgets the reaction once it is toggled off', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+    await togglePortfolioLike(item.id);
+
+    const { items } = await listPortfolios();
+
+    expect(items.find((p) => p.id === item.id).likedByMe).toBe(false);
+  });
+
+  it('never marks someone else reaction as mine', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    signInAs(USERS.b);
+    const { items } = await listPortfolios();
+    const card = items.find((p) => p.id === item.id);
+
+    expect(card.likedByMe).toBe(false);
+    expect(card.likeCount).toBe(1);
+  });
+
+  it('reports no reaction to a visitor who is not signed in', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    signOutOfBrowser();
+    const { items } = await listPortfolios();
+
+    expect(items.find((p) => p.id === item.id)).toMatchObject({
+      likedByMe: false,
+      bookmarkedByMe: false,
+      likeCount: 1,
+    });
   });
 
   it('marks which cards the member already reacted to', async () => {

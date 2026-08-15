@@ -1,6 +1,15 @@
 import { SCORE_SCALE } from '../constants';
 import { badRequest, notFound, unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+const NO_MINE = { like: new Set(), bookmark: new Set() };
+
+const withMine = (item, mine) => ({
+  ...item,
+  likedByMe: mine.like.has(item.id),
+  scrappedByMe: mine.bookmark.has(item.id),
+});
 
 const POST_TYPES = ['review', 'qbank'];
 
@@ -191,7 +200,10 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
   if (error) throw error;
 
   const labels = await loadLabels(supabase);
-  return { items: (data ?? []).map((r) => toItem(r, labels)), total: count ?? 0, page, pageSize };
+  const items = (data ?? []).map((r) => toItem(r, labels));
+  const mine = await loadMyReactions(supabase, user, 'post', items.map((i) => i.id));
+
+  return { items: items.map((item) => withMine(item, mine)), total: count ?? 0, page, pageSize };
 });
 
 export const POST = defineRoute(
@@ -211,7 +223,7 @@ export const POST = defineRoute(
     );
 
     const row = unwrap(await supabase.from('v_posts').select('*').eq('id', inserted.id).single());
-    return toItem(row, await loadLabels(supabase));
+    return withMine(toItem(row, await loadLabels(supabase)), NO_MINE);
   },
   { auth: true }
 );
@@ -229,10 +241,12 @@ export const DELETE = defineRoute(
   { auth: true }
 );
 
-export const GET_DETAIL = defineRoute(async ({ params, supabase }) => {
+export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   const row = unwrap(await supabase.from('v_posts').select('*').eq('id', params.id).maybeSingle());
   if (!row) throw notFound('글을 찾을 수 없습니다.');
-  return toItem(row, await loadLabels(supabase));
+
+  const mine = await loadMyReactions(supabase, user, 'post', [row.id]);
+  return withMine(toItem(row, await loadLabels(supabase)), mine);
 });
 
 export const PATCH_DETAIL = defineRoute(
@@ -252,7 +266,8 @@ export const PATCH_DETAIL = defineRoute(
     if (!updated) throw notFound('글을 찾을 수 없습니다.');
 
     const row = unwrap(await supabase.from('v_posts').select('*').eq('id', updated.id).single());
-    return toItem(row, await loadLabels(supabase));
+    const mine = await loadMyReactions(supabase, user, 'post', [row.id]);
+    return withMine(toItem(row, await loadLabels(supabase)), mine);
   },
   { auth: true }
 );
