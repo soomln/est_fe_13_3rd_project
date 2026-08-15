@@ -1,8 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import { toPatch, validate, fillMissingEducations } from '@/app/mypage/_lib/profileMap';
+import techIcon from '@/app/mypage/_lib/techIcon';
+import Toast from '@/app/mypage/_components/Toast';
+import UnsavedGuard from '@/app/mypage/_components/UnsavedGuard';
 import ProfileSection from '@/app/mypage/_components/ProfileSection';
 import ProfileForm from '@/app/mypage/_components/ProfileForm';
 import InfoRow from '@/app/mypage/_components/InfoRow';
@@ -10,13 +16,35 @@ import AwardRow from '@/app/mypage/_components/AwardRow';
 import LogoItem from '@/app/mypage/_components/LogoItem';
 import styles from './ProfileView.module.sass';
 
-// 주의: supabase 연결 전까지는 화면에만 반영된다. 새로고침하면 되돌아간다
-export default function ProfileView({ profile: initialProfile }) {
-  const [profile, setProfile] = useState(initialProfile);
+export default function ProfileView({ profile }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { codes, saveProfile } = useMyProfile();
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState(null);
+  const [toast, setToast] = useState({ message: '', tone: 'done', id: 0 });
 
-  const { stats, educations, careers, languages, awards, skills, companies, interests } = profile;
+  // 같은 문구를 다시 띄워도 새로 보이도록 번호를 올린다
+  const showToast = (message, tone = 'done') =>
+    setToast((prev) => ({ message, tone, id: prev.id + 1 }));
+  const [problem, setProblem] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 전체 수정 화면에서 저장하고 돌아오면 여기서 알림을 띄운다
+  useEffect(() => {
+    if (searchParams.get('saved') !== '1') return;
+    showToast('저장되었습니다');
+    router.replace(pathname, { scroll: false });
+  }, [searchParams, router, pathname]);
+
+  const { stats, educations, careers, languages, awards, skills, interests } = profile;
+
+  // 수정 모드가 열려 있으면 나가기를 막는다
+  const isDirty = editing !== null;
+
+  const skillCodeOf = (label) =>
+    (codes.tech_stack ?? []).find((item) => item.label === label)?.code;
 
   // 한 번에 한 섹션만 연다. 다른 섹션을 열면 이전 수정은 버린다
   const startEdit = (section) => {
@@ -27,20 +55,51 @@ export default function ProfileView({ profile: initialProfile }) {
   const cancelEdit = () => {
     setEditing(null);
     setDraft(null);
+    setProblem(null);
   };
 
-  const saveEdit = () => {
-    setProfile(draft);
-    cancelEdit();
+  const saveEdit = async () => {
+    if (isSaving) return;
+
+    const found = validate(editing, draft);
+
+    if (found) {
+      // 최종학력에 필요한 줄을 지웠으면 되살려서 보여준다
+      if (found.missing) setDraft(fillMissingEducations(draft));
+      setProblem(found);
+      showToast(found.message, 'error');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await saveProfile(toPatch(editing, draft, codes));
+      cancelEdit();
+      showToast('저장되었습니다');
+    } catch {
+      showToast('저장하지 못했어요. 잠시 뒤 다시 시도해주세요.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 섹션마다 같은 prop 묶음이 들어가서 한 곳에서 만든다
   const sectionProps = (section) => ({
     isEditing: editing === section,
+    isSaving,
+    isLocked: editing !== null && editing !== section,
     onEdit: () => startEdit(section),
     onCancel: cancelEdit,
     onSave: saveEdit,
-    editChildren: <ProfileForm section={section} draft={draft} onChange={setDraft} />,
+    editChildren: (
+      <ProfileForm
+        section={section}
+        draft={draft}
+        onChange={setDraft}
+        errorFields={problem?.fields ?? {}}
+      />
+    ),
   });
 
   return (
@@ -91,6 +150,15 @@ export default function ProfileView({ profile: initialProfile }) {
         </div>
       </section>
 
+      <UnsavedGuard isDirty={isDirty} />
+
+      <Toast
+        key={toast.id}
+        message={toast.message}
+        tone={toast.tone}
+        onHide={() => setToast((prev) => ({ ...prev, message: '' }))}
+      />
+
       <ProfileSection title='자기소개' {...sectionProps('bio')}>
         <p className={`${styles.profile_view_bio} font_body_m_r`}>{profile.bio}</p>
       </ProfileSection>
@@ -130,15 +198,7 @@ export default function ProfileView({ profile: initialProfile }) {
       <ProfileSection title='기술 스택' {...sectionProps('skills')}>
         <ul className={styles.profile_view_skills}>
           {skills.map((label) => (
-            <LogoItem key={label} label={label} />
-          ))}
-        </ul>
-      </ProfileSection>
-
-      <ProfileSection title='관심 회사' {...sectionProps('companies')}>
-        <ul className={styles.profile_view_companies}>
-          {companies.map((label) => (
-            <LogoItem key={label} label={label} />
+            <LogoItem key={label} label={label} icon={techIcon(skillCodeOf(label))} />
           ))}
         </ul>
       </ProfileSection>
