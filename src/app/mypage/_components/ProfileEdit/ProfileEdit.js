@@ -25,8 +25,10 @@ const SECTIONS = [
 
 export default function ProfileEdit({ profile }) {
   const router = useRouter();
-  const { codes, saveProfile } = useMyProfile();
+  const { codes, saveProfile, setProfile } = useMyProfile();
   const [draft, setDraft] = useState(profile);
+  // 사진은 고르는 즉시 올라가므로, 취소하면 처음 사진으로 되돌려야 한다
+  const [firstAvatar] = useState(profile.avatarUrl);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState({ message: '', tone: 'done', id: 0 });
 
@@ -36,6 +38,22 @@ export default function ProfileEdit({ profile }) {
 
   // 전체 수정 화면은 들어와 있는 것 자체가 수정 중이다
   const isDirty = !isSaving;
+
+  // 고른 사진을 처음 것으로 되돌린다
+  const undoAvatar = async () => {
+    if (draft.avatarUrl === firstAvatar) return;
+
+    try {
+      await saveProfile({ avatar_url: firstAvatar || null });
+    } catch {
+      setProfile((prev) => ({ ...prev, avatar_url: firstAvatar }));
+    }
+  };
+
+  const handleCancel = async () => {
+    await undoAvatar();
+    router.push('/mypage');
+  };
 
   const handleSave = async () => {
     const found = ['basic', ...SECTIONS.map((section) => section.key)]
@@ -82,7 +100,7 @@ export default function ProfileEdit({ profile }) {
           <button
             type='button'
             className={`${styles.profile_edit_cancel} font_body_l_b`}
-            onClick={() => router.push('/mypage')}
+            onClick={handleCancel}
           >
             수정 취소
           </button>
@@ -108,7 +126,7 @@ export default function ProfileEdit({ profile }) {
         수정 모드입니다. 수정한 뒤 우측 상단 “수정 완료”를 눌러주세요.
       </p>
 
-      <UnsavedGuard isDirty={isDirty} />
+      <UnsavedGuard isDirty={isDirty} onLeave={undoAvatar} />
 
       <Toast
         key={toast.id}

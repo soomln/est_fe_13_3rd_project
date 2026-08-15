@@ -1,22 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
-
 import DEFAULT_AVATARS from '@/app/mypage/_lib/defaultAvatars';
+import useDialog from '@/app/mypage/_lib/useDialog';
 import styles from './AvatarPicker.module.sass';
 
 // 기본 프로필 이미지 중에서 고르는 창
 export default function AvatarPicker({ isOpen, current, onSelect, onClose }) {
-  useEffect(() => {
-    if (!isOpen) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  useDialog(isOpen, onClose);
 
   if (!isOpen) return null;
 

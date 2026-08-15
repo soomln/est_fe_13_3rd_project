@@ -1,21 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-
+import useDialog from '@/app/mypage/_lib/useDialog';
 import styles from './ConfirmDialog.module.sass';
 
 // 되돌릴 수 없는 일을 하기 전에 한 번 더 묻는 창
 export default function ConfirmDialog({ isOpen, title, desc, confirmLabel, onConfirm, onCancel }) {
-  useEffect(() => {
-    if (!isOpen) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onCancel]);
+  useDialog(isOpen, onCancel);
 
   if (!isOpen) return null;
 
