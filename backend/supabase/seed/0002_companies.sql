@@ -295,3 +295,11 @@ from (values
   ('sk-hynix', '[{"title":"SK하이닉스, 용인 Y2 ∙ 청주 M17에 54조 원 투자… AI 시대 메모리 수요 대응 위한 중장기 생산 기반 확보","url":"https://news.skhynix.co.kr/fab-facility-investment-2026/","published_on":"2026-08-07"},{"title":"AI 시대, 차세대 메모리 아키텍처는?… SK하이닉스, ''FMS 2026''서 방향성 제시","url":"https://news.skhynix.co.kr/fms-2026/","published_on":"2026-08-07"},{"title":"SK하이닉스, 샌디스크와 HBF 첫 표준 규격 공개…''FMS 2026''서 AI 메모리 해법 알린다","url":"https://news.skhynix.co.kr/hbf-at-fms-2026/","published_on":"2026-08-04"}]'::jsonb)
 ) as v(slug, news)
 where c.slug = v.slug;
+
+update public.companies c
+set logo_url = 'https://cbidaboiqbkxexxbunsx.supabase.co/storage/v1/object/public/company-logos/'
+               || c.slug || '.svg'
+where exists (
+  select 1 from storage.objects o
+  where o.bucket_id = 'company-logos' and o.name = c.slug || '.svg'
+);
