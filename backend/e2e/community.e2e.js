@@ -125,6 +125,29 @@ describe('writing an interview review', () => {
     await expect(createPost({ postType: 'diary' })).rejects.toMatchObject({ status: 400 });
   });
 
+  it('rejects a difficulty score outside the 1 to 5 scale', async () => {
+    await expect(writeReview({ difficultyScore: 6 })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects a half point difficulty score', async () => {
+    await expect(writeReview({ difficultyScore: 3.5 })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('holds the question bank problem score to the same scale', async () => {
+    const write = (problemScore) =>
+      createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'], problemScore });
+
+    await expect(write(4.5)).rejects.toMatchObject({ status: 400 });
+    await expect(write(6)).rejects.toMatchObject({ status: 400 });
+    expect((await write(4)).problemScore).toBe(4);
+  });
+
+  it('keeps a whole point difficulty score', async () => {
+    const post = await writeReview({ difficultyScore: 1 });
+
+    expect(post.difficultyScore).toBe(1);
+  });
+
   it('rejects questions that are not a list', async () => {
     await expect(createPost({ postType: 'qbank', questions: 'nope' })).rejects.toMatchObject({
       status: 400,
