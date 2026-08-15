@@ -23,6 +23,19 @@ async function readJson(request) {
 
 const NO_REACTIONS = { like: new Set(), bookmark: new Set() };
 
+export async function loadScrapMarks(supabase, user, targetType) {
+  const rows = unwrap(
+    await supabase
+      .from('reactions')
+      .select('target_id, created_at')
+      .eq('user_id', user.id)
+      .eq('target_type', targetType)
+      .eq('kind', 'bookmark')
+  );
+
+  return new Map((rows ?? []).map((r) => [r.target_id, r.created_at]));
+}
+
 export async function loadMyReactions(supabase, user, targetType, ids) {
   const targetIds = [...new Set(ids.filter(Boolean))];
   if (!user || targetIds.length === 0) return NO_REACTIONS;

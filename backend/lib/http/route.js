@@ -32,6 +32,11 @@ export function unwrap({ data, error }) {
   return data;
 }
 
+export function pageOf(items, page, pageSize) {
+  const from = (page - 1) * pageSize;
+  return { items: items.slice(from, from + pageSize), total: items.length, page, pageSize };
+}
+
 export function resolveUserId(rawUserId, user) {
   if (rawUserId !== 'me') return rawUserId;
   if (!user) throw unauthorized();

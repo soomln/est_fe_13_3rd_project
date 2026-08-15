@@ -116,39 +116,34 @@ describe('bookmarked companies', () => {
 });
 
 describe('listMyBookmarkedCompanies', () => {
-  it('makes no further request when nothing is bookmarked', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
-
-    await expect(listMyBookmarkedCompanies()).resolves.toEqual({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 9,
-    });
-    expect(apiFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the bookmarked order', async () => {
+  it('asks the server for my scrapped companies', async () => {
     mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['c', 'a', 'b'] },
-      'GET /api/companies': { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] },
+      'GET /api/companies': { items: [{ id: 'a' }], total: 1, page: 1, pageSize: 9 },
     });
 
     const result = await listMyBookmarkedCompanies();
 
-    expect(result.items.map((i) => i.id)).toEqual(['c', 'a', 'b']);
-    expect(result.total).toBe(3);
+    expect(apiFetch).toHaveBeenCalledWith('/api/companies', {
+      query: { scrapped: 1, sort: 'latest', page: 1, pageSize: 9 },
+    });
+    expect(result.total).toBe(1);
   });
 
-  it('fetches only the ids on the requested page', async () => {
-    mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['a', 'b', 'c'] },
-      'GET /api/companies': { items: [{ id: 'c' }] },
+  it('passes the chosen sort and page through', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/companies': { items: [], total: 0 } });
+
+    await listMyBookmarkedCompanies({ sort: 'name', page: 2, pageSize: 5 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/companies', {
+      query: { scrapped: 1, sort: 'name', page: 2, pageSize: 5 },
     });
+  });
 
-    const result = await listMyBookmarkedCompanies({ page: 2, pageSize: 2 });
+  it('needs only one request', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/companies': { items: [], total: 0 } });
 
-    expect(apiFetch.mock.calls[1][1].query).toEqual({ ids: 'c', pageSize: 2 });
-    expect(result).toMatchObject({ total: 3, page: 2, pageSize: 2 });
+    await listMyBookmarkedCompanies();
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 });

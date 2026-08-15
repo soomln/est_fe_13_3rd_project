@@ -579,3 +579,91 @@ describe('commenting on a post', () => {
     expect(page.total).toBe(3);
   });
 });
+
+describe('sorting the board', () => {
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await writeReview({ title: '먼저 쓴 글' });
+    await writeReview({ title: '나중에 쓴 글' });
+  });
+
+  it('sorts oldest first', async () => {
+    const { items } = await listPosts({ type: 'review', sort: 'oldest' });
+
+    expect(items[0].title).toBe('먼저 쓴 글');
+  });
+
+  it('sorts by company name', async () => {
+    const { items } = await listPosts({ type: 'review', sort: 'company' });
+
+    const names = items.map((p) => p.companyName);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('rejects a sort it does not know', async () => {
+    await expect(listPosts({ sort: 'random' })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('sorting my scrapped posts', () => {
+  let first;
+  let second;
+
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    first = await writeReview({ title: '먼저 담을 글' });
+    second = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'Q1',
+      title: '나중에 담을 글',
+    });
+
+    signInAs(USERS.b);
+    await togglePostScrap(first.id);
+    await togglePostScrap(second.id);
+  });
+
+  it('shows the one I scrapped last at the top', async () => {
+    const { items, total } = await listMyScrappedPosts();
+
+    expect(total).toBe(2);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('flips to the one I scrapped first', async () => {
+    const { items } = await listMyScrappedPosts({ sort: 'oldest' });
+
+    expect(items[0].id).toBe(first.id);
+  });
+
+  it('still narrows by type', async () => {
+    const { items, total } = await listMyScrappedPosts({ type: 'qbank' });
+
+    expect(total).toBe(1);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('sorts by company name', async () => {
+    const { items } = await listMyScrappedPosts({ sort: 'company' });
+
+    const names = items.map((p) => p.companyName);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('rejects a sort the scrap list does not have', async () => {
+    await expect(listMyScrappedPosts({ sort: 'views' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('drops out of the list once I unscrap it', async () => {
+    await togglePostScrap(second.id);
+
+    await expect(listMyScrappedPosts()).resolves.toMatchObject({ total: 1 });
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(listMyScrappedPosts()).rejects.toMatchObject({ status: 401 });
+  });
+});

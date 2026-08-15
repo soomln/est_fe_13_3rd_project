@@ -322,7 +322,8 @@ const company = await getCompany('estsoft');            // 상세
 const recommended = await getRecommendedCompanies(6);   // 메인 화면 추천 기업
 const on = await toggleCompanyBookmark(company.id);     // true = 등록됨
 const marked = await getMyBookmarkedCompanyIds(items.map((c) => c.id));
-const mine = await listMyBookmarkedCompanies({ page: 1 });   // 마이페이지 "스크랩한 기업"
+// 마이페이지 "스크랩한 기업" — sort 는 latest | oldest | name
+const mine = await listMyBookmarkedCompanies({ sort: 'latest', page: 1 });
 await incrementCompanyView(company.id);                 // 상세 진입 시 조회수 +1
 ```
 
@@ -414,7 +415,8 @@ import {
 // 갤러리 (공개된 것만)
 const { items, total } = await listPortfolios({
   category: 'web',     // web | app
-  sort: 'latest',      // latest | views | popular(좋아요) | bookmarks(스크랩)
+  q: '협업',           // 제목 검색
+  sort: 'latest',      // latest | oldest | title | views | popular(좋아요) | bookmarks(스크랩)
   page: 1,
 });
 
@@ -487,7 +489,7 @@ const { items, total } = await listPosts({
   type: 'review',            // review | qbank | (생략 = 전체)
   companySlug: 'naver',      // 기업 상세의 후기 탭
   q: '프론트엔드',            // 제목 검색
-  sort: 'latest',            // latest | popular | scraps | comments | views
+  sort: 'latest',            // latest | oldest | company | popular | scraps | comments | views
   page: 1,
 });
 
@@ -772,6 +774,26 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `pageSize` | number | 엔드포인트별 | **최대 50** (댓글만 100). 초과하면 상한으로 깎임 |
 | `sort` | string | 엔드포인트별 | 허용값 밖이면 **400**. 표는 각 엔드포인트 참고 |
 | `q` | string | — | 검색어. **기본적으로 제목만** 검색 (기획 9-2). 부분 일치·대소문자 무시 |
+| `scrapped` | `1` | — | 내가 스크랩한 것만. `/api/companies` · `/api/portfolios` · `/api/posts`. **인증 필요** |
+
+### 4.4-1 ⚠️ 스크랩 목록에서 `latest` 의 뜻
+
+**`scrapped=1` 을 붙이면 `latest`/`oldest` 는 리소스가 만들어진 시각이 아니라 "내가 스크랩한 시각" 입니다.**
+
+| 요청 | `latest` 의 기준 |
+|---|---|
+| `GET /api/companies?sort=latest` | 기업이 **등록된** 시각 |
+| `GET /api/companies?scrapped=1&sort=latest` | 내가 **스크랩한** 시각 |
+
+| 스크랩 목록 | 허용 sort |
+|---|---|
+| 기업 (`/api/companies?scrapped=1`) | `latest` · `oldest` · `name` |
+| 포트폴리오 (`/api/portfolios?scrapped=1`) | `latest` · `oldest` · `title` |
+| 후기·족보 (`/api/posts?scrapped=1`) | `latest` · `oldest` · `company` |
+
+마이페이지의 "스크랩한 기업/포트폴리오"는 **내 행동 목록**이라 방금 담은 것이 위로 오는 게 맞습니다.
+그래서 스크랩 목록에서는 리소스 기준 정렬(`popular` `views` 등)을 **허용하지 않고 400** 을 돌려줍니다 —
+같은 이름이 두 가지를 뜻하는 상황을 만들지 않기 위해서입니다.
 
 > `q` 가 본문까지 검색하는 곳은 `GET /api/interview-qas` **한 군데뿐**입니다 (질문·답변).
 
@@ -1437,7 +1459,8 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `industry` | string | — | `code_master(industry)` 코드 |
 | `size` | string | — | `code_master(company_size)` 코드 |
 | `jobRole` | string | — | `code_master(job_role)` 코드. 해당 직군을 채용하는 기업만 |
-| `ids` | string | — | **쉼표 구분** id 목록. 스크랩 목록 조회용 |
+| `ids` | string | — | **쉼표 구분** id 목록 |
+| `scrapped` | `1` | — | **내가 스크랩한 기업만.** 미로그인이면 401. sort 해석이 달라집니다 |
 | `sort` | enum | `popular` | 아래 표 |
 | `page` | number | `1` | |
 | `pageSize` | number | `20` | 최대 50 |
@@ -1451,6 +1474,9 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `views` | 조회수 많은 순 |
 | `name` | 이름 가나다순 |
 | `latest` | 등록 최신순 |
+
+**`scrapped=1` 일 때는 `latest`(기본) · `oldest` · `name` 만** 허용합니다. 그 외는 400 입니다.
+`latest`/`oldest` 는 **내가 스크랩한 시각** 기준입니다 — [4.4-1](#441-️-스크랩-목록에서-latest-의-뜻) 참고.
 
 > 값이 같으면 **이름 오름차순**으로 2차 정렬합니다. 페이지를 넘겨도 순서가 흔들리지 않습니다.
 
@@ -1686,7 +1712,9 @@ try {
 | `userId` | uuid | — | 특정 작성자의 **공개** 포트폴리오 (타인 프로필 페이지용) |
 | `category` | enum | — | `web` \| `app`. **다른 값이면 400** |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
-| `sort` | enum | `latest` | `latest` \| `popular`(좋아요) \| `views`(조회) \| `bookmarks`(스크랩) |
+| `q` | string | — | **제목만** 검색 |
+| `scrapped` | `1` | — | **내가 스크랩한 것만.** 미로그인이면 401. sort 해석이 달라집니다(아래) |
+| `sort` | enum | `latest` | `latest` \| `oldest` \| `title` \| `popular`(좋아요) \| `views`(조회) \| `bookmarks`(스크랩) |
 | `page` | number | `1` | |
 | `pageSize` | number | `20` | 최대 50 |
 
@@ -1791,7 +1819,7 @@ publishPortfolio(id)
 | `companySlug` | string | — | 기업 slug로 필터 (기업 상세 탭에서 편함) |
 | `q` | string | — | **제목만** 검색 |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
-| `sort` | enum | `latest` | `latest` \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
+| `sort` | enum | `latest` | `latest` \| `oldest` \| `company`(기업명) \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
 | `page` | number | `1` | |
 | `pageSize` | number | `10` | 최대 50 |
 
@@ -2223,7 +2251,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 856개 + E2E 417개 = 1,273개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 884개 + E2E 443개 = 1,327개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all

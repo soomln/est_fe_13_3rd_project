@@ -819,3 +819,124 @@ describe('portfolio collaborators', () => {
     expect(body.error.message).toContain('20명');
   });
 });
+
+describe('portfolio sorting and search', () => {
+  it.each([
+    ['oldest', 'created_at', true],
+    ['title', 'title', true],
+  ])('sort=%s orders by %s', async (sort, column, ascending) => {
+    await callRoute(GET, { request: makeRequest(url(`?sort=${sort}`)) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'order')[0]).toEqual([
+      column,
+      { ascending, nullsFirst: false },
+    ]);
+  });
+
+  it('searches the title only', async () => {
+    await callRoute(GET, { request: makeRequest(url('?q=%20협업%20')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'ilike')[0]).toEqual([
+      'title',
+      '%협업%',
+    ]);
+  });
+
+  it('skips the search when q is blank', async () => {
+    await callRoute(GET, { request: makeRequest(url('?q=%20%20')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'ilike')).toEqual([]);
+  });
+});
+
+describe('GET /api/portfolios?scrapped=1', () => {
+  const MARKS = [
+    { target_id: 'f1', created_at: '2026-08-03T00:00:00Z' },
+    { target_id: 'f2', created_at: '2026-08-01T00:00:00Z' },
+  ];
+  const ROWS = [
+    { ...ROW, id: 'f1', title: '나중에 담은 것' },
+    { ...ROW, id: 'f2', title: '가장 먼저 담은 것' },
+  ];
+
+  const scrapStub = (marks = MARKS, rows = ROWS) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        reactions: { data: marks, error: null },
+        v_portfolios: { data: rows, error: null },
+      },
+    });
+
+  it('answers 401 while signed out', async () => {
+    setSupabase(createSupabaseStub());
+
+    const { status } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(status).toBe(401);
+  });
+
+  it('puts the most recently scrapped first', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f1', 'f2']);
+    expect(body.total).toBe(2);
+  });
+
+  it('sort=oldest flips it to the first one scrapped', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=oldest')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f2', 'f1']);
+  });
+
+  it('sort=title orders by name', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=title')) });
+
+    expect(body.items.map((p) => p.title)).toEqual(['가장 먼저 담은 것', '나중에 담은 것']);
+  });
+
+  it('answers 400 for a sort the scrap list does not have', async () => {
+    setSupabase(scrapStub());
+
+    const { status, body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&sort=popular')),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('스크랩 목록');
+  });
+
+  it('pages the sorted list', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&page=2&pageSize=1')),
+    });
+
+    expect(body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(body.items.map((p) => p.id)).toEqual(['f2']);
+  });
+
+  it('answers an empty list when nothing is scrapped', async () => {
+    setSupabase(scrapStub([], []));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 20 });
+  });
+
+  it('leaves out a portfolio that is no longer visible', async () => {
+    setSupabase(scrapStub(MARKS, [ROWS[1]]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f2']);
+    expect(body.total).toBe(1);
+  });
+});
