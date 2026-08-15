@@ -1022,6 +1022,12 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `positionLevel` | string \| null | ● | ● | 자유 텍스트 (`"신입"`) |
 | `educationLevel` | string | ● | ● | 학력 **라벨** (`"대졸"`). 값 없으면 `""` |
 | `jobInfo` | string | ● | ● | `jobRole / positionLevel / educationLevel` 을 `" / "` 로 이은 표시용 문자열. 빈 값은 건너뜀 |
+| `jobRoleCode` | string \| null | ● | ● | 직무 **원본 코드** (`"frontend"`). 수정 폼의 dropdown 을 되채울 때 씁니다. 미기입이면 `null` |
+| `educationLevelCode` | string \| null | ● | ● | 학력 원본 코드 |
+| `difficultyCode` | string \| null | ● | ● | 난이도 원본 코드 |
+| `passResultCode` | string \| null | ● | ✕ | 합격 여부 원본 코드 |
+| `channelCode` | string \| null | ● | ● | 면접 경로 원본 코드. `'etc'` 면 `channelEtc` 를 함께 보세요 |
+| `channelEtc` | string \| null | ● | ● | `channelCode='etc'` 일 때 자유 입력값 |
 | `tags` | string[] | ● | ● | 해시태그 |
 | `overallComment` | string | ● | ● | 면접 총평 |
 | `authorId` | uuid | ● | ● | |
@@ -1036,9 +1042,12 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `date` | date | ● | ● | 표시용 `"2026.08.12"` |
 | `createdAt` / `updatedAt` | datetime | ● | ● | |
 
-> **코드는 요청, 라벨은 응답.** `difficulty` `result` `channel` `jobRole` `educationLevel` 다섯 필드는
-> 요청에서 `difficultyCode` 처럼 **코드**로 보내고, 응답에서는 **라벨**로 돌아옵니다.
-> `code_master` 에 없는 값을 보내면 변환 없이 그대로 돌아옵니다.
+> **코드로 보내고, 라벨과 코드를 함께 받습니다.** `difficulty` `result` `channel` `jobRole` `educationLevel`
+> 다섯 필드는 요청에서 `difficultyCode` 처럼 **코드**로 보냅니다.
+> 응답에는 화면에 그대로 찍을 **라벨**(`jobRole: "프론트엔드"`)과
+> dropdown 을 되채울 **원본 코드**(`jobRoleCode: "frontend"`)가 **둘 다** 들어 있습니다.
+>
+> 목록/상세는 라벨을, **수정 폼은 코드**를 쓰세요.
 
 **목업 호환 별칭** — 같은 값이 다른 이름으로도 들어 있습니다. **신규 코드에서는 쓰지 마세요.**
 
@@ -1839,6 +1848,7 @@ publishPortfolio(id)
 | `mine` | `1` | — | 내가 쓴 글만. 미로그인 401 |
 | `companyId` | uuid | — | 기업 id로 필터 |
 | `companySlug` | string | — | 기업 slug로 필터 (기업 상세 탭에서 편함) |
+| `jobRole` | string | — | 직무로 필터. `code_master(job_role)` 코드 |
 | `q` | string | — | **제목만** 검색 |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
 | `sort` | enum | `latest` | `latest` \| `oldest` \| `company`(기업명) \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
@@ -1868,7 +1878,7 @@ publishPortfolio(id)
 | `passResultCode` | string | ✕ | 후기 | `pass` \| `waiting` \| `fail` |
 | `channelCode` | string | ✕ | 공통 | `code_master(interview_channel)` 코드 |
 | `channelEtc` | string | ✕ | 공통 | **`channelCode: 'etc'` 일 때만** 자유 입력값 |
-| `jobRoleCode` | string | ✕ | 공통 | `code_master(job_role)` 코드 |
+| `jobRoleCode` | string \| null | ✕ | 공통 | 직무. `code_master(job_role)` 코드. **없는 코드면 400** (사용 가능한 코드 목록이 메시지에 들어옵니다). `null` 이면 미기입 |
 | `positionLevel` | string | ✕ | 공통 | 자유 텍스트 (`"신입"`) |
 | `educationLevel` | string | ✕ | 공통 | `code_master(education_level)` 코드 |
 | `tags` | string[] | ✕ | 공통 | **배열 아니면 400** |
@@ -2333,7 +2343,6 @@ await removeDocumentImages(draftId);
 | 기업 `logo` `ceo` `founded` `capital` `address` `news` | 값이 채워져 있지 않습니다. `null` 또는 `[]` 로 내려가므로 폴백 UI가 필요합니다 |
 | 기업 `rating` `ratings` `salary` | 샘플 값입니다. 실제 평점·연봉이 아닙니다 |
 | `POST /api/views` | 중복 호출 방지가 없습니다. 부른 만큼 조회수가 올라갑니다 |
-| `Post` 의 코드 필드 | 응답은 표시용 **라벨**만 포함합니다 (`difficulty: "어려움"`). 원본 코드(`difficulty_code` 등)는 내려가지 않습니다 |
 | `profiles` 직접 조회 | `email` 컬럼 권한이 회수돼 있어 `select('*')` 는 **403** 입니다. 컬럼을 명시해야 합니다 (어차피 REST API 만 쓰면 됩니다) |
 | jsonb 필드 내부 구조 | 서버는 배열/객체 여부만 검사하고 내부 키는 검증하지 않습니다. [5장](#5-데이터-모델)의 모양은 프론트와의 약속입니다 |
 
@@ -2401,7 +2410,7 @@ data: {"type": "action", "data": "search_web"}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 937개 + E2E 460개 = 1,397개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 948개 + E2E 469개 = 1,417개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all
