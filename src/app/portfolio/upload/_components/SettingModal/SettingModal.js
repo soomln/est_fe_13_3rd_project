@@ -9,9 +9,9 @@ import Tag from '../Tag';
 
 import { createPortfolio, updatePortfolio, uploadPortfolioImage } from '@backend/lib/api/portfolio';
 
-import styles from './Window.module.sass';
+import styles from './SettingModal.module.sass';
 
-export default function Window({ item, setItem, isCreated, setIsCreated, isOpen, onClose }) {
+export default function SettingModal({ item, setItem, isCreated, setIsCreated, isOpen, onClose }) {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
