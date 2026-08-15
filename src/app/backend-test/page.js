@@ -91,6 +91,10 @@ import {
 } from '@backend/lib/api/templates';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+const ALAN_BASE = process.env.NEXT_PUBLIC_ALAN_BASE_URL;
+const ALAN_CLIENT_ID = process.env.NEXT_PUBLIC_ALAN_CLIENT_ID;
+const ALAN_DIRECT = 'https://kdt-api-function.azurewebsites.net/api/v1';
+
 const DEFAULT_LIST_OPTS = {
   gallery: 'latest',
   galleryQuery: '',
@@ -168,6 +172,9 @@ export default function BackendTestPage() {
   const [myWritings, setMyWritings] = useState(null);
   const [codeGroups, setCodeGroups] = useState(null);
   const [listOpts, setListOpts] = useState(DEFAULT_LIST_OPTS);
+  const [alan, setAlan] = useState(null);
+  const [alanBusy, setAlanBusy] = useState(false);
+  const [alanPrompt, setAlanPrompt] = useState('한 문장으로: 좋은 이력서의 조건은?');
 
   const listOptsRef = useRef(DEFAULT_LIST_OPTS);
 
@@ -520,6 +527,36 @@ export default function BackendTestPage() {
     [log, loadMypage, reloadPortfolios, reloadPosts, setListOpt]
   );
 
+  const callAlan = useCallback(
+    async (base, label) => {
+      if (!ALAN_CLIENT_ID) {
+        setAlan({ ok: false, text: 'NEXT_PUBLIC_ALAN_CLIENT_ID 가 비어 있습니다.' });
+        return;
+      }
+
+      setAlanBusy(true);
+      const startedAt = Date.now();
+      try {
+        const q = new URLSearchParams({ content: alanPrompt, client_id: ALAN_CLIENT_ID });
+        const res = await fetch(`${base}/question?${q}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { answer } = await res.json();
+        const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+        setAlan({ ok: true, text: `${label} ${secs}초 — ${answer || '(빈 응답)'}` });
+        log(true, `Alan ${label} — ${secs}초`);
+      } catch (e) {
+        setAlan({ ok: false, text: `${label} 실패 — ${e.message}` });
+        log(false, `Alan ${label} — ${e.message}`);
+      }
+      setAlanBusy(false);
+    },
+    [alanPrompt, log]
+  );
+
+  const askAlan = useCallback(() => callAlan(ALAN_BASE, '/alan 경유'), [callAlan]);
+
+  const askAlanDirect = useCallback(() => callAlan(ALAN_DIRECT, '직접 호출'), [callAlan]);
+
   const searchGallery = useCallback(async () => {
     const keyword = listOptsRef.current.galleryQuery;
     try {
@@ -603,6 +640,47 @@ export default function BackendTestPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>2-1. Alan AI 연결</h2>
+
+        <ul style={S.summary}>
+          <li>
+            BASE_URL <b>{ALAN_BASE || '(없음)'}</b>
+          </li>
+          <li>
+            CLIENT_ID <b>{ALAN_CLIENT_ID ? `${ALAN_CLIENT_ID.slice(0, 8)}…` : '(없음)'}</b>
+          </li>
+        </ul>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <input
+            value={alanPrompt}
+            onChange={(e) => setAlanPrompt(e.target.value)}
+            placeholder='Alan 에게 물어볼 내용'
+            style={{ ...S.input, minWidth: 280 }}
+          />
+          <button type='button' style={S.btn} disabled={alanBusy} onClick={askAlan}>
+            {alanBusy ? '묻는 중…' : '질문 보내기'}
+          </button>
+          <button type='button' style={S.btn} disabled={alanBusy} onClick={askAlanDirect}>
+            직접 호출 (CORS 확인용)
+          </button>
+        </div>
+
+        {alan && (
+          <p style={{ ...S.mono, marginTop: 12, color: alan.ok ? '#111111' : '#DC2626' }}>
+            {alan.text}
+          </p>
+        )}
+
+        <p style={S.hint}>
+          <code>client_id</code> 는 사람마다 다릅니다. 팀 단톡 배정표에서 본인 것을 찾아{' '}
+          <code>.env.local</code> 의 <code>NEXT_PUBLIC_ALAN_CLIENT_ID</code> 에 넣으세요. 오른쪽
+          버튼은 Alan 을 브라우저에서 직접 부르면 CORS 로 막힌다는 것을 보여줍니다 — 실패가
+          정상입니다.
+        </p>
       </section>
 
       <section style={S.card}>
