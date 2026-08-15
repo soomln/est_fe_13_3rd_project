@@ -7,9 +7,22 @@ const VIEW_BASE = {
   v_companies: 'companies',
 };
 
-const PUBLIC_READ = ['profiles', 'code_master', 'companies', 'resume_templates', 'posts', 'comments', 'reaction_counts'];
+const PROFILE_LISTS = [
+  'profile_educations',
+  'profile_careers',
+  'profile_awards',
+  'profile_languages',
+];
+
+const PUBLIC_READ = [
+  'profiles', 'code_master', 'companies', 'resume_templates', 'posts', 'comments',
+  'reaction_counts', ...PROFILE_LISTS,
+];
 const OWNER_READ = ['documents', 'reactions', 'interview_sessions', 'interview_qas'];
-const OWNER_WRITE = ['profiles', 'documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas'];
+const OWNER_WRITE = [
+  'profiles', 'documents', 'portfolios', 'posts', 'comments', 'reactions',
+  'interview_sessions', 'interview_qas', ...PROFILE_LISTS,
+];
 
 const FAULTS = Symbol.for('callback.e2e.faults');
 
@@ -537,7 +550,7 @@ function incrementView(_user, { p_target_type, p_target_id }) {
 function deleteMyAccount(user) {
   if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
 
-  for (const table of ['documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas']) {
+  for (const table of ['documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas', ...PROFILE_LISTS]) {
     const store = rows(table);
     for (const row of store.filter((r) => r.user_id === user.id)) {
       store.splice(store.indexOf(row), 1);
@@ -563,6 +576,95 @@ function recommendedCompanies(user, { p_limit = 6 } = {}) {
   return { data: list.slice(0, limit), error: null };
 }
 
+const LIST_SPECS = {
+  p_educations: {
+    table: 'profile_educations',
+    toRow: (e) => ({
+      school_type: e.type ?? null,
+      school: e.school ?? null,
+      major: e.major ?? null,
+      status: e.status ?? null,
+      admission: e.admission ?? null,
+      graduation: e.graduation ?? null,
+    }),
+  },
+  p_careers: {
+    table: 'profile_careers',
+    toRow: (c) => ({
+      started_on: c.start ?? null,
+      ended_on: c.end ?? null,
+      company: c.company ?? null,
+      job_role: c.role ?? null,
+    }),
+  },
+  p_awards: {
+    table: 'profile_awards',
+    toRow: (a) => ({ awarded_on: a.date ?? null, title: a.name ?? null }),
+  },
+  p_languages: {
+    table: 'profile_languages',
+    toRow: (l) => ({ language: l.language ?? null, level: l.level ?? null, detail: l.detail ?? null }),
+  },
+};
+
+const CODE_REFS = {
+  profile_educations: { school_type: 'school_type', status: 'edu_status' },
+  profile_languages: { level: 'language_level' },
+};
+
+function violatesCodeReference(table, row) {
+  const refs = CODE_REFS[table];
+  if (!refs) return null;
+
+  for (const [column, group] of Object.entries(refs)) {
+    const value = row[column];
+    if (value === null || value === undefined) continue;
+    const known = rows('code_master').some((c) => c.group_name === group && c.code === value);
+    if (!known) return column;
+  }
+  return null;
+}
+
+function saveProfileLists(user, args = {}) {
+  if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
+
+  const staged = [];
+
+  for (const [param, spec] of Object.entries(LIST_SPECS)) {
+    const list = args[param];
+    if (list === null || list === undefined) continue;
+
+    const prepared = list.map((item, index) => ({
+      id: nextId('profile_list'),
+      user_id: user.id,
+      sort_order: index,
+      ...spec.toRow(item),
+    }));
+
+    for (const row of prepared) {
+      const bad = violatesCodeReference(spec.table, row);
+      if (bad) {
+        return {
+          data: null,
+          error: { code: '23503', message: `insert on table "${spec.table}" violates foreign key constraint on ${bad}` },
+        };
+      }
+    }
+
+    staged.push([spec.table, prepared]);
+  }
+
+  for (const [table, prepared] of staged) {
+    const store = rows(table);
+    for (const row of store.filter((r) => r.user_id === user.id)) {
+      store.splice(store.indexOf(row), 1);
+    }
+    store.push(...prepared);
+  }
+
+  return { data: null, error: null };
+}
+
 function myProfileEmail(user) {
   if (!user) return { data: null, error: { code: '42501', message: 'permission denied' } };
   const profile = rows('profiles').find((p) => p.id === user.id);
@@ -575,6 +677,7 @@ const RPCS = {
   delete_my_account: deleteMyAccount,
   get_recommended_companies: recommendedCompanies,
   my_profile_email: myProfileEmail,
+  save_profile_lists: saveProfileLists,
 };
 
 export function createSupabase(user) {

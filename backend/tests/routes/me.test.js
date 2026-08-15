@@ -221,7 +221,14 @@ describe('GET /api/me/summary', () => {
     const { status, body } = await callRoute(GET_SUMMARY);
 
     expect(status).toBe(200);
-    expect(body.profile).toEqual({ ...PROFILE, email: 'me@example.com' });
+    expect(body.profile).toEqual({
+      ...PROFILE,
+      educations: [],
+      careers: [],
+      awards: [],
+      languages: [],
+      email: 'me@example.com',
+    });
     expect(body.stats).toMatchObject({ docCount: 4, finishedInterviewCount: 3 });
   });
 

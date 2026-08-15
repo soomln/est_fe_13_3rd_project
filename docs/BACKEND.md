@@ -776,15 +776,20 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `created_at` | datetime | ✕ | 가입 시각 |
 | `updated_at` | datetime | ✕ | 마지막 수정 시각 |
 
-**중첩 객체** — jsonb 컬럼입니다. **서버는 "배열인지"만 검사하고 내부 키는 검증하지 않습니다.**
-즉 아래 모양은 **프론트와의 약속**입니다. 다르게 넣으면 다르게 저장되고, 화면에서 깨집니다.
+**중첩 객체** — 각각 **별도 테이블**에 저장되고 응답에서는 아래 배열로 다시 조립됩니다.
+**코드 필드는 DB가 검증합니다** — 라벨(`'대학교'`)을 코드 자리에 넣으면 **400** 입니다.
 
 | 타입 | 모양 | 비고 |
 |---|---|---|
-| `Education` | `{ type, school, major, status, admission, graduation }` | `type` = **학교 구분**, `code_master(school_type)` 코드. `status` = `code_master(edu_status)` 코드. 디자인상 **1개만** 입력하지만 저장은 배열 |
+| `Education` | `{ type, school, major, status, admission, graduation }` | `type` = **학교 구분**, `code_master(school_type)` 코드 ⚠️검증됨. `status` = `code_master(edu_status)` 코드 ⚠️검증됨. 디자인상 **1개만** 입력하지만 저장은 배열 |
 | `Career` | `{ start, end, company, role }` | `end` 에 `"재직 중"` 문자열 허용 |
 | `Award` | `{ date, name }` | |
-| `Language` | `{ language, level, detail }` | `level` = `code_master(language_level)` 코드 (`high`/`mid`/`low`) |
+| `Language` | `{ language, level, detail }` | `level` = `code_master(language_level)` 코드 (`high`/`mid`/`low`) ⚠️검증됨 |
+
+> **저장은 목록 단위 통째 교체이고, 4개가 한 트랜잭션으로 처리됩니다.**
+> 항목 하나만 추가하려면 기존 배열에 넣어 전체를 보내세요. 저장이 실패하면 **기존 목록이 그대로 남습니다** —
+> 지워지고 못 채워지는 중간 상태는 생기지 않습니다.
+> 보내지 않은 목록은 건드리지 않습니다. `[]` 를 보내면 그 목록만 비웁니다.
 
 ### 5.2 ProfileStats
 
@@ -1222,10 +1227,10 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `email` | string \| null | 이력서용 연락처. 본인만 볼 수 있음. 직접 넣은 값은 자동 채우기가 덮어쓰지 않음 |
 | `github_url` | string \| null | |
 | `bio` | string \| null | **1000자 초과 시 400** |
-| `educations` | array | **배열 아니면 400** |
-| `careers` | array | **배열 아니면 400** |
-| `awards` | array | **배열 아니면 400** |
-| `languages` | array | **배열 아니면 400** |
+| `educations` | array | **배열 아니면 400.** 목록 통째 교체. 코드값이 틀리면 400 `INVALID_REFERENCE` |
+| `careers` | array | **배열 아니면 400.** 목록 통째 교체 |
+| `awards` | array | **배열 아니면 400.** 목록 통째 교체 |
+| `languages` | array | **배열 아니면 400.** 목록 통째 교체. `level` 코드가 틀리면 400 `INVALID_REFERENCE` |
 | `skill_codes` | string[] | **배열 아니면 400** |
 | `interest_codes` | string[] | **배열 아니면 400** |
 

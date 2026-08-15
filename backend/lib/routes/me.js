@@ -1,11 +1,10 @@
 import { unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
-import { withEmail } from './profiles';
+import { assembleProfile } from './profiles';
 
 const PROFILE_COLUMNS = `
   id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
-  educations, careers, awards, languages, skill_codes, interest_codes,
-  created_at, updated_at
+  skill_codes, interest_codes, created_at, updated_at
 `;
 
 const STAT_COLUMNS = `
@@ -85,7 +84,7 @@ export const GET_SUMMARY = defineRoute(
     const row = unwrap(profile);
 
     return {
-      profile: row ? await withEmail(row, supabase, true) : null,
+      profile: row ? await assembleProfile(row, supabase, true) : null,
       stats: toStats(unwrap(stats)),
     };
   },
