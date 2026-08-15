@@ -47,3 +47,14 @@
   color: $white
   background-color: $green
   border: 1px solid $green
+
+// 다른 섹션을 수정 중이면 못 누른다
+.profile_section_edit:disabled
+  color: $stroke1
+  border-color: $stroke3
+  cursor: not-allowed
+
+// 저장하는 동안 다시 눌리지 않게
+.profile_section_save:disabled
+  cursor: not-allowed
+  opacity: 0.6

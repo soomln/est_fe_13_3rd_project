@@ -77,10 +77,16 @@
   gap: 12px
 
 .profile_edit_avatar
+  flex-shrink: 0
   width: 120px
   height: 120px
+  object-fit: cover
   background-color: $stroke3
   border-radius: 24px
+
+// 진짜 파일 선택창은 감추고 '사진 변경' 버튼이 대신 연다
+.profile_edit_avatar_input
+  display: none
 
 .profile_edit_avatar_btn
   padding: 8px 14px
@@ -103,132 +109,4 @@
   grid-template-columns: 1fr 1fr
   gap: 20px 24px
 
-.profile_edit_foot
-  display: flex
-  align-items: center
-  justify-content: space-between
-  gap: 16px
-
-.profile_edit_hint
-  color: $stroke1
-
-.profile_edit_count
-  flex-shrink: 0
-  color: $stroke1
-
-.profile_edit_rows
-  display: flex
-  flex-direction: column
-  gap: 16px
-
-.profile_edit_row
-  display: flex
-  align-items: flex-end
-  gap: 16px
-
 // 학력의 상태 칸
-.profile_edit_col_narrow
-  flex: 0 0 200px
-  display: flex
-
-.profile_edit_table
-  display: flex
-  flex-direction: column
-  gap: 8px
-
-.profile_edit_table_head,
-.profile_edit_table_row
-  display: flex
-  align-items: center
-  gap: 12px
-
-.profile_edit_table_head
-  color: $gray
-
-.profile_edit_col_date
-  flex: 0 0 150px
-  display: flex
-
-.profile_edit_col_wide
-  flex: 1
-  min-width: 0
-  display: flex
-
-.profile_edit_col_full
-  flex: 1
-  min-width: 0
-  display: flex
-
-.profile_edit_col_del
-  flex: 0 0 40px
-  display: flex
-  align-items: center
-  justify-content: center
-  height: 40px
-  padding: 0
-  color: $stroke1
-  background-color: transparent
-  border: 0
-  border-radius: 8px
-  cursor: pointer
-  transition: color 0.2s ease, background-color 0.2s ease
-
-  &:hover
-    color: $warning
-    background-color: $warning_bg
-
-  :global(.material-symbols-sharp)
-    font-size: 20px
-
-.profile_edit_add
-  display: flex
-  align-items: center
-  justify-content: center
-  gap: 4px
-  height: 48px
-  color: $gray
-  background-color: $white
-  border: 1px dashed $stroke2
-  border-radius: 8px
-  cursor: pointer
-  transition: color 0.2s ease, border-color 0.2s ease
-
-  &:hover
-    color: $green
-    border-color: $green
-
-  :global(.material-symbols-sharp)
-    font-size: 20px
-
-.profile_edit_langs
-  display: flex
-  flex-direction: column
-  gap: 12px
-
-.profile_edit_lang
-  display: flex
-  flex-direction: column
-  box-sizing: border-box
-  gap: 12px
-  padding: 16px
-  background-color: $light_gray
-  border-radius: 12px
-
-.profile_edit_lang_head
-  display: flex
-  align-items: center
-  justify-content: space-between
-  gap: 16px
-
-.profile_edit_lang_name
-  color: $black
-
-.profile_edit_logos
-  display: flex
-  flex-wrap: wrap
-  gap: 40px
-
-.profile_edit_chips
-  display: flex
-  flex-wrap: wrap
-  gap: 8px

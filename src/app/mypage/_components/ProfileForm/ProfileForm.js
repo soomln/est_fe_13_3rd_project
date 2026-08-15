@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-
 import TextField from '@/app/mypage/_components/TextField';
 import ToggleGroup from '@/app/mypage/_components/ToggleGroup';
 import InterestChip from '@/app/mypage/_components/InterestChip';
+import SearchSelect from '@/app/mypage/_components/SearchSelect';
 import LogoItem from '@/app/mypage/_components/LogoItem';
+import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import LANGUAGES from '@/app/mypage/_lib/languages';
+import techIcon from '@/app/mypage/_lib/techIcon';
+import { isOngoing, dateHint, monthValue } from '@/app/mypage/_lib/profileMap';
 import styles from './ProfileForm.module.sass';
 
 const EDU_STATES = ['졸업', '재학 중', '휴학', '중퇴'];
@@ -25,21 +28,6 @@ const CAREER_STATES = ['재직 중', '퇴사'];
 const LANGUAGE_LEVELS = ['상', '중', '하'];
 const BIO_MAX = 1000;
 
-// 주의: supabase 연결 전까지 쓰는 임시 목록
-const INTERESTS = [
-  '프론트엔드',
-  '백엔드',
-  '풀스택',
-  '모바일',
-  '데이터',
-  'AI · ML',
-  'DevOps',
-  '보안',
-  '웹 접근성',
-  '기획',
-  '디자인',
-];
-
 // meta 는 "2020.03 – 2024.02" 형태로 저장한다
 const splitMeta = (meta = '') => meta.split(' – ');
 const joinMeta = (from, to) => `${from} – ${to}`;
@@ -55,38 +43,22 @@ function RowActions({ onAdd, addLabel }) {
   );
 }
 
-function ChipAdder({ placeholder, onAdd }) {
-  const [text, setText] = useState('');
-
-  const submit = () => {
-    const value = text.trim();
-    if (!value) return;
-    onAdd(value);
-    setText('');
-  };
-
-  return (
-    <div className={styles.profile_form_adder}>
-      <TextField
-        aria-label={placeholder}
-        placeholder={placeholder}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter') return;
-          event.preventDefault();
-          submit();
-        }}
-      />
-      <button type='button' className={`${styles.profile_form_add} font_body_m_b`} onClick={submit}>
-        추가
-      </button>
-    </div>
-  );
-}
 
 // 섹션마다 다른 편집 폼. draft 를 직접 고치지 않고 onChange 로 통째로 넘긴다
-export default function ProfileForm({ section, draft, onChange }) {
+export default function ProfileForm({ section, draft, onChange, errorFields = {} }) {
+  const { codes } = useMyProfile();
+
+  // 진행 중이면 종료칸에 상태 글자를 넣고, 끝난 상태로 바꾸면 비운다
+  const changeBadge = (key, index, item, badge) => {
+    const [from] = splitMeta(item.meta);
+    const to = isOngoing(badge) ? badge : '';
+    patchList(key, index, { ...item, badge, meta: joinMeta(from, to) });
+  };
+
+  // 저장 때 잡혔고 아직 그대로인 칸만 테두리가 빨개진다. 고치면 바로 풀린다
+  const isBad = (index, key, stillWrong) => Boolean(errorFields[index]?.[key]) && stillWrong;
+
+  const isEmpty = (text) => !String(text ?? '').trim();
   const patch = (key, value) => onChange({ ...draft, [key]: value });
 
   const patchList = (key, index, next) =>
@@ -160,6 +132,8 @@ export default function ProfileForm({ section, draft, onChange }) {
 
         {draft.educations.map((item, index) => {
           const [from, to] = splitMeta(item.meta);
+          const fromHint = dateHint(from);
+          const toHint = dateHint(to, { after: monthValue(from), afterLabel: '입학' });
           const isHighSchool = item.level === '고등학교';
 
           return (
@@ -183,6 +157,8 @@ export default function ProfileForm({ section, draft, onChange }) {
 
                 <TextField
                   label='학교명'
+                  placeholder='서울대학교'
+                  hasError={isBad(index, 'title', isEmpty(item.title))}
                   value={item.title}
                   onChange={(event) => patchList('educations', index, { ...item, title: event.target.value })}
                 />
@@ -201,7 +177,7 @@ export default function ProfileForm({ section, draft, onChange }) {
                     label='상태'
                     options={EDU_STATES}
                     value={item.badge}
-                    onChange={(event) => patchList('educations', index, { ...item, badge: event.target.value })}
+                    onChange={(event) => changeBadge('educations', index, item, event.target.value)}
                   />
                 </div>
 
@@ -220,6 +196,9 @@ export default function ProfileForm({ section, draft, onChange }) {
               <div className={styles.profile_form_row}>
                 <TextField
                   label='입학'
+                  placeholder='2020.03'
+                  hasError={isBad(index, 'from', Boolean(fromHint) || isEmpty(from))}
+                  errorText={fromHint}
                   value={from}
                   onChange={(event) =>
                     patchList('educations', index, { ...item, meta: joinMeta(event.target.value, to) })
@@ -227,6 +206,10 @@ export default function ProfileForm({ section, draft, onChange }) {
                 />
                 <TextField
                   label='졸업'
+                  placeholder='2024.02'
+                  disabled={isOngoing(item.badge)}
+                  hasError={isBad(index, 'to', !isOngoing(item.badge) && (Boolean(toHint) || isEmpty(to)))}
+                  errorText={isOngoing(item.badge) ? undefined : toHint}
                   value={to}
                   onChange={(event) =>
                     patchList('educations', index, { ...item, meta: joinMeta(from, event.target.value) })
@@ -258,17 +241,21 @@ export default function ProfileForm({ section, draft, onChange }) {
       <>
         {draft.careers.map((item, index) => {
           const [from, to] = splitMeta(item.meta);
+          const fromHint = dateHint(from);
+          const toHint = dateHint(to, { after: monthValue(from), afterLabel: '시작' });
 
           return (
             <div key={index} className={styles.profile_form_group}>
               <div className={styles.profile_form_row}>
                 <TextField
                   label='회사명'
+                  hasError={isBad(index, 'title', isEmpty(item.title))}
                   value={item.title}
                   onChange={(event) => patchList('careers', index, { ...item, title: event.target.value })}
                 />
                 <TextField
                   label='직무'
+                  hasError={isBad(index, 'sub', isEmpty(item.sub))}
                   value={item.sub}
                   onChange={(event) => patchList('careers', index, { ...item, sub: event.target.value })}
                 />
@@ -277,7 +264,7 @@ export default function ProfileForm({ section, draft, onChange }) {
                     label='상태'
                     options={CAREER_STATES}
                     value={item.badge}
-                    onChange={(event) => patchList('careers', index, { ...item, badge: event.target.value })}
+                    onChange={(event) => changeBadge('careers', index, item, event.target.value)}
                   />
                 </div>
                 <button
@@ -295,6 +282,9 @@ export default function ProfileForm({ section, draft, onChange }) {
               <div className={styles.profile_form_row}>
                 <TextField
                   label='시작'
+                  placeholder='2024.03'
+                  hasError={isBad(index, 'from', Boolean(fromHint) || isEmpty(from))}
+                  errorText={fromHint}
                   value={from}
                   onChange={(event) =>
                     patchList('careers', index, { ...item, meta: joinMeta(event.target.value, to) })
@@ -302,6 +292,10 @@ export default function ProfileForm({ section, draft, onChange }) {
                 />
                 <TextField
                   label='종료'
+                  placeholder='2026.02'
+                  disabled={isOngoing(item.badge)}
+                  hasError={isBad(index, 'to', !isOngoing(item.badge) && (Boolean(toHint) || isEmpty(to)))}
+                  errorText={isOngoing(item.badge) ? undefined : toHint}
                   value={to}
                   onChange={(event) =>
                     patchList('careers', index, { ...item, meta: joinMeta(from, event.target.value) })
@@ -317,7 +311,7 @@ export default function ProfileForm({ section, draft, onChange }) {
           onAdd={() =>
             patch('careers', [
               ...draft.careers,
-              { title: '', sub: '', meta: ' – ', badge: CAREER_STATES[0] },
+              { title: '', sub: '', meta: joinMeta('', CAREER_STATES[0]), badge: CAREER_STATES[0] },
             ])
           }
         />
@@ -331,13 +325,18 @@ export default function ProfileForm({ section, draft, onChange }) {
         {draft.languages.map((item, index) => (
           <div key={index} className={styles.profile_form_group}>
             <div className={styles.profile_form_row}>
-              <TextField
+              <SearchSelect
                 label='언어'
+                hasError={isBad(index, 'title', isEmpty(item.title))}
+                placeholder='언어를 검색하세요'
+                options={LANGUAGES.map((name) => ({ label: name }))}
                 value={item.title}
-                onChange={(event) => patchList('languages', index, { ...item, title: event.target.value })}
+                onSelect={(option) => patchList('languages', index, { ...item, title: option.label })}
               />
               <TextField
-                label='설명'
+                label='설명 (예: TOEIC 800점, 일상 회화 가능 등)'
+                placeholder='TOEIC 800점'
+                hasError={isBad(index, 'sub', isEmpty(item.sub))}
                 value={item.sub}
                 onChange={(event) => patchList('languages', index, { ...item, sub: event.target.value })}
               />
@@ -379,12 +378,16 @@ export default function ProfileForm({ section, draft, onChange }) {
           <div key={index} className={styles.profile_form_row}>
             <TextField
               label='수상명'
+              hasError={isBad(index, 'title', isEmpty(item.title))}
               value={item.title}
               onChange={(event) => patchList('awards', index, { ...item, title: event.target.value })}
             />
             <div className={styles.profile_form_narrow}>
               <TextField
                 label='수상일'
+                placeholder='2026.01'
+                hasError={isBad(index, 'date', Boolean(dateHint(item.date)) || isEmpty(item.date))}
+                errorText={dateHint(item.date)}
                 value={item.date}
                 onChange={(event) => patchList('awards', index, { ...item, date: event.target.value })}
               />
@@ -410,44 +413,53 @@ export default function ProfileForm({ section, draft, onChange }) {
     );
   }
 
-  if (section === 'skills' || section === 'companies') {
-    const isSkill = section === 'skills';
+  // 검색해서 추가하고, 로고 오른쪽 위 - 로 뺀다
+  if (section === 'skills') {
+    const group = codes.tech_stack ?? [];
+    const codeOf = (label) => group.find((item) => item.label === label)?.code;
 
     return (
       <>
         <ul className={styles.profile_form_chips}>
-          {draft[section].map((label, index) => (
-            <LogoItem key={label} label={label} onRemove={() => removeAt(section, index)} />
+          {draft.skills.map((label, index) => (
+            <LogoItem
+              key={label}
+              label={label}
+              icon={techIcon(codeOf(label))}
+              onRemove={() => removeAt('skills', index)}
+            />
           ))}
         </ul>
 
-        <ChipAdder
-          placeholder={isSkill ? '기술을 입력하고 Enter' : '회사를 입력하고 Enter'}
-          onAdd={(value) => {
-            if (draft[section].includes(value)) return;
-            patch(section, [...draft[section], value]);
-          }}
+        <SearchSelect
+          placeholder='기술을 검색해서 추가하세요'
+          options={group
+            .filter((item) => !draft.skills.includes(item.label))
+            .map((item) => ({ value: item.code, label: item.label }))}
+          clearOnSelect
+          onSelect={(option) => patch('skills', [...draft.skills, option.label])}
         />
       </>
     );
   }
 
   if (section === 'interests') {
+    const toggle = (label) =>
+      patch(
+        'interests',
+        draft.interests.includes(label)
+          ? draft.interests.filter((item) => item !== label)
+          : [...draft.interests, label],
+      );
+
     return (
       <ul className={styles.profile_form_interests}>
-        {INTERESTS.map((label) => (
-          <li key={label}>
+        {(codes.interest_field ?? []).map((item) => (
+          <li key={item.code}>
             <InterestChip
-              label={label}
-              selected={draft.interests.includes(label)}
-              onToggle={() =>
-                patch(
-                  'interests',
-                  draft.interests.includes(label)
-                    ? draft.interests.filter((item) => item !== label)
-                    : [...draft.interests, label],
-                )
-              }
+              label={item.label}
+              selected={draft.interests.includes(item.label)}
+              onToggle={() => toggle(item.label)}
             />
           </li>
         ))}
