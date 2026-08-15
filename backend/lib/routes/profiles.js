@@ -2,10 +2,15 @@ import { badRequest, forbidden, notFound } from '../http/errors';
 import { defineRoute, resolveUserId, unwrap } from '../http/route';
 
 const COLUMNS = `
-  id, name, avatar_url, desired_role, career_level, email, github_url, bio,
+  id, name, avatar_url, desired_role, career_level, github_url, bio,
   educations, careers, awards, languages, skill_codes, interest_codes,
   created_at, updated_at
 `;
+
+export async function withEmail(profile, supabase, isOwner) {
+  if (!isOwner) return { ...profile, email: null };
+  return { ...profile, email: unwrap(await supabase.rpc('my_profile_email')) };
+}
 
 const EDITABLE = [
   'name',
@@ -33,7 +38,7 @@ export const GET = defineRoute(async ({ params, supabase, user }) => {
   );
 
   if (!profile) throw notFound('프로필을 찾을 수 없습니다.');
-  return profile;
+  return withEmail(profile, supabase, userId === user?.id);
 });
 
 export const PATCH = defineRoute(
@@ -65,9 +70,11 @@ export const PATCH = defineRoute(
       }
     }
 
-    return unwrap(
+    const profile = unwrap(
       await supabase.from('profiles').update(body).eq('id', user.id).select(COLUMNS).single()
     );
+
+    return withEmail(profile, supabase, true);
   },
   { auth: true }
 );
