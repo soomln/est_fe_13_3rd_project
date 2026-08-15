@@ -100,6 +100,30 @@ describe('free template gallery', () => {
       new Set([resumeTemplate().id])
     );
   });
+
+  it('remembers my bookmark when the list is loaded again', async () => {
+    signInAs(USERS.a);
+    await toggleTemplateBookmark(resumeTemplate().id);
+
+    const { items } = await listTemplates();
+    const marked = items.find((t) => t.id === resumeTemplate().id);
+
+    expect(marked.bookmarkedByMe).toBe(true);
+    expect(items.filter((t) => t.bookmarkedByMe)).toHaveLength(1);
+    await expect(getTemplate(resumeTemplate().id)).resolves.toMatchObject({
+      bookmarkedByMe: true,
+    });
+  });
+
+  it('never marks another member bookmark as mine', async () => {
+    signInAs(USERS.a);
+    await toggleTemplateBookmark(resumeTemplate().id);
+
+    signInAs(USERS.b);
+    const { items } = await listTemplates();
+
+    expect(items.every((t) => t.bookmarkedByMe === false)).toBe(true);
+  });
 });
 
 describe('writing a resume', () => {

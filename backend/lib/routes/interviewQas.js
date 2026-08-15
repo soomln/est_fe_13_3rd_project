@@ -1,6 +1,6 @@
 import { badRequest } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
-import { toQa } from './interviews';
+import { attachQaMine, toQa } from './interviews';
 
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
@@ -49,7 +49,12 @@ export const GET = defineRoute(
       .range(from, from + pageSize - 1);
     if (error) throw error;
 
-    return { items: (data ?? []).map(toQa), total: count ?? 0, page, pageSize };
+    return {
+      items: await attachQaMine((data ?? []).map(toQa), supabase, user),
+      total: count ?? 0,
+      page,
+      pageSize,
+    };
   },
   { auth: true }
 );

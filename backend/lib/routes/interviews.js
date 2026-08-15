@@ -1,5 +1,15 @@
 import { badRequest, notFound } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+export const NO_MINE = { like: new Set(), bookmark: new Set() };
+
+export const withQaMine = (qa, mine) => ({ ...qa, scrappedByMe: mine.bookmark.has(qa.id) });
+
+export async function attachQaMine(qas, supabase, user) {
+  const mine = await loadMyReactions(supabase, user, 'interview_qa', qas.map((q) => q.id));
+  return qas.map((qa) => withQaMine(qa, mine));
+}
 
 const STYLES = ['friendly', 'neutral', 'pressure', 'technical'];
 const STATUSES = ['ongoing', 'finished'];
@@ -46,7 +56,7 @@ function toSession(row, qas) {
     date: formatDate(row.created_at),
     createdAt: row.created_at,
     finishedAt: row.finished_at,
-    ...(qas ? { qas: qas.map(toQa) } : {}),
+    ...(qas ? { qas } : {}),
   };
 }
 
@@ -107,6 +117,7 @@ export const POST = defineRoute(
   { auth: true }
 );
 
+
 export const GET_DETAIL = defineRoute(
   async ({ params, supabase, user }) => {
     const row = unwrap(
@@ -119,7 +130,7 @@ export const GET_DETAIL = defineRoute(
     );
     if (!row) throw notFound('면접 기록을 찾을 수 없습니다.');
 
-    const qas = unwrap(
+    const rows = unwrap(
       await supabase
         .from('interview_qas')
         .select('*')
@@ -127,7 +138,7 @@ export const GET_DETAIL = defineRoute(
         .order('seq', { ascending: true })
     );
 
-    return toSession(row, qas);
+    return toSession(row, await attachQaMine(rows.map(toQa), supabase, user));
   },
   { auth: true }
 );
@@ -217,7 +228,10 @@ export const POST_QAS = defineRoute(
     });
 
     const inserted = unwrap(await supabase.from('interview_qas').insert(rows).select('*'));
-    return { items: inserted.map(toQa), saved: inserted.length };
+    return {
+      items: inserted.map((row) => withQaMine(toQa(row), NO_MINE)),
+      saved: inserted.length,
+    };
   },
   { auth: true }
 );

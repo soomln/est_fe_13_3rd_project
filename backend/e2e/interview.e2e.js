@@ -276,6 +276,35 @@ describe('scrapping interview questions', () => {
     expect(scraps.items[0].id).toBe(first.id);
   });
 
+  it('remembers my scrap when the question list is loaded again', async () => {
+    const [first, second] = (await listMyQas()).items;
+    await toggleQaScrap(first.id);
+
+    const { items } = await listMyQas();
+
+    expect(items.find((q) => q.id === first.id).scrappedByMe).toBe(true);
+    expect(items.find((q) => q.id === second.id).scrappedByMe).toBe(false);
+  });
+
+  it('remembers my scrap inside the session detail', async () => {
+    const [first] = (await listMyQas()).items;
+    await toggleQaScrap(first.id);
+
+    const detail = await getSession(first.sessionId);
+
+    expect(detail.qas.find((q) => q.id === first.id).scrappedByMe).toBe(true);
+  });
+
+  it('forgets the scrap once it is toggled off', async () => {
+    const [first] = (await listMyQas()).items;
+    await toggleQaScrap(first.id);
+    await toggleQaScrap(first.id);
+
+    const { items } = await listMyQas();
+
+    expect(items.find((q) => q.id === first.id).scrappedByMe).toBe(false);
+  });
+
   it('marks which questions are already scrapped', async () => {
     const [first] = (await listMyQas()).items;
     await toggleQaScrap(first.id);
