@@ -373,6 +373,7 @@ await incrementTemplateView(id);          // 미리보기 열 때 조회수 +1
 import {
   listMyDocuments, getDocument, createDocument, createDocumentFromTemplate,
   updateDocument, deleteDocument, deleteDocuments,
+  createDocumentDraftId, uploadDocumentImage, uploadDocumentImages, removeDocumentImages,
 } from '@backend/lib/api/documents';
 
 const { items, total, counts } = await listMyDocuments({
@@ -395,6 +396,10 @@ await updateDocument(doc.id, {
   contentHtml: editor.getHTML(),
   contentText: editor.getText(),
 });
+
+// 본문에 이미지 넣기 — 저장 전(draft)에도 됩니다. 8장 참고
+const draftId  = createDocumentDraftId();
+const imageUrl = await uploadDocumentImage(draftId, file);   // 5MB / jpg·png·webp·gif
 
 await deleteDocuments([id1, id2]);   // 문서함 복수 삭제
 ```
@@ -1174,6 +1179,8 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | 17 | GET | `/api/templates` | — | `listTemplates()` |
 | 18 | GET | `/api/templates/{id}` | — | `getTemplate()` |
 | 19 | GET · POST · DELETE | `/api/documents` | ✔ | `listMyDocuments()` / `createDocument()` / `deleteDocuments()` |
+| 19-1 | GET | `/api/documents/{id}/images/{name}` | ✔ | 본문 이미지 서빙 (본인 것만) |
+| 19-2 | DELETE | `/api/documents/{id}/images` | ✔ | `removeDocumentImages()` — draft 정리 |
 | 20 | GET · PATCH · DELETE | `/api/documents/{id}` | ✔ | `getDocument()` / `updateDocument()` / `deleteDocument()` |
 | 21 | GET · POST · DELETE | `/api/portfolios` | 일부 | `listPortfolios()` / `createPortfolio()` / `deletePortfolios()` |
 | 22 | GET · PATCH · DELETE | `/api/portfolios/{id}` | 일부 | `getPortfolio()` / `updatePortfolio()` / `deletePortfolio()` |
@@ -2206,12 +2213,14 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 ```js
 const url  = await uploadAvatar(file);                    // 업로드 + 프로필 갱신까지
 const urls = await uploadPortfolioImages(portfolioId, files);
+const url  = await uploadDocumentImage(documentId, file); // 이력서·자소서 본문 이미지 (비공개)
 ```
 
 | 용도 | 버킷 | 용량 | 허용 형식 | 개수 |
 |---|---|---|---|---|
 | 프로필 사진 | `avatars` | **2MB** | jpg / png / webp | 1장 |
 | 포트폴리오 이미지 | `portfolios` | **5MB / 장** | jpg / png / webp / gif | **최대 15장** |
+| 이력서·자소서 이미지 | `documents` 🔒 | **5MB / 장** | jpg / png / webp / gif | 한 번에 **최대 10장** |
 | 기업 로고 | `company-logos` | 1MB | png / svg / webp | 대시보드에서만 |
 | 양식 미리보기 | `templates` | 2MB | png / webp | 대시보드에서만 |
 
@@ -2222,9 +2231,81 @@ const urls = await uploadPortfolioImages(portfolioId, files);
 ```
 avatars/{userId}/avatar-{timestamp}.{ext}
 portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
+documents/{userId}/{documentId}/{timestamp}-{random}.{ext}
 ```
 
-**보안** — 자기 폴더(`{userId}/`)에만 쓸 수 있습니다. 읽기는 전체 공개(`getPublicUrl`).
+### 이력서·자소서 본문 이미지
+
+⚠️ **`documents` 버킷만 비공개입니다.** 이력서는 남에게 보이면 안 되므로 다른 버킷과 다르게 동작합니다.
+
+- Supabase 공개 URL 이 **없습니다**. 대신 `uploadDocumentImage` 가 **우리 API 경로**를 돌려줍니다.
+- 그 경로는 **만료되지 않습니다.** `contentHtml` 안에 그대로 저장하면 됩니다.
+- 서버가 **항상 로그인한 사람 본인 폴더로만** 경로를 만듭니다. 남의 이미지는 URL 을 알아도 404 입니다.
+
+```
+GET /api/documents/{documentId}/images/{fileName}
+   → 비로그인 401 · 남의 것 404 · 내 것 200 (Cache-Control: private)
+```
+
+#### 저장 전(draft)에도 업로드됩니다
+
+문서를 저장하기 전에도 이미지를 넣을 수 있어야 하므로, **id 를 먼저 만들어** 쓰는 방식입니다.
+
+```js
+import {
+  createDocument, createDocumentDraftId,
+  uploadDocumentImage, removeDocumentImages,
+} from '@backend/lib/api/documents';
+
+// 1) 에디터를 열 때 id 를 하나 만들어 둡니다 (아직 DB 에 아무것도 없습니다)
+const draftId = createDocumentDraftId();
+
+// 2) 저장 전에도 이미지가 올라갑니다
+const url = await uploadDocumentImage(draftId, file);
+editor.chain().focus().setImage({ src: url }).run();
+
+// 3) 저장할 때 그 id 를 그대로 넘기면 이미지가 그대로 붙어 있습니다
+await createDocument({
+  id: draftId,
+  docType: 'resume',
+  title,
+  content: editor.getJSON(),
+  contentHtml: editor.getHTML(),
+  contentText: editor.getText(),
+});
+
+// 3') 저장하지 않고 나갈 때는 올렸던 이미지를 정리해 주세요
+await removeDocumentImages(draftId);
+```
+
+`createDocument` 의 `id` 는 **선택**입니다. 안 넘기면 서버가 만들어 줍니다.
+넘길 경우 uuid 여야 하며, 아니면 400 입니다.
+
+#### 문서를 지우면 이미지도 지워집니다
+
+`deleteDocument(id)` · `deleteDocuments(ids)` 는 해당 문서 폴더의 이미지를 **서버에서 함께 지웁니다.**
+프론트가 따로 정리할 필요가 없습니다.
+
+여러 장을 한 번에 올릴 땐 `uploadDocumentImages(documentId, files)` — URL 배열이 돌아옵니다.
+
+#### 버려진 draft 도 알아서 정리됩니다
+
+3') 를 못 부르고 창을 닫아도(브라우저 강제 종료 등) 이미지가 남지 않습니다.
+문서함을 열 때(`listMyDocuments()`) 서버가 **문서 없는 이미지 폴더**를 함께 청소합니다.
+
+- 마지막 업로드로부터 **24시간**이 지난 것만 지웁니다. **지금 편집 중인 draft 는 안전합니다.**
+- 저장된 문서의 이미지는 대상이 아닙니다.
+- 남의 것은 건드리지 않습니다.
+
+즉시 지우고 싶으면 3') 의 `removeDocumentImages(draftId)` 를 쓰세요. 기다릴 필요가 없습니다.
+
+#### 회원 탈퇴하면 파일도 사라집니다
+
+`deleteMyAccount()` 는 DB 행뿐 아니라 그 사람의 **Storage 파일 전부**를 지웁니다 —
+`documents`(이력서 이미지) · `portfolios` · `avatars` 세 버킷의 본인 폴더.
+
+**보안** — 자기 폴더(`{userId}/`)에만 쓸 수 있습니다.
+읽기는 `documents` 만 **본인 전용**이고, 나머지 버킷은 전체 공개(`getPublicUrl`)입니다.
 용량·형식은 **함수에서 한 번, 버킷 설정에서 한 번** 두 겹으로 막힙니다.
 
 **에러** — 검증 실패 시 `ApiError` 가 던져집니다.
@@ -2233,7 +2314,8 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 |---|---|
 | `JPG, PNG, WEBP 이미지만 올릴 수 있습니다.` | MIME 타입 불허 |
 | `프로필 사진은 2MB 이하만 올릴 수 있습니다.` | 용량 초과 |
-| `이미지는 최대 15장까지 올릴 수 있습니다.` | 개수 초과 |
+| `이미지는 최대 15장까지 올릴 수 있습니다.` | 포트폴리오 개수 초과 |
+| `이미지는 한 번에 10장까지 올릴 수 있습니다.` | 문서 이미지 개수 초과 |
 | `로그인이 필요합니다.` (status 401) | 미로그인 |
 
 > `next/image` 로 렌더할 수 있게 `next.config.mjs` 에 `*.supabase.co` 가 등록돼 있습니다.
@@ -2319,7 +2401,7 @@ data: {"type": "action", "data": "search_web"}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 884개 + E2E 443개 = 1,327개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 937개 + E2E 460개 = 1,397개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all

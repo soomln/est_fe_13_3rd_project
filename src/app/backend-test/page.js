@@ -13,9 +13,13 @@ import {
 import {
   createDocument,
   createDocumentFromTemplate,
+  createDocumentDraftId,
+  deleteDocument,
   deleteDocuments,
   listMyDocuments,
+  removeDocumentImages,
   updateDocument,
+  uploadDocumentImages,
 } from '@backend/lib/api/documents';
 import {
   createPortfolio,
@@ -172,6 +176,7 @@ export default function BackendTestPage() {
   const [myWritings, setMyWritings] = useState(null);
   const [codeGroups, setCodeGroups] = useState(null);
   const [listOpts, setListOpts] = useState(DEFAULT_LIST_OPTS);
+  const [docDraft, setDocDraft] = useState(null);
   const [alan, setAlan] = useState(null);
   const [alanBusy, setAlanBusy] = useState(false);
   const [alanPrompt, setAlanPrompt] = useState('한 문장으로: 좋은 이력서의 조건은?');
@@ -969,6 +974,33 @@ export default function BackendTestPage() {
               >
                 10개 제한 확인
               </button>
+              <label style={{ ...S.btn, display: 'inline-flex', alignItems: 'center' }}>
+                draft 상태로 이미지 업로드
+                <input
+                  type='file'
+                  accept='image/*'
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    if (files.length === 0) return;
+
+                    runDocAction(`draft 이미지 업로드 (${files.length}장)`, async () => {
+                      const draftId = docDraft?.id ?? createDocumentDraftId();
+                      const urls = await uploadDocumentImages(draftId, files);
+
+                      setDocDraft((prev) => ({
+                        id: draftId,
+                        saved: prev?.id === draftId ? prev.saved : false,
+                        urls: [...(prev?.id === draftId ? prev.urls : []), ...urls],
+                      }));
+
+                      return `문서 저장 전 ${urls.length}장 업로드됨 (draft ${draftId.slice(0, 8)}…)`;
+                    });
+                  }}
+                />
+              </label>
               <button
                 type='button'
                 style={S.btn}
@@ -1000,6 +1032,90 @@ export default function BackendTestPage() {
                 전체 삭제
               </button>
             </div>
+
+            {docDraft && (
+              <div style={S.detailBox}>
+                <div style={S.detailTitle}>
+                  draft {docDraft.id.slice(0, 8)}… — 이미지 {docDraft.urls.length}장 ·{' '}
+                  {docDraft.saved ? '저장됨' : '아직 저장 안 됨'}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {docDraft.urls.map((url) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt=''
+                      style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8 }}
+                    />
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    disabled={docDraft.saved}
+                    onClick={() =>
+                      runDocAction('draft 를 같은 id 로 저장', async () => {
+                        const html = docDraft.urls.map((u) => `<img src="${u}" />`).join('');
+                        const doc = await createDocument({
+                          id: docDraft.id,
+                          docType: 'resume',
+                          title: 'draft 에서 저장한 이력서',
+                          contentHtml: html,
+                        });
+                        setDocDraft((prev) => ({ ...prev, saved: true }));
+                        return `id 유지됨 (${doc.id === docDraft.id ? '동일' : '다름!'}) · 이미지 ${docDraft.urls.length}장 그대로`;
+                      })
+                    }
+                  >
+                    이 draft 저장
+                  </button>
+
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('문서 삭제 → 이미지도 지워지는지', async () => {
+                        const [first] = docDraft.urls;
+                        await deleteDocument(docDraft.id);
+                        const res = await fetch(first);
+                        setDocDraft(null);
+                        return res.ok
+                          ? `이미지가 아직 살아있음 (${res.status}) — 문제`
+                          : `이미지도 함께 삭제됨 (${res.status})`;
+                      })
+                    }
+                  >
+                    문서 삭제 (이미지 연쇄 확인)
+                  </button>
+
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('저장 없이 draft 버리기', async () => {
+                        const [first] = docDraft.urls;
+                        await removeDocumentImages(docDraft.id);
+                        const res = await fetch(first);
+                        setDocDraft(null);
+                        return res.ok ? `아직 살아있음 (${res.status}) — 문제` : `정리됨 (${res.status})`;
+                      })
+                    }
+                  >
+                    draft 버리기
+                  </button>
+                </div>
+
+                <p style={S.hint}>
+                  <code>documents</code> 버킷은 <b>비공개</b>입니다. 위 이미지는{' '}
+                  <code>/api/documents/{'{id}'}/images/{'{name}'}</code> 로 서빙되며, 로그아웃하거나
+                  다른 계정으로 열면 보이지 않습니다. 저장하지 않고 떠난 draft 는 24시간 뒤 문서함을
+                  열 때 자동으로 정리됩니다.
+                </p>
+              </div>
+            )}
 
             <ul style={S.list}>
               {documents.items.map((d, i) => (
@@ -2462,8 +2578,10 @@ export default function BackendTestPage() {
         </div>
 
         <p style={S.hint}>
-          회원 탈퇴는 <code>deleteMyAccount()</code> 한 줄이며 계정·문서·포트폴리오·스크랩·업로드
-          파일이 모두 삭제됩니다. 되돌릴 수 없으므로 이 페이지에는 버튼을 두지 않았습니다.
+          회원 탈퇴는 <code>deleteMyAccount()</code> 한 줄이며 계정·문서·포트폴리오·스크랩이 모두
+          삭제됩니다. Storage 파일도 <code>documents</code> · <code>portfolios</code> ·{' '}
+          <code>avatars</code> 세 버킷에서 함께 지워집니다. 되돌릴 수 없으므로 이 페이지에는 버튼을
+          두지 않았습니다.
         </p>
       </section>
 
