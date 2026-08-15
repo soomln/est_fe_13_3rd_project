@@ -1,6 +1,6 @@
 import { badRequest, forbidden, notFound, unauthorized } from '../http/errors';
-import { defineRoute, unwrap } from '../http/route';
-import { loadMyReactions } from './reactions';
+import { defineRoute, pageOf, unwrap } from '../http/route';
+import { loadMyReactions, loadScrapMarks } from './reactions';
 
 const NO_MINE = { like: new Set(), bookmark: new Set() };
 
@@ -66,9 +66,17 @@ const BLOCK_TYPES = ['image', 'video', 'text', 'code'];
 
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
+  oldest: { column: 'created_at', ascending: true },
+  title: { column: 'title', ascending: true },
   popular: { column: 'like_count', ascending: false },
   views: { column: 'view_count', ascending: false },
   bookmarks: { column: 'bookmark_count', ascending: false },
+};
+
+const SCRAP_SORTS = {
+  latest: (a, b) => b.scrappedAt.localeCompare(a.scrappedAt),
+  oldest: (a, b) => a.scrappedAt.localeCompare(b.scrappedAt),
+  title: (a, b) => (a.title ?? '').localeCompare(b.title ?? ''),
 };
 
 function toItem(row) {
@@ -149,11 +157,38 @@ function validateContent(content) {
   return content;
 }
 
+async function listScrapped({ supabase, user, q, page, pageSize }) {
+  const sortKey = q.get('sort') ?? 'latest';
+  const compare = SCRAP_SORTS[sortKey];
+  if (!compare) {
+    throw badRequest(`스크랩 목록의 sort 는 ${Object.keys(SCRAP_SORTS).join(' | ')} 중 하나여야 합니다.`);
+  }
+
+  const marks = await loadScrapMarks(supabase, user, 'portfolio');
+  if (marks.size === 0) return { items: [], total: 0, page, pageSize };
+
+  const rows = unwrap(
+    await supabase.from('v_portfolios').select('*').in('id', [...marks.keys()])
+  );
+
+  const scrapped = (rows ?? [])
+    .map((row) => ({ ...toItem(row), scrappedAt: marks.get(row.id) ?? '' }))
+    .sort(compare);
+
+  const paged = pageOf(scrapped, page, pageSize);
+  return { ...paged, items: await attachMine(paged.items, supabase, user) };
+}
+
 export const GET = defineRoute(async ({ request, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(q.get('pageSize') ?? 20)));
+  if (q.get('scrapped') === '1') {
+    if (!user) throw unauthorized();
+    return listScrapped({ supabase, user, q, page, pageSize });
+  }
+
   const sort = SORTS[q.get('sort') ?? 'latest'];
   if (!sort) throw badRequest(`sort 는 ${Object.keys(SORTS).join(' | ')} 중 하나여야 합니다.`);
 
@@ -182,6 +217,9 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
   }
 
   if (category) query = query.eq('category', category);
+
+  const keyword = q.get('q')?.trim();
+  if (keyword) query = query.ilike('title', `%${keyword}%`);
 
   const ids = q.get('ids');
   if (ids) {

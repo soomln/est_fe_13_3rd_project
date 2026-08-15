@@ -35,32 +35,34 @@ describe('account information', () => {
 
 describe('scrap lists', () => {
   it('lists scrapped companies 9 per page', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
+    mockApiFetch(apiFetch, { 'GET /api/companies': { items: [], total: 0, page: 1, pageSize: 9 } });
 
     await expect(mypage.listMyScrappedCompanies()).resolves.toMatchObject({ pageSize: 9 });
   });
 
-  it('accepts a page for scrapped companies', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
+  it('passes sort and page for scrapped companies', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/companies': { items: [], total: 0, page: 2, pageSize: 3 } });
 
-    await expect(mypage.listMyScrappedCompanies({ page: 2, pageSize: 3 })).resolves.toMatchObject({
-      page: 2,
-      pageSize: 3,
+    await mypage.listMyScrappedCompanies({ sort: 'oldest', page: 2, pageSize: 3 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/companies', {
+      query: { scrapped: 1, sort: 'oldest', page: 2, pageSize: 3 },
     });
   });
 
   it('lists scrapped portfolios 9 per page', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0, page: 1, pageSize: 9 } });
 
     await expect(mypage.listMyScrappedPortfolios()).resolves.toMatchObject({ pageSize: 9 });
   });
 
-  it('accepts a page for scrapped portfolios', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
+  it('passes sort and page for scrapped portfolios', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0, page: 2, pageSize: 3 } });
 
-    await expect(mypage.listMyScrappedPortfolios({ page: 3, pageSize: 6 })).resolves.toMatchObject({
-      page: 3,
-      pageSize: 6,
+    await mypage.listMyScrappedPortfolios({ sort: 'title', page: 2, pageSize: 3 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios', {
+      query: { scrapped: 1, sort: 'title', page: 2, pageSize: 3 },
     });
   });
 });

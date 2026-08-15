@@ -464,3 +464,87 @@ describe('GET /api/companies/recommended', () => {
     spy.mockRestore();
   });
 });
+
+describe('GET /api/companies?scrapped=1', () => {
+  const MARKS = [
+    { target_id: 'c1', created_at: '2026-08-03T00:00:00Z' },
+    { target_id: 'c2', created_at: '2026-08-01T00:00:00Z' },
+  ];
+  const ROWS = [
+    { id: 'c1', slug: 'naver', name: '네이버', industry_code: 'it' },
+    { id: 'c2', slug: 'kakao', name: '가카오', industry_code: 'it' },
+  ];
+
+  const scrapStub = (marks = MARKS, rows = ROWS) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        reactions: { data: marks, error: null },
+        v_companies: { data: rows, error: null },
+        code_master: { data: [{ code: 'it', label: 'IT·소프트웨어' }], error: null },
+      },
+    });
+
+  it('answers 401 while signed out', async () => {
+    setSupabase(createSupabaseStub());
+
+    const { status } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(status).toBe(401);
+  });
+
+  it('puts the most recently scrapped first', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((c) => c.id)).toEqual(['c1', 'c2']);
+    expect(body.total).toBe(2);
+  });
+
+  it('sort=oldest flips it to the first one scrapped', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=oldest')) });
+
+    expect(body.items.map((c) => c.id)).toEqual(['c2', 'c1']);
+  });
+
+  it('sort=name orders by company name', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=name')) });
+
+    expect(body.items.map((c) => c.name)).toEqual(['가카오', '네이버']);
+  });
+
+  it('answers 400 for a sort the scrap list does not have', async () => {
+    setSupabase(scrapStub());
+
+    const { status, body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&sort=rating')),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('스크랩 목록');
+  });
+
+  it('pages the sorted list', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&page=2&pageSize=1')),
+    });
+
+    expect(body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(body.items.map((c) => c.id)).toEqual(['c2']);
+  });
+
+  it('answers an empty list when nothing is scrapped', async () => {
+    setSupabase(scrapStub([], []));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 20 });
+  });
+});
