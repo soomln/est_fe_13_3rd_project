@@ -33,7 +33,10 @@ const loggedIn = (extra = {}) =>
       profiles: { data: PROFILE, error: null },
       v_profile_stats: { data: STATS_ROW, error: null },
     },
-    rpc: { delete_my_account: { data: null, error: null } },
+    rpc: {
+      delete_my_account: { data: null, error: null },
+      my_profile_email: { data: 'me@example.com', error: null },
+    },
     ...extra,
   });
 
@@ -218,8 +221,23 @@ describe('GET /api/me/summary', () => {
     const { status, body } = await callRoute(GET_SUMMARY);
 
     expect(status).toBe(200);
-    expect(body.profile).toEqual(PROFILE);
+    expect(body.profile).toEqual({ ...PROFILE, email: 'me@example.com' });
     expect(body.stats).toMatchObject({ docCount: 4, finishedInterviewCount: 3 });
+  });
+
+  it('leaves the profile null when the row is missing', async () => {
+    setSupabase(
+      loggedIn({
+        tables: {
+          profiles: { data: null, error: null },
+          v_profile_stats: { data: STATS_ROW, error: null },
+        },
+      })
+    );
+
+    const { body } = await callRoute(GET_SUMMARY);
+
+    expect(body.profile).toBeNull();
   });
 
   it('queries only my own rows', async () => {

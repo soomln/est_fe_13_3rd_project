@@ -222,9 +222,12 @@ const { docCount, portfolioCount, interviewScrapCount } = await getProfileStats(
 ⚠️ **프로필만 필드 이름이 `snake_case`입니다.** DB 컬럼을 그대로 주고받기 때문입니다.
 나머지 API는 전부 `camelCase` 입니다. 자세한 스키마는 [5.1 Profile](#51-profile) 참고.
 
-⚠️ **`email` 칸은 프로필에 그대로 공개됩니다.** 타인 프로필 페이지가 있어서 `profiles` 는 전체 공개 읽기입니다.
-입력란 옆에 **"프로필에 공개됩니다"** 를 표시해주세요. 로그인에 쓴 계정 이메일은 여기 들어가지 않고
-`getMyAccount()` (본인만) 로 따로 내려갑니다. 자세한 내용은 `SECURITY.md`.
+**`email` 은 본인에게만 내려갑니다.** 남의 프로필을 조회하면 항상 `null` 입니다.
+DB 컬럼 권한으로 막혀 있어 `anon` 키로 Supabase 를 직접 찔러도 읽히지 않습니다. 자세한 내용은 `SECURITY.md`.
+
+**소셜 로그인 이메일이 자동으로 채워집니다.** 가입 시 한 번, 그리고 값이 비어 있는 기존 회원은
+다음 로그인 때 채워집니다. 사용자가 직접 고쳐 넣은 값은 **덮어쓰지 않습니다.**
+따라서 프로필 편집 폼의 이메일 칸은 대개 이미 채워진 상태로 열립니다.
 
 > 프로필 항목은 **전부 선택 입력**입니다. 빈 값이어도 저장됩니다.
 > `getProfileStats` 의 `docCount` / `interviewScrapCount` 는 **본인 프로필을 볼 때만** 값이 나옵니다.
@@ -733,7 +736,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `avatar_url` | string \| null | ○ | 프로필 사진 공개 URL. `uploadAvatar()` 가 갱신 |
 | `desired_role` | string \| null | ○ | 희망 직무. **자유 텍스트** (`"프론트엔드 개발자"`) |
 | `career_level` | string \| null | ○ | `code_master(career_level)` 코드 — `entry` `1_3` `3_5` `5_plus` |
-| `email` | string \| null | ○ | ⚠️ **공개 표시용** 이력서 연락처. 로그인 이메일과 무관 |
+| `email` | string \| null | ○ | 이력서용 연락처. **본인 조회일 때만 값이 옵니다.** 타인·비로그인 조회에서는 항상 `null`. 가입·재로그인 시 소셜 계정 이메일이 자동으로 채워짐(빈 값일 때만) |
 | `github_url` | string \| null | ○ | 깃허브 주소 |
 | `bio` | string \| null | ○ | 자기소개. **최대 1000자** (초과 시 400) |
 | `educations` | Education[] | ○ | 기본 `[]` |
@@ -1165,6 +1168,9 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 
 **응답 200** — [Profile](#51-profile) (**snake_case**)
 
+> ⚠️ **`email` 은 본인 조회일 때만 값이 옵니다.** 타인·비로그인 조회에서는 키는 있지만 항상 `null` 입니다.
+> "값이 없음"과 "가려짐"을 구분할 수 없습니다 — 의도된 동작입니다.
+
 **에러** — `401`(`me` + 미로그인) · `404 NOT_FOUND`(없는 유저)
 
 > `getMyProfile()` 은 401/404 를 잡아 `null` 로 바꿔 줍니다. 직접 호출할 때만 신경 쓰면 됩니다.
@@ -1183,7 +1189,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `avatar_url` | string \| null | `null` 로 보내면 사진 제거 |
 | `desired_role` | string \| null | |
 | `career_level` | string \| null | `code_master(career_level)` 코드 |
-| `email` | string \| null | ⚠️ 공개됨 |
+| `email` | string \| null | 이력서용 연락처. 본인만 볼 수 있음. 직접 넣은 값은 자동 채우기가 덮어쓰지 않음 |
 | `github_url` | string \| null | |
 | `bio` | string \| null | **1000자 초과 시 400** |
 | `educations` | array | **배열 아니면 400** |
@@ -2097,6 +2103,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 | 기업 `rating` `ratings` `salary` | 샘플 값입니다. 실제 평점·연봉이 아닙니다 |
 | `POST /api/views` | 중복 호출 방지가 없습니다. 부른 만큼 조회수가 올라갑니다 |
 | `Post` 의 코드 필드 | 응답은 표시용 **라벨**만 포함합니다 (`difficulty: "어려움"`). 원본 코드(`difficulty_code` 등)는 내려가지 않습니다 |
+| `profiles` 직접 조회 | `email` 컬럼 권한이 회수돼 있어 `select('*')` 는 **403** 입니다. 컬럼을 명시해야 합니다 (어차피 REST API 만 쓰면 됩니다) |
 | jsonb 필드 내부 구조 | 서버는 배열/객체 여부만 검사하고 내부 키는 검증하지 않습니다. [5장](#5-데이터-모델)의 모양은 프론트와의 약속입니다 |
 
 ### 미구현
@@ -2128,6 +2135,7 @@ npm run test:all
    자유 텍스트로 쌓이면 통계를 영원히 못 만듭니다.
 4. **PDF 다운로드는 `window.print()` + `@media print`** 로 해주세요.
    서버 렌더링은 반나절 이상 걸립니다.
-5. **프로필 이메일 입력란 옆에 "프로필에 공개됩니다"** 를 표시해주세요.
+5. **타인 프로필 화면에서 이메일 칸을 그리지 마세요.** 항상 `null` 로 내려갑니다.
+   본인 프로필·편집 화면에서만 쓰면 됩니다.
 6. **목록 화면에서 카드마다 반응 API를 부르지 마세요.** 목록을 받은 뒤 id 배열로 **한 번만** 부르면 됩니다.
 7. 나머지 확인 요청 사항은 `DECISIONS.md` 에 정리해 뒀습니다.

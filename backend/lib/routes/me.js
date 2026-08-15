@@ -1,8 +1,9 @@
 import { unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { withEmail } from './profiles';
 
 const PROFILE_COLUMNS = `
-  id, name, avatar_url, desired_role, career_level, email, github_url, bio,
+  id, name, avatar_url, desired_role, career_level, github_url, bio,
   educations, careers, awards, languages, skill_codes, interest_codes,
   created_at, updated_at
 `;
@@ -81,7 +82,12 @@ export const GET_SUMMARY = defineRoute(
       supabase.from('v_profile_stats').select(STAT_COLUMNS).eq('user_id', user.id).maybeSingle(),
     ]);
 
-    return { profile: unwrap(profile), stats: toStats(unwrap(stats)) };
+    const row = unwrap(profile);
+
+    return {
+      profile: row ? await withEmail(row, supabase, true) : null,
+      stats: toStats(unwrap(stats)),
+    };
   },
   { auth: true }
 );

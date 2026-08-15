@@ -106,6 +106,44 @@ describe('editing my profile', () => {
   });
 });
 
+describe('the contact email on a profile', () => {
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await updateProfile({ name: '장도담', email: 'contact@example.com' });
+  });
+
+  it('comes back to its owner', async () => {
+    await expect(getProfile('me')).resolves.toMatchObject({ email: 'contact@example.com' });
+  });
+
+  it('survives a round trip through the edit form', async () => {
+    const saved = await updateProfile({ name: '장도담' });
+
+    expect(saved.email).toBe('contact@example.com');
+  });
+
+  it('is hidden from another member', async () => {
+    signInAs(USERS.b);
+
+    const profile = await getProfile(USERS.a.id);
+
+    expect(profile.name).toBe('장도담');
+    expect(profile.email).toBeNull();
+  });
+
+  it('is hidden from a visitor who is not signed in', async () => {
+    signOutOfBrowser();
+
+    await expect(getProfile(USERS.a.id)).resolves.toMatchObject({ email: null });
+  });
+
+  it('is included in my own summary', async () => {
+    const { profile } = await getMySummary();
+
+    expect(profile.email).toBe('contact@example.com');
+  });
+});
+
 describe('the profile photo', () => {
   beforeEach(() => signInAs(USERS.a));
 
