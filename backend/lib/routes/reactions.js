@@ -21,6 +21,26 @@ async function readJson(request) {
   }
 }
 
+const NO_REACTIONS = { like: new Set(), bookmark: new Set() };
+
+export async function loadMyReactions(supabase, user, targetType, ids) {
+  const targetIds = [...new Set(ids.filter(Boolean))];
+  if (!user || targetIds.length === 0) return NO_REACTIONS;
+
+  const rows = unwrap(
+    await supabase
+      .from('reactions')
+      .select('target_id, kind')
+      .eq('user_id', user.id)
+      .eq('target_type', targetType)
+      .in('target_id', targetIds)
+  );
+
+  const mine = { like: new Set(), bookmark: new Set() };
+  for (const row of rows ?? []) mine[row.kind]?.add(row.target_id);
+  return mine;
+}
+
 export const POST = defineRoute(
   async ({ request, supabase }) => {
     const { targetType, targetId, kind = 'bookmark' } = await readJson(request);

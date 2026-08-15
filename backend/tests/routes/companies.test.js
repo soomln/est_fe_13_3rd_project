@@ -100,6 +100,7 @@ describe('GET /api/companies', () => {
       jokbo: 5,
       passrate: 75,
       difficulty: 3.6,
+      bookmarkedByMe: false,
     });
   });
 

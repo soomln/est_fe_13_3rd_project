@@ -53,6 +53,7 @@ describe('GET /api/posts/:id/comments', () => {
       authorName: '김프론트',
       authorAvatar: 'https://cdn/a.png',
       likeCount: 3,
+      likedByMe: false,
       date: '2026.08.05',
       createdAt: '2026-08-05T10:00:00Z',
       updatedAt: '2026-08-05T11:00:00Z',

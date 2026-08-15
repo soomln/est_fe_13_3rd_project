@@ -1,5 +1,8 @@
 import { badRequest, notFound } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+const withMine = (item, mine) => ({ ...item, bookmarkedByMe: mine.bookmark.has(item.id) });
 
 const SORTS = {
   popular: { column: 'bookmark_count', ascending: false },
@@ -78,7 +81,7 @@ function toDetail(row, labels) {
   };
 }
 
-export const GET = defineRoute(async ({ request, supabase }) => {
+export const GET = defineRoute(async ({ request, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
@@ -116,27 +119,34 @@ export const GET = defineRoute(async ({ request, supabase }) => {
   if (error) throw error;
 
   const labels = await industryLabels(supabase);
+  const items = (data ?? []).map((row) => toCard(row, labels));
+  const mine = await loadMyReactions(supabase, user, 'company', items.map((i) => i.id));
+
   return {
-    items: (data ?? []).map((row) => toCard(row, labels)),
+    items: items.map((item) => withMine(item, mine)),
     total: count ?? 0,
     page,
     pageSize,
   };
 });
 
-export const GET_DETAIL = defineRoute(async ({ params, supabase }) => {
+export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   const row = unwrap(
     await supabase.from('v_companies').select('*').eq('slug', params.slug).maybeSingle()
   );
   if (!row) throw notFound('기업을 찾을 수 없습니다.');
 
   const labels = await industryLabels(supabase);
-  return toDetail(row, labels);
+  const mine = await loadMyReactions(supabase, user, 'company', [row.id]);
+  return withMine(toDetail(row, labels), mine);
 });
 
-export const GET_RECOMMENDED = defineRoute(async ({ request, supabase }) => {
+export const GET_RECOMMENDED = defineRoute(async ({ request, supabase, user }) => {
   const limit = Math.min(20, Math.max(1, Number(request.nextUrl.searchParams.get('limit') ?? 6)));
   const rows = unwrap(await supabase.rpc('get_recommended_companies', { p_limit: limit }));
   const labels = await industryLabels(supabase);
-  return { items: (rows ?? []).map((row) => toCard(row, labels)) };
+  const items = (rows ?? []).map((row) => toCard(row, labels));
+  const mine = await loadMyReactions(supabase, user, 'company', items.map((i) => i.id));
+
+  return { items: items.map((item) => withMine(item, mine)) };
 });

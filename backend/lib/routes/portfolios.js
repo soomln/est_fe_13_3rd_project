@@ -1,5 +1,19 @@
 import { badRequest, forbidden, notFound, unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+const NO_MINE = { like: new Set(), bookmark: new Set() };
+
+const withMine = (item, mine) => ({
+  ...item,
+  likedByMe: mine.like.has(item.id),
+  bookmarkedByMe: mine.bookmark.has(item.id),
+});
+
+async function attachMine(items, supabase, user) {
+  const mine = await loadMyReactions(supabase, user, 'portfolio', items.map((i) => i.id));
+  return items.map((item) => withMine(item, mine));
+}
 
 const CATEGORIES = ['web', 'app'];
 const STATUSES = ['draft', 'published'];
@@ -112,7 +126,12 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
     .range(from, from + pageSize - 1);
   if (error) throw error;
 
-  return { items: (data ?? []).map(toItem), total: count ?? 0, page, pageSize };
+  return {
+    items: await attachMine((data ?? []).map(toItem), supabase, user),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 });
 
 export const POST = defineRoute(
@@ -144,7 +163,10 @@ export const POST = defineRoute(
         .single()
     );
 
-    return toDetail({ ...row, author_name: null, like_count: 0, bookmark_count: 0 });
+    return withMine(
+      toDetail({ ...row, author_name: null, like_count: 0, bookmark_count: 0 }),
+      NO_MINE
+    );
   },
   { auth: true }
 );
@@ -170,7 +192,9 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   if (row.status !== 'published' && row.user_id !== user?.id) {
     throw notFound('포트폴리오를 찾을 수 없습니다.');
   }
-  return toDetail(row);
+
+  const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
+  return withMine(toDetail(row), mine);
 });
 
 export const PATCH_DETAIL = defineRoute(
@@ -210,7 +234,8 @@ export const PATCH_DETAIL = defineRoute(
     );
     if (!row) throw notFound('포트폴리오를 찾을 수 없습니다.');
 
-    return toDetail(row);
+    const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
+    return withMine(toDetail(row), mine);
   },
   { auth: true }
 );
