@@ -1,7 +1,7 @@
 import { ensureProfile, resetDatabase, USERS } from './database';
 import { registerUser } from './session';
 import { resetBrowser } from './browser';
-import { resetFaults } from './supabase';
+import { resetFaults, resetStorage } from './supabase';
 import { startApiServer } from './server';
 
 const KEY = Symbol.for('callback.e2e.harness');
@@ -44,6 +44,7 @@ export function resetWorld() {
   resetDatabase();
   resetBrowser();
   resetFaults();
+  resetStorage();
   state().cookie = null;
 }
 

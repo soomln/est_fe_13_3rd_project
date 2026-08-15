@@ -23,6 +23,11 @@ const ROUTES = [
   ['/api/templates/[id]', () => import('@/app/api/templates/[id]/route.js')],
   ['/api/templates', () => import('@/app/api/templates/route.js')],
 
+  [
+    '/api/documents/[id]/images/[name]',
+    () => import('@/app/api/documents/[id]/images/[name]/route.js'),
+  ],
+  ['/api/documents/[id]/images', () => import('@/app/api/documents/[id]/images/route.js')],
   ['/api/documents/[id]', () => import('@/app/api/documents/[id]/route.js')],
   ['/api/documents', () => import('@/app/api/documents/route.js')],
 
