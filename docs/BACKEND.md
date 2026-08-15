@@ -453,16 +453,29 @@ await createPost({
   overallComment: '...',
 });
 
-// 족보 작성 — title 없이 questions 배열
+// 족보 작성 — title 없이, 질문은 여러 줄 텍스트 (textarea 값을 그대로)
 await createPost({
   postType: 'qbank',
   companyId,
-  questions: ['REST API의 장점은?', '클로저를 설명해주세요.'],
+  questions: 'REST API의 장점은?\n클로저를 설명해주세요.',
   problemScore: 4,
 });
 ```
 
-`questionCount` 는 **서버가 `questions` 길이로 계산**합니다. 보내지 마세요 (보내도 무시됩니다).
+**질문은 `textarea` 값을 그대로 보내면 됩니다.** 한 줄에 질문 하나입니다. 배열을 보내면 400.
+
+응답은 **두 가지 모양으로 함께** 옵니다.
+
+| 필드 | 용도 |
+|---|---|
+| `questions` | **입력한 원본 텍스트.** 수정 화면의 `textarea` 에 그대로 넣으세요 |
+| `questionList` | 줄 단위로 자르고 공백·빈 줄을 걸러낸 **배열.** 목록 렌더링에 쓰세요 |
+
+```jsx
+{post.questionList.map((q, i) => <li key={i}>{q}</li>)}
+```
+
+`questionCount` 는 **서버가 빈 줄을 뺀 줄 수로 계산**합니다. 보내지 마세요 (보내도 무시됩니다).
 수정으로 질문을 늘리거나 줄이면 개수도 함께 갱신됩니다.
 
 **점수는 전부 1~5 정수만** 받습니다 — 면접 난이도(`difficultyScore`)와 문제 난이도(`problemScore`) 둘 다.
@@ -898,8 +911,9 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `companySlug` | string \| null | ● | ● | 기업 상세로 링크할 때 |
 | `title` | string | ● | △ | 없으면 `""` |
 | `body` | string | ● | ✕ | 후기 본문 |
-| `questions` | string[] | ✕ | ● | 족보 질문 목록 |
-| `questionCount` | number \| null | ✕ | ● | `questions.length` — **서버가 계산**. 요청으로 못 바꿈 |
+| `questions` | string | ✕ | ● | 족보 질문. **한 줄에 하나인 여러 줄 텍스트** (입력 원본 그대로). 없으면 `""` |
+| `questionList` | string[] | ✕ | ● | `questions` 를 줄 단위로 자르고 빈 줄을 뺀 배열. **목록 렌더링용** |
+| `questionCount` | number \| null | ✕ | ● | `questionList.length` — **서버가 계산**. 요청으로 못 바꿈 |
 | `difficulty` | string | ● | ● | 난이도 **라벨** (`"쉬움"`/`"보통"`/`"어려움"`). 값 없으면 `""` |
 | `difficultyScore` | number \| null | ● | ● | 면접 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
 | `problemScore` | number \| null | ✕ | ● | 문제 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
@@ -1722,7 +1736,7 @@ publishPortfolio(id)
 | `companyId` | uuid | ✕ | 공통 | 없는 id면 400 `INVALID_REFERENCE` |
 | `title` | string | ✕ | 후기 | 족보는 생략 |
 | `body` | string | ✕ | 후기 | 본문 |
-| `questions` | string[] | ✕ | 족보 | **배열 아니면 400.** 보내면 `questionCount` 도 함께 갱신됨 |
+| `questions` | string | ✕ | 족보 | **여러 줄 텍스트.** 한 줄에 질문 하나. 문자열이 아니면 400. 보내면 `questionCount` 도 함께 갱신됨 |
 | `difficultyCode` | string | ✕ | 공통 | `code_master(difficulty)` — `easy`/`normal`/`hard` |
 | `difficultyScore` | number \| null | ✕ | 공통 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
 | `problemScore` | number \| null | ✕ | 족보 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
@@ -1736,7 +1750,7 @@ publishPortfolio(id)
 | `overallComment` | string | ✕ | 공통 | 총평 |
 
 > 위에 없는 키는 **조용히 무시**됩니다. `userId` 를 보낼 필요도, 보내도 소용도 없습니다(항상 토큰 주인으로 저장).
-> `questionCount` 도 마찬가지입니다 — 서버가 `questions.length` 로 계산합니다.
+> `questionCount` 도 마찬가지입니다 — 서버가 빈 줄을 뺀 줄 수로 계산합니다.
 
 **응답 200** — 생성된 [Post](#57-post) (라벨·카운트가 모두 채워진 완성형)
 
@@ -1759,7 +1773,7 @@ publishPortfolio(id)
 #### `PATCH /api/posts/{id}` — 수정
 
 **인증 필요.** `POST` 와 같은 필드를 보낸 것만 수정. **최소 1개 필요.**
-`postType` 은 변경 불가(보내도 무시). `questions` 를 보내면 `questionCount` 가 새 길이로 다시 계산됩니다.
+`postType` 은 변경 불가(보내도 무시). `questions` 를 보내면 `questionCount` 가 다시 계산됩니다.
 
 **응답 200** — 수정된 [Post](#57-post) · **에러** `400` · `401` · `404`
 
