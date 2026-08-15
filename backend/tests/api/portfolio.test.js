@@ -210,40 +210,35 @@ describe('reactions', () => {
 });
 
 describe('listMyBookmarkedPortfolios', () => {
-  it('makes no further request when nothing is scrapped', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
-
-    await expect(listMyBookmarkedPortfolios()).resolves.toEqual({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 9,
-    });
-    expect(apiFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns items sorted in the scrapped order', async () => {
+  it('asks the server for my scrapped portfolios', async () => {
     mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['c', 'a', 'b'] },
-      'GET /api/portfolios': { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] },
+      'GET /api/portfolios': { items: [{ id: 'a' }], total: 1, page: 1, pageSize: 9 },
     });
 
     const result = await listMyBookmarkedPortfolios();
 
-    expect(result.items.map((i) => i.id)).toEqual(['c', 'a', 'b']);
-    expect(result.total).toBe(3);
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios', {
+      query: { scrapped: 1, sort: 'latest', page: 1, pageSize: 9 },
+    });
+    expect(result.total).toBe(1);
   });
 
-  it('fetches only the ids on the requested page', async () => {
-    mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['a', 'b', 'c', 'd'] },
-      'GET /api/portfolios': { items: [{ id: 'c' }, { id: 'd' }] },
+  it('passes the chosen sort and page through', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0 } });
+
+    await listMyBookmarkedPortfolios({ sort: 'title', page: 3, pageSize: 4 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios', {
+      query: { scrapped: 1, sort: 'title', page: 3, pageSize: 4 },
     });
+  });
 
-    const result = await listMyBookmarkedPortfolios({ page: 2, pageSize: 2 });
+  it('needs only one request', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0 } });
 
-    expect(apiFetch.mock.calls[1][1].query).toEqual({ ids: 'c,d', pageSize: 2 });
-    expect(result).toMatchObject({ total: 4, page: 2, pageSize: 2 });
+    await listMyBookmarkedPortfolios();
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 });
 

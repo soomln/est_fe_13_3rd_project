@@ -12,7 +12,12 @@ import {
   updateProfile,
   uploadAvatar,
 } from '@backend/lib/api/profile';
-import { deleteMyAccount, getMyAccount, getMySummary } from '@backend/lib/api/mypage';
+import {
+  deleteMyAccount,
+  getMyAccount,
+  getMySummary,
+  listMyScrappedCompanies,
+} from '@backend/lib/api/mypage';
 import { getCodeGroups } from '@backend/lib/api/codes';
 import { createDocument } from '@backend/lib/api/documents';
 import { createPortfolio, publishPortfolio, togglePortfolioBookmark } from '@backend/lib/api/portfolio';
@@ -409,5 +414,54 @@ describe('the account tab', () => {
 
   it('turns a visitor away', async () => {
     await expect(getMySummary()).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('sorting my scrapped companies', () => {
+  const naver = () => rows('companies').find((c) => c.slug === 'naver');
+  const other = () => rows('companies').find((c) => c.slug !== 'naver');
+
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await toggleCompanyBookmark(other().id);
+    await toggleCompanyBookmark(naver().id);
+  });
+
+  it('shows the one I scrapped last at the top', async () => {
+    const { items, total } = await listMyScrappedCompanies();
+
+    expect(total).toBe(2);
+    expect(items[0].id).toBe(naver().id);
+  });
+
+  it('flips to the one I scrapped first', async () => {
+    const { items } = await listMyScrappedCompanies({ sort: 'oldest' });
+
+    expect(items[0].id).toBe(other().id);
+  });
+
+  it('sorts by company name', async () => {
+    const { items } = await listMyScrappedCompanies({ sort: 'name' });
+
+    expect(items.map((c) => c.name)).toEqual([...items.map((c) => c.name)].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('rejects a sort the scrap list does not have', async () => {
+    await expect(listMyScrappedCompanies({ sort: 'rating' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('drops out of the list once I unscrap it', async () => {
+    await toggleCompanyBookmark(naver().id);
+
+    const { items, total } = await listMyScrappedCompanies();
+
+    expect(total).toBe(1);
+    expect(items.map((c) => c.id)).not.toContain(naver().id);
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(listMyScrappedCompanies()).rejects.toMatchObject({ status: 401 });
   });
 });

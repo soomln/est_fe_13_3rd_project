@@ -630,3 +630,85 @@ describe('portfolio collaborators', () => {
     expect(rows('portfolio_collaborators')).toEqual([]);
   });
 });
+
+describe('sorting and searching the gallery', () => {
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await publish('가나다 작업');
+    await publish('하하 작업');
+    await publish('마바사 작업');
+  });
+
+  it('sorts oldest first', async () => {
+    const { items } = await listPortfolios({ sort: 'oldest' });
+
+    expect(items[0].title).toBe('가나다 작업');
+  });
+
+  it('sorts by title', async () => {
+    const { items } = await listPortfolios({ sort: 'title' });
+
+    expect(items.map((p) => p.title)).toEqual(['가나다 작업', '마바사 작업', '하하 작업']);
+  });
+
+  it('searches the title', async () => {
+    const { items, total } = await listPortfolios({ q: '마바사' });
+
+    expect(total).toBe(1);
+    expect(items[0].title).toBe('마바사 작업');
+  });
+
+  it('finds nothing for a title that is not there', async () => {
+    await expect(listPortfolios({ q: '없는제목' })).resolves.toMatchObject({ total: 0 });
+  });
+
+  it('searches my own list too', async () => {
+    await expect(listMyPortfolios({ q: '하하' })).resolves.toMatchObject({ total: 1 });
+  });
+});
+
+describe('sorting my scrapped portfolios', () => {
+  let first;
+  let second;
+
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    first = await publish('하하 먼저 담은 것');
+    second = await publish('가나다 나중에 담은 것');
+
+    signInAs(USERS.b);
+    await togglePortfolioBookmark(first.id);
+    await togglePortfolioBookmark(second.id);
+  });
+
+  it('shows the one I scrapped last at the top', async () => {
+    const { items, total } = await listMyBookmarkedPortfolios();
+
+    expect(total).toBe(2);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('flips to the one I scrapped first', async () => {
+    const { items } = await listMyBookmarkedPortfolios({ sort: 'oldest' });
+
+    expect(items[0].id).toBe(first.id);
+  });
+
+  it('sorts by title', async () => {
+    const { items } = await listMyBookmarkedPortfolios({ sort: 'title' });
+
+    expect(items.map((p) => p.title)).toEqual(['가나다 나중에 담은 것', '하하 먼저 담은 것']);
+  });
+
+  it('rejects a sort the scrap list does not have', async () => {
+    await expect(listMyBookmarkedPortfolios({ sort: 'popular' })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(listMyBookmarkedPortfolios()).rejects.toMatchObject({ status: 401 });
+  });
+});

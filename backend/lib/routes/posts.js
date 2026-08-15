@@ -1,7 +1,7 @@
 import { SCORE_SCALE } from '../constants';
 import { badRequest, notFound, unauthorized } from '../http/errors';
-import { defineRoute, unwrap } from '../http/route';
-import { loadMyReactions } from './reactions';
+import { defineRoute, pageOf, unwrap } from '../http/route';
+import { loadMyReactions, loadScrapMarks } from './reactions';
 
 const NO_MINE = { like: new Set(), bookmark: new Set() };
 
@@ -13,8 +13,16 @@ const withMine = (item, mine) => ({
 
 const POST_TYPES = ['review', 'qbank'];
 
+const SCRAP_SORTS = {
+  latest: (a, b) => b.scrappedAt.localeCompare(a.scrappedAt),
+  oldest: (a, b) => a.scrappedAt.localeCompare(b.scrappedAt),
+  company: (a, b) => (a.companyName ?? '').localeCompare(b.companyName ?? ''),
+};
+
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
+  oldest: { column: 'created_at', ascending: true },
+  company: { column: 'company_name', ascending: true },
   popular: { column: 'like_count', ascending: false },
   scraps: { column: 'scrap_count', ascending: false },
   comments: { column: 'comment_count', ascending: false },
@@ -154,18 +162,49 @@ function toColumns(body) {
   return patch;
 }
 
+async function listScrapped({ supabase, user, q, page, pageSize, type }) {
+  const compare = SCRAP_SORTS[q.get('sort') ?? 'latest'];
+  if (!compare) {
+    throw badRequest(`스크랩 목록의 sort 는 ${Object.keys(SCRAP_SORTS).join(' | ')} 중 하나여야 합니다.`);
+  }
+
+  const marks = await loadScrapMarks(supabase, user, 'post');
+  if (marks.size === 0) return { items: [], total: 0, page, pageSize };
+
+  let query = supabase.from('v_posts').select('*').in('id', [...marks.keys()]);
+  if (type) query = query.eq('post_type', type);
+
+  const rows = unwrap(await query);
+  const labels = await loadLabels(supabase);
+
+  const scrapped = (rows ?? [])
+    .map((row) => ({ ...toItem(row, labels), scrappedAt: marks.get(row.id) ?? '' }))
+    .sort(compare);
+
+  const paged = pageOf(scrapped, page, pageSize);
+  const mine = await loadMyReactions(supabase, user, 'post', paged.items.map((p) => p.id));
+
+  return { ...paged, items: paged.items.map((item) => withMine(item, mine)) };
+}
+
 export const GET = defineRoute(async ({ request, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(q.get('pageSize') ?? 10)));
-  const sort = SORTS[q.get('sort') ?? 'latest'];
-  if (!sort) throw badRequest(`sort 는 ${Object.keys(SORTS).join(' | ')} 중 하나여야 합니다.`);
 
   const type = q.get('type');
   if (type && !POST_TYPES.includes(type)) {
     throw badRequest(`type 은 ${POST_TYPES.join(' | ')} 중 하나여야 합니다.`);
   }
+
+  if (q.get('scrapped') === '1') {
+    if (!user) throw unauthorized();
+    return listScrapped({ supabase, user, q, page, pageSize, type });
+  }
+
+  const sort = SORTS[q.get('sort') ?? 'latest'];
+  if (!sort) throw badRequest(`sort 는 ${Object.keys(SORTS).join(' | ')} 중 하나여야 합니다.`);
 
   let query = supabase.from('v_posts').select('*', { count: 'exact' });
 
