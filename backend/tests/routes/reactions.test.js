@@ -8,7 +8,7 @@ vi.mock('../../lib/supabase/server', async () => {
   return { createClient: async () => getSupabase() };
 });
 
-const { DELETE, GET, POST } = await import('../../lib/routes/reactions');
+const { DELETE, GET, POST, loadMyReactions } = await import('../../lib/routes/reactions');
 
 const url = (qs = '') => `http://localhost/api/reactions${qs}`;
 
@@ -240,5 +240,84 @@ describe('DELETE /api/reactions', () => {
     });
 
     expect(body).toEqual({ deleted: 0 });
+  });
+});
+
+describe('loadMyReactions', () => {
+  const rowsFor = (data) => createSupabaseStub({ tables: { reactions: { data, error: null } } });
+
+  it('sorts my rows into one set per kind', async () => {
+    const stub = rowsFor([
+      { target_id: 'a', kind: 'like' },
+      { target_id: 'b', kind: 'bookmark' },
+      { target_id: 'c', kind: 'like' },
+    ]);
+
+    const mine = await loadMyReactions(stub, { id: 'u1' }, 'portfolio', ['a', 'b', 'c']);
+
+    expect([...mine.like]).toEqual(['a', 'c']);
+    expect([...mine.bookmark]).toEqual(['b']);
+  });
+
+  it('asks only for my rows of that target type', async () => {
+    const stub = rowsFor([]);
+
+    await loadMyReactions(stub, { id: 'u1' }, 'post', ['a']);
+
+    expect(argsOf(queryFor(stub, 'reactions'), 'eq')).toEqual([
+      ['user_id', 'u1'],
+      ['target_type', 'post'],
+    ]);
+  });
+
+  it('sends each id once even when the list repeats', async () => {
+    const stub = rowsFor([]);
+
+    await loadMyReactions(stub, { id: 'u1' }, 'post', ['a', 'a', 'b']);
+
+    expect(argsOf(queryFor(stub, 'reactions'), 'in')[0]).toEqual(['target_id', ['a', 'b']]);
+  });
+
+  it('never queries for a signed-out visitor', async () => {
+    const stub = rowsFor([]);
+
+    const mine = await loadMyReactions(stub, null, 'post', ['a']);
+
+    expect(mine.like.size).toBe(0);
+    expect(mine.bookmark.size).toBe(0);
+    expect(stub.queries).toEqual([]);
+  });
+
+  it('never queries for an empty list', async () => {
+    const stub = rowsFor([]);
+
+    await loadMyReactions(stub, { id: 'u1' }, 'post', []);
+
+    expect(stub.queries).toEqual([]);
+  });
+
+  it('drops ids that are missing', async () => {
+    const stub = rowsFor([]);
+
+    await loadMyReactions(stub, { id: 'u1' }, 'post', [null, undefined, 'a']);
+
+    expect(argsOf(queryFor(stub, 'reactions'), 'in')[0]).toEqual(['target_id', ['a']]);
+  });
+
+  it('ignores a kind it does not track', async () => {
+    const stub = rowsFor([{ target_id: 'a', kind: 'shrug' }]);
+
+    const mine = await loadMyReactions(stub, { id: 'u1' }, 'post', ['a']);
+
+    expect(mine.like.size).toBe(0);
+    expect(mine.bookmark.size).toBe(0);
+  });
+
+  it('treats a null result as no reactions', async () => {
+    const stub = rowsFor(null);
+
+    const mine = await loadMyReactions(stub, { id: 'u1' }, 'post', ['a']);
+
+    expect(mine.like.size).toBe(0);
   });
 });
