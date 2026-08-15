@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
+import Image from 'next/image';
 import Tag from '../Tag';
 
 import { createPortfolio, updatePortfolio, uploadPortfolioImage } from '@backend/lib/api/portfolio';
@@ -198,12 +198,8 @@ export default function SettingModal({ item, setItem, isCreated, setIsCreated, i
         router.replace('/portfolio');
         return;
       }
-
-      onClose();
     } catch (error) {
       console.error('포트폴리오 저장 실패:', error);
-
-      alert(status === 'draft' ? '임시저장에 실패했습니다.' : '업로드에 실패했습니다.');
     } finally {
       setIsSaving(false);
     }
@@ -347,15 +343,6 @@ export default function SettingModal({ item, setItem, isCreated, setIsCreated, i
         </div>
 
         <footer>
-          <button
-            type='button'
-            className={`${styles.temp_save_btn} font_body_s_b`}
-            onClick={() => savePortfolio('draft')}
-            disabled={isSaving}
-          >
-            {isSaving ? '저장중...' : '임시저장'}
-          </button>
-
           <button
             type='button'
             className={`${styles.upload_btn} font_body_s_b`}
