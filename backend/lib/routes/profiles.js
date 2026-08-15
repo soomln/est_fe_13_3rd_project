@@ -1,5 +1,6 @@
 import { badRequest, forbidden, notFound } from '../http/errors';
 import { defineRoute, resolveUserId, unwrap } from '../http/route';
+import { assertCodes } from './codeGuard';
 
 const COLUMNS = `
   id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
@@ -57,6 +58,13 @@ const EDITABLE = [
 ];
 
 const ARRAY_FIELDS = ['skill_codes', 'interest_codes'];
+
+const CODE_FIELDS = {
+  career_level: 'career_level',
+  education_level: 'education_level',
+  skill_codes: 'tech_stack',
+  interest_codes: 'interest_field',
+};
 
 export async function loadProfileLists(supabase, userId) {
   const entries = await Promise.all(
@@ -134,6 +142,8 @@ export const PATCH = defineRoute(
         throw badRequest(`${key} 는 배열이어야 합니다.`);
       }
     }
+
+    await assertCodes(supabase, body, CODE_FIELDS);
 
     if (Object.keys(lists).length > 0) {
       unwrap(

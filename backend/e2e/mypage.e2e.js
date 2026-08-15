@@ -68,7 +68,7 @@ describe('editing my profile', () => {
       github_url: 'https://github.com/dodam',
       bio: '안녕하세요',
       skill_codes: ['react'],
-      interest_codes: ['be'],
+      interest_codes: ['backend'],
     });
 
     expect(saved).toMatchObject({
@@ -463,5 +463,55 @@ describe('sorting my scrapped companies', () => {
     signOutOfBrowser();
 
     await expect(listMyScrappedCompanies()).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('프로필의 코드 값도 라벨을 거부한다', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it.each([
+    ['career_level', '신입'],
+    ['education_level', '대졸'],
+  ])('refuses a label in %s', async (field, label) => {
+    await expect(updateProfile({ [field]: label })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('refuses a label mixed into skill_codes', async () => {
+    await expect(updateProfile({ skill_codes: ['react', '리액트'] })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('refuses a label mixed into interest_codes', async () => {
+    await expect(updateProfile({ interest_codes: ['frontend', '백엔드'] })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('saves the real codes', async () => {
+    const saved = await updateProfile({
+      career_level: 'junior',
+      education_level: 'bachelor',
+      skill_codes: ['react', 'next'],
+      interest_codes: ['frontend'],
+    });
+
+    expect(saved).toMatchObject({
+      career_level: 'junior',
+      education_level: 'bachelor',
+      skill_codes: ['react', 'next'],
+    });
+  });
+
+  it('leaves the profile untouched when a code is refused', async () => {
+    await updateProfile({ career_level: 'junior' });
+
+    await expect(updateProfile({ career_level: '경력' })).rejects.toMatchObject({ status: 400 });
+
+    await expect(getMyProfile()).resolves.toMatchObject({ career_level: 'junior' });
+  });
+
+  it('lets an empty array clear the codes', async () => {
+    await expect(updateProfile({ skill_codes: [] })).resolves.toMatchObject({ skill_codes: [] });
   });
 });

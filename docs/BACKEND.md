@@ -2098,6 +2098,32 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 `GET /api/codes?groups=…` 로 내려오는 전체 목록입니다. **하드코딩하지 말고 API로 받으세요.**
 아래 표는 값 확인용입니다. 라벨은 대시보드에서 바뀔 수 있지만 **코드는 바뀌지 않습니다.**
 
+### ⚠️ 라벨을 보내면 400 입니다
+
+코드 컬럼에는 **반드시 `code` 를 보내세요.** `label`(`"프론트엔드"`)을 보내면 저장되지 않고 400 입니다.
+
+```json
+{ "error": { "code": "BAD_REQUEST",
+  "message": "jobRoleCode 의 \"프론트엔드\" 는 code_master(job_role) 의 코드가 아닙니다. 사용 가능: frontend | backend | ..." } }
+```
+
+에러 메시지에 **사용 가능한 코드가 전부 들어 있으니** 그대로 보고 고치면 됩니다.
+
+검사는 두 겹입니다 — API 가 먼저 위 메시지로 막고, 그걸 우회해도 **DB 의 FK 가 막습니다.**
+대상은 아래 전부입니다.
+
+| 테이블 | 컬럼 | 그룹 |
+|---|---|---|
+| `posts` | `job_role_code` · `difficulty_code` · `pass_result_code` · `channel_code` · `education_level` | job_role · difficulty · pass_result · interview_channel · education_level |
+| `profiles` | `career_level` · `education_level` · `skill_codes[]` · `interest_codes[]` | career_level · education_level · tech_stack · interest_field |
+| `companies` | `industry_code` · `size_code` · `job_role_codes[]` | industry · company_size · job_role |
+| `portfolios` | `category` | portfolio_category |
+| `resume_templates` | `category_code` | template_category |
+| `interview_sessions` | `interviewer_style` | interviewer_style |
+| `interview_qas` | `category` | interview_category |
+
+`null` 은 "미기입"으로 통과합니다. 배열은 **원소 하나라도 틀리면** 전체가 400 입니다.
+
 <details>
 <summary><b>job_role</b> — 직무 (13) · 기업 필터 / 후기 작성</summary>
 
@@ -2116,6 +2142,22 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 | `embedded` | 임베디드 |
 | `pm` | PM·기획 |
 | `designer` | UI/UX 디자인 |
+
+</details>
+
+<details>
+<summary><b>template_category</b> — 양식 분류 (8) · 무료 양식</summary>
+
+| code | label |
+|---|---|
+| `basic` | 기본 |
+| `standard` | 표준 |
+| `newcomer` | 신입 |
+| `career` | 경력 |
+| `project` | 프로젝트 중심 |
+| `competency` | 역량 중심 |
+| `portfolio` | 포트폴리오형 |
+| `english` | 영문 |
 
 </details>
 
@@ -2410,7 +2452,7 @@ data: {"type": "action", "data": "search_web"}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 948개 + E2E 469개 = 1,417개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 963개 + E2E 485개 = 1,448개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all
