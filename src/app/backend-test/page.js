@@ -91,6 +91,50 @@ import {
 } from '@backend/lib/api/templates';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+const DEFAULT_LIST_OPTS = {
+  gallery: 'latest',
+  galleryQuery: '',
+  posts: 'latest',
+  scrapCompanies: 'latest',
+  scrapPosts: 'latest',
+  scrapPortfolios: 'latest',
+};
+
+const SORT_OPTIONS = {
+  gallery: [
+    ['latest', '최신순'],
+    ['oldest', '오래된순'],
+    ['title', '이름순'],
+    ['popular', '인기순'],
+    ['views', '조회순'],
+    ['scraps', '스크랩순'],
+  ],
+  posts: [
+    ['latest', '최신순'],
+    ['oldest', '오래된순'],
+    ['company', '기업이름순'],
+    ['popular', '인기순'],
+    ['scraps', '스크랩순'],
+    ['comments', '댓글순'],
+    ['views', '조회순'],
+  ],
+  scrapCompanies: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['name', '기업이름순'],
+  ],
+  scrapPosts: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['company', '기업이름순'],
+  ],
+  scrapPortfolios: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['title', '이름순'],
+  ],
+};
+
 export default function BackendTestPage() {
   const [authError, setAuthError] = useState(null);
   const [user, setUser] = useState(null);
@@ -123,6 +167,14 @@ export default function BackendTestPage() {
   const [collabFound, setCollabFound] = useState(null);
   const [myWritings, setMyWritings] = useState(null);
   const [codeGroups, setCodeGroups] = useState(null);
+  const [listOpts, setListOpts] = useState(DEFAULT_LIST_OPTS);
+
+  const listOptsRef = useRef(DEFAULT_LIST_OPTS);
+
+  const setListOpt = useCallback((patch) => {
+    listOptsRef.current = { ...listOptsRef.current, ...patch };
+    setListOpts(listOptsRef.current);
+  }, []);
 
   const patchForm = useCallback((patch) => setProfileForm((prev) => ({ ...prev, ...patch })), []);
 
@@ -166,13 +218,14 @@ export default function BackendTestPage() {
     }
 
     try {
+      const o = listOptsRef.current;
       const [nextAccount, nextSummary, companyScraps, postScraps, portfolioScraps] =
         await Promise.all([
           getMyAccount(),
           getMySummary(),
-          listMyScrappedCompanies({ pageSize: 9 }),
-          listMyScrappedPosts({ pageSize: 10 }),
-          listMyScrappedPortfolios({ pageSize: 9 }),
+          listMyScrappedCompanies({ sort: o.scrapCompanies, pageSize: 9 }),
+          listMyScrappedPosts({ sort: o.scrapPosts, pageSize: 10 }),
+          listMyScrappedPortfolios({ sort: o.scrapPortfolios, pageSize: 9 }),
         ]);
 
       setAccount(nextAccount);
@@ -327,7 +380,8 @@ export default function BackendTestPage() {
     }
 
     try {
-      setGallery(await listPortfolios({ pageSize: 20 }));
+      const { gallery: sort, galleryQuery } = listOptsRef.current;
+      setGallery(await listPortfolios({ sort, q: galleryQuery || undefined, pageSize: 20 }));
     } catch (e) {
       setGallery({ error: e.message });
     }
@@ -339,7 +393,7 @@ export default function BackendTestPage() {
     }
 
     try {
-      setPosts(await listPosts({ pageSize: 20 }));
+      setPosts(await listPosts({ sort: listOptsRef.current.posts, pageSize: 20 }));
     } catch (e) {
       setPosts({ error: e.message });
     }
@@ -364,7 +418,7 @@ export default function BackendTestPage() {
   }, []);
 
   const reloadPosts = useCallback(async () => {
-    setPosts(await listPosts({ pageSize: 20 }));
+    setPosts(await listPosts({ sort: listOptsRef.current.posts, pageSize: 20 }));
   }, []);
 
   const openComments = useCallback(async (postId) => {
@@ -373,7 +427,8 @@ export default function BackendTestPage() {
   }, []);
 
   const reloadPortfolios = useCallback(async () => {
-    setGallery(await listPortfolios({ pageSize: 20 }));
+    const { gallery: sort, galleryQuery } = listOptsRef.current;
+    setGallery(await listPortfolios({ sort, q: galleryQuery || undefined, pageSize: 20 }));
     setMyPortfolios(await listMyPortfolios({ pageSize: 20 }).catch((e) => ({ error: e.message })));
   }, []);
 
@@ -449,6 +504,31 @@ export default function BackendTestPage() {
     },
     [log, loadMypage]
   );
+
+  const changeSort = useCallback(
+    async (name, value) => {
+      setListOpt({ [name]: value });
+      const reload =
+        name === 'posts' ? reloadPosts : name.startsWith('scrap') ? loadMypage : reloadPortfolios;
+      try {
+        await reload();
+        log(true, `정렬 ${name} → ${value}`);
+      } catch (e) {
+        log(false, `정렬 ${name} → ${value} — ${e.message}`);
+      }
+    },
+    [log, loadMypage, reloadPortfolios, reloadPosts, setListOpt]
+  );
+
+  const searchGallery = useCallback(async () => {
+    const keyword = listOptsRef.current.galleryQuery;
+    try {
+      await reloadPortfolios();
+      log(true, `갤러리 검색 "${keyword || '(전체)'}"`);
+    } catch (e) {
+      log(false, `갤러리 검색 "${keyword}" — ${e.message}`);
+    }
+  }, [log, reloadPortfolios]);
 
   useEffect(() => {
     runChecks();
@@ -901,6 +981,26 @@ export default function BackendTestPage() {
           </li>
         </ul>
 
+        <div style={S.sortBar}>
+          <SortSelect
+            label='갤러리 정렬'
+            name='gallery'
+            value={listOpts.gallery}
+            onChange={changeSort}
+          />
+          <input
+            type='search'
+            placeholder='포트폴리오 이름 검색'
+            value={listOpts.galleryQuery}
+            onChange={(e) => setListOpt({ galleryQuery: e.target.value })}
+            onKeyDown={(e) => e.key === 'Enter' && searchGallery()}
+            style={{ ...S.sortSelect, minWidth: 200 }}
+          />
+          <button type='button' style={S.miniBtn} onClick={searchGallery}>
+            검색
+          </button>
+        </div>
+
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           <button
             type='button'
@@ -1045,7 +1145,7 @@ export default function BackendTestPage() {
               </span>
               <span style={S.companyName}>{p.title}</span>
               <span style={S.companyMeta}>
-                {p.authorName ?? '작성자 없음'} · {p.category ?? '-'}
+                {p.authorName ?? '작성자 없음'} · {p.category ?? '-'} · {p.createdAt?.slice(0, 10)}
               </span>
               <span style={S.companyMeta}>
                 👍 {p.likeCount}
@@ -1232,6 +1332,16 @@ export default function BackendTestPage() {
             족보 <b>{(posts?.items ?? []).filter((p) => p.postType === 'qbank').length}</b>
           </li>
         </ul>
+
+        <div style={S.sortBar}>
+          <SortSelect label='정렬' name='posts' value={listOpts.posts} onChange={changeSort} />
+          <span style={S.sortLabel}>
+            {(posts?.items ?? [])
+              .slice(0, 3)
+              .map((p) => `${p.companyName || '-'}/${p.date}`)
+              .join(' → ')}
+          </span>
+        </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           <button
@@ -2155,10 +2265,16 @@ export default function BackendTestPage() {
 
         {myScraps && (
           <div style={S.detailBox}>
-            <div style={S.detailTitle}>스크랩 목록 (복수 삭제)</div>
+            <div style={S.detailTitle}>스크랩 목록 (정렬 · 복수 삭제)</div>
             <ul style={S.list}>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>기업</span>
+                <SortSelect
+                  label=''
+                  name='scrapCompanies'
+                  value={listOpts.scrapCompanies}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.companies.total}건
                   {myScraps.companies.items.length > 0 &&
@@ -2167,16 +2283,28 @@ export default function BackendTestPage() {
               </li>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>면접 후기·족보</span>
+                <SortSelect
+                  label=''
+                  name='scrapPosts'
+                  value={listOpts.scrapPosts}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.posts.total}건
                   {myScraps.posts.items.length > 0 &&
                     ` — ${myScraps.posts.items
-                      .map((p) => p.title || p.companyName || p.id.slice(0, 8))
+                      .map((p) => `${p.companyName || '-'}/${p.title || p.id.slice(0, 8)}`)
                       .join(', ')}`}
                 </span>
               </li>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>포트폴리오</span>
+                <SortSelect
+                  label=''
+                  name='scrapPortfolios'
+                  value={listOpts.scrapPortfolios}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.portfolios.total}건
                   {myScraps.portfolios.items.length > 0 &&
@@ -2184,6 +2312,10 @@ export default function BackendTestPage() {
                 </span>
               </li>
             </ul>
+            <p style={S.hint}>
+              스크랩 목록의 <code>latest</code> 는 <b>내가 스크랩한 시각</b> 기준입니다. 목록
+              화면의 <code>latest</code>(글이 등록된 시각)와 뜻이 다릅니다.
+            </p>
           </div>
         )}
 
@@ -2305,6 +2437,25 @@ function Field({ label, children }) {
     <label style={S.field}>
       <span style={S.fieldLabel}>{label}</span>
       {children}
+    </label>
+  );
+}
+
+function SortSelect({ label, name, value, onChange }) {
+  return (
+    <label style={S.sortLabel}>
+      {label}
+      <select
+        style={S.sortSelect}
+        value={value}
+        onChange={(e) => onChange(name, e.target.value)}
+      >
+        {SORT_OPTIONS[name].map(([code, text]) => (
+          <option key={code} value={code}>
+            {text}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -2525,6 +2676,15 @@ const S = {
   },
   mono: { fontSize: 13, lineHeight: 1.6, marginBottom: 12, wordBreak: 'break-all' },
   hint: { marginTop: 12, fontSize: 12, color: '#6F6F6F' },
+  sortBar: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 },
+  sortLabel: { display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, color: '#6F6F6F' },
+  sortSelect: {
+    padding: '6px 10px',
+    border: '1px solid #ACAEAD',
+    borderRadius: 8,
+    background: '#FFFFFF',
+    fontSize: 13,
+  },
   error: {
     border: '1px solid #FECACA',
     background: '#FEF2F2',

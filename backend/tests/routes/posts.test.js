@@ -832,3 +832,110 @@ describe('DELETE /api/posts/:id', () => {
     expect(status).toBe(404);
   });
 });
+
+describe('post sorting', () => {
+  it.each([
+    ['oldest', 'created_at', true],
+    ['company', 'company_name', true],
+  ])('sort=%s orders by %s', async (sort, column, ascending) => {
+    await callRoute(GET, { request: makeRequest(url(`?sort=${sort}`)) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'order')[0]).toEqual([
+      column,
+      { ascending, nullsFirst: false },
+    ]);
+  });
+});
+
+describe('GET /api/posts?scrapped=1', () => {
+  const MARKS = [
+    { target_id: 'p1', created_at: '2026-08-03T00:00:00Z' },
+    { target_id: 'p2', created_at: '2026-08-01T00:00:00Z' },
+  ];
+  const ROWS = [
+    { ...ROW, id: 'p1', company_name: '토스' },
+    { ...ROW, id: 'p2', company_name: '가카오', post_type: 'qbank' },
+  ];
+
+  const scrapStub = (marks = MARKS, rows = ROWS) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        reactions: { data: marks, error: null },
+        v_posts: { data: rows, error: null },
+        code_master: CODES,
+      },
+    });
+
+  it('answers 401 while signed out', async () => {
+    setSupabase(createSupabaseStub());
+
+    const { status } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(status).toBe(401);
+  });
+
+  it('puts the most recently scrapped first', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['p1', 'p2']);
+    expect(body.total).toBe(2);
+  });
+
+  it('sort=oldest flips it to the first one scrapped', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=oldest')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['p2', 'p1']);
+  });
+
+  it('sort=company orders by company name', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=company')) });
+
+    expect(body.items.map((p) => p.companyName)).toEqual(['가카오', '토스']);
+  });
+
+  it('still narrows by type', async () => {
+    const stub = scrapStub();
+    setSupabase(stub);
+
+    await callRoute(GET, { request: makeRequest(url('?scrapped=1&type=qbank')) });
+
+    expect(argsOf(queriesFor(stub, 'v_posts')[0], 'eq')).toContainEqual(['post_type', 'qbank']);
+  });
+
+  it('answers 400 for a sort the scrap list does not have', async () => {
+    setSupabase(scrapStub());
+
+    const { status, body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&sort=views')),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('스크랩 목록');
+  });
+
+  it('pages the sorted list', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&page=2&pageSize=1')),
+    });
+
+    expect(body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(body.items.map((p) => p.id)).toEqual(['p2']);
+  });
+
+  it('answers an empty list when nothing is scrapped', async () => {
+    setSupabase(scrapStub([], []));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 10 });
+  });
+});

@@ -2,7 +2,6 @@ import { PAGE_SIZE, REACTION } from '../constants';
 import { apiFetch } from './_fetch';
 import {
   getMyReactionIds,
-  listMyReactionTargetIds,
   removeReactions,
   toggleReaction,
 } from './reactions';
@@ -46,21 +45,11 @@ export async function getMyBookmarkedCompanyIds(companyIds) {
 }
 
 export async function listMyBookmarkedCompanies({
+  sort = 'latest',
   page = 1,
   pageSize = PAGE_SIZE.scrappedCompanies,
 } = {}) {
-  const ids = await listMyReactionTargetIds(...REACTION.companyBookmark);
-  if (ids.length === 0) return { items: [], total: 0, page, pageSize };
-
-  const pageIds = ids.slice((page - 1) * pageSize, page * pageSize);
-  const { items } = await apiFetch('/api/companies', {
-    query: { ids: pageIds.join(','), pageSize },
-  });
-
-  const order = new Map(pageIds.map((id, index) => [id, index]));
-  items.sort((a, b) => order.get(a.id) - order.get(b.id));
-
-  return { items, total: ids.length, page, pageSize };
+  return apiFetch('/api/companies', { query: { scrapped: 1, sort, page, pageSize } });
 }
 
 export async function removeCompanyBookmarks(companyIds) {

@@ -1,8 +1,14 @@
-import { badRequest, notFound } from '../http/errors';
-import { defineRoute, unwrap } from '../http/route';
-import { loadMyReactions } from './reactions';
+import { badRequest, notFound, unauthorized } from '../http/errors';
+import { defineRoute, pageOf, unwrap } from '../http/route';
+import { loadMyReactions, loadScrapMarks } from './reactions';
 
 const withMine = (item, mine) => ({ ...item, bookmarkedByMe: mine.bookmark.has(item.id) });
+
+const SCRAP_SORTS = {
+  latest: (a, b) => b.scrappedAt.localeCompare(a.scrappedAt),
+  oldest: (a, b) => a.scrappedAt.localeCompare(b.scrappedAt),
+  name: (a, b) => (a.name ?? '').localeCompare(b.name ?? ''),
+};
 
 const SORTS = {
   popular: { column: 'bookmark_count', ascending: false },
@@ -81,11 +87,39 @@ function toDetail(row, labels) {
   };
 }
 
+async function listScrapped({ supabase, user, q, page, pageSize }) {
+  const compare = SCRAP_SORTS[q.get('sort') ?? 'latest'];
+  if (!compare) {
+    throw badRequest(`스크랩 목록의 sort 는 ${Object.keys(SCRAP_SORTS).join(' | ')} 중 하나여야 합니다.`);
+  }
+
+  const marks = await loadScrapMarks(supabase, user, 'company');
+  if (marks.size === 0) return { items: [], total: 0, page, pageSize };
+
+  const rows = unwrap(await supabase.from('v_companies').select('*').in('id', [...marks.keys()]));
+  const labels = await industryLabels(supabase);
+
+  const scrapped = (rows ?? [])
+    .map((row) => ({ ...toCard(row, labels), scrappedAt: marks.get(row.id) ?? '' }))
+    .sort(compare);
+
+  const paged = pageOf(scrapped, page, pageSize);
+  const mine = await loadMyReactions(supabase, user, 'company', paged.items.map((c) => c.id));
+
+  return { ...paged, items: paged.items.map((item) => withMine(item, mine)) };
+}
+
 export const GET = defineRoute(async ({ request, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(q.get('pageSize') ?? 20)));
+
+  if (q.get('scrapped') === '1') {
+    if (!user) throw unauthorized();
+    return listScrapped({ supabase, user, q, page, pageSize });
+  }
+
   const sortKey = q.get('sort') ?? 'popular';
   const sort = SORTS[sortKey];
   if (!sort) throw badRequest(`sort 는 ${Object.keys(SORTS).join(' | ')} 중 하나여야 합니다.`);
