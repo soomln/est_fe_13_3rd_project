@@ -19,8 +19,12 @@ const MENUS = [
 export default function MyPageNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile } = useMyProfile();
+  const { profile, codes } = useMyProfile();
   const { signOut } = useAuth();
+
+  // 서버는 코드(frontend)로 주니 이름표(프론트엔드)로 바꿔서 보여준다
+  const role =
+    (codes.job_role ?? []).find((item) => item.code === profile?.desired_role)?.label ?? '';
 
   const isActive = (href) => (href === '/mypage' ? pathname === href : pathname.startsWith(href));
 
@@ -40,9 +44,7 @@ export default function MyPageNav() {
 
         <span className={styles.mypage_nav_names}>
           <span className={`${styles.mypage_nav_name} font_body_l_b`}>{profile?.name ?? ''}</span>
-          <span className={`${styles.mypage_nav_role} font_body_l_r`}>
-            {profile?.desired_role ?? ''}
-          </span>
+          <span className={`${styles.mypage_nav_role} font_body_l_r`}>{role}</span>
         </span>
       </div>
 

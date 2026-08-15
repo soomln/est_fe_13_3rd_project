@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { getDocument } from '@backend/lib/api/documents';
+import useDialog from '@/app/mypage/_lib/useDialog';
 import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './DocumentPreview.module.sass';
 
@@ -36,23 +37,7 @@ export default function DocumentPreview({ id, onClose }) {
     };
   }, [id]);
 
-  // 열려 있는 동안 Esc 로 닫고 뒤쪽 스크롤을 막는다
-  useEffect(() => {
-    if (!id) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [id, onClose]);
+  useDialog(Boolean(id), onClose);
 
   if (!id) return null;
 
