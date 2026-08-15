@@ -48,12 +48,25 @@ export default function BasicFields({ draft, onChange, hasNameError, onPhotoErro
 
   return (
     <section className={styles.profile_edit_basic}>
-      <div className={styles.profile_edit_avatar_box}>
-        {draft.avatarUrl ? (
-          <img src={draft.avatarUrl} alt='' className={styles.profile_edit_avatar} />
-        ) : (
-          <span className={styles.profile_edit_avatar} />
-        )}
+      <div className={styles.profile_edit_avatar_col}>
+        <div className={styles.profile_edit_avatar_box}>
+          {draft.avatarUrl ? (
+            <img src={draft.avatarUrl} alt='' className={styles.profile_edit_avatar} />
+          ) : (
+            <span className={styles.profile_edit_avatar} />
+          )}
+
+          {/* 사진 위에 마우스를 올리면 어두워지면서 뜬다 */}
+          <div className={styles.profile_edit_avatar_dim}>
+            <button
+              type='button'
+              className={`${styles.profile_edit_avatar_btn} font_body_m_b`}
+              onClick={() => setIsPicking(true)}
+            >
+              기본 이미지
+            </button>
+          </div>
+        </div>
 
         <input
           ref={fileInputRef}
@@ -66,19 +79,11 @@ export default function BasicFields({ draft, onChange, hasNameError, onPhotoErro
 
         <button
           type='button'
-          className={`${styles.profile_edit_avatar_btn} font_body_s_b`}
+          className={`${styles.profile_edit_avatar_btn} font_body_m_b`}
           disabled={isUploading}
           onClick={() => fileInputRef.current?.click()}
         >
           {isUploading ? '올리는 중…' : '사진 변경'}
-        </button>
-
-        <button
-          type='button'
-          className={`${styles.profile_edit_avatar_btn} font_body_s_b`}
-          onClick={() => setIsPicking(true)}
-        >
-          기본 이미지
         </button>
       </div>
 

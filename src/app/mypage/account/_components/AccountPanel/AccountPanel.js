@@ -107,11 +107,35 @@ export default function AccountPanel() {
         <h2 className={`${styles.account_card_title} font_h4`}>로그인 정보</h2>
 
         <div className={styles.account_login}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt='' className={styles.account_avatar} />
-          ) : (
-            <span className={styles.account_avatar_dummy} />
-          )}
+          <div className={styles.account_avatar_col}>
+            <div className={styles.account_avatar_box}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt='' className={styles.account_avatar} />
+              ) : (
+                <span className={styles.account_avatar_dummy} />
+              )}
+
+              {/* 사진 위에 마우스를 올리면 어두워지면서 뜬다 */}
+              <div className={styles.account_photo_dim}>
+                <button
+                  type='button'
+                  className={`${styles.account_photo_btn} font_body_m_b`}
+                  onClick={() => setIsPicking(true)}
+                >
+                  기본 이미지
+                </button>
+              </div>
+            </div>
+
+            <button
+              type='button'
+              className={`${styles.account_photo_btn} font_body_m_b`}
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? '올리는 중…' : '사진 변경'}
+            </button>
+          </div>
 
           <dl className={styles.account_fields}>
             <div className={styles.account_field}>
@@ -134,24 +158,6 @@ export default function AccountPanel() {
             aria-label='프로필 사진 파일 선택'
           />
 
-          <div className={styles.account_photo_btns}>
-            <button
-              type='button'
-              className={`${styles.account_photo_btn} font_body_s_b`}
-              disabled={isUploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploading ? '올리는 중…' : '사진 변경'}
-            </button>
-
-            <button
-              type='button'
-              className={`${styles.account_photo_btn} font_body_s_b`}
-              onClick={() => setIsPicking(true)}
-            >
-              기본 이미지
-            </button>
-          </div>
         </div>
 
         <AvatarPicker

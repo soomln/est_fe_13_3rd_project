@@ -1,6 +1,7 @@
 // 서버(profiles 테이블)와 화면이 쓰는 이름이 달라서 여기서 맞춘다
 
 const labelOf = (list, code) => list.find((item) => item.code === code)?.label ?? code;
+const codeOf = (list, label) => list.find((item) => item.label === label)?.code ?? null;
 
 // 코드표에 없는 이름표는 저장하지 않는다. 서버에 엉뚱한 값이 들어가는 것을 막는다
 const toCodes = (list, labels) =>
@@ -8,112 +9,6 @@ const toCodes = (list, labels) =>
 
 // meta 는 "2020.03 – 2024.02" 형태다
 const splitMeta = (meta = '') => String(meta).split('–');
-
-// 최종학력은 profiles 에 칸이 없어서 학력 행마다 같이 넣어둔다
-const finalOf = (educations) => educations[0]?.final ?? '고졸';
-
-const EMPTY = {
-  name: '',
-  headline: '',
-  email: '',
-  github: '',
-  avatarUrl: '',
-  bio: '',
-  stats: [],
-  desiredRole: '',
-  careerLevel: '',
-  educationLevel: '고졸',
-  educations: [],
-  careers: [],
-  languages: [],
-  awards: [],
-  skills: [],
-  interests: [],
-};
-
-export function toView(profile, codes, stats) {
-  if (!profile) return EMPTY;
-
-  const roles = codes.job_role ?? [];
-  const levels = codes.career_level ?? [];
-  const techs = codes.tech_stack ?? [];
-  const fields = codes.interest_field ?? [];
-
-  const headline = [
-    profile.desired_role && labelOf(roles, profile.desired_role),
-    profile.career_level && labelOf(levels, profile.career_level),
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
-  return {
-    name: profile.name ?? '',
-    headline,
-    email: profile.email ?? '',
-    github: profile.github_url ?? '',
-    avatarUrl: profile.avatar_url ?? '',
-    bio: profile.bio ?? '',
-    desiredRole: profile.desired_role ? labelOf(roles, profile.desired_role) : '',
-    careerLevel: profile.career_level ? labelOf(levels, profile.career_level) : '',
-    stats: [
-      { value: stats?.docCount ?? 0, label: '문서', tone: 'black' },
-      { value: stats?.portfolioCount ?? 0, label: '포트폴리오', tone: 'green' },
-      { value: stats?.interviewScrapCount ?? 0, label: '면접 스크랩', tone: 'amber' },
-    ],
-    educationLevel: finalOf(profile.educations ?? []),
-    educations: profile.educations ?? [],
-    careers: profile.careers ?? [],
-    languages: profile.languages ?? [],
-    awards: profile.awards ?? [],
-    skills: (profile.skill_codes ?? []).map((code) => labelOf(techs, code)),
-    interests: (profile.interest_codes ?? []).map((code) => labelOf(fields, code)),
-  };
-}
-
-// 수정한 섹션에 해당하는 칸만 골라 서버로 보낸다
-export function toPatch(section, draft, codes) {
-  switch (section) {
-    case 'basic':
-      return {
-        name: draft.name,
-        avatar_url: draft.avatarUrl || null,
-        github_url: draft.github,
-        desired_role: toCodes(codes.job_role ?? [], [draft.desiredRole])[0] ?? null,
-        career_level: toCodes(codes.career_level ?? [], [draft.careerLevel])[0] ?? null,
-      };
-    case 'bio':
-      return { bio: draft.bio };
-    case 'educations':
-      return {
-        educations: draft.educations.map((item) => ({
-          ...item,
-          meta: normalizeMeta(item.meta),
-          final: draft.educationLevel,
-        })),
-      };
-    case 'careers':
-      return {
-        careers: draft.careers.map((item) => ({ ...item, meta: normalizeMeta(item.meta) })),
-      };
-    case 'languages':
-      return { languages: draft.languages };
-    case 'awards':
-      return {
-        awards: draft.awards.map((item) => ({ ...item, date: normalizeDate(item.date) })),
-      };
-    case 'skills':
-      return { skill_codes: toCodes(codes.tech_stack ?? [], draft.skills) };
-    case 'interests':
-      return { interest_codes: toCodes(codes.interest_field ?? [], draft.interests) };
-    default:
-      return {};
-  }
-}
-
-const isBlank = (text) => !String(text ?? '').trim();
-
-// 시작·종료를 " – " 로 이어 붙인 값이라 양쪽 다 봐야 한다
-const hasBlankMeta = (meta) => splitMeta(meta).some(isBlank);
 
 // 띄어쓰기와 한 자리 월(2020.3)까지 받아주고 저장할 때 "2020. 03" 으로 통일한다
 const squash = (text) => String(text ?? '').replace(/\s/g, '');
@@ -142,15 +37,173 @@ const normalizeDate = (text) => {
   return found ? `${found.year}. ${String(found.month).padStart(2, '0')}` : String(text ?? '').trim();
 };
 
-const normalizeMeta = (meta) => splitMeta(meta).map(normalizeDate).join(' – ');
-
 const thisMonth = () => {
   const now = new Date();
   return now.getFullYear() * 100 + (now.getMonth() + 1);
 };
 
+// 시작 – 종료를 한 칸에 담는다
+const joinMeta = (from, to) => `${from} – ${to}`;
+
+const EMPTY = {
+  name: '',
+  headline: '',
+  email: '',
+  github: '',
+  avatarUrl: '',
+  bio: '',
+  stats: [],
+  desiredRole: '',
+  careerLevel: '',
+  educationLevel: '고졸',
+  educations: [],
+  careers: [],
+  languages: [],
+  awards: [],
+  skills: [],
+  interests: [],
+};
+
+export function toView(profile, codes, stats) {
+  if (!profile) return EMPTY;
+
+  const roles = codes.job_role ?? [];
+  const levels = codes.career_level ?? [];
+  const techs = codes.tech_stack ?? [];
+  const fields = codes.interest_field ?? [];
+  const edus = codes.education_level ?? [];
+  const schools = codes.school_type ?? [];
+  const states = codes.edu_status ?? [];
+  const langLevels = codes.language_level ?? [];
+
+  const headline = [
+    profile.desired_role && labelOf(roles, profile.desired_role),
+    profile.career_level && labelOf(levels, profile.career_level),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return {
+    name: profile.name ?? '',
+    headline,
+    email: profile.email ?? '',
+    github: profile.github_url ?? '',
+    avatarUrl: profile.avatar_url ?? '',
+    bio: profile.bio ?? '',
+    desiredRole: profile.desired_role ? labelOf(roles, profile.desired_role) : '',
+    careerLevel: profile.career_level ? labelOf(levels, profile.career_level) : '',
+    stats: [
+      { value: stats?.docCount ?? 0, label: '문서', tone: 'black' },
+      { value: stats?.portfolioCount ?? 0, label: '포트폴리오', tone: 'green' },
+      { value: stats?.interviewScrapCount ?? 0, label: '면접 스크랩', tone: 'amber' },
+    ],
+    educationLevel:
+      (profile.education_level ? labelOf(edus, profile.education_level) : '') ||
+      profile.educations?.[0]?.final ||
+      '고졸',
+    educations: (profile.educations ?? []).map((item) => ({
+      level: item.type ? labelOf(schools, item.type) : (item.level ?? ''),
+      title: item.school ?? item.title ?? '',
+      sub: item.major ?? item.sub ?? '',
+      badge: item.status ? labelOf(states, item.status) : (item.badge ?? ''),
+      meta: item.meta ?? joinMeta(item.admission ?? '', item.graduation ?? ''),
+    })),
+    careers: (profile.careers ?? []).map((item) => {
+      const meta = item.meta ?? joinMeta(item.start ?? '', item.end ?? '');
+      return {
+        title: item.company ?? item.title ?? '',
+        sub: item.role ?? item.sub ?? '',
+        badge: splitMeta(meta)[1]?.trim() === '재직 중' ? '재직 중' : '퇴사',
+        meta,
+      };
+    }),
+    languages: (profile.languages ?? []).map((item) => ({
+      title: item.language ?? item.title ?? '',
+      sub: item.detail ?? item.sub ?? '',
+      badge: item.level ? labelOf(langLevels, item.level) : (item.badge ?? ''),
+    })),
+    awards: (profile.awards ?? []).map((item) => ({
+      title: item.name ?? item.title ?? '',
+      date: item.date ?? '',
+    })),
+    skills: (profile.skill_codes ?? []).map((code) => labelOf(techs, code)),
+    interests: (profile.interest_codes ?? []).map((code) => labelOf(fields, code)),
+  };
+}
+
+// 수정한 섹션에 해당하는 칸만 골라 서버로 보낸다
+export function toPatch(section, draft, codes) {
+  switch (section) {
+    case 'basic':
+      return {
+        name: draft.name,
+        avatar_url: draft.avatarUrl || null,
+        github_url: draft.github,
+        desired_role: toCodes(codes.job_role ?? [], [draft.desiredRole])[0] ?? null,
+        career_level: toCodes(codes.career_level ?? [], [draft.careerLevel])[0] ?? null,
+      };
+    case 'bio':
+      return { bio: draft.bio };
+    case 'educations': {
+      const schools = codes.school_type ?? [];
+      const states = codes.edu_status ?? [];
+  const langLevels = codes.language_level ?? [];
+
+      return {
+        education_level: codeOf(codes.education_level ?? [], draft.educationLevel),
+        educations: draft.educations.map((item) => {
+          const [from, to] = splitMeta(item.meta);
+          return {
+            type: codeOf(schools, item.level),
+            school: item.title,
+            major: item.sub,
+            status: codeOf(states, item.badge),
+            admission: normalizeDate(from),
+            graduation: normalizeDate(to),
+          };
+        }),
+      };
+    }
+    case 'careers':
+      return {
+        careers: draft.careers.map((item) => {
+          const [from, to] = splitMeta(item.meta);
+          return {
+            start: normalizeDate(from),
+            end: isOngoing(item.badge) ? '재직 중' : normalizeDate(to),
+            company: item.title,
+            role: item.sub,
+          };
+        }),
+      };
+    case 'languages':
+      return {
+        languages: draft.languages.map((item) => ({
+          language: item.title,
+          level: codeOf(codes.language_level ?? [], item.badge),
+          detail: item.sub,
+        })),
+      };
+    case 'awards':
+      return {
+        awards: draft.awards.map((item) => ({ name: item.title, date: normalizeDate(item.date) })),
+      };
+    case 'skills':
+      return { skill_codes: toCodes(codes.tech_stack ?? [], draft.skills) };
+    case 'interests':
+      return { interest_codes: toCodes(codes.interest_field ?? [], draft.interests) };
+    default:
+      return {};
+  }
+}
+
+const isBlank = (text) => !String(text ?? '').trim();
+
+// 시작·종료를 " – " 로 이어 붙인 값이라 양쪽 다 봐야 한다
+const hasBlankMeta = (meta) => splitMeta(meta).some(isBlank);
+
 // 이 상태들은 아직 안 끝나서 종료일이 없다. 종료칸에 상태 글자를 그대로 넣는다
-const ONGOING = ['재학 중', '휴학', '재직 중'];
+const ONGOING = ['재학', '휴학', '재직 중'];
 
 export const isOngoing = (badge) => ONGOING.includes(badge);
 
