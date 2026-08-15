@@ -563,11 +563,18 @@ function recommendedCompanies(user, { p_limit = 6 } = {}) {
   return { data: list.slice(0, limit), error: null };
 }
 
+function myProfileEmail(user) {
+  if (!user) return { data: null, error: { code: '42501', message: 'permission denied' } };
+  const profile = rows('profiles').find((p) => p.id === user.id);
+  return { data: profile?.email ?? null, error: null };
+}
+
 const RPCS = {
   toggle_reaction: toggleReaction,
   increment_view: incrementView,
   delete_my_account: deleteMyAccount,
   get_recommended_companies: recommendedCompanies,
+  my_profile_email: myProfileEmail,
 };
 
 export function createSupabase(user) {
