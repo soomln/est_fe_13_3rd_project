@@ -25,6 +25,9 @@ export async function loadLabels(supabase) {
 
 const formatDate = (iso) => (iso ? iso.slice(0, 10).replace(/-/g, '.') : '');
 
+export const splitQuestions = (text) =>
+  typeof text === 'string' ? text.split('\n').map((line) => line.trim()).filter(Boolean) : [];
+
 function toItem(row, labels) {
   const label = (group, code) => (code ? labels[group]?.[code] ?? code : '');
 
@@ -48,7 +51,8 @@ function toItem(row, labels) {
     title: row.title ?? '',
     body: row.body ?? '',
     content: row.body ?? '',
-    questions: row.questions ?? [],
+    questions: row.questions ?? '',
+    questionList: splitQuestions(row.questions),
 
     difficulty: label('difficulty', row.difficulty_code),
     difficultyScore: row.difficulty_score,
@@ -125,8 +129,10 @@ function toColumns(body) {
     if (key in body) patch[column] = body[key];
   }
   if ('questions' in body) {
-    if (!Array.isArray(body.questions)) throw badRequest('questions 는 배열이어야 합니다.');
-    patch.question_count = body.questions.length;
+    if (typeof body.questions !== 'string') {
+      throw badRequest('questions 는 줄바꿈으로 구분한 텍스트여야 합니다.');
+    }
+    patch.question_count = splitQuestions(body.questions).length;
   }
   if ('tags' in body && !Array.isArray(body.tags)) {
     throw badRequest('tags 는 배열이어야 합니다.');

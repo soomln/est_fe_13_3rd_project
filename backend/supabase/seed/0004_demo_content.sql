@@ -126,7 +126,8 @@ begin
     pass_result_code, channel_code, job_role_code, position_level, education_level,
     tags, overall_comment, view_count
   )
-  select v.id, v.user_id, c.id, 'qbank', v.title, v.questions,
+  select v.id, v.user_id, c.id, 'qbank', v.title,
+         (select string_agg(q.value, E'\n') from jsonb_array_elements_text(v.questions) as q(value)),
          v.difficulty_code, v.difficulty_score, v.problem_score, jsonb_array_length(v.questions),
          v.pass_result_code, v.channel_code, v.job_role_code, v.position_level, v.education_level,
          v.tags, v.overall_comment, v.view_count
