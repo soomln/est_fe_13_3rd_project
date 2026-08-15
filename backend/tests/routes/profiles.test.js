@@ -14,6 +14,18 @@ const url = 'http://localhost/api/profiles/me';
 
 const PROFILE = { id: 'u1', name: '장도담', bio: '안녕하세요', skill_codes: ['react'] };
 
+const CODES = {
+  data: [
+    { group_name: 'career_level', code: 'entry' },
+    { group_name: 'education_level', code: 'bachelor' },
+    { group_name: 'education_level', code: 'master' },
+    { group_name: 'tech_stack', code: 'react' },
+    { group_name: 'tech_stack', code: 'nodejs' },
+    { group_name: 'interest_field', code: 'frontend' },
+  ],
+  error: null,
+};
+
 const EMPTY_LISTS = { educations: [], careers: [], awards: [], languages: [] };
 
 const patchRequest = (body) => makeRequest(url, { body });
@@ -21,7 +33,7 @@ const patchRequest = (body) => makeRequest(url, { body });
 const stub = (extra = {}) =>
   createSupabaseStub({
     user: { id: 'u1' },
-    tables: { profiles: { data: PROFILE, error: null } },
+    tables: { profiles: { data: PROFILE, error: null }, code_master: CODES },
     rpc: {
       my_profile_email: { data: 'me@example.com', error: null },
       save_profile_lists: { data: null, error: null },
