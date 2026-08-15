@@ -185,7 +185,8 @@ await labelOf('job_role', 'frontend');  // '프론트엔드'
 | `pass_result` | 합격 여부 | 3 |
 | `difficulty` | 면접 난이도 | 3 |
 | `language_level` | 어학 수준 | 3 |
-| `education_level` | 학력 | 5 |
+| `education_level` | 최종 학력 (프로필) · 학력 (면접 후기) | 5 |
+| `school_type` | 학교 구분 (프로필 학력) | 4 |
 | `career_level` | 경력 구분 | 4 |
 | `edu_status` | 재학/휴학/졸업/중퇴 | 4 |
 | `interviewer_style` | AI 면접관 성격 | 4 |
@@ -206,8 +207,10 @@ await updateProfile({
   name: '홍길동',
   desired_role: '프론트엔드 개발자',
   career_level: 'entry',
+  education_level: 'bachelor',                  // 최종 학력 — code_master(education_level)
   bio: '...',                                   // 1000자 제한
-  educations: [{ school, major, status, admission, graduation }],
+  educations: [{ type, school, major, status, admission, graduation }],
+  //            ↑ 학교 구분 — code_master(school_type)
   careers:    [{ start, end, company, role }],  // end 에 '재직 중' 문자열 허용
   awards:     [{ date, name }],
   languages:  [{ language, level, detail }],
@@ -224,6 +227,17 @@ const { docCount, portfolioCount, interviewScrapCount } = await getProfileStats(
 
 **`email` 은 본인에게만 내려갑니다.** 남의 프로필을 조회하면 항상 `null` 입니다.
 DB 컬럼 권한으로 막혀 있어 `anon` 키로 Supabase 를 직접 찔러도 읽히지 않습니다. 자세한 내용은 `SECURITY.md`.
+
+**학력 드롭다운 2개는 서로 다른 코드 그룹**입니다. 라벨이 비슷해 헷갈리기 쉬우니 주의하세요.
+
+| 화면 항목 | 저장 위치 | 코드 그룹 | 값 |
+|---|---|---|---|
+| 최종 학력 | `education_level` (프로필 컬럼) | `education_level` | 고졸 / 초대졸 / **대졸** / 석사 / 박사 |
+| 구분 | `educations[].type` (학력 항목 안) | `school_type` | 고등학교 / 전문대 / **대학교** / 대학원 |
+
+```js
+const { education_level, school_type } = await getCodeGroups(['education_level', 'school_type']);
+```
 
 **소셜 로그인 이메일이 자동으로 채워집니다.** 가입 시 한 번, 그리고 값이 비어 있는 기존 회원은
 다음 로그인 때 채워집니다. 사용자가 직접 고쳐 넣은 값은 **덮어쓰지 않습니다.**
@@ -736,6 +750,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `avatar_url` | string \| null | ○ | 프로필 사진 공개 URL. `uploadAvatar()` 가 갱신 |
 | `desired_role` | string \| null | ○ | 희망 직무. **자유 텍스트** (`"프론트엔드 개발자"`) |
 | `career_level` | string \| null | ○ | `code_master(career_level)` 코드 — `entry` `1_3` `3_5` `5_plus` |
+| `education_level` | string \| null | ○ | **최종 학력.** `code_master(education_level)` 코드 — `high_school` `associate` `bachelor` `master` `doctor` |
 | `email` | string \| null | ○ | 이력서용 연락처. **본인 조회일 때만 값이 옵니다.** 타인·비로그인 조회에서는 항상 `null`. 가입·재로그인 시 소셜 계정 이메일이 자동으로 채워짐(빈 값일 때만) |
 | `github_url` | string \| null | ○ | 깃허브 주소 |
 | `bio` | string \| null | ○ | 자기소개. **최대 1000자** (초과 시 400) |
@@ -753,7 +768,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 
 | 타입 | 모양 | 비고 |
 |---|---|---|
-| `Education` | `{ school, major, status, admission, graduation }` | `status` = `code_master(edu_status)` 코드. 디자인상 **1개만** 입력하지만 저장은 배열 |
+| `Education` | `{ type, school, major, status, admission, graduation }` | `type` = **학교 구분**, `code_master(school_type)` 코드. `status` = `code_master(edu_status)` 코드. 디자인상 **1개만** 입력하지만 저장은 배열 |
 | `Career` | `{ start, end, company, role }` | `end` 에 `"재직 중"` 문자열 허용 |
 | `Award` | `{ date, name }` | |
 | `Language` | `{ language, level, detail }` | `level` = `code_master(language_level)` 코드 (`high`/`mid`/`low`) |
@@ -1189,6 +1204,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `avatar_url` | string \| null | `null` 로 보내면 사진 제거 |
 | `desired_role` | string \| null | |
 | `career_level` | string \| null | `code_master(career_level)` 코드 |
+| `education_level` | string \| null | 최종 학력. `code_master(education_level)` 코드 |
 | `email` | string \| null | 이력서용 연락처. 본인만 볼 수 있음. 직접 넣은 값은 자동 채우기가 덮어쓰지 않음 |
 | `github_url` | string \| null | |
 | `bio` | string \| null | **1000자 초과 시 400** |
@@ -2039,6 +2055,7 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 | `difficulty` | `easy` 쉬움 · `normal` 보통 · `hard` 어려움 |
 | `language_level` | `high` 상 · `mid` 중 · `low` 하 |
 | `education_level` | `high_school` 고졸 · `associate` 초대졸 · `bachelor` 대졸 · `master` 석사 · `doctor` 박사 |
+| `school_type` | `high_school` 고등학교 · `college` 전문대 · `university` 대학교 · `graduate` 대학원 |
 | `career_level` | `entry` 신입 · `1_3` 1~3년 · `3_5` 3~5년 · `5_plus` 5년+ |
 | `edu_status` | `enrolled` 재학 · `leave` 휴학 · `graduated` 졸업 · `dropped` 중퇴 |
 | `interviewer_style` | `friendly` 친절한 · `neutral` 보통 · `pressure` 압박하는 · `technical` 기술 심층 |
@@ -2117,7 +2134,7 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 814개 + E2E 371개 = 1,185개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 819개 + E2E 380개 = 1,199개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all

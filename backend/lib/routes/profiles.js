@@ -2,7 +2,7 @@ import { badRequest, forbidden, notFound } from '../http/errors';
 import { defineRoute, resolveUserId, unwrap } from '../http/route';
 
 const COLUMNS = `
-  id, name, avatar_url, desired_role, career_level, github_url, bio,
+  id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
   educations, careers, awards, languages, skill_codes, interest_codes,
   created_at, updated_at
 `;
@@ -17,6 +17,7 @@ const EDITABLE = [
   'avatar_url',
   'desired_role',
   'career_level',
+  'education_level',
   'email',
   'github_url',
   'bio',
