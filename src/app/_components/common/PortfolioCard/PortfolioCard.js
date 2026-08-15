@@ -9,7 +9,7 @@ import styles from './PortfolioCard.module.sass';
 export default function PortfolioCard({ item, onClick, isSelected = false, onToggle, updateReactionCount }) {
   return (
     <li
-      className={`${styles.portfolio_card} ${isSelected ? styles.is_selected : ''}`}
+      className={`${styles.portfolio_card}`}
       onClick={() => {
         onClick(item);
       }}
@@ -30,7 +30,11 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
 
       {/* 썸네일 & 제목 영역 */}
       <div className={styles.thumb_box}>
-        {<Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />}
+        {item.thumbnailUrl ? (
+          <Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />
+        ) : (
+          <div className={`font_h2 ${styles.thumb_dummy}`}>NULL</div>
+        )}
         <div className={styles.img_hover}>
           <div className={styles.label}>
             <span>{item.category}</span>

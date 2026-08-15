@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react';
 
 import styles from './page.module.sass';
 
-import TabGroup from '../_components/Modal/TabGroup';
-import Contents from '../_components/Modal/Contents';
+import TabGroup from '../_components/TabGroup';
+import Contents from '../_components/Contents';
 import UploadBtn from './_components/UploadBtn';
 import CustomSetting from './_components/CustomSetting';
 import AiChatPanel from './_components/AiChatPanel';
 import AiChatBtn from './_components/AiChatBtn';
 import BackBtn from './_components/BackBtn';
 import SaveBtn from './_components/SaveBtn';
-import Window from './_components/Window';
+import SettingModal from './_components/SettingModal';
 
 import { getCurrentUser } from '@backend/lib/api/auth';
 import { createPortfolio, updatePortfolio } from '@backend/lib/api/portfolio';
@@ -23,12 +23,12 @@ export default function Upload() {
     authorId: '',
     title: '',
     category: '',
-    thumbnailUrl: null,
+    thumbnailUrl: '',
     description: '',
     content: [],
     tags: [],
     bgColor: '#ffffff',
-    gapPx: 16,
+    gapPx: Number(16),
     status: 'draft',
   });
 
@@ -119,7 +119,7 @@ export default function Upload() {
   const setGap = (gap) => {
     setItem((prev) => ({
       ...prev,
-      gapPx: gap,
+      gapPx: Number(gap),
     }));
   };
 
@@ -135,7 +135,13 @@ export default function Upload() {
       setIsSaving(true);
 
       const draftItem = {
-        ...item,
+        title: item.title,
+        category: item.category || null,
+        thumbnailUrl: item.thumbnailUrl,
+        description: item.description,
+        content: item.content,
+        bgColor: item.bgColor,
+        gapPx: item.gapPx,
         status: 'draft',
       };
 
@@ -222,28 +228,22 @@ export default function Upload() {
 
         <main>
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
-
           <Contents item={item} setItem={setItem} isEditMode updateBlock={updateBlock} removeBlock={removeBlock} />
         </main>
 
         <aside className={styles.btns_wrapper}>
           <div className={styles.add_btns}>
             <UploadBtn iconText='image' text='이미지' isIconFill={true} onClick={() => addBlock('image')} />
-
             <UploadBtn iconText='ondemand_video' text='동영상' onClick={() => addBlock('video')} />
-
             <UploadBtn iconText='text_fields' text='텍스트' onClick={() => addBlock('text')} />
-
             <UploadBtn iconText='code' text='코드' onClick={() => addBlock('code')} />
           </div>
-
           <UploadBtn iconText='import_export' text='순서 바꾸기' />
-
           <CustomSetting bgColor={item.bgColor} onSetColor={setBgColor} gap={item.gapPx} onSetGap={setGap} />
         </aside>
       </div>
 
-      <Window
+      <SettingModal
         item={item}
         setItem={setItem}
         isCreated={isCreated}
