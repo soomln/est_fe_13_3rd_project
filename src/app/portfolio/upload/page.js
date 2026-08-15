@@ -36,7 +36,7 @@ export default function Upload() {
 
   const [isCreated, setIsCreated] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('ai');
+  const [activeTab, setActiveTab] = useState('overview');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
 
