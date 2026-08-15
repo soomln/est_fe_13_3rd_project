@@ -3,7 +3,7 @@ import { defineRoute, unwrap } from '../http/route';
 import { withEmail } from './profiles';
 
 const PROFILE_COLUMNS = `
-  id, name, avatar_url, desired_role, career_level, github_url, bio,
+  id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
   educations, careers, awards, languages, skill_codes, interest_codes,
   created_at, updated_at
 `;

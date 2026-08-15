@@ -41,6 +41,8 @@ const CODES = [
   ['interview_channel', 'online', '온라인 지원', 1],
   ['interview_channel', 'etc', '기타', 2],
   ['education_level', 'bachelor', '대졸', 1],
+  ['school_type', 'university', '대학교', 1],
+  ['school_type', 'graduate', '대학원', 2],
   ['career_level', 'junior', '신입', 1],
   ['edu_status', 'graduated', '졸업', 1],
   ['language_level', 'high', '상', 1],
@@ -154,7 +156,8 @@ const TEMPLATES = [
 
 export const SCHEMA = {
   profiles: [
-    'id', 'name', 'avatar_url', 'desired_role', 'career_level', 'email', 'github_url', 'bio',
+    'id', 'name', 'avatar_url', 'desired_role', 'career_level', 'education_level',
+    'email', 'github_url', 'bio',
     'educations', 'careers', 'awards', 'languages', 'skill_codes', 'interest_codes',
     'created_at', 'updated_at',
   ],
