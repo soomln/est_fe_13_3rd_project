@@ -1,6 +1,7 @@
 import { unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
 import { assembleProfile } from './profiles';
+import { removeAllMyFiles } from './storage';
 
 const PROFILE_COLUMNS = `
   id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
@@ -47,7 +48,8 @@ function toStats(row) {
 export const GET = defineRoute(async ({ user }) => ({ user }));
 
 export const DELETE = defineRoute(
-  async ({ supabase }) => {
+  async ({ supabase, user }) => {
+    await removeAllMyFiles(supabase, user.id);
     unwrap(await supabase.rpc('delete_my_account'));
     return { deleted: true };
   },

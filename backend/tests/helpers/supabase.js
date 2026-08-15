@@ -42,9 +42,17 @@ const resolveValue = (value, fallback) => {
   return value === undefined ? fallback : value;
 };
 
-export function createStorageStub({ uploadError = null, publicUrl = 'https://cdn.test/x.png' } = {}) {
+export function createStorageStub({
+  uploadError = null,
+  publicUrl = 'https://cdn.test/x.png',
+  files = {},
+  download = null,
+  downloadError = null,
+} = {}) {
   const uploads = [];
   const buckets = [];
+  const listed = [];
+  const removed = [];
 
   const bucket = {
     upload: vi.fn(async (path, file, options) => {
@@ -52,6 +60,29 @@ export function createStorageStub({ uploadError = null, publicUrl = 'https://cdn
       return { data: uploadError ? null : { path }, error: uploadError };
     }),
     getPublicUrl: vi.fn((path) => ({ data: { publicUrl: `${publicUrl}#${path}` } })),
+    list: vi.fn(async (prefix) => {
+      listed.push(prefix);
+      if (files[prefix] === null) return { data: null, error: null };
+      const entries = (files[prefix] ?? []).map((entry) =>
+        typeof entry === 'string' ? { name: entry } : entry
+      );
+      return {
+        data: entries.map((entry) => ({
+          id: 'folder' in entry && entry.folder ? null : (entry.id ?? 'file'),
+          name: entry.name,
+          created_at: 'created_at' in entry ? entry.created_at : '2026-08-16T00:00:00Z',
+        })),
+        error: null,
+      };
+    }),
+    remove: vi.fn(async (paths) => {
+      removed.push(...paths);
+      return { data: paths.map((path) => ({ name: path })), error: null };
+    }),
+    download: vi.fn(async () => ({
+      data: downloadError ? null : download,
+      error: downloadError,
+    })),
   };
 
   return {
@@ -61,6 +92,8 @@ export function createStorageStub({ uploadError = null, publicUrl = 'https://cdn
     }),
     uploads,
     buckets,
+    listed,
+    removed,
     bucket,
   };
 }
