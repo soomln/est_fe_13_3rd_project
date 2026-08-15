@@ -36,7 +36,7 @@ const ROW = {
   body: '분위기 좋았어요',
   questions: ['REST 란?'],
   difficulty_code: 'hard',
-  difficulty_score: 4.5,
+  difficulty_score: 4,
   problem_score: 3,
   question_count: 5,
   pass_result_code: 'pass',
@@ -411,7 +411,7 @@ describe('POST /api/posts', () => {
           title: '후기',
           body: '내용',
           difficultyCode: 'hard',
-          difficultyScore: 4.5,
+          difficultyScore: 4,
           problemScore: 3,
           passResultCode: 'pass',
           channelCode: 'etc',
@@ -434,7 +434,7 @@ describe('POST /api/posts', () => {
       body: '내용',
       questions: ['Q1'],
       difficulty_code: 'hard',
-      difficulty_score: 4.5,
+      difficulty_score: 4,
       problem_score: 3,
       question_count: 1,
       pass_result_code: 'pass',
@@ -445,6 +445,53 @@ describe('POST /api/posts', () => {
       education_level: 'bachelor',
       tags: ['#CS'],
       overall_comment: '총평',
+    });
+  });
+
+  it.each([
+    ['difficultyScore', 0],
+    ['difficultyScore', 6],
+    ['difficultyScore', 3.5],
+    ['difficultyScore', -1],
+    ['difficultyScore', '4'],
+    ['problemScore', 0],
+    ['problemScore', 6],
+    ['problemScore', 4.5],
+    ['problemScore', '3'],
+  ])('answers 400 when %s is %p', async (key, value) => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', [key]: value } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toBe(`${key} 는 1~5 사이의 정수여야 합니다.`);
+  });
+
+  it.each([1, 2, 3, 4, 5])('accepts whole point scores of %i', async (score) => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'qbank', difficultyScore: score, problemScore: score },
+      }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      difficulty_score: score,
+      problem_score: score,
+    });
+  });
+
+  it('accepts null to clear a score', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'review', difficultyScore: null, problemScore: null },
+      }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      difficulty_score: null,
+      problem_score: null,
     });
   });
 
@@ -649,6 +696,19 @@ describe('PATCH /api/posts/:id', () => {
 
     expect(status).toBe(400);
   });
+
+  it.each(['difficultyScore', 'problemScore'])(
+    'the %s check applies to updates too',
+    async (key) => {
+      const { status, body } = await callRoute(PATCH_DETAIL, {
+        request: makeRequest(url(), { body: { [key]: 4.5 } }),
+        params: { id: 'p1' },
+      });
+
+      expect(status).toBe(400);
+      expect(body.error.message).toBe(`${key} 는 1~5 사이의 정수여야 합니다.`);
+    }
+  );
 
   it('recounts the questions on update', async () => {
     await callRoute(PATCH_DETAIL, {

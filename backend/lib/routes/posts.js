@@ -1,3 +1,4 @@
+import { SCORE_SCALE } from '../constants';
 import { badRequest, notFound, unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
 
@@ -112,6 +113,12 @@ const WRITABLE = {
   overallComment: 'overall_comment',
 };
 
+const SCORE_KEYS = ['difficultyScore', 'problemScore'];
+
+const isScore = (value) =>
+  value === null ||
+  (Number.isInteger(value) && value >= SCORE_SCALE.min && value <= SCORE_SCALE.max);
+
 function toColumns(body) {
   const patch = {};
   for (const [key, column] of Object.entries(WRITABLE)) {
@@ -123,6 +130,11 @@ function toColumns(body) {
   }
   if ('tags' in body && !Array.isArray(body.tags)) {
     throw badRequest('tags 는 배열이어야 합니다.');
+  }
+  for (const key of SCORE_KEYS) {
+    if (key in body && !isScore(body[key])) {
+      throw badRequest(`${key} 는 ${SCORE_SCALE.min}~${SCORE_SCALE.max} 사이의 정수여야 합니다.`);
+    }
   }
   return patch;
 }
