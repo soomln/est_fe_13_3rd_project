@@ -102,3 +102,13 @@ describe('describeError', () => {
     expect(result.code).toBe('DOCUMENT_LIMIT_EXCEEDED');
   });
 });
+
+describe('portfolio ownership from the RPC', () => {
+  it('maps PORTFOLIO_NOT_MINE to 403', () => {
+    expect(describeError({ message: 'PORTFOLIO_NOT_MINE' })).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+      message: '본인 포트폴리오만 수정할 수 있습니다.',
+    });
+  });
+});
