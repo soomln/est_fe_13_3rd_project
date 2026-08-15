@@ -667,3 +667,81 @@ describe('sorting my scrapped posts', () => {
     await expect(listMyScrappedPosts()).rejects.toMatchObject({ status: 401 });
   });
 });
+
+describe('면접 후기·족보의 직무', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it('keeps the job role through save and reload', async () => {
+    const post = await writeReview({ jobRoleCode: 'be' });
+
+    const reopened = await getPost(post.id);
+
+    expect(reopened).toMatchObject({ jobRole: '백엔드', jobRoleCode: 'be' });
+  });
+
+  it('records the job role on a qbank as well', async () => {
+    const post = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'REST 란?',
+      jobRoleCode: 'fe',
+    });
+
+    await expect(getPost(post.id)).resolves.toMatchObject({ jobRoleCode: 'fe' });
+  });
+
+  it('lets the writer change the job role later', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const edited = await updatePost(post.id, { jobRoleCode: 'be' });
+
+    expect(edited).toMatchObject({ jobRole: '백엔드', jobRoleCode: 'be' });
+  });
+
+  it('lets the writer clear it', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const edited = await updatePost(post.id, { jobRoleCode: null });
+
+    expect(edited).toMatchObject({ jobRole: '', jobRoleCode: null });
+  });
+
+  it('refuses a job role that is not a real code', async () => {
+    await expect(writeReview({ jobRoleCode: 'frontned' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('writes nothing when the job role is refused', async () => {
+    const before = (await listPosts({ type: 'review' })).total;
+
+    await expect(writeReview({ jobRoleCode: 'nope' })).rejects.toMatchObject({ status: 400 });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: before });
+  });
+
+  it('is optional', async () => {
+    const post = await writeReview({ jobRoleCode: undefined });
+
+    await expect(getPost(post.id)).resolves.toMatchObject({ jobRoleCode: null });
+  });
+
+  it('narrows the board to one job role', async () => {
+    await writeReview({ jobRoleCode: 'fe' });
+    await writeReview({ jobRoleCode: 'be' });
+
+    const { items } = await listPosts({ type: 'review', jobRole: 'be' });
+
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((p) => p.jobRoleCode === 'be')).toBe(true);
+  });
+
+  it('shows the label next to the raw code so both are usable', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const { items } = await listPosts({ type: 'review' });
+    const mine = items.find((p) => p.id === post.id);
+
+    expect(mine.jobRole).toBe('프론트엔드');
+    expect(mine.jobRoleCode).toBe('fe');
+    expect(mine.jobInfo).toContain('프론트엔드');
+  });
+});
