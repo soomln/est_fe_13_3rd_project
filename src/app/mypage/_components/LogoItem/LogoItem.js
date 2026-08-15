@@ -1,7 +1,7 @@
 import styles from './LogoItem.module.sass';
 
-// 기술 스택 · 관심 회사 공통. 로고가 없으면 앞 두 글자로 대체한다
-export default function LogoItem({ label, logoUrl, onRemove }) {
+// 로고가 없으면 앞 두 글자로 대체한다
+export default function LogoItem({ label, logoUrl, icon, onRemove }) {
   return (
     <li className={styles.logo_item}>
       {onRemove && (
@@ -18,7 +18,12 @@ export default function LogoItem({ label, logoUrl, onRemove }) {
       )}
 
       <span className={styles.logo_item_box}>
-        {logoUrl ? (
+        {icon ? (
+          <svg viewBox='0 0 24 24' className={styles.logo_item_icon} aria-hidden='true'>
+            <circle cx='12' cy='12' r='12' fill={icon.color} />
+            <path d={icon.path} fill='#FFFFFF' transform='translate(5.4 5.4) scale(0.55)' />
+          </svg>
+        ) : logoUrl ? (
           <img src={logoUrl} alt='' className={styles.logo_item_img} />
         ) : (
           <span className={`${styles.logo_item_initial} font_body_m_b`} aria-hidden='true'>

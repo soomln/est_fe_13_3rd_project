@@ -1,0 +1,55 @@
+@use '@/app/_variables.sass' as *
+
+.confirm_dialog_overlay
+  position: fixed
+  inset: 0
+  z-index: 110
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 24px
+  background-color: rgba(0, 0, 0, 0.5)
+
+.confirm_dialog
+  box-sizing: border-box
+  width: 100%
+  max-width: 420px
+  padding: 32px
+  background-color: $white
+  border-radius: 16px
+
+.confirm_dialog_title
+  margin-bottom: 8px
+  color: $black
+
+.confirm_dialog_desc
+  color: $gray
+
+.confirm_dialog_btns
+  display: flex
+  justify-content: flex-end
+  gap: 12px
+  margin-top: 28px
+
+.confirm_dialog_cancel,
+.confirm_dialog_confirm
+  height: 48px
+  padding: 0 20px
+  border-radius: 10px
+  cursor: pointer
+
+.confirm_dialog_cancel
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+
+  &:hover
+    background-color: $light_gray
+
+.confirm_dialog_confirm
+  color: $white
+  background-color: $warning
+  border: 1px solid $warning
+
+  &:hover
+    opacity: 0.9
