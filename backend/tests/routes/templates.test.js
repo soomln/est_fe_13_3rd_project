@@ -59,6 +59,7 @@ describe('GET /api/templates', () => {
       category: 'dev',
       thumbnail: 'https://cdn/t1.png',
       views: 120,
+      bookmarkedByMe: false,
     });
   });
 
