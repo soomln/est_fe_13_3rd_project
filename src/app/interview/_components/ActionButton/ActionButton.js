@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import './ActionButton.sass';
+import styles from './ActionButton.module.sass';
 
 export default function ActionButton({
   text,
@@ -24,7 +24,7 @@ export default function ActionButton({
   return (
     <button
       type="button"
-      className={`action_button ${variant} ${className}`}
+      className={`${styles.action_button} ${styles[variant]} ${className}`}
       onClick={handleClick}
     >
       <span>{text}</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import './CompanySearch.sass';
+import styles from './CompanySearch.module.sass';
 import { listCompanies } from '@backend/lib/api/companies';
 
 export default function CompanySearch({
@@ -49,9 +49,9 @@ export default function CompanySearch({
   };
 
   return (
-    <section className="company_search">
+    <section className={styles.company_search}>
       <h3 className="font_body_l_b">기업 검색</h3>
-      <div className="company_search_input">
+      <div className={styles.company_search_input}>
         <input
           type="text"
           value={keyword}
@@ -66,7 +66,7 @@ export default function CompanySearch({
         />
         <button
           type="button"
-          className="company_search_button"
+          className={styles.company_search_button}
           aria-label="기업 검색"
           onClick={handleSearch}
         >
@@ -75,13 +75,13 @@ export default function CompanySearch({
           </span>
         </button>
       </div>
-      <ul className="company_list">
+      <ul className={styles.company_list}>
         {isLoading ? (
-          <li className="company_list_item font_body_l_r">
+          <li className={`${styles.company_list_item} font_body_l_r`}>
             불러오는 중...
           </li>
         ) : companies.length === 0 ? (
-          <li className="company_list_item font_body_l_r">
+          <li className={`${styles.company_list_item} font_body_l_r`}>
             {searchKeyword
               ? '검색 결과가 없습니다.'
               : '등록된 기업이 없습니다.'}
@@ -93,12 +93,12 @@ export default function CompanySearch({
             return (
               <li
                 key={company.id}
-                className={`company_list_item font_body_l_r ${
+                className={`${styles.company_list_item} font_body_l_r ${
                   isSelected ? 'is_selected' : ''
                 }`}
                 onClick={() => onSelect(company.id, company)}
               >
-                <span className="material-symbols-outlined company_checkbox">
+                <span className={`material-symbols-outlined ${styles.company_checkbox}`}>
                   {isSelected
                     ? 'check_box'
                     : 'check_box_outline_blank'}

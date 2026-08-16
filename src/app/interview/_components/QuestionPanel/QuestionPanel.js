@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import './QuestionPanel.sass';
+import styles from './QuestionPanel.module.sass';
 import QuestionListButton from '../QuestionListButton';
 import { QUESTIONS } from '../../_constants/questions';
 import { getDocument } from '@backend/lib/api/documents';
@@ -86,10 +86,10 @@ export default function QuestionPanel({
   };
 
   return (
-    <aside className="question_panel">
+    <aside className={styles.question_panel}>
       <h2 className="font_h3">질문 리스트</h2>
 
-      <ul className="question_list">
+      <ul className={styles.question_list}>
         {QUESTIONS.map((question) => {
           const isAllRow = question.category === 'all';
           const generatedItem = generatedQuestions.find(
@@ -108,10 +108,10 @@ export default function QuestionPanel({
               : generatedItem?.description || question.description;
 
           return (
-            <li key={question.category} className="question_item">
+            <li key={question.category} className={styles.question_item}>
               <button
                 type="button"
-                className="question_button"
+                className={styles.question_button}
                 onClick={() => handleSelect(isAllRow ? question : generatedItem)}
                 disabled={isGenerating || (!isAllRow && !generatedItem)}
               >
@@ -121,7 +121,7 @@ export default function QuestionPanel({
                     : 'check_box_outline_blank'}
                 </span>
 
-                <div className="question_info">
+                <div className={styles.question_info}>
                   <strong className="font_h4">
                     {question.title}
                   </strong>

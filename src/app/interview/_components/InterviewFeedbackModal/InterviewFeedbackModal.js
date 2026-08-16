@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import './InterviewFeedbackModal.sass';
+import styles from './InterviewFeedbackModal.module.sass';
 
 export default function InterviewFeedbackModal({
   results = [],
@@ -38,26 +38,26 @@ export default function InterviewFeedbackModal({
   );
 
   return (
-    <div className="feedback_overlay">
-      <div className="interview_feedback_modal">
-        <div className="modal_header">
+    <div className={styles.feedback_overlay}>
+      <div className={styles.interview_feedback_modal}>
+        <div className={styles.modal_header}>
           <div>
-            <div className="modal_title_wrap">
+            <div className={styles.modal_title_wrap}>
               <span className="material-symbols-outlined">
                 feedback
               </span>
-              <h2 className="modal_title font_h4">
+              <h2 className={`${styles.modal_title} font_h4`}>
                 질문별 피드백
               </h2>
             </div>
-            <p className="modal_description font_body_s_r">
+            <p className={`${styles.modal_description} font_body_s_r`}>
               원하는 질문에 북마크를 클릭하면, 마이페이지에 두고
               언제든지 다시 볼 수 있어요!
             </p>
           </div>
           <button
             type="button"
-            className="close_button"
+            className={styles.close_button}
             onClick={onClose}
             aria-label="닫기"
           >
@@ -66,7 +66,7 @@ export default function InterviewFeedbackModal({
             </span>
           </button>
         </div>
-        <div className="feedback_content">
+        <div className={styles.feedback_content}>
           {feedbackList.map((item) => {
             const isOpen =
               openQuestionId === item.id;
@@ -76,23 +76,23 @@ export default function InterviewFeedbackModal({
             return (
               <div
                 key={item.id}
-                className={`feedback_item ${
+                className={`${styles.feedback_item} ${
                   isOpen ? 'is_open' : ''
                 }`}
               >
-                <div className="feedback_item_header">
+                <div className={styles.feedback_item_header}>
                   <button
                     type="button"
-                    className="question_toggle"
+                    className={styles.question_toggle}
                     onClick={() =>
                       handleToggle(item.id)
                     }
                   >
-                    <span className="question_title font_body_l_b">
+                    <span className={`${styles.question_title} font_body_l_b`}>
                       {item.title}
                     </span>
                     {typeof item.score === 'number' && (
-                      <span className="question_score font_body_m_b">
+                      <span className={`${styles.question_score} font_body_m_b`}>
                         {item.score}점
                       </span>
                     )}
@@ -104,9 +104,9 @@ export default function InterviewFeedbackModal({
                   </button>
                   <button
                     type="button"
-                    className={`bookmark_button ${
+                    className={`${styles.bookmark_button} ${
                       isBookmarked
-                        ? 'is_bookmarked'
+                        ? styles.is_bookmarked
                         : ''
                     }`}
                     onClick={() =>
@@ -123,12 +123,12 @@ export default function InterviewFeedbackModal({
                 </div>
 
                 {isOpen && (
-                  <div className="feedback_detail">
+                  <div className={styles.feedback_detail}>
                     <section>
                       <h3 className="font_body_l_b">
                         {item.title} 질문
                       </h3>
-                      <p className="font_body_l_r question_text">
+                      <p className={`font_body_l_r ${styles.question_text}`}>
                         {item.question}
                       </p>
                     </section>
@@ -146,7 +146,7 @@ export default function InterviewFeedbackModal({
                       <h3 className="font_body_l_b">
                         피드백
                       </h3>
-                      <div className="feedback_group">
+                      <div className={styles.feedback_group}>
                         <h4 className="font_body_l_r">
                           잘한 점
                         </h4>
@@ -163,7 +163,7 @@ export default function InterviewFeedbackModal({
                           )}
                         </ul>
                       </div>
-                      <div className="feedback_group">
+                      <div className={styles.feedback_group}>
                         <h4 className="font_body_l_r">
                           보완할 점
                         </h4>

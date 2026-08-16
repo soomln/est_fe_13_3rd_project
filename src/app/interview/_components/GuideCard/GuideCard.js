@@ -1,4 +1,4 @@
-import './GuideCard.sass';
+import styles from './GuideCard.module.sass';
 
 export default function GuideCard({
   icon,
@@ -6,8 +6,8 @@ export default function GuideCard({
   description,
 }) {
   return (
-    <article className="guide_card">
-      <span className="material-symbols-rounded guide_icon">
+    <article className={styles.guide_card}>
+      <span className={`material-symbols-rounded ${styles.guide_icon}`}>
         {icon}
       </span>
 

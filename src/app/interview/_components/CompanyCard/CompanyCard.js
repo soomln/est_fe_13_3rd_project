@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import './CompanyCard.sass';
+import styles from './CompanyCard.module.sass';
 
 export default function CompanyCard({
   logo,
@@ -10,7 +10,7 @@ export default function CompanyCard({
   onClick,
 }) {
   return (
-    <button className="company_card" onClick={onClick}>
+    <button className={styles.company_card} onClick={onClick}>
       <div className="company_logo">
         <Image
           src={logo}
@@ -20,28 +20,28 @@ export default function CompanyCard({
         />
       </div>
 
-      <div className="company_content">
-        <div className="company_title font_body_m_b">
-          <span className="company_name">{companyName}</span>
+      <div className={styles.company_content}>
+        <div className={`${styles.company_title} font_body_m_b`}>
+          <span className={styles.company_name}>{companyName}</span>
           <span className="position">{position}</span>
         </div>
 
-        <div className="company_detail">
-          <div className="detail_item">
-            <span className="label font_body_m_r">평균 연봉</span>
-            <span className="value font_body_m_b">{salary}</span>
+        <div className={styles.company_detail}>
+          <div className={styles.detail_item}>
+            <span className={`${styles.label} font_body_m_r`}>평균 연봉</span>
+            <span className={`${styles.value} font_body_m_b`}>{salary}</span>
           </div>
 
-          <div className="divider"></div>
+          <div className={styles.divider}></div>
 
-          <div className="detail_item">
-            <span className="label font_body_m_r">기업 평점</span>
+          <div className={styles.detail_item}>
+            <span className={`${styles.label} font_body_m_r`}>기업 평점</span>
 
-            <span className="material-symbols-rounded star">
+            <span className={`material-symbols-rounded ${styles.star}`}>
               grade
             </span>
 
-            <span className="value font_body_m_b">{rating}</span>
+            <span className={`${styles.value} font_body_m_b`}>{rating}</span>
           </div>
         </div>
       </div>
