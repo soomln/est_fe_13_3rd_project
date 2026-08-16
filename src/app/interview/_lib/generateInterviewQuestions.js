@@ -17,7 +17,7 @@ const QUESTION_LINE_WIDTH = 40;
 // 쉼표 앞부분이 이 길이 이상일 때만(=충분히 긴 절일 때만) 그 쉼표에서 강제로 줄을 바꾼다.
 const CLAUSE_BREAK_MIN_LENGTH = 20;
 
-function stripHtml(text) {
+export function stripHtml(text) {
   return text ? text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 }
 
@@ -64,7 +64,7 @@ function formatQuestionText(text) {
   return paragraphs.join('\n\n');
 }
 
-function truncate(text, max) {
+export function truncate(text, max) {
   if (!text) return '';
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }

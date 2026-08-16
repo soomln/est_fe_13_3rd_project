@@ -3,27 +3,13 @@
 import { useState } from 'react';
 
 import './InterviewFeedbackModal.sass';
-import { getQuestionByTitle } from '../../_constants/questions';
-
-const feedbackData = {
-  good: [
-    '지원 직무에 대한 방향성이 잘 드러났습니다.',
-    '답변의 핵심 내용을 명확하게 전달했습니다.',
-  ],
-  improve: [
-    '관련 프로젝트 경험을 함께 이야기하면 신뢰도가 높아집니다.',
-    '구체적인 기술 스택이나 경험을 추가하면 더 인상적인 답변이 됩니다.',
-  ],
-  summary:
-    '질문에 대한 방향은 잘 전달되었으며, 구체적인 경험을 추가하면 더욱 설득력 있는 답변이 됩니다.',
-};
 
 export default function InterviewFeedbackModal({
-  selectedQuestions = [],
+  results = [],
   onClose,
 }) {
   const [openQuestionId, setOpenQuestionId] =
-    useState(selectedQuestions[0]?.category || null);
+    useState(results[0]?.category || null);
   const [bookmarkedQuestions, setBookmarkedQuestions] =
     useState([]);
   const handleToggle = (id) => {
@@ -38,14 +24,16 @@ export default function InterviewFeedbackModal({
         : [...prev, id],
     );
   };
-  const feedbackList = selectedQuestions.map(
+  const feedbackList = results.map(
     (item) => ({
       id: item.category,
       title: item.title,
       question: item.question,
-      answer: getQuestionByTitle(item.title)?.answer || '',
-      feedback: feedbackData,
-      summary: feedbackData.summary,
+      answer: item.answer || '',
+      score: item.score,
+      good: item.feedback?.strengths || [],
+      improve: item.feedback?.improvements || [],
+      summary: item.feedback?.summary || '',
     }),
   );
 
@@ -103,6 +91,11 @@ export default function InterviewFeedbackModal({
                     <span className="question_title font_body_l_b">
                       {item.title}
                     </span>
+                    {typeof item.score === 'number' && (
+                      <span className="question_score font_body_m_b">
+                        {item.score}점
+                      </span>
+                    )}
                     <span className="material-symbols-outlined">
                       {isOpen
                         ? 'keyboard_arrow_up'
@@ -158,7 +151,7 @@ export default function InterviewFeedbackModal({
                           잘한 점
                         </h4>
                         <ul>
-                          {item.feedback.good.map(
+                          {item.good.map(
                             (text) => (
                               <li
                                 key={text}
@@ -175,7 +168,7 @@ export default function InterviewFeedbackModal({
                           보완할 점
                         </h4>
                         <ul>
-                          {item.feedback.improve.map(
+                          {item.improve.map(
                             (text) => (
                               <li
                                 key={text}

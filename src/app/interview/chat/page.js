@@ -16,9 +16,13 @@ import QuestionListButton from '../_components/QuestionListButton';
 import QuestionPanel from '../_components/QuestionPanel';
 import UserChatBubble from '../_components/UserChatBubble';
 import InterviewResult from '../_components/InterviewResult';
+import RetryButton from '../_components/RetryButton';
 import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
 import InterviewSettingModal from '../_components/InterviewSettingModal';
-import { createSession } from '@backend/lib/api/interview';
+import { createSession, saveQas, finishSession } from '@backend/lib/api/interview';
+import { getDocument } from '@backend/lib/api/documents';
+import { getCompany } from '@backend/lib/api/companies';
+import { evaluateInterviewAnswers, sumSubScores } from '../_lib/evaluateInterviewAnswers';
 
 export default function InterviewPage() {
   const router = useRouter();
@@ -36,6 +40,12 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 const [selectedCompanySlug, setSelectedCompanySlug] = useState(null);
 const [interviewerStyle, setInterviewerStyle] = useState('friendly');
 const [showTimer, setShowTimer] = useState(false);
+const [sessionId, setSessionId] = useState(null);
+const [answers, setAnswers] = useState([]);
+const [interviewStartedAt, setInterviewStartedAt] = useState(null);
+const [isEvaluating, setIsEvaluating] = useState(false);
+const [evaluationResult, setEvaluationResult] = useState(null);
+const [evaluationError, setEvaluationError] = useState(false);
 
   const handleSelectCompany = (id, company) => {
     setSelectedCompanyId(id);
@@ -53,7 +63,7 @@ const [showTimer, setShowTimer] = useState(false);
     ]);
   }, []);
 
-  const handleSendAnswer = (answer) => {
+  const handleSendAnswer = async (answer) => {
     if (selectedQuestions.length === 0) {
       setMessages((prev) => [
         ...prev,
@@ -66,6 +76,7 @@ const [showTimer, setShowTimer] = useState(false);
     }
 
     const nextIndex = currentQuestionIndex + 1;
+    const nextAnswers = [...answers, answer];
     const nextMessages = [
       ...messages,
       {
@@ -81,37 +92,155 @@ const [showTimer, setShowTimer] = useState(false);
       });
       setCurrentQuestionIndex(nextIndex);
       setMessages(nextMessages);
+      setAnswers(nextAnswers);
       return;
     }
+
+    setAnswers(nextAnswers);
     setMessages([
       ...nextMessages,
       {
         role: 'ai',
-        content:
-          '면접이 종료되었습니다!\n다시 연습하고 싶은 질문을 선택하세요.\n오늘 진행한 면접 질문을 저장하고, 필요할 때 언제든 다시 연습할 수 있습니다.',
+        content: '면접이 종료되었습니다!\n답변을 분석하고 있습니다...',
       },
     ]);
     setIsInterviewFinished(true);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+
+    const qaList = selectedQuestions.map((question, index) => ({
+      category: question.category,
+      title: question.title,
+      question: question.question,
+      answer: nextAnswers[index],
+    }));
+
+    try {
+      const [resume, coverLetter, company] = await Promise.all([
+        selectedResumeId ? getDocument(selectedResumeId) : null,
+        selectedCoverLetterId ? getDocument(selectedCoverLetterId) : null,
+        selectedCompanySlug ? getCompany(selectedCompanySlug) : null,
+      ]);
+
+      const evaluation = await evaluateInterviewAnswers({
+        resumeText: resume?.contentText,
+        coverLetterText: coverLetter?.contentText,
+        company,
+        qaList,
+      });
+
+      const results = qaList.map((qa, index) => {
+        const questionResult = evaluation.questionResults[index];
+        return {
+          ...qa,
+          feedback: {
+            summary: questionResult.summary,
+            strengths: questionResult.strengths,
+            improvements: questionResult.improvements,
+          },
+          score: questionResult.score,
+        };
+      });
+
+      // finishSession()에 저장하는 값과 InterviewResult에 표시하는 값이 항상 같은 계산식을
+      // 쓰도록, 화면에 표시되는 subScores를 그대로 합산해서 totalScore를 구한다.
+      const totalScore = sumSubScores(evaluation.subScores);
+
+      if (sessionId) {
+        await saveQas(
+          sessionId,
+          results.map((result, index) => ({
+            seq: index + 1,
+            category: result.category,
+            question: result.question,
+            answer: result.answer,
+            feedback: result.feedback,
+            score: result.score,
+          })),
+        );
+        await finishSession(sessionId, {
+          durationSec: interviewStartedAt
+            ? Math.round((Date.now() - interviewStartedAt) / 1000)
+            : undefined,
+          totalScore,
+          subScores: evaluation.subScores,
+        });
+      }
+
+      setEvaluationResult({
+        totalScore,
+        subScores: evaluation.subScores,
+        results,
+      });
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '면접이 종료되었습니다!\n평가가 완료되었습니다.\n결과를 확인해보세요.',
+        },
+      ]);
+    } catch (err) {
+      console.error('면접 평가 실패:', err);
+      setEvaluationError(true);
+
+      if (sessionId) {
+        try {
+          await saveQas(
+            sessionId,
+            qaList.map((qa, index) => ({
+              seq: index + 1,
+              category: qa.category,
+              question: qa.question,
+              answer: qa.answer,
+            })),
+          );
+        } catch (saveErr) {
+          console.error('질문/답변 저장 실패:', saveErr);
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '면접이 종료되었습니다.\n\n답변 평가에 실패했습니다.\n질문과 답변은 저장되었습니다.\n잠시 후 다시 시도해주세요.',
+        },
+      ]);
+    } finally {
+      setIsEvaluating(false);
+    }
   };
   const handleRetry = () => {
     setIsInterviewFinished(false);
     setCurrentQuestionIndex(0);
     setMessages([]);
+    setAnswers([]);
+    setSessionId(null);
+    setInterviewStartedAt(null);
+    setIsEvaluating(false);
+    setEvaluationResult(null);
+    setEvaluationError(false);
   };
   const handleStartInterview = async (questions) => {
     if (questions.length === 0) return;
     setSelectedQuestions(questions);
     setCurrentQuestionIndex(0);
     setIsInterviewFinished(false);
+    setAnswers([]);
+    setEvaluationResult(null);
+    setEvaluationError(false);
     setMessages([
       {
         role: 'ai',
         content: questions[0].question,
       },
     ]);
+    setInterviewStartedAt(Date.now());
 
     try {
-      await createSession({
+      const session = await createSession({
         companyId: selectedCompanyId,
         resumeIds: selectedResumeId ? [selectedResumeId] : [],
         coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
@@ -119,6 +248,7 @@ const [showTimer, setShowTimer] = useState(false);
         selectedCategories: questions.map((question) => question.category),
         showTimer,
       });
+      setSessionId(session.id);
     } catch (err) {
       console.error('면접 세션 생성 실패:', err);
     }
@@ -167,21 +297,18 @@ const [showTimer, setShowTimer] = useState(false);
                 )
               )}
 
-              {isInterviewFinished && (
+              {isInterviewFinished && !isEvaluating && evaluationResult && (
                 <InterviewResult
-                  totalScore={5}
-                  scores={{
-                    content: 1,
-                    delivery: 1,
-                    logic: 1,
-                    skill: 1,
-                    attitude: 1,
-                  }}
+                  scores={evaluationResult.subScores}
                   onFeedback={() => {
                     setIsFeedbackOpen(true);
                   }}
                   onRetry={handleRetry}
                 />
+              )}
+
+              {isInterviewFinished && !isEvaluating && evaluationError && (
+                <RetryButton onClick={handleRetry} />
               )}
             </div>
 
@@ -237,9 +364,9 @@ const [showTimer, setShowTimer] = useState(false);
           )}
         </div>
 
-        {isFeedbackOpen && (
+        {isFeedbackOpen && evaluationResult && (
           <InterviewFeedbackModal
-            selectedQuestions={selectedQuestions}
+            results={evaluationResult.results}
             onClose={() => setIsFeedbackOpen(false)}
           />
         )}
