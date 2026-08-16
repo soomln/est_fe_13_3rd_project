@@ -1,3 +1,6 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
 import styles from './page.module.sass';
 import Image from 'next/image';
 
@@ -87,6 +90,7 @@ const faqList = [
 ];
 
 export default function InterviewPage() {
+  const router = useRouter();
   return (
     <>
       <Header />
@@ -157,6 +161,7 @@ export default function InterviewPage() {
                 <button
                   type="button"
                   className={`${styles.view_all_btn} font_body_s_r`}
+                  onClick={() => router.push('/mypage/activity')}
                 >
                   전체 보기
                 </button>

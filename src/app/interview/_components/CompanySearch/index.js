@@ -1,1 +1,1 @@
-export {default} from './CompanySearch';
+export { default } from './CompanySearch';

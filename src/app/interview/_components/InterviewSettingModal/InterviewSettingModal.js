@@ -1,6 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import './InterviewSettingModal.sass';
 
 export default function InterviewSettingModal({ onClose }) {
+  const [isTimeLimitOn, setIsTimeLimitOn] = useState(false);
+  const [personality, setPersonality] = useState('friendly');
+
   return (
     <div className="modal_overlay">
       <div className="setting_modal">
@@ -47,8 +53,12 @@ export default function InterviewSettingModal({ onClose }) {
 
             <button
               type="button"
-              className="toggle_button"
+              className={`toggle_button ${
+                isTimeLimitOn ? 'is_on' : ''
+              }`}
+              aria-pressed={isTimeLimitOn}
               aria-label="전체 면접 시간 설정"
+              onClick={() => setIsTimeLimitOn((prev) => !prev)}
             >
               <span className="toggle_circle" />
             </button>
@@ -74,7 +84,8 @@ export default function InterviewSettingModal({ onClose }) {
             <div className="select_wrapper">
               <select
                 className="personality_select font_body_m_r"
-                defaultValue="friendly"
+                value={personality}
+                onChange={(e) => setPersonality(e.target.value)}
               >
                 <option value="friendly">친절한</option>
                 <option value="neutral">중립적인</option>
