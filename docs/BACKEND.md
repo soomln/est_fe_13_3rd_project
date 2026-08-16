@@ -444,7 +444,7 @@ const { items, total } = await listPortfolios({
 const draft = await createPortfolio({ title: '제목 없음', category: 'web' });
 const urls = await uploadPortfolioImages(draft.id, files);   // 최대 15장 / 5MB
 await updatePortfolio(draft.id, {
-  content: [...blocks, ...urls.map((url) => ({ type: 'image', url }))],
+  document: [...blocks, ...urls.map((url) => ({ type: 'image', url }))],
   bgColor: '#F4FCFE',
   gapPx: 16,
 });
@@ -484,7 +484,33 @@ await createPortfolio({ title: '작업', collaboratorIds: [member.id] });
 > ⚠️ `findMemberByEmail` 은 **이메일을 되돌려주지 않습니다.** 이름과 사진만 옵니다.
 > 부분 검색도 안 됩니다 — 정확한 이메일 전체를 알아야 찾을 수 있습니다.
 
-**content 블록 형식** — `[{ type, ... }]`
+**본문은 탭 3개로 나뉘어 있습니다** — `content` 는 없어졌습니다.
+
+| 필드 | 탭 | 타입 |
+|---|---|---|
+| `overview` | 개요 | `Block[]` |
+| `document` | 문서 | `Block[]` |
+| `code` | 코드 | `Block[]` |
+
+```js
+await createPortfolio({
+  title: '내 작업',
+  category: 'web',
+  overview: [{ type: 'text',  html: '<p>소개</p>' }],
+  document:  [{ type: 'image', url: 'https://.../1.png' }],
+  code:     [{ type: 'code',  lang: 'js', body: 'const a = 1;' }],
+});
+```
+
+| 규칙 | 동작 |
+|---|---|
+| 셋 다 선택 | 안 보낸 탭은 생성 시 `[]`, 수정 시 **건드리지 않습니다** |
+| 값 | 반드시 배열. 아니면 **400** `overview 는 블록 배열이어야 합니다.` |
+| 블록 `type` | 아래 4종 밖이면 **400** `overview 의 블록 type 은 …` |
+| 이미지 15장 | **세 탭을 합쳐서** 15장. 수정할 때는 **이미 저장된 탭까지 합산**합니다 |
+| `content` 를 보내면 | **400** — 조용히 버려지지 않도록 막아뒀습니다 |
+
+**Block 형식** — 세 탭 모두 동일합니다.
 
 | type | 필드 |
 |---|---|
@@ -492,6 +518,9 @@ await createPortfolio({ title: '작업', collaboratorIds: [member.id] });
 | `video` | `{ youtubeUrl }` — **동영상 업로드는 없습니다. YouTube 링크만** |
 | `text` | `{ html }` |
 | `code` | `{ lang, body }` |
+
+> 이미지 15장은 **포트폴리오 하나당** 총량입니다. `overview` 에 10장을 저장해두고
+> `document` 에 6장을 추가하면 400입니다 — 서버가 저장된 탭을 다시 읽어서 함께 셉니다.
 
 ### 면접 후기·족보 — `@backend/lib/api/posts`
 
@@ -1096,11 +1125,13 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `collaborators` | Collaborator[] | 공동작업자. 없으면 `[]`. 목록·상세 모두 포함 |
 | `viewCount` | number | |
 | `createdAt` / `updatedAt` | datetime | |
-| `content` | Block[] | **상세에서만.** 아래 블록 배열 |
+| `overview` / `document` / `code` | Block[] | **상세에서만.** 탭별 블록 배열. 비어 있으면 `[]` |
 | `bgColor` | string | **상세에서만.** 배경색 hex. 기본 `"#F4FCFE"` |
 | `gapPx` | number | **상세에서만.** 블록 간격 px. 기본 `16` |
 
-**Block** — `content` 배열의 원소. `type` 은 4종만 허용되고 그 외는 **400**.
+> `content` 는 없어졌습니다. 목록 응답에는 세 탭이 **포함되지 않습니다**(용량 때문). 상세에서만 옵니다.
+
+**Block** — 탭 배열의 원소. `type` 은 4종만 허용되고 그 외는 **400**.
 
 | type | 필드 | 비고 |
 |---|---|---|
@@ -1751,7 +1782,7 @@ try {
 
 > `mine` 없이 부르면 **항상 `published` 만** 내려갑니다. 남의 초안은 어떤 조합으로도 볼 수 없습니다.
 
-**응답 200** — `items`: [Portfolio](#59-portfolio)[] (**`content` / `bgColor` / `gapPx` 제외**)
+**응답 200** — `items`: [Portfolio](#59-portfolio)[] (**`overview` / `document` / `code` / `bgColor` / `gapPx` 제외**)
 
 ---
 
@@ -1767,7 +1798,8 @@ try {
 | `category` | enum \| null | `null` | `web` \| `app`, 그 외 **400** |
 | `thumbnailUrl` | string \| null | `null` | |
 | `description` | string \| null | `null` | |
-| `content` | Block[] | `[]` | 배열 아니면 400 / `type` 오류 400 / **image 15개 초과 400** |
+| `overview` / `document` / `code` | Block[] | `[]` | 배열 아니면 400 / `type` 오류 400 / **세 탭 합쳐 image 15개 초과 400** |
+| `content` | — | — | **보내면 400.** `overview` / `document` / `code` 로 나뉘었습니다 |
 | `bgColor` | string | `"#F4FCFE"` | |
 | `gapPx` | number | `16` | |
 | `status` | enum | `"draft"` | `draft` \| `published`, 그 외 **400** |
@@ -1784,7 +1816,7 @@ createPortfolio()  →  id 확보
       ↓
 uploadPortfolioImages(id, files)  →  URL 배열
       ↓
-updatePortfolio(id, { content: [...blocks] })
+updatePortfolio(id, { overview: [...], document: [...], code: [...] })
       ↓
 publishPortfolio(id)
 ```
@@ -1807,7 +1839,7 @@ publishPortfolio(id)
 | `draft` + 본인 | 200 |
 | `draft` + 타인/비로그인 | **404** (403 아님) |
 
-**응답 200** — [Portfolio](#59-portfolio) + `content` / `bgColor` / `gapPx`
+**응답 200** — [Portfolio](#59-portfolio) + `overview` / `document` / `code` / `bgColor` / `gapPx`
 
 ---
 
@@ -1818,9 +1850,13 @@ publishPortfolio(id)
 | 필드 | 비고 |
 |---|---|
 | `title` `description` `thumbnailUrl` `bgColor` `gapPx` | 그대로 저장 |
-| `content` | 블록 검증 후 **통째로 교체** |
+| `overview` `document` `code` | 블록 검증 후 **보낸 탭만 통째로 교체.** 안 보낸 탭은 그대로 둡니다 |
+| `content` | **보내면 400** — 세 탭으로 나뉘었습니다 |
 | `category` | `web`/`app`/`null` 외 400 |
 | `status` | `draft`/`published` 외 400. `publishPortfolio()` 가 이걸 씁니다 |
+
+> 탭을 하나라도 보내면 서버가 **저장돼 있는 나머지 탭을 읽어서 이미지를 합산**합니다.
+> `overview` 에 10장이 있으면 `code` 로는 5장까지만 올라갑니다.
 
 **응답 200** — 수정된 [Portfolio](#59-portfolio)
 **에러** — `400` · `401` · `404`(없거나 내 것 아님)
