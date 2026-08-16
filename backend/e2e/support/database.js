@@ -184,7 +184,8 @@ export const SCHEMA = {
     'content', 'content_html', 'content_text', 'created_at', 'updated_at',
   ],
   portfolios: [
-    'id', 'user_id', 'title', 'category', 'thumbnail_url', 'description', 'content',
+    'id', 'user_id', 'title', 'category', 'thumbnail_url', 'description',
+    'overview', 'document', 'code',
     'bg_color', 'gap_px', 'status', 'view_count', 'created_at', 'updated_at',
   ],
   posts: [

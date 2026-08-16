@@ -1206,14 +1206,62 @@ export default function BackendTestPage() {
                   title: '테스트 포트폴리오',
                   category: 'web',
                   description: '스모크 테스트',
-                  content: [{ type: 'text', html: '<p>본문</p>' }],
+                  overview: [{ type: 'text', html: '<p>개요</p>' }],
+                  document: [{ type: 'image', url: 'https://cdn.test/1.png' }],
+                  code: [{ type: 'code', lang: 'js', body: 'const a = 1;' }],
                 });
+
+                const read = await getPortfolio(p.id);
                 await reloadPortfolios();
-                return `draft 생성 id=${p.id.slice(0, 8)}…`;
+
+                return `draft 생성 id=${p.id.slice(0, 8)}… · overview ${read.overview.length} · document ${read.document.length} · code ${read.code.length}`;
               })
             }
           >
             임시저장 생성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('이미지 15장 합산 확인', async () => {
+                const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+                const tried = async (label, call) => {
+                  try {
+                    await call();
+                    return `${label} 통과`;
+                  } catch (e) {
+                    if (e.status !== 400) throw e;
+                    return `${label} 400`;
+                  }
+                };
+
+                const spread = await tried('세 탭 합쳐 16장 →', () =>
+                  createPortfolio({
+                    title: '15장 확인',
+                    overview: img(5),
+                    document: img(5),
+                    code: img(6),
+                  })
+                );
+
+                const base = await createPortfolio({ title: '15장 확인 누적', overview: img(10) });
+                const cumulative = await tried('저장된 10장 + 6장 →', () =>
+                  updatePortfolio(base.id, { code: img(6) })
+                );
+
+                const legacy = await tried('content 필드 →', () =>
+                  createPortfolio({ title: 'content 확인', content: [] })
+                );
+
+                await reloadPortfolios();
+                return `${spread} · ${cumulative} · ${legacy}`;
+              })
+            }
+          >
+            이미지 15장 합산 확인
           </button>
 
           <label style={{ ...S.btn, display: 'inline-flex', alignItems: 'center' }}>
@@ -1242,8 +1290,8 @@ export default function BackendTestPage() {
 
                   await updatePortfolio(target.id, {
                     thumbnailUrl: current.thumbnailUrl || urls[0],
-                    content: [
-                      ...(current.content ?? []),
+                    document: [
+                      ...(current.document ?? []),
                       ...urls.map((url) => ({ type: 'image', url })),
                     ],
                   });
