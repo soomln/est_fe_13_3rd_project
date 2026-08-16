@@ -1,11 +1,14 @@
 'use client';
 
+import { useRef } from 'react';
 import styles from './ImageBlock.module.sass';
 
 import Image from 'next/image';
 import { uploadPortfolioImage } from '@backend/lib/api/portfolio';
 
 export default function ImageBlock({ block, isEditMode = false, portfolioID, updateBlock, removeBlock }) {
+  const uploadRef = useRef(null);
+
   const getImageSize = (file) => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -38,11 +41,14 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
       const { width, height } = await getImageSize(file);
       const imageUrl = await uploadPortfolioImage(portfolioID, file);
 
+      const parentWidth = uploadRef.current?.clientWidth || width;
+      const displayWidth = Math.min(width, parentWidth);
+
       updateBlock(block.id, {
         url: imageUrl,
         originalWidth: width,
         originalHeight: height,
-        width,
+        width: displayWidth,
       });
     } catch (error) {
       console.error('이미지 업로드 실패:', error);
@@ -51,17 +57,21 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
 
   const startResize = (e) => {
     e.preventDefault();
+
     if (!block.originalWidth) return;
 
     const startX = e.clientX;
     const startWidth = block.width || block.originalWidth;
-    const minWidth = Math.min(200, block.originalWidth);
+
+    const parentWidth = uploadRef.current?.clientWidth || block.originalWidth;
+    const maxWidth = Math.min(block.originalWidth, parentWidth);
+    const minWidth = Math.min(200, maxWidth);
 
     const handlePointerMove = (e) => {
       const diff = e.clientX - startX;
       const nextWidth = startWidth + diff;
 
-      const width = Math.max(minWidth, Math.min(nextWidth, block.originalWidth));
+      const width = Math.max(minWidth, Math.min(nextWidth, maxWidth));
 
       updateBlock(block.id, {
         width,
@@ -79,12 +89,13 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
 
   return (
     <div className={styles.block}>
-      <div className={`${styles.upload} ${isEditMode ? styles.edit_mode : ''}`}>
+      <div ref={uploadRef} className={`${styles.upload} ${isEditMode ? styles.edit_mode : ''}`}>
         {block.url ? (
           <div
             className={styles.preview}
             style={{
               width: `${block.width || block.originalWidth}px`,
+              maxWidth: '100%',
             }}
           >
             <Image
@@ -107,7 +118,6 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
         ) : (
           <label>
             <div className='material-symbols-outlined'>add_photo_alternate</div>
-
             <div>이미지를 업로드해주세요.</div>
 
             <input type='file' accept='image/*' onChange={onUploadImage} />
