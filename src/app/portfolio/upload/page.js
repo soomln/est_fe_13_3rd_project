@@ -27,7 +27,9 @@ export default function Upload() {
     category: '',
     thumbnailUrl: '',
     description: '',
-    content: [],
+    overview: [],
+    document: [],
+    code: [],
     tags: [],
     bgColor: '#ffffff',
     gapPx: Number(16),
@@ -70,32 +72,34 @@ export default function Upload() {
       type,
     };
 
-    if (type === 'text') {
-      newBlock.html = '';
-    }
+    switch (type) {
+      case 'text':
+        newBlock.html = '';
+        break;
 
-    if (type === 'image') {
-      newBlock.url = '';
-    }
+      case 'image':
+      case 'video':
+        newBlock.url = '';
+        break;
 
-    if (type === 'video') {
-      newBlock.url = '';
-    }
+      case 'code':
+        newBlock.code = '';
+        break;
 
-    if (type === 'code') {
-      newBlock.code = '';
+      default:
+        return;
     }
 
     setItem((prev) => ({
       ...prev,
-      content: [...prev.content, newBlock],
+      [activeTab]: [...prev[activeTab], newBlock],
     }));
   };
 
   const updateBlock = (id, updatedBlock) => {
     setItem((prev) => ({
       ...prev,
-      content: prev.content.map((block) =>
+      [activeTab]: prev[activeTab].map((block) =>
         block.id === id
           ? {
               ...block,
@@ -109,7 +113,7 @@ export default function Upload() {
   const removeBlock = (id) => {
     setItem((prev) => ({
       ...prev,
-      content: prev.content.filter((block) => block.id !== id),
+      [activeTab]: prev[activeTab].filter((block) => block.id !== id),
     }));
   };
 
@@ -143,7 +147,9 @@ export default function Upload() {
         category: item.category || null,
         thumbnailUrl: item.thumbnailUrl,
         description: item.description,
-        content: item.content,
+        overview: item.overview,
+        document: item.document,
+        code: item.code,
         bgColor: item.bgColor,
         gapPx: item.gapPx,
         status: 'draft',
@@ -235,7 +241,14 @@ export default function Upload() {
 
         <main>
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
-          <Contents item={item} setItem={setItem} isEditMode updateBlock={updateBlock} removeBlock={removeBlock} />
+          <Contents
+            item={item}
+            setItem={setItem}
+            activeTab={activeTab}
+            isEditMode
+            updateBlock={updateBlock}
+            removeBlock={removeBlock}
+          />
         </main>
 
         <aside className={styles.btns_wrapper}>

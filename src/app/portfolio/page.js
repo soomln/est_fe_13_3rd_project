@@ -17,7 +17,7 @@ import CategoryBtn from '@/app/portfolio/_components/CategoryBtn';
 import SortBtn from '@/app/portfolio/_components/SortBtn/SortBtn';
 import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import QuickBtns from './_components/QuickBtns';
-import Window from '@/app/portfolio/_components/DetailModal';
+import DetailModal from '@/app/portfolio/_components/DetailModal';
 
 import { listPortfolios } from '@backend/lib/api/portfolio';
 
@@ -195,7 +195,7 @@ export default function Portpolio() {
           </section>
         </div>
 
-        <Window
+        <DetailModal
           isOpen={isModalOpen}
           onClose={onCloseDetail}
           itemID={selectedItemID}
