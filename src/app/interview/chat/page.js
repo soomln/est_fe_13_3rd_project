@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './page.module.sass';
@@ -18,7 +18,7 @@ import UserChatBubble from '../_components/UserChatBubble';
 import InterviewResult from '../_components/InterviewResult';
 import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
 import InterviewSettingModal from '../_components/InterviewSettingModal';
-import { getQuestionByTitle } from '../_constants/questions';
+import { createSession } from '@backend/lib/api/interview';
 
 export default function InterviewPage() {
   const router = useRouter();
@@ -33,6 +33,25 @@ const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 const [selectedResumeId, setSelectedResumeId] = useState(null);
 const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
 const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+const [selectedCompanySlug, setSelectedCompanySlug] = useState(null);
+const [interviewerStyle, setInterviewerStyle] = useState('friendly');
+const [showTimer, setShowTimer] = useState(false);
+
+  const handleSelectCompany = (id, company) => {
+    setSelectedCompanyId(id);
+    setSelectedCompanySlug(company?.slug ?? null);
+  };
+
+  const handleGenerationError = useCallback(() => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'ai',
+        content:
+          '선택하신 정보를 바탕으로\n맞춤 질문을 생성하지 못했습니다.\n\n기본 질문으로 면접을 진행합니다.',
+      },
+    ]);
+  }, []);
 
   const handleSendAnswer = (answer) => {
     if (selectedQuestions.length === 0) {
@@ -58,8 +77,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     if (nextIndex < selectedQuestions.length) {
       nextMessages.push({
         role: 'ai',
-        content: getQuestionByTitle(selectedQuestions[nextIndex])
-          ?.question,
+        content: selectedQuestions[nextIndex].question,
       });
       setCurrentQuestionIndex(nextIndex);
       setMessages(nextMessages);
@@ -80,18 +98,30 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     setCurrentQuestionIndex(0);
     setMessages([]);
   };
-  const handleStartInterview = (questions) => {
+  const handleStartInterview = async (questions) => {
     if (questions.length === 0) return;
     setSelectedQuestions(questions);
     setCurrentQuestionIndex(0);
     setIsInterviewFinished(false);
-    const firstQuestion = getQuestionByTitle(questions[0])?.question;
     setMessages([
       {
         role: 'ai',
-        content: firstQuestion,
+        content: questions[0].question,
       },
     ]);
+
+    try {
+      await createSession({
+        companyId: selectedCompanyId,
+        resumeIds: selectedResumeId ? [selectedResumeId] : [],
+        coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
+        interviewerStyle,
+        selectedCategories: questions.map((question) => question.category),
+        showTimer,
+      });
+    } catch (err) {
+      console.error('면접 세션 생성 실패:', err);
+    }
   };
 
   return (
@@ -118,7 +148,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
             <div className={styles.chat_content}>
               {messages.length === 0 ? (
                 <AiChatBubble
-                  message="안녕하세요! 저는 AI 면접관입니다.면접 진행을 위해 우측 패널 옵션을 선택해주세요!"
+                  message={'안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.'}
                 />
               ) : (
                 messages.map((message, index) =>
@@ -162,7 +192,11 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
           {isQuestionList ? (
             <QuestionPanel
+              resumeId={selectedResumeId}
+              coverLetterId={selectedCoverLetterId}
+              companySlug={selectedCompanySlug}
               onStart={handleStartInterview}
+              onGenerationError={handleGenerationError}
             />
           ) : (
             <aside className={styles.option_panel}>
@@ -183,7 +217,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
               />
               <CompanySearch
                 selectedId={selectedCompanyId}
-                onSelect={setSelectedCompanyId}
+                onSelect={handleSelectCompany}
               />
               <QuestionListButton
                 onClick={() => {
@@ -213,6 +247,10 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
         {isSettingOpen && (
           <InterviewSettingModal
             onClose={() => setIsSettingOpen(false)}
+            showTimer={showTimer}
+            onToggleShowTimer={setShowTimer}
+            interviewerStyle={interviewerStyle}
+            onInterviewerStyleChange={setInterviewerStyle}
           />
         )}
       </main>
