@@ -1,6 +1,6 @@
 'use client';
 
-import './InterviewSettingModal.sass';
+import styles from './InterviewSettingModal.module.sass';
 
 export default function InterviewSettingModal({
   onClose,
@@ -10,11 +10,11 @@ export default function InterviewSettingModal({
   onInterviewerStyleChange,
 }) {
   return (
-    <div className="modal_overlay">
-      <div className="setting_modal">
-        <div className="modal_header">
-          <div className="modal_title">
-            <span className="material-symbols-outlined setting_icon">
+    <div className={styles.modal_overlay}>
+      <div className={styles.setting_modal}>
+        <div className={styles.modal_header}>
+          <div className={styles.modal_title}>
+            <span className={`material-symbols-outlined ${styles.setting_icon}`}>
               settings
             </span>
 
@@ -23,7 +23,7 @@ export default function InterviewSettingModal({
 
           <button
             type="button"
-            className="close_button"
+            className={styles.close_button}
             onClick={onClose}
             aria-label="면접 설정 닫기"
           >
@@ -33,13 +33,13 @@ export default function InterviewSettingModal({
           </button>
         </div>
 
-        <section className="setting_section">
+        <section className={styles.setting_section}>
           <h3 className="font_h4">기본 설정</h3>
 
-          <div className="setting_item">
-            <div className="setting_item_info">
-              <div className="setting_item_title">
-                <span className="material-symbols-outlined setting_item_icon">
+          <div className={styles.setting_item}>
+            <div className={styles.setting_item_info}>
+              <div className={styles.setting_item_title}>
+                <span className={`material-symbols-outlined ${styles.setting_item_icon}`}>
                   schedule
                 </span>
 
@@ -55,21 +55,21 @@ export default function InterviewSettingModal({
 
             <button
               type="button"
-              className={`toggle_button ${
-                showTimer ? 'is_on' : ''
+              className={`${styles.toggle_button} ${
+                showTimer ? styles.is_on : ''
               }`}
               aria-pressed={showTimer}
               aria-label="전체 면접 시간 설정"
               onClick={() => onToggleShowTimer(!showTimer)}
             >
-              <span className="toggle_circle" />
+              <span className={styles.toggle_circle} />
             </button>
           </div>
 
-          <div className="setting_item">
-            <div className="setting_item_info">
-              <div className="setting_item_title">
-                <span className="material-symbols-outlined setting_item_icon">
+          <div className={styles.setting_item}>
+            <div className={styles.setting_item_info}>
+              <div className={styles.setting_item_title}>
+                <span className={`material-symbols-outlined ${styles.setting_item_icon}`}>
                   group
                 </span>
 
@@ -83,9 +83,9 @@ export default function InterviewSettingModal({
               </p>
             </div>
 
-            <div className="select_wrapper">
+            <div className={styles.select_wrapper}>
               <select
-                className="personality_select font_body_m_r"
+                className={`${styles.personality_select} font_body_m_r`}
                 value={interviewerStyle}
                 onChange={(e) => onInterviewerStyleChange(e.target.value)}
               >
@@ -94,7 +94,7 @@ export default function InterviewSettingModal({
                 <option value="strict">엄격한</option>
               </select>
 
-              <span className="material-symbols-outlined select_icon">
+              <span className={`material-symbols-outlined ${styles.select_icon}`}>
                 arrow_drop_down
               </span>
             </div>

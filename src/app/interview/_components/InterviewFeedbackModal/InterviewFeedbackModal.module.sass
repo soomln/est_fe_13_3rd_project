@@ -104,14 +104,14 @@
   color: $gray
   cursor: pointer
 
-  .material-symbols-outlined
+  :global(.material-symbols-outlined)
     font-size: 24px
     font-variation-settings: 'FILL' 0
 
   &.is_bookmarked
     color: $amber
 
-    .material-symbols-outlined
+    :global(.material-symbols-outlined)
       font-variation-settings: 'FILL' 1
       
 .feedback_detail
@@ -159,6 +159,6 @@
   align-items: center
   gap: 6px
 
-  .material-symbols-outlined
+  :global(.material-symbols-outlined)
     color: $amber
     font-size: 20px
