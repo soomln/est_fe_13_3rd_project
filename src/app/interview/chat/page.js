@@ -17,6 +17,8 @@ import QuestionPanel from '../_components/QuestionPanel';
 import UserChatBubble from '../_components/UserChatBubble';
 import InterviewResult from '../_components/InterviewResult';
 import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
+import InterviewSettingModal from '../_components/InterviewSettingModal';
+import { getQuestionByTitle } from '../_constants/questions';
 
 export default function InterviewPage() {
   const router = useRouter();
@@ -32,17 +34,18 @@ const [selectedResumeId, setSelectedResumeId] = useState(null);
 const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
 const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
-  const questionData = {
-    전체: '안녕하세요. 간단하게 자기소개 부탁드립니다.',
-    자기소개: '안녕하세요. 본인을 간단하게 소개해주세요.',
-    '기술 질문 1': '프론트엔드 개발자로 지원한 이유는 무엇인가요?',
-    '기술 질문 2':
-      '프로젝트에서 가장 어려웠던 기술적인 문제는 무엇이었나요?',
-    '인성 질문': '팀원과 의견이 충돌했을 때 어떻게 해결했나요?',
-    '마무리 질문': '마지막으로 하고 싶은 말이 있나요.',
-  };
-
   const handleSendAnswer = (answer) => {
+    if (selectedQuestions.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '면접 질문에 필요한 정보를 왼쪽 패널에서 선택해 주세요.',
+        },
+      ]);
+      return;
+    }
+
     const nextIndex = currentQuestionIndex + 1;
     const nextMessages = [
       ...messages,
@@ -55,7 +58,8 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     if (nextIndex < selectedQuestions.length) {
       nextMessages.push({
         role: 'ai',
-        content: questionData[selectedQuestions[nextIndex]],
+        content: getQuestionByTitle(selectedQuestions[nextIndex])
+          ?.question,
       });
       setCurrentQuestionIndex(nextIndex);
       setMessages(nextMessages);
@@ -81,7 +85,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     setSelectedQuestions(questions);
     setCurrentQuestionIndex(0);
     setIsInterviewFinished(false);
-    const firstQuestion = questionData[questions[0]];
+    const firstQuestion = getQuestionByTitle(questions[0])?.question;
     setMessages([
       {
         role: 'ai',
@@ -114,7 +118,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
             <div className={styles.chat_content}>
               {messages.length === 0 ? (
                 <AiChatBubble
-                  message="안녕하세요! 저는 AI 면접관입니다. 면접 진행을 위해 우측 패널 옵션을 선택해주세요!"
+                  message="안녕하세요! 저는 AI 면접관입니다.면접 진행을 위해 우측 패널 옵션을 선택해주세요!"
                 />
               ) : (
                 messages.map((message, index) =>
@@ -203,6 +207,12 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
           <InterviewFeedbackModal
             selectedQuestions={selectedQuestions}
             onClose={() => setIsFeedbackOpen(false)}
+          />
+        )}
+
+        {isSettingOpen && (
+          <InterviewSettingModal
+            onClose={() => setIsSettingOpen(false)}
           />
         )}
       </main>

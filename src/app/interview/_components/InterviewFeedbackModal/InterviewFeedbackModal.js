@@ -3,38 +3,7 @@
 import { useState } from 'react';
 
 import './InterviewFeedbackModal.sass';
-
-const questionData = {
-  자기소개: {
-    question: '본인을 간단하게 소개해주세요.',
-    answer:
-      '안녕하세요. 저는 프론트엔드 개발자를 목표로 하고 있는 지원자입니다.',
-  },
-  '기술 질문 1': {
-    question:
-      '프론트엔드 개발자로 지원한 이유는 무엇인가요?',
-    answer:
-      '사용자 경험을 중요하게 생각하며, 직관적이고 유지보수하기 좋은 프론트엔드 개발을 지향하고 있습니다.',
-  },
-  '기술 질문 2': {
-    question:
-      '프로젝트에서 가장 어려웠던 기술적인 문제는 무엇이었나요?',
-    answer:
-      '프로젝트에서 상태 관리와 API 응답 처리 과정에서 발생한 문제를 해결한 경험이 있습니다.',
-  },
-  '인성 질문': {
-    question:
-      '팀원과 의견이 충돌했을 때 어떻게 해결했나요?',
-    answer:
-      '서로의 의견을 정리한 뒤 근거를 비교하고 가장 적절한 방향을 함께 결정했습니다.',
-  },
-  '마무리 질문': {
-    question:
-      '마지막으로 하고 싶은 말이 있나요.',
-    answer:
-      '지속적으로 배우고 성장하는 개발자가 되겠습니다.',
-  },
-};
+import { getQuestionByTitle } from '../../_constants/questions';
 
 const feedbackData = {
   good: [
@@ -70,13 +39,11 @@ export default function InterviewFeedbackModal({
     );
   };
   const feedbackList = selectedQuestions.map(
-    (question) => ({
-      id: question,
-      title: question,
-      question:
-        questionData[question]?.question || '',
-      answer:
-        questionData[question]?.answer || '',
+    (title) => ({
+      id: title,
+      title,
+      question: getQuestionByTitle(title)?.question || '',
+      answer: getQuestionByTitle(title)?.answer || '',
       feedback: feedbackData,
       summary: feedbackData.summary,
     }),
