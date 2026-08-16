@@ -56,7 +56,7 @@ export default function Contents({ item, setItem, contentsRef = null, isEditMode
       <div
         className={styles.contents}
         style={{
-          gap: `${item?.gap}px`,
+          gap: `${item?.gapPx}px`,
         }}
       >
         {item?.content?.map((block) => (
