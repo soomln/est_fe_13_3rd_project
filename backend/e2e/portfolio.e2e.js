@@ -49,7 +49,9 @@ describe('building a portfolio', () => {
       status: 'draft',
       bgColor: '#F4FCFE',
       gapPx: 16,
-      content: [],
+      overview: [],
+      document: [],
+      code: [],
     });
   });
 
@@ -63,35 +65,72 @@ describe('building a portfolio', () => {
     await expect(createPortfolio({ category: 'vr' })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('accepts the four block types', async () => {
+  it('fills the three tabs independently', async () => {
     const draft = await createPortfolio({
-      content: [
-        { type: 'image', url: 'https://cdn.test/1.png' },
-        { type: 'video', youtube_url: 'https://youtu.be/x' },
-        { type: 'text', html: '<p>hi</p>' },
+      overview: [{ type: 'text', html: '<p>hi</p>' }],
+      document: [{ type: 'image', url: 'https://cdn.test/1.png' }],
+      code: [
         { type: 'code', lang: 'js', body: 'const a = 1;' },
+        { type: 'video', youtube_url: 'https://youtu.be/x' },
       ],
     });
 
-    expect(draft.content).toHaveLength(4);
+    const read = await getPortfolio(draft.id);
+
+    expect(read.overview).toHaveLength(1);
+    expect(read.document).toHaveLength(1);
+    expect(read.code).toHaveLength(2);
   });
 
-  it('rejects an unsupported block', async () => {
-    await expect(createPortfolio({ content: [{ type: 'audio' }] })).rejects.toMatchObject({
+  it('leaves the tabs it was not given alone', async () => {
+    const draft = await createPortfolio({ overview: [{ type: 'text', html: '<p>hi</p>' }] });
+
+    await updatePortfolio(draft.id, { code: [{ type: 'code', body: 'x' }] });
+    const read = await getPortfolio(draft.id);
+
+    expect(read.overview).toHaveLength(1);
+    expect(read.code).toHaveLength(1);
+    expect(read.document).toEqual([]);
+  });
+
+  it.each(['overview', 'document', 'code'])('rejects an unsupported block in %s', async (tab) => {
+    await expect(createPortfolio({ [tab]: [{ type: 'audio' }] })).rejects.toMatchObject({
       status: 400,
     });
   });
 
-  it('allows fifteen images', async () => {
-    const content = Array.from({ length: 15 }, () => ({ type: 'image' }));
-
-    await expect(createPortfolio({ content })).resolves.toMatchObject({ status: 'draft' });
+  it.each(['overview', 'document', 'code'])('rejects a non-array %s', async (tab) => {
+    await expect(createPortfolio({ [tab]: 'nope' })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('stops at sixteen images', async () => {
-    const content = Array.from({ length: 16 }, () => ({ type: 'image' }));
+  it('rejects the retired content field outright', async () => {
+    await expect(createPortfolio({ content: [] })).rejects.toMatchObject({ status: 400 });
+  });
 
-    await expect(createPortfolio({ content })).rejects.toMatchObject({ status: 400 });
+  it('spends the fifteen image budget across all three tabs', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+    await expect(
+      createPortfolio({ overview: img(5), document: img(5), code: img(5) })
+    ).resolves.toMatchObject({ status: 'draft' });
+
+    await expect(
+      createPortfolio({ overview: img(5), document: img(5), code: img(6) })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('counts tabs already saved when only one tab is updated', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+    const draft = await createPortfolio({ overview: img(10) });
+
+    await expect(updatePortfolio(draft.id, { code: img(5) })).resolves.toMatchObject({
+      status: 'draft',
+    });
+
+    await expect(updatePortfolio(draft.id, { document: img(1) })).rejects.toMatchObject({
+      status: 400,
+    });
   });
 
   it('edits the canvas settings', async () => {
