@@ -1,0 +1,72 @@
+@use '@/app/_variables.sass' as *
+
+.link_dialog_overlay
+  position: fixed
+  inset: 0
+  z-index: 110
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 24px
+  background-color: rgba(0, 0, 0, 0.5)
+
+.link_dialog
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  width: 100%
+  max-width: 420px
+  padding: 32px
+  background-color: $white
+  border-radius: 16px
+
+.link_dialog_title
+  margin-bottom: 16px
+  color: $black
+
+.link_dialog_input
+  box-sizing: border-box
+  width: 100%
+  height: 48px
+  padding: 0 16px
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 8px
+
+  &:focus
+    outline: none
+    border-color: $green
+
+.link_dialog_hint
+  margin-top: 8px
+  color: $gray
+
+.link_dialog_btns
+  display: flex
+  justify-content: flex-end
+  gap: 12px
+  margin-top: 24px
+
+.link_dialog_cancel,
+.link_dialog_confirm
+  height: 48px
+  padding: 0 20px
+  border-radius: 10px
+  cursor: pointer
+
+.link_dialog_cancel
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke2
+
+  &:hover
+    background-color: $light_gray
+
+.link_dialog_confirm
+  color: $white
+  background-color: $green
+  border: 1px solid $green
+
+  &:hover
+    opacity: 0.9
