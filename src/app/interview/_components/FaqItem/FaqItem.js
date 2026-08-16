@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import './FaqItem.sass';
+import styles from './FaqItem.module.sass';
 
 export default function FaqItem({
   question,
@@ -10,15 +10,15 @@ export default function FaqItem({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="faq_item">
+    <div className={styles.faq_item}>
       <button
         type="button"
-        className="faq_header"
+        className={styles.faq_header}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
-        <div className="faq_left">
-          <span className="question_mark">
+        <div className={styles.faq_left}>
+          <span className={styles.question_mark}>
             Q.
           </span>
 
@@ -35,7 +35,7 @@ export default function FaqItem({
       </button>
 
       {isOpen && (
-        <div className="faq_answer font_body_m_r">
+        <div className={`${styles.faq_answer} font_body_m_r`}>
           {answer}
         </div>
       )}

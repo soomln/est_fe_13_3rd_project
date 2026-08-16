@@ -1,4 +1,4 @@
-import './OptionListItem.sass';
+import styles from './OptionListItem.module.sass';
 
 export default function OptionListItem({
   title,
@@ -8,12 +8,12 @@ export default function OptionListItem({
 }) {
   return (
     <li
-      className={`option_list_item ${type} font_body_l_r ${
+      className={`${styles.option_list_item} ${styles[type]} font_body_l_r ${
         isSelected ? 'is_selected' : ''
       }`}
       onClick={onClick}
     >
-      <span className="material-symbols-outlined option_checkbox">
+      <span className={`material-symbols-outlined ${styles.option_checkbox}`}>
         {isSelected ? 'check_box' : 'check_box_outline_blank'}
       </span>
 
