@@ -1,1 +1,1 @@
-export {default} from './GuideCard';
+export { default } from './GuideCard';
