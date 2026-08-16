@@ -11,6 +11,8 @@ export const PAGE_SIZE = {
   scrappedCompanies: 9,
   myPortfolios: 9,
   comments: 20,
+  homeCompanies: 3,
+  homePortfolios: 5,
 };
 
 export const SORT = {
