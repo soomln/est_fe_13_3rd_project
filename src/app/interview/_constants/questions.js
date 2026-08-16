@@ -6,7 +6,7 @@ export const QUESTIONS = [
   },
   {
     title: '자기소개',
-    category: 'self_intro',
+    category: 'intro',
     description: '경험과 강점을 확인하는 질문입니다.',
     question: '본인을 간단하게 소개해주세요.',
     answer:
@@ -14,7 +14,7 @@ export const QUESTIONS = [
   },
   {
     title: '기술 질문 1',
-    category: 'technical1',
+    category: 'tech1',
     description: '직무 기술 역량을 확인하는 질문입니다.',
     question: '프론트엔드 개발자로 지원한 이유는 무엇인가요?',
     answer:
@@ -22,7 +22,7 @@ export const QUESTIONS = [
   },
   {
     title: '기술 질문 2',
-    category: 'technical2',
+    category: 'tech2',
     description: '기술 이해도를 확인하는 질문입니다.',
     question:
       '프로젝트에서 가장 어려웠던 기술적인 문제는 무엇이었나요?',
