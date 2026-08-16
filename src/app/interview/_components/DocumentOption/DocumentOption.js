@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import './DocumentOption.sass';
+import styles from './DocumentOption.module.sass';
 import OptionListItem from '../OptionListItem';
 import { listMyDocuments } from '@backend/lib/api/documents';
 
@@ -39,12 +39,12 @@ export default function DocumentOption({
   }, [title, type]);
 
   return (
-    <section className={`document_option ${type}`}>
-      <div className="option_header">
+    <section className={`${styles.document_option} ${styles[type]}`}>
+      <div className={styles.option_header}>
         <h3 className="font_body_l_b">{title}</h3>
       </div>
 
-      <ul className="option_list">
+      <ul className={styles.option_list}>
         {isLoading ? (
           <li className="font_body_l_r">
             불러오는 중...
