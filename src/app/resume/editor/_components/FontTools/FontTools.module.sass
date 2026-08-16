@@ -1,0 +1,58 @@
+@use '@/app/_variables.sass' as *
+
+.font_tools_select
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: flex-end
+  box-sizing: border-box
+  width: 132px
+  height: 36px
+  padding-right: 8px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 8px
+
+  :global(.material-symbols-sharp)
+    font-size: 22px
+    pointer-events: none
+
+// 화살표 자리까지 덮어서 외곽선 안쪽 어디를 눌러도 열린다
+.font_tools_select_field
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  padding: 0 28px 0 10px
+  color: $black
+  background-color: transparent
+  border: 0
+  appearance: none
+  cursor: pointer
+
+  &:focus
+    outline: none
+
+// space-between 이 -, 숫자, + 사이까지 벌리지 않도록 셋만 고정 간격으로 둔다
+.font_tools_size_group
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 2px
+
+.font_tools_size
+  flex-shrink: 0
+  box-sizing: border-box
+  width: 40px
+  height: 36px
+  padding: 0 2px
+  color: $black
+  text-align: center
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 8px
+
+  &:focus
+    outline: none
+    border-color: $green

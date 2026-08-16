@@ -1,6 +1,8 @@
 @use '@/app/_variables.sass' as *
 
+// 브라우저 기본 말풍선은 느리고 잘 안 떠서 직접 만든다
 .tool_btn
+  position: relative
   flex-shrink: 0
   display: flex
   align-items: center
@@ -24,3 +26,25 @@
 .tool_btn_active
   color: $green
   background-color: $sub_green
+
+.tool_btn::after
+  content: attr(data-tip)
+  position: absolute
+  top: calc(100% + 6px)
+  left: 50%
+  z-index: 30
+  padding: 6px 10px
+  color: $white
+  font-size: 12px
+  line-height: 16px
+  white-space: nowrap
+  background-color: rgba(0, 0, 0, 0.85)
+  border-radius: 6px
+  opacity: 0
+  transform: translateX(-50%)
+  pointer-events: none
+  transition: opacity 0.12s ease
+
+.tool_btn:hover::after,
+.tool_btn:focus-visible::after
+  opacity: 1

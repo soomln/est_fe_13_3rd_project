@@ -3,27 +3,30 @@
 .toolbar
   flex-shrink: 0
   display: flex
+  flex-wrap: wrap
   align-items: center
   box-sizing: border-box
   gap: 4px
   width: 100%
   max-width: 1148px
-  height: 64px
   margin: 0 auto
-  padding: 0 16px
+  // 표 툴이 아래에 붙어도 위아래 여백이 그대로여야 한다. min-height 로 잡으면 줄어든다
+  padding: 14px 16px
   background-color: $white
   border: 1px solid $gray
   border-radius: 16px
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
 
+// overflow 를 두면 색 팔레트가 잘려서 안 보인다. 대신 줄바꿈으로 처리한다
 .toolbar_inner
   flex: 1
   min-width: 0
+  margin-left: 12px
   display: flex
+  flex-wrap: wrap
   align-items: center
   justify-content: space-between
   gap: 4px
-  overflow-x: auto
 
 // 헤더·툴바 구분선 색 (와이어프레임 전용이라 변수에 없음)
 .toolbar_divider
@@ -32,52 +35,14 @@
   height: 28px
   background-color: #767779
 
-.toolbar_select
+// 색 팔레트가 이 버튼 아래에 붙는다
+.toolbar_tool
   position: relative
-  flex-shrink: 0
-  display: flex
-  align-items: center
-  box-sizing: border-box
-  height: 36px
-  padding-right: 8px
-  background-color: $white
-  border: 1px solid $gray
-  border-radius: 8px
+  display: inline-flex
 
-  :global(.material-symbols-sharp)
-    font-size: 22px
-    pointer-events: none
+.toolbar_file
+  display: none
 
-.toolbar_select_field
-  padding: 0 4px 0 10px
-  color: $black
-  background-color: transparent
-  border: 0
-  appearance: none
-  cursor: pointer
-
-  &:focus
-    outline: none
-
-// space-between 이 -, 숫자, + 사이까지 벌리지 않도록 셋만 고정 간격으로 둔다
-.toolbar_size_group
-  flex-shrink: 0
-  display: flex
-  align-items: center
-  gap: 2px
-
-.toolbar_size
-  flex-shrink: 0
-  box-sizing: border-box
-  width: 40px
-  height: 36px
-  padding: 0 2px
-  color: $black
-  text-align: center
-  background-color: $white
-  border: 1px solid $gray
-  border-radius: 8px
-
-  &:focus
-    outline: none
-    border-color: $green
+@media print
+  .toolbar
+    display: none
