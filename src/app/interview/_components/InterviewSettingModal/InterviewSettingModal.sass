@@ -85,6 +85,11 @@
   border-radius: 20px
   background: $stroke2
   cursor: pointer
+  transition: 0.2s ease
+
+  &.is_on
+    border-color: $green
+    background: $green
 
 .toggle_circle
   display: block
@@ -92,6 +97,11 @@
   height: 28px
   border-radius: 50%
   background: $gray
+  transition: 0.2s ease
+
+  .is_on &
+    transform: translateX(34px)
+    background: $white
 
 .select_wrapper
   position: relative

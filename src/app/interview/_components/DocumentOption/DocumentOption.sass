@@ -2,6 +2,8 @@
 
 .document_option
   width: 100%
+  flex: 1
+  min-height: 0
   padding: 15px
   box-sizing: border-box
   display: flex
@@ -46,6 +48,8 @@
 
   &::-webkit-scrollbar-thumb
     border-radius: 4px
+    min-height: 40px
+    max-height: 40px
 
 .resume .option_list::-webkit-scrollbar-thumb
   background: $amber
