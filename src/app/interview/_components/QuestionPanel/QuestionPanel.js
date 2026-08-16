@@ -1,31 +1,87 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import './QuestionPanel.sass';
 import QuestionListButton from '../QuestionListButton';
-import { QUESTIONS, QUESTION_TITLES } from '../../_constants/questions';
+import { QUESTIONS } from '../../_constants/questions';
+import { getDocument } from '@backend/lib/api/documents';
+import { getCompany } from '@backend/lib/api/companies';
+import { generateInterviewQuestions } from '../../_lib/generateInterviewQuestions';
 
-export default function QuestionPanel({ onStart }) {
+export default function QuestionPanel({
+  resumeId,
+  coverLetterId,
+  companySlug,
+  onStart,
+  onGenerationError,
+}) {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(true);
 
-  const handleSelect = (title) => {
-    if (title === '전체') {
-      setSelectedQuestions((prev) =>
-        prev.length === QUESTION_TITLES.length
-          ? []
-          : QUESTION_TITLES,
-      );
+  useEffect(() => {
+    let cancelled = false;
 
-      return;
-    }
+    const generate = async () => {
+      try {
+        setIsGenerating(true);
+        setSelectedQuestions([]);
 
+        const [resume, coverLetter, company] = await Promise.all([
+          resumeId ? getDocument(resumeId) : null,
+          coverLetterId ? getDocument(coverLetterId) : null,
+          companySlug ? getCompany(companySlug) : null,
+        ]);
+
+        const questions = await generateInterviewQuestions({
+          resumeText: resume?.contentText,
+          coverLetterText: coverLetter?.contentText,
+          company,
+        });
+
+        if (!cancelled) setGeneratedQuestions(questions);
+      } catch (err) {
+        console.error('면접 질문 생성 실패:', err);
+        if (!cancelled) {
+          onGenerationError?.();
+          // AI 생성이 완전히 실패해도 정적 질문으로 패널이 계속 동작하게 한다.
+          setGeneratedQuestions(
+            QUESTIONS.filter((item) => item.category !== 'all').map((item) => ({
+              category: item.category,
+              title: item.title,
+              description: item.description,
+              question: item.question,
+            })),
+          );
+        }
+      } finally {
+        if (!cancelled) setIsGenerating(false);
+      }
+    };
+
+    generate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeId, coverLetterId, companySlug, onGenerationError]);
+
+  const handleSelect = (item) => {
     setSelectedQuestions((prev) => {
-      if (prev.includes(title)) {
-        return prev.filter((item) => item !== title);
+      if (item.category === 'all') {
+        return prev.length === generatedQuestions.length ? [] : generatedQuestions;
       }
 
-      return [...prev, title];
+      const isSelected = prev.some((q) => q.category === item.category);
+      const nextCategories = isSelected
+        ? prev.filter((q) => q.category !== item.category)
+        : [...prev, item];
+
+      // 선택 순서와 상관없이 항상 생성된 카테고리 순서를 유지한다.
+      return generatedQuestions.filter((q) =>
+        nextCategories.some((n) => n.category === q.category),
+      );
     });
   };
 
@@ -35,17 +91,29 @@ export default function QuestionPanel({ onStart }) {
 
       <ul className="question_list">
         {QUESTIONS.map((question) => {
-          const isSelected =
-            question.title === '전체'
-              ? selectedQuestions.length === QUESTION_TITLES.length
-              : selectedQuestions.includes(question.title);
+          const isAllRow = question.category === 'all';
+          const generatedItem = generatedQuestions.find(
+            (item) => item.category === question.category,
+          );
+
+          const isSelected = isAllRow
+            ? generatedQuestions.length > 0 &&
+            selectedQuestions.length === generatedQuestions.length
+            : selectedQuestions.some((item) => item.category === question.category);
+
+          const description = isAllRow
+            ? question.description
+            : isGenerating
+              ? '질문을 생성하는 중...'
+              : generatedItem?.description || question.description;
 
           return (
-            <li key={question.title} className="question_item">
+            <li key={question.category} className="question_item">
               <button
                 type="button"
                 className="question_button"
-                onClick={() => handleSelect(question.title)}
+                onClick={() => handleSelect(isAllRow ? question : generatedItem)}
+                disabled={isGenerating || (!isAllRow && !generatedItem)}
               >
                 <span className="material-symbols-outlined">
                   {isSelected
@@ -59,7 +127,7 @@ export default function QuestionPanel({ onStart }) {
                   </strong>
 
                   <p className="font_body_m_r">
-                    {question.description}
+                    {description}
                   </p>
                 </div>
               </button>
