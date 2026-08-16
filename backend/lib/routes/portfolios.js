@@ -64,6 +64,9 @@ const CATEGORIES = ['web', 'app'];
 const STATUSES = ['draft', 'published'];
 const BLOCK_TYPES = ['image', 'video', 'text', 'code'];
 
+export const SECTIONS = ['overview', 'document', 'code'];
+export const IMAGE_LIMIT = 15;
+
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
   oldest: { column: 'created_at', ascending: true },
@@ -102,7 +105,7 @@ function toItem(row) {
 function toDetail(row) {
   return {
     ...toItem(row),
-    content: row.content ?? [],
+    ...Object.fromEntries(SECTIONS.map((name) => [name, row[name] ?? []])),
     bgColor: row.bg_color,
     gapPx: row.gap_px,
   };
@@ -142,20 +145,41 @@ async function detailWithExtras(row, supabase, user, mine) {
   return { ...withMine(toDetail(row), mine), collaborators: collaborators.get(row.id) ?? [] };
 }
 
-function validateContent(content) {
-  if (content === undefined) return undefined;
-  if (!Array.isArray(content)) throw badRequest('content 는 블록 배열이어야 합니다.');
-
-  const images = content.filter((b) => b?.type === 'image').length;
-  if (images > 15) throw badRequest('이미지는 최대 15장까지 넣을 수 있습니다.');
-
-  for (const block of content) {
-    if (!BLOCK_TYPES.includes(block?.type)) {
-      throw badRequest(`블록 type 은 ${BLOCK_TYPES.join(' | ')} 중 하나여야 합니다.`);
-    }
+function readSections(body) {
+  if ('content' in body) {
+    throw badRequest(`content 는 ${SECTIONS.join(' / ')} 로 나뉘었습니다. 탭별로 보내주세요.`);
   }
-  return content;
+
+  const given = {};
+
+  for (const name of SECTIONS) {
+    if (!(name in body)) continue;
+
+    const blocks = body[name];
+    if (!Array.isArray(blocks)) throw badRequest(`${name} 는 블록 배열이어야 합니다.`);
+
+    for (const block of blocks) {
+      if (!BLOCK_TYPES.includes(block?.type)) {
+        throw badRequest(`${name} 의 블록 type 은 ${BLOCK_TYPES.join(' | ')} 중 하나여야 합니다.`);
+      }
+    }
+    given[name] = blocks;
+  }
+
+  return given;
 }
+
+function assertImageBudget(sections) {
+  const images = SECTIONS.reduce(
+    (n, name) => n + (sections[name] ?? []).filter((b) => b?.type === 'image').length,
+    0
+  );
+  if (images > IMAGE_LIMIT) {
+    throw badRequest(`이미지는 ${SECTIONS.join(' · ')} 를 합쳐 최대 ${IMAGE_LIMIT}장까지 넣을 수 있습니다.`);
+  }
+}
+
+const filled = (sections) => Object.fromEntries(SECTIONS.map((n) => [n, sections[n] ?? []]));
 
 async function listScrapped({ supabase, user, q, page, pageSize }) {
   const sortKey = q.get('sort') ?? 'latest';
@@ -256,6 +280,9 @@ export const POST = defineRoute(
 
     const collaboratorIds = validateCollaborators(body.collaboratorIds);
 
+    const sections = readSections(body);
+    assertImageBudget(sections);
+
     const row = unwrap(
       await supabase
         .from('portfolios')
@@ -265,7 +292,7 @@ export const POST = defineRoute(
           category: body.category ?? null,
           thumbnail_url: body.thumbnailUrl ?? null,
           description: body.description ?? null,
-          content: validateContent(body.content) ?? [],
+          ...filled(sections),
           bg_color: body.bgColor ?? '#F4FCFE',
           gap_px: body.gapPx ?? 16,
           status: body.status ?? 'draft',
@@ -322,7 +349,6 @@ export const PATCH_DETAIL = defineRoute(
     if ('thumbnailUrl' in body) patch.thumbnail_url = body.thumbnailUrl;
     if ('bgColor' in body) patch.bg_color = body.bgColor;
     if ('gapPx' in body) patch.gap_px = body.gapPx;
-    if ('content' in body) patch.content = validateContent(body.content);
     if ('category' in body) {
       if (body.category && !CATEGORIES.includes(body.category)) {
         throw badRequest(`category 는 ${CATEGORIES.join(' | ')} 중 하나여야 합니다.`);
@@ -337,6 +363,22 @@ export const PATCH_DETAIL = defineRoute(
     }
 
     const collaboratorIds = validateCollaborators(body.collaboratorIds);
+
+    const sections = readSections(body);
+    if (Object.keys(sections).length > 0) {
+      const current = unwrap(
+        await supabase
+          .from('portfolios')
+          .select(SECTIONS.join(', '))
+          .eq('id', params.id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      );
+      if (!current) throw notFound('포트폴리오를 찾을 수 없습니다.');
+
+      assertImageBudget({ ...current, ...sections });
+      Object.assign(patch, sections);
+    }
 
     if (Object.keys(patch).length === 0 && !collaboratorIds) {
       throw badRequest('수정할 내용이 없습니다.');
