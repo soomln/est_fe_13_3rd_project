@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards, Navigation, Pagination, Parallax } from 'swiper/modules';
 import { listPortfolios } from '@backend/lib/api/portfolio';
+import { PAGE_SIZE } from '@backend/lib/constants';
+import { formatDate } from '@/utils/formatDate';
 
 import 'swiper/css';
 import 'swiper/css/effect-cards';
@@ -19,10 +21,6 @@ const CATEGORY_LABELS = {
 };
 
 const FALLBACK_COVER = '/images/main/portfolio-showcase.png';
-
-function formatDate(iso) {
-  return iso ? iso.slice(0, 10).replace(/-/g, '.') : '';
-}
 
 function toSlide(item) {
   return {
@@ -39,16 +37,19 @@ export default function PortfolioSlider() {
   const prevRef = useRef(null);
   const nextRef = useRef(null);
   const [items, setItems] = useState([]);
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     let cancelled = false;
 
-    listPortfolios({ sort: 'latest', pageSize: 5 })
+    listPortfolios({ sort: 'latest', pageSize: PAGE_SIZE.homePortfolios })
       .then(({ items: fetched }) => {
-        if (!cancelled) setItems(fetched.map(toSlide));
+        if (cancelled) return;
+        setItems(fetched.map(toSlide));
+        setStatus('ready');
       })
       .catch(() => {
-        if (!cancelled) setItems([]);
+        if (!cancelled) setStatus('error');
       });
 
     return () => {
@@ -56,7 +57,11 @@ export default function PortfolioSlider() {
     };
   }, []);
 
-  if (items.length === 0) return null;
+  if (status === 'loading') return null;
+
+  if (status === 'error' || items.length === 0) {
+    return <p className={`font_body_s_r ${styles.preview_empty}`}>포트폴리오를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>;
+  }
 
   return (
     <div className={styles.preview}>
