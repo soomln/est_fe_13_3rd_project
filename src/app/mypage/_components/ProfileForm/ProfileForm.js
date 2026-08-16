@@ -125,7 +125,7 @@ export default function ProfileForm({ section, draft, onChange, errorFields = {}
         </div>
 
         <p className={`${styles.profile_form_hint} font_body_s_b`}>
-          고등학교부터 순서대로 적어요. 블라인드 채용에 낼 거라면 고등학교는 빼도 괜찮아요.
+          고등학교부터 순서대로 적어요.
         </p>
 
         {draft.educations.map((item, index) => {
