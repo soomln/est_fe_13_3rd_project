@@ -23,7 +23,7 @@ export default function InterviewFeedbackModal({
   onClose,
 }) {
   const [openQuestionId, setOpenQuestionId] =
-    useState(selectedQuestions[0] || null);
+    useState(selectedQuestions[0]?.category || null);
   const [bookmarkedQuestions, setBookmarkedQuestions] =
     useState([]);
   const handleToggle = (id) => {
@@ -39,11 +39,11 @@ export default function InterviewFeedbackModal({
     );
   };
   const feedbackList = selectedQuestions.map(
-    (title) => ({
-      id: title,
-      title,
-      question: getQuestionByTitle(title)?.question || '',
-      answer: getQuestionByTitle(title)?.answer || '',
+    (item) => ({
+      id: item.category,
+      title: item.title,
+      question: item.question,
+      answer: getQuestionByTitle(item.title)?.answer || '',
       feedback: feedbackData,
       summary: feedbackData.summary,
     }),
@@ -135,7 +135,7 @@ export default function InterviewFeedbackModal({
                       <h3 className="font_body_l_b">
                         {item.title} 질문
                       </h3>
-                      <p className="font_body_l_r">
+                      <p className="font_body_l_r question_text">
                         {item.question}
                       </p>
                     </section>

@@ -4,9 +4,7 @@ import './AiChatBubble.sass';
 export default function AiChatBubble({ message }) {
   const displayMessage =
     message ||
-    '안녕하세요! 저는 AI 면접관입니다. 면접 진행을 위해 우측 패널 옵션을 선택해주세요!';
-
-  const sentences = displayMessage.split(/(?<=[.!?])\s+/);
+    '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.';
 
   return (
     <div className="ai_chat_bubble">
@@ -26,13 +24,8 @@ export default function AiChatBubble({ message }) {
 
         <div className="message_row">
           <div className="message_bubble font_body_l_r">
-            <p>
-              {sentences.map((sentence, index) => (
-                <span key={index}>
-                  {sentence}
-                  {index < sentences.length - 1 && <br />}
-                </span>
-              ))}
+            <p className="message_text">
+              {displayMessage}
             </p>
           </div>
 
