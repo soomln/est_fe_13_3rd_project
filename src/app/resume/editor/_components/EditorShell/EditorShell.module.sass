@@ -112,3 +112,24 @@
   min-width: 40px
   color: $gray
   text-align: center
+
+// 인쇄할 때는 화면용 여백·배경·배율을 모두 걷어낸다
+@media print
+  .editor_body,
+  .editor_body_wide
+    margin-left: 0
+    padding: 0
+    background-color: transparent
+
+  .editor_doc_area
+    margin-top: 0
+    padding: 0
+    overflow: visible
+
+  .editor_doc_pages
+    display: block
+    gap: 0
+    zoom: 1
+
+  .editor_zoom
+    display: none

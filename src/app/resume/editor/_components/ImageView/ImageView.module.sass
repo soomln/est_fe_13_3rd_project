@@ -1,0 +1,65 @@
+@use '@/app/_variables.sass' as *
+
+// 글자 줄 안에 들어가야 해서 inline 이다
+.image_view
+  display: inline
+
+// 손잡이를 이미지 모서리에 붙이려면 그림 크기에 딱 맞는 상자가 필요하다
+.image_view_box
+  position: relative
+  display: inline-block
+  line-height: 0
+  vertical-align: bottom
+
+.image_view_img
+  max-width: 100%
+  height: auto
+  cursor: grab
+
+  &:active
+    cursor: grabbing
+
+// 안 열리는 이미지는 크기가 0 이 돼서 고르지도 지우지도 못한다
+.image_view_img_broken
+  width: 160px
+  // documentBody 의 height: auto 가 더 세서 min- 으로 줘야 먹는다
+  min-height: 120px
+  background-color: $light_gray
+  border: 1px dashed $stroke2
+
+.image_view_handle
+  position: absolute
+  display: none
+  width: 12px
+  height: 12px
+  background-color: $white
+  border: 2px solid $green
+  border-radius: 3px
+
+.image_view_on
+  .image_view_img
+    outline: 2px solid $green
+    outline-offset: 1px
+
+  .image_view_handle
+    display: block
+
+.image_view_handle_nw
+  top: -6px
+  left: -6px
+  cursor: nwse-resize
+
+.image_view_handle_ne
+  top: -6px
+  right: -6px
+  cursor: nesw-resize
+
+.image_view_handle_sw
+  bottom: -6px
+  left: -6px
+  cursor: nesw-resize
+
+.image_view_handle_se
+  right: -6px
+  bottom: -6px
+  cursor: nwse-resize

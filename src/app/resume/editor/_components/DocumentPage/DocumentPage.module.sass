@@ -1,60 +1,89 @@
 @use '@/app/_variables.sass' as *
-@use '@/app/_mixin.sass' as *
+@use '@/app/resume/editor/_lib/documentBody' as *
 
-// A4 (96dpi 기준 794x1123)
-.document_page
+// A4 (96dpi 기준 794x1123). 값이 바뀌면 _lib/pageBreaks.js 도 같이 고쳐야 한다
+.document_stack
+  position: relative
   flex-shrink: 0
-  box-sizing: border-box
   width: 794px
-  min-height: 1123px
-  padding: 94px 76px
+
+// 뒤에 깔리는 종이. 장 수만큼 쌓이고 이 높이가 전체 높이가 된다
+.document_sheets
+  display: flex
+  flex-direction: column
+  gap: 24px
+
+.document_sheet
+  flex: 0 0 1123px
   background-color: $white
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
+
+// 본문은 종이 위에 겹쳐 놓는다
+// 끌어서 옮길 때 뜨는 자리 표시가 이 상자를 기준으로 놓인다
+.document_page
+  position: absolute
+  inset: 0
+  box-sizing: border-box
+  padding: 64px 76px 94px
+
+  +documentBody
+
+  // Tiptap 이 안쪽에 실제 편집 영역을 하나 더 만든다
+  :global(.tiptap)
+    min-height: 100%
+    outline: none
+
+  :global(.tableWrapper)
+    margin-top: 12px
+    overflow-x: auto
+
+  // 칸을 고를 때 표시
+  :global(.selectedCell)
+    background-color: $sub_green
 
   &:focus
     outline: none
 
-  h1
-    +setFont(36px, 48px, 700)
-    color: $black
+// Tiptap 이 이미지 바깥에 만드는 상자. inline 이면 끌 때 미리보기 크기가 안 먹는다
+// 미리보기 복제본이 body 로 나가서 전역 규칙으로 둔다
+:global(.react-renderer.node-image)
+  display: inline-block
+  vertical-align: bottom
+  overflow: hidden
 
-  h2
-    margin-top: 32px
-    +setFont(20px, 24px, 700)
-    color: $black
+  img
+    max-width: 100%
+    height: auto
 
-  p
-    margin-top: 8px
-    +setFont(16px, 20px, 400)
-    color: $black
+// 끌 때 뜨는 미리보기 복제본만 (Tiptap 이 body 바로 아래에 잠깐 만든다)
+// 배율이 안 따라오므로 상자에 꽉 채워 화면과 같은 크기로 보이게 한다
+:global(body > div > .react-renderer.node-image img)
+  width: 100%
 
-  em
-    font-style: italic
-    color: $gray
+// 종이 크기와 여백은 인쇄 설정이 맡는다
+@page
+  size: A4
+  margin: 18mm 20mm
 
-  table
-    width: 100%
-    margin-top: 12px
-    border-collapse: collapse
+@media print
+  .document_sheets
+    display: none
 
-  td
-    padding: 8px 0
-    +setFont(16px, 20px, 400)
-    color: $black
-    border-bottom: 1px solid $stroke3
+  .document_page
+    position: static
+    padding: 0
 
-    &:first-child
-      width: 180px
-      color: $gray
+    // 화면에서 장을 넘기려고 넣은 빈 자리. 인쇄는 브라우저가 알아서 나눈다
+    [data-page-spacer]
+      display: none
 
-  ul
-    margin-top: 12px
-    padding-left: 20px
+    // 표와 그림이 페이지 경계에서 잘리지 않게
+    table,
+    img,
+    li
+      break-inside: avoid
 
-  li
-    +setFont(16px, 20px, 400)
-    color: $black
-    list-style: disc
-
-    & + li
-      margin-top: 4px
+    h1,
+    h2,
+    h3
+      break-after: avoid
