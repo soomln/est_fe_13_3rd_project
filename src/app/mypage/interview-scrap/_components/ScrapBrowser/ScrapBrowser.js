@@ -10,6 +10,7 @@ import SearchPill from '@/app/mypage/_components/SearchPill';
 import SortPill from '@/app/mypage/_components/SortPill';
 import ScrapRow from '@/app/mypage/_components/ScrapRow';
 import Toast from '@/app/mypage/_components/Toast';
+import ErrorState from '@/app/mypage/_components/ErrorState';
 import styles from './ScrapBrowser.module.sass';
 
 const PAGE_SIZE = 10;
@@ -228,25 +229,9 @@ export default function ScrapBrowser() {
         )}
 
         {status === 'error' && (
-          <div className={styles.scrap_browser_empty}>
-            <span
-              className={`material-symbols-sharp ${styles.scrap_browser_empty_icon}`}
-              aria-hidden='true'
-            >
-              error
-            </span>
-            <p className={`${styles.scrap_browser_empty_title} font_h4`}>불러오지 못했어요</p>
-            <p className={`${styles.scrap_browser_empty_desc} font_body_m_r`}>
-              잠시 뒤 다시 시도해주세요.
-            </p>
-            <button
-              type='button'
-              className={`${styles.scrap_browser_ghost_btn} ${styles.scrap_browser_retry} font_body_l_b`}
-              onClick={() => setReloadKey((prev) => prev + 1)}
-            >
-              다시 불러오기
-            </button>
-          </div>
+          <ErrorState
+            onRetry={() => setReloadKey((prev) => prev + 1)}
+          />
         )}
 
         {status === 'ready' && items.length > 0 ? (
