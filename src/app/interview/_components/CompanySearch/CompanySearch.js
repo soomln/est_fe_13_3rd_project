@@ -96,7 +96,7 @@ export default function CompanySearch({
                 className={`company_list_item font_body_l_r ${
                   isSelected ? 'is_selected' : ''
                 }`}
-                onClick={() => onSelect(company.id)}
+                onClick={() => onSelect(company.id, company)}
               >
                 <span className="material-symbols-outlined company_checkbox">
                   {isSelected
