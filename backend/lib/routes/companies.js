@@ -18,11 +18,15 @@ const SORTS = {
   latest: { column: 'created_at', ascending: false },
 };
 
-async function industryLabels(supabase) {
+const LABEL_GROUPS = ['industry', 'company_size'];
+
+async function loadLabels(supabase) {
   const rows = unwrap(
-    await supabase.from('code_master').select('code, label').eq('group_name', 'industry')
+    await supabase.from('code_master').select('group_name, code, label').in('group_name', LABEL_GROUPS)
   );
-  return Object.fromEntries(rows.map((r) => [r.code, r.label]));
+  const map = Object.fromEntries(LABEL_GROUPS.map((g) => [g, {}]));
+  for (const r of rows) map[r.group_name][r.code] = r.label;
+  return map;
 }
 
 function toCard(row, labels) {
@@ -31,7 +35,8 @@ function toCard(row, labels) {
     slug: row.slug,
     name: row.name,
     logo: row.logo_url,
-    category: labels[row.industry_code] ?? row.industry_code,
+    category: labels.industry[row.industry_code] ?? row.industry_code,
+    size: labels.company_size[row.size_code] ?? row.size_code ?? null,
     location: row.location,
     tags: row.tags ?? [],
     rating: row.rating,
@@ -48,7 +53,7 @@ function toCard(row, labels) {
 function toDetail(row, labels) {
   return {
     ...toCard(row, labels),
-    industry: labels[row.industry_code] ?? row.industry_code,
+    industry: labels.industry[row.industry_code] ?? row.industry_code,
     tagline: row.tagline,
     intro: row.description,
     homepage: row.homepage,
@@ -97,7 +102,7 @@ async function listScrapped({ supabase, user, q, page, pageSize }) {
   if (marks.size === 0) return { items: [], total: 0, page, pageSize };
 
   const rows = unwrap(await supabase.from('v_companies').select('*').in('id', [...marks.keys()]));
-  const labels = await industryLabels(supabase);
+  const labels = await loadLabels(supabase);
 
   const scrapped = (rows ?? [])
     .map((row) => ({ ...toCard(row, labels), scrappedAt: marks.get(row.id) ?? '' }))
@@ -152,7 +157,7 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
     .range(from, from + pageSize - 1);
   if (error) throw error;
 
-  const labels = await industryLabels(supabase);
+  const labels = await loadLabels(supabase);
   const items = (data ?? []).map((row) => toCard(row, labels));
   const mine = await loadMyReactions(supabase, user, 'company', items.map((i) => i.id));
 
@@ -170,7 +175,7 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   );
   if (!row) throw notFound('기업을 찾을 수 없습니다.');
 
-  const labels = await industryLabels(supabase);
+  const labels = await loadLabels(supabase);
   const mine = await loadMyReactions(supabase, user, 'company', [row.id]);
   return withMine(toDetail(row, labels), mine);
 });
@@ -178,7 +183,7 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
 export const GET_RECOMMENDED = defineRoute(async ({ request, supabase, user }) => {
   const limit = Math.min(20, Math.max(1, Number(request.nextUrl.searchParams.get('limit') ?? 6)));
   const rows = unwrap(await supabase.rpc('get_recommended_companies', { p_limit: limit }));
-  const labels = await industryLabels(supabase);
+  const labels = await loadLabels(supabase);
   const items = (rows ?? []).map((row) => toCard(row, labels));
   const mine = await loadMyReactions(supabase, user, 'company', items.map((i) => i.id));
 
