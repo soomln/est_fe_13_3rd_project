@@ -21,12 +21,20 @@ export async function getMySummary() {
   return apiFetch('/api/me/summary');
 }
 
-export async function listMyScrappedCompanies({ page = 1, pageSize = PAGE_SIZE.scrappedCompanies } = {}) {
-  return listMyBookmarkedCompanies({ page, pageSize });
+export async function listMyScrappedCompanies({
+  sort = 'latest',
+  page = 1,
+  pageSize = PAGE_SIZE.scrappedCompanies,
+} = {}) {
+  return listMyBookmarkedCompanies({ sort, page, pageSize });
 }
 
-export async function listMyScrappedPortfolios({ page = 1, pageSize = PAGE_SIZE.myPortfolios } = {}) {
-  return listMyBookmarkedPortfolios({ page, pageSize });
+export async function listMyScrappedPortfolios({
+  sort = 'latest',
+  page = 1,
+  pageSize = PAGE_SIZE.myPortfolios,
+} = {}) {
+  return listMyBookmarkedPortfolios({ sort, page, pageSize });
 }
 
 export async function listMyQbanks({ page = 1, pageSize = PAGE_SIZE.myQbank } = {}) {

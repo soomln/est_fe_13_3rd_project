@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './page.module.sass';
@@ -13,10 +13,60 @@ import SettingButton from '../_components/SettingButton';
 import DocumentOption from '../_components/DocumentOption';
 import CompanySearch from '../_components/CompanySearch';
 import QuestionListButton from '../_components/QuestionListButton';
-import QuestionPanel from '../_components/QuestionPanel';
+import QuestionPanel, { clearQuestionPanelCache } from '../_components/QuestionPanel';
 import UserChatBubble from '../_components/UserChatBubble';
 import InterviewResult from '../_components/InterviewResult';
+import RetryButton from '../_components/RetryButton';
 import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
+import InterviewSettingModal from '../_components/InterviewSettingModal';
+import InterviewTimer from '../_components/InterviewTimer';
+import DocumentRequiredNotice from '../_components/DocumentRequiredNotice';
+import { createSession, saveQas, finishSession } from '@backend/lib/api/interview';
+import { getDocument, listMyDocuments } from '@backend/lib/api/documents';
+import { getCompany } from '@backend/lib/api/companies';
+import { evaluateInterviewAnswers, sumSubScores } from '../_lib/evaluateInterviewAnswers';
+
+const INITIAL_MESSAGE = {
+  role: 'ai',
+  content: '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.',
+};
+
+const INTERVIEWER_STYLE_LABELS = {
+  friendly: '친절한',
+  neutral: '중립적인',
+  pressure: '엄격한',
+};
+
+const STORAGE_KEY = 'interview_chat_state_v1';
+
+function loadSavedState() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(state) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+function clearSavedState() {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(STORAGE_KEY);
+}
+
+function shouldRestoreOnMount() {
+  if (typeof window === 'undefined' || typeof performance === 'undefined') return false;
+  const [entry] = performance.getEntriesByType('navigation');
+  if (entry?.type) return entry.type === 'reload' || entry.type === 'back_forward';
+  return performance.navigation?.type === 1;
+}
 
 export default function InterviewPage() {
   const router = useRouter();
@@ -25,25 +75,339 @@ const [isSettingOpen, setIsSettingOpen] = useState(false);
 const [isQuestionList, setIsQuestionList] = useState(false);
 const [selectedQuestions, setSelectedQuestions] = useState([]);
 const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-const [messages, setMessages] = useState([]);
+const [messages, setMessages] = useState([INITIAL_MESSAGE]);
 const [isInterviewFinished, setIsInterviewFinished] = useState(false);
 const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 const [selectedResumeId, setSelectedResumeId] = useState(null);
 const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
 const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+const [selectedCompanySlug, setSelectedCompanySlug] = useState(null);
+const [interviewerStyle, setInterviewerStyle] = useState('friendly');
+const [showTimer, setShowTimer] = useState(false);
+const [sessionId, setSessionId] = useState(null);
+const [answers, setAnswers] = useState([]);
+const [interviewStartedAt, setInterviewStartedAt] = useState(null);
+const [timerStartedAt, setTimerStartedAt] = useState(null);
+const [isEvaluating, setIsEvaluating] = useState(false);
+const [evaluationResult, setEvaluationResult] = useState(null);
+const [evaluationError, setEvaluationError] = useState(false);
+const [pendingQaList, setPendingQaList] = useState([]);
+const [needsAutoRetry, setNeedsAutoRetry] = useState(false);
+const [hasHydrated, setHasHydrated] = useState(false);
+const chatEndRef = useRef(null);
+const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, hasCoverLetter: true });
 
-  const questionData = {
-    전체: '안녕하세요. 간단하게 자기소개 부탁드립니다.',
-    자기소개: '안녕하세요. 본인을 간단하게 소개해주세요.',
-    '기술 질문 1': '프론트엔드 개발자로 지원한 이유는 무엇인가요?',
-    '기술 질문 2':
-      '프로젝트에서 가장 어려웠던 기술적인 문제는 무엇이었나요?',
-    '인성 질문': '팀원과 의견이 충돌했을 때 어떻게 해결했나요?',
-    '마무리 질문': '마지막으로 하고 싶은 말이 있나요.',
+  useEffect(() => {
+    let cancelled = false;
+
+    listMyDocuments({ pageSize: 1 })
+      .then(({ counts }) => {
+        if (cancelled) return;
+        setDocStatus({
+          loading: false,
+          hasResume: (counts?.resume ?? 0) > 0,
+          hasCoverLetter: (counts?.cover_letter ?? 0) > 0,
+        });
+      })
+      .catch((err) => {
+        console.error('이력서/자소서 보유 여부 확인 실패:', err);
+        if (!cancelled) setDocStatus({ loading: false, hasResume: true, hasCoverLetter: true });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isEvaluating, evaluationResult, evaluationError]);
+
+  const handleSelectCompany = (id, company) => {
+    setSelectedCompanyId(id);
+    setSelectedCompanySlug(company?.slug ?? null);
   };
 
-  const handleSendAnswer = (answer) => {
+  const handleToggleShowTimer = (next) => {
+    setShowTimer(next);
+    setTimerStartedAt(next && interviewStartedAt ? Date.now() : null);
+    if (next) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '타이머 표시를 켰습니다!\n면접이 시작되면 진행 시간이 상단에 표시돼요.',
+        },
+      ]);
+    }
+  };
+
+  const handleChangeInterviewerStyle = (next) => {
+    setInterviewerStyle(next);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'ai',
+        content: `면접관 성격을 ${INTERVIEWER_STYLE_LABELS[next] ?? next} 스타일로 설정했습니다!`,
+      },
+    ]);
+  };
+
+  const handleGenerationError = useCallback(() => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'ai',
+        content:
+          '선택하신 정보를 바탕으로\n맞춤 질문을 생성하지 못했습니다.\n\n기본 질문으로 면접을 진행합니다.',
+      },
+    ]);
+  }, []);
+
+  const ensureSessionId = async () => {
+    if (sessionId) return sessionId;
+
+    try {
+      const session = await createSession({
+        companyId: selectedCompanyId,
+        resumeIds: selectedResumeId ? [selectedResumeId] : [],
+        coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
+        interviewerStyle: interviewerStyle || 'friendly',
+        selectedCategories: selectedQuestions.map((question) => question.category),
+        showTimer,
+      });
+      setSessionId(session.id);
+      return session.id;
+    } catch (err) {
+      console.error('면접 세션 생성 실패(재시도):', err);
+      return null;
+    }
+  };
+
+  const runEvaluation = async (qaList) => {
+    try {
+      const [resume, coverLetter, company] = await Promise.all([
+        selectedResumeId ? getDocument(selectedResumeId) : null,
+        selectedCoverLetterId ? getDocument(selectedCoverLetterId) : null,
+        selectedCompanySlug ? getCompany(selectedCompanySlug) : null,
+      ]);
+
+      const evaluation = await evaluateInterviewAnswers({
+        resumeText: resume?.contentText,
+        coverLetterText: coverLetter?.contentText,
+        company,
+        qaList,
+      });
+
+      const results = qaList.map((qa, index) => {
+        const questionResult = evaluation.questionResults[index];
+        return {
+          ...qa,
+          feedback: {
+            summary: questionResult.summary,
+            strengths: questionResult.strengths,
+            improvements: questionResult.improvements,
+          },
+          score: questionResult.score,
+        };
+      });
+
+      const totalScore = sumSubScores(evaluation.subScores);
+
+      let resultsWithQaIds = results;
+      const activeSessionId = await ensureSessionId();
+
+      if (activeSessionId) {
+        const saved = await saveQas(
+          activeSessionId,
+          results.map((result, index) => ({
+            seq: index + 1,
+            category: result.category,
+            question: result.question,
+            answer: result.answer,
+            feedback: result.feedback,
+            score: result.score,
+          })),
+        );
+        resultsWithQaIds = results.map((result, index) => ({
+          ...result,
+          qaId: saved?.items?.find((item) => item.seq === index + 1)?.id ?? null,
+        }));
+        await finishSession(activeSessionId, {
+          durationSec: interviewStartedAt
+            ? Math.round((Date.now() - interviewStartedAt) / 1000)
+            : undefined,
+          totalScore,
+          subScores: evaluation.subScores,
+        });
+      } else {
+        console.error('면접 세션이 없어 답변/평가를 저장하지 못했습니다. 북마크도 저장되지 않습니다.');
+      }
+
+      setEvaluationResult({
+        totalScore,
+        subScores: evaluation.subScores,
+        results: resultsWithQaIds,
+      });
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '면접이 종료되었습니다!\n평가가 완료되었습니다.\n결과를 확인해보세요.',
+        },
+      ]);
+    } catch (err) {
+      console.error('면접 평가 실패:', err);
+      setEvaluationError(true);
+
+      const activeSessionId = await ensureSessionId();
+      if (activeSessionId) {
+        try {
+          await saveQas(
+            activeSessionId,
+            qaList.map((qa, index) => ({
+              seq: index + 1,
+              category: qa.category,
+              question: qa.question,
+              answer: qa.answer,
+            })),
+          );
+        } catch (saveErr) {
+          console.error('질문/답변 저장 실패:', saveErr);
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '답변 평가에 실패했습니다.\n질문과 답변은 저장되었습니다.\n아래 "평가 다시 시도" 버튼을 눌러주세요.',
+        },
+      ]);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  const handleRetryEvaluation = () => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        role: 'ai',
+        content: '답변을 다시 분석하고 있습니다...',
+      },
+    ]);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+    runEvaluation(pendingQaList);
+  };
+
+  useEffect(() => {
+    if (!shouldRestoreOnMount()) {
+      clearSavedState();
+      clearQuestionPanelCache();
+      setHasHydrated(true);
+      return;
+    }
+
+    const saved = loadSavedState();
+    if (!saved) {
+      setHasHydrated(true);
+      return;
+    }
+
+    setIsQuestionList(saved.isQuestionList ?? false);
+    setSelectedQuestions(saved.selectedQuestions ?? []);
+    setCurrentQuestionIndex(saved.currentQuestionIndex ?? 0);
+    setMessages(saved.messages?.length ? saved.messages : [INITIAL_MESSAGE]);
+    setIsInterviewFinished(saved.isInterviewFinished ?? false);
+    setSelectedResumeId(saved.selectedResumeId ?? null);
+    setSelectedCoverLetterId(saved.selectedCoverLetterId ?? null);
+    setSelectedCompanyId(saved.selectedCompanyId ?? null);
+    setSelectedCompanySlug(saved.selectedCompanySlug ?? null);
+    setInterviewerStyle(saved.interviewerStyle ?? 'friendly');
+    setShowTimer(saved.showTimer ?? false);
+    setSessionId(saved.sessionId ?? null);
+    setAnswers(saved.answers ?? []);
+    setInterviewStartedAt(saved.interviewStartedAt ?? null);
+    setTimerStartedAt(saved.timerStartedAt ?? null);
+    setEvaluationResult(saved.evaluationResult ?? null);
+    setPendingQaList(saved.pendingQaList ?? []);
+
+    if (saved.isInterviewFinished && !saved.evaluationResult && saved.pendingQaList?.length) {
+      setNeedsAutoRetry(true);
+    }
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!needsAutoRetry) return;
+    setNeedsAutoRetry(false);
+    setIsInterviewFinished(true);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+    runEvaluation(pendingQaList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsAutoRetry]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    saveState({
+      isQuestionList,
+      selectedQuestions,
+      currentQuestionIndex,
+      messages,
+      isInterviewFinished,
+      selectedResumeId,
+      selectedCoverLetterId,
+      selectedCompanyId,
+      selectedCompanySlug,
+      interviewerStyle,
+      showTimer,
+      sessionId,
+      answers,
+      interviewStartedAt,
+      timerStartedAt,
+      evaluationResult,
+      pendingQaList,
+    });
+  }, [
+    isQuestionList,
+    selectedQuestions,
+    currentQuestionIndex,
+    messages,
+    isInterviewFinished,
+    selectedResumeId,
+    selectedCoverLetterId,
+    selectedCompanyId,
+    selectedCompanySlug,
+    interviewerStyle,
+    showTimer,
+    sessionId,
+    answers,
+    interviewStartedAt,
+    timerStartedAt,
+    evaluationResult,
+    pendingQaList,
+    hasHydrated,
+  ]);
+
+  const handleSendAnswer = async (answer) => {
+    if (selectedQuestions.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '면접 질문에 필요한 정보를 왼쪽 패널에서 선택해 주세요.',
+        },
+      ]);
+      return;
+    }
+
     const nextIndex = currentQuestionIndex + 1;
+    const nextAnswers = [...answers, answer];
     const nextMessages = [
       ...messages,
       {
@@ -55,40 +419,101 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     if (nextIndex < selectedQuestions.length) {
       nextMessages.push({
         role: 'ai',
-        content: questionData[selectedQuestions[nextIndex]],
+        content: selectedQuestions[nextIndex].question,
       });
       setCurrentQuestionIndex(nextIndex);
       setMessages(nextMessages);
+      setAnswers(nextAnswers);
       return;
     }
+
+    setAnswers(nextAnswers);
     setMessages([
       ...nextMessages,
       {
         role: 'ai',
-        content:
-          '면접이 종료되었습니다!\n다시 연습하고 싶은 질문을 선택하세요.\n오늘 진행한 면접 질문을 저장하고, 필요할 때 언제든 다시 연습할 수 있습니다.',
+        content: '면접이 종료되었습니다!\n답변을 분석하고 있습니다...',
       },
     ]);
     setIsInterviewFinished(true);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+
+    const qaList = selectedQuestions.map((question, index) => ({
+      category: question.category,
+      title: question.title,
+      question: question.question,
+      answer: nextAnswers[index],
+    }));
+    setPendingQaList(qaList);
+
+    await runEvaluation(qaList);
   };
   const handleRetry = () => {
+    clearSavedState();
+    clearQuestionPanelCache();
     setIsInterviewFinished(false);
     setCurrentQuestionIndex(0);
-    setMessages([]);
+    setMessages([INITIAL_MESSAGE]);
+    setAnswers([]);
+    setSessionId(null);
+    setInterviewStartedAt(null);
+    setTimerStartedAt(null);
+    setIsEvaluating(false);
+    setEvaluationResult(null);
+    setEvaluationError(false);
+    setPendingQaList([]);
   };
-  const handleStartInterview = (questions) => {
+  const handleStartInterview = async (questions) => {
     if (questions.length === 0) return;
     setSelectedQuestions(questions);
     setCurrentQuestionIndex(0);
     setIsInterviewFinished(false);
-    const firstQuestion = questionData[questions[0]];
-    setMessages([
+    setAnswers([]);
+    setEvaluationResult(null);
+    setEvaluationError(false);
+    setMessages((prev) => [
+      ...prev,
       {
         role: 'ai',
-        content: firstQuestion,
+        content: questions[0].question,
       },
     ]);
+    const startedAt = Date.now();
+    setInterviewStartedAt(startedAt);
+    if (showTimer) setTimerStartedAt(startedAt);
+
+    try {
+      const session = await createSession({
+        companyId: selectedCompanyId,
+        resumeIds: selectedResumeId ? [selectedResumeId] : [],
+        coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
+        interviewerStyle: interviewerStyle || 'friendly',
+        selectedCategories: questions.map((question) => question.category),
+        showTimer,
+      });
+      setSessionId(session.id);
+    } catch (err) {
+      console.error('면접 세션 생성 실패:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content:
+            '면접 세션 생성에 실패했습니다.\n답변과 결과가 저장되지 않을 수 있어요.',
+        },
+      ]);
+    }
   };
+
+  if (!hasHydrated) {
+    return (
+      <>
+        <Header />
+        <main className={styles.interview_page} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -98,57 +523,67 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
         <div className={`container ${styles.chat_layout}`}>
           <div className={styles.chat_container}>
             <div className={styles.chat_header}>
-              <button
-                type="button"
-                className={`${styles.exit_button} font_body_l_b`}
-                onClick={() => router.push('/interview')}
-              >
-                ← 면접 나가기
-              </button>
+              <div className={styles.chat_header_left}>
+                <button
+                  type="button"
+                  className={`${styles.exit_button} font_body_l_b`}
+                  onClick={() => {
+                    clearSavedState();
+                    clearQuestionPanelCache();
+                    router.push('/interview');
+                  }}
+                >
+                  ← 면접 나가기
+                </button>
+              </div>
 
-              <SettingButton
-                onClick={() => setIsSettingOpen(true)}
-              />
+              <div className={styles.chat_header_center}>
+                {showTimer && (
+                  <InterviewTimer startedAt={timerStartedAt} running={!isInterviewFinished} />
+                )}
+              </div>
+
+              <div className={styles.chat_header_right}>
+                <SettingButton
+                  onClick={() => setIsSettingOpen(true)}
+                />
+              </div>
             </div>
 
             <div className={styles.chat_content}>
-              {messages.length === 0 ? (
-                <AiChatBubble
-                  message="안녕하세요! 저는 AI 면접관입니다. 면접 진행을 위해 우측 패널 옵션을 선택해주세요!"
-                />
-              ) : (
-                messages.map((message, index) =>
-                  message.role === 'ai' ? (
-                    <AiChatBubble
-                      key={index}
-                      message={message.content}
-                    />
-                  ) : (
-                    <UserChatBubble
-                      key={index}
-                      message={message.content}
-                      time="01:48"
-                    />
-                  ),
-                )
+              {messages.map((message, index) =>
+                message.role === 'ai' ? (
+                  <AiChatBubble
+                    key={index}
+                    message={message.content}
+                  />
+                ) : (
+                  <UserChatBubble
+                    key={index}
+                    message={message.content}
+                    time="01:48"
+                  />
+                ),
               )}
 
-              {isInterviewFinished && (
+              {isInterviewFinished && !isEvaluating && evaluationResult && (
                 <InterviewResult
-                  totalScore={5}
-                  scores={{
-                    content: 1,
-                    delivery: 1,
-                    logic: 1,
-                    skill: 1,
-                    attitude: 1,
-                  }}
+                  scores={evaluationResult.subScores}
                   onFeedback={() => {
                     setIsFeedbackOpen(true);
                   }}
                   onRetry={handleRetry}
                 />
               )}
+
+              {isInterviewFinished && !isEvaluating && evaluationError && (
+                <div className={styles.evaluation_error_actions}>
+                  <RetryButton label="평가 다시 시도" onClick={handleRetryEvaluation} />
+                  <RetryButton variant="outline" onClick={handleRetry} />
+                </div>
+              )}
+
+              <div ref={chatEndRef} />
             </div>
 
             {!isInterviewFinished && (
@@ -158,7 +593,19 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
           {isQuestionList ? (
             <QuestionPanel
+              resumeId={selectedResumeId}
+              coverLetterId={selectedCoverLetterId}
+              companySlug={selectedCompanySlug}
+              interviewerStyle={interviewerStyle}
               onStart={handleStartInterview}
+              onGenerationError={handleGenerationError}
+            />
+          ) : docStatus.loading ? (
+            <aside className={styles.option_panel} />
+          ) : !docStatus.hasResume || !docStatus.hasCoverLetter ? (
+            <DocumentRequiredNotice
+              hasResume={docStatus.hasResume}
+              hasCoverLetter={docStatus.hasCoverLetter}
             />
           ) : (
             <aside className={styles.option_panel}>
@@ -179,7 +626,7 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
               />
               <CompanySearch
                 selectedId={selectedCompanyId}
-                onSelect={setSelectedCompanyId}
+                onSelect={handleSelectCompany}
               />
               <QuestionListButton
                 onClick={() => {
@@ -199,10 +646,20 @@ const [selectedCompanyId, setSelectedCompanyId] = useState(null);
           )}
         </div>
 
-        {isFeedbackOpen && (
+        {isFeedbackOpen && evaluationResult && (
           <InterviewFeedbackModal
-            selectedQuestions={selectedQuestions}
+            results={evaluationResult.results}
             onClose={() => setIsFeedbackOpen(false)}
+          />
+        )}
+
+        {isSettingOpen && (
+          <InterviewSettingModal
+            onClose={() => setIsSettingOpen(false)}
+            showTimer={showTimer}
+            onToggleShowTimer={handleToggleShowTimer}
+            interviewerStyle={interviewerStyle}
+            onInterviewerStyleChange={handleChangeInterviewerStyle}
           />
         )}
       </main>

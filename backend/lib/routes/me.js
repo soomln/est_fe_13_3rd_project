@@ -1,10 +1,11 @@
 import { unauthorized } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { assembleProfile } from './profiles';
+import { removeAllMyFiles } from './storage';
 
 const PROFILE_COLUMNS = `
-  id, name, avatar_url, desired_role, career_level, email, github_url, bio,
-  educations, careers, awards, languages, skill_codes, interest_codes,
-  created_at, updated_at
+  id, name, avatar_url, desired_role, career_level, education_level, github_url, bio,
+  skill_codes, interest_codes, created_at, updated_at
 `;
 
 const STAT_COLUMNS = `
@@ -47,7 +48,8 @@ function toStats(row) {
 export const GET = defineRoute(async ({ user }) => ({ user }));
 
 export const DELETE = defineRoute(
-  async ({ supabase }) => {
+  async ({ supabase, user }) => {
+    await removeAllMyFiles(supabase, user.id);
     unwrap(await supabase.rpc('delete_my_account'));
     return { deleted: true };
   },
@@ -81,7 +83,12 @@ export const GET_SUMMARY = defineRoute(
       supabase.from('v_profile_stats').select(STAT_COLUMNS).eq('user_id', user.id).maybeSingle(),
     ]);
 
-    return { profile: unwrap(profile), stats: toStats(unwrap(stats)) };
+    const row = unwrap(profile);
+
+    return {
+      profile: row ? await assembleProfile(row, supabase, true) : null,
+      stats: toStats(unwrap(stats)),
+    };
   },
   { auth: true }
 );

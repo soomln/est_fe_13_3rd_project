@@ -1,15 +1,32 @@
 import styles from './AiToolMenu.module.sass';
 
 const AI_TOOLS = [
-  { icon: 'auto_fix_high', label: '첨삭' },
-  { icon: 'tag', label: '키워드 추천' },
-  { icon: 'edit_note', label: '문장 개선' },
-  { icon: 'translate', label: '번역', children: ['영어', '일본어', '중국어'] },
-  { icon: 'mic', label: '톤 수정', children: ['정중하게', '친근하게', '간결하게', '전문적으로'] },
+  { key: 'fix', icon: 'auto_fix_high', label: '첨삭' },
+  { key: 'keywords', icon: 'tag', label: '키워드 추천' },
+  { key: 'polish', icon: 'edit_note', label: '문장 개선' },
+  {
+    icon: 'translate',
+    label: '번역',
+    children: [
+      { key: 'translate-en', label: '영어' },
+      { key: 'translate-ja', label: '일본어' },
+      { key: 'translate-zh', label: '중국어' },
+    ],
+  },
+  {
+    icon: 'mic',
+    label: '톤 수정',
+    children: [
+      { key: 'tone-polite', label: '정중하게' },
+      { key: 'tone-friendly', label: '친근하게' },
+      { key: 'tone-short', label: '간결하게' },
+      { key: 'tone-pro', label: '전문적으로' },
+    ],
+  },
 ];
 
 // 호버하면 열리는 AI 보조도구 메뉴
-export default function AiToolMenu() {
+export default function AiToolMenu({ onPick }) {
   return (
     <div className={styles.ai_tool}>
       <button type='button' className={styles.ai_tool_btn} aria-label='AI 보조도구'>
@@ -24,7 +41,11 @@ export default function AiToolMenu() {
         <ul>
           {AI_TOOLS.map((tool) => (
             <li key={tool.label} className={styles.ai_tool_item}>
-              <button type='button' className={`${styles.ai_tool_option} font_body_l_r`}>
+              <button
+                type='button'
+                className={`${styles.ai_tool_option} font_body_l_r`}
+                onClick={() => tool.key && onPick?.(tool.key)}
+              >
                 <span className={styles.ai_tool_option_text}>
                   <span className='material-symbols-sharp' aria-hidden='true'>
                     {tool.icon}
@@ -42,9 +63,13 @@ export default function AiToolMenu() {
               {tool.children && (
                 <ul className={styles.ai_tool_submenu}>
                   {tool.children.map((child) => (
-                    <li key={child}>
-                      <button type='button' className={`${styles.ai_tool_option} font_body_l_r`}>
-                        <span className={styles.ai_tool_option_text}>{child}</span>
+                    <li key={child.key}>
+                      <button
+                        type='button'
+                        className={`${styles.ai_tool_option} font_body_l_r`}
+                        onClick={() => onPick?.(child.key)}
+                      >
+                        <span className={styles.ai_tool_option_text}>{child.label}</span>
                       </button>
                     </li>
                   ))}

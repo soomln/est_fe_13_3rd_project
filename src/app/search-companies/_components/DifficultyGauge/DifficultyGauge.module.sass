@@ -1,0 +1,41 @@
+@use '@/app/_variables.sass' as *
+
+.gauge
+  display: flex
+  flex-direction: column
+  gap: 20px
+  width: 100%
+
+.gauge_title
+  color: $green
+
+.gauge_score
+  color: $black
+  text-align: center
+
+.gauge_grade
+  margin-top: -20px
+  color: $black
+  text-align: center
+
+.gauge_bar_area
+  display: flex
+  flex-direction: column
+  padding: 0 30px
+
+.gauge_labels
+  display: flex
+  justify-content: space-between
+  color: $black
+
+.gauge_track
+  width: 100%
+  height: 15px
+  background-color: $stroke3
+  border-radius: 20px
+  overflow: hidden
+
+.gauge_fill
+  height: 100%
+  background-color: $green
+  border-radius: 20px

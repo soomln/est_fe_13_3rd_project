@@ -8,9 +8,11 @@ vi.mock('../../lib/supabase/server', async () => {
   return { createClient: async () => getSupabase() };
 });
 
-const { DELETE, DELETE_DETAIL, GET, GET_DETAIL, PATCH_DETAIL, POST } = await import(
+const { DELETE, DELETE_DETAIL, GET, GET_DETAIL, PATCH_DETAIL, POST, SECTIONS } = await import(
   '../../lib/routes/portfolios'
 );
+
+const SECTION_NAMES = SECTIONS;
 
 const url = (qs = '') => `http://localhost/api/portfolios${qs}`;
 
@@ -28,7 +30,9 @@ const ROW = {
   like_count: 12,
   bookmark_count: 4,
   view_count: 88,
-  content: [{ type: 'image', url: 'https://cdn/1.png' }],
+  overview: [{ type: 'image', url: 'https://cdn/1.png' }],
+  document: [],
+  code: [{ type: 'code', lang: 'js', body: 'a()' }],
   bg_color: '#F4FCFE',
   gap_px: 16,
   created_at: '2026-08-01T00:00:00Z',
@@ -65,17 +69,20 @@ describe('GET /api/portfolios', () => {
       authorAvatar: 'https://cdn/a.png',
       authorRole: '프론트엔드 개발자',
       likeCount: 12,
+      likedByMe: false,
       bookmarkCount: 4,
+      bookmarkedByMe: false,
+      collaborators: [],
       viewCount: 88,
       createdAt: '2026-08-01T00:00:00Z',
       updatedAt: '2026-08-02T00:00:00Z',
     });
   });
 
-  it('leaves the block content out of the list', async () => {
+  it.each(['overview', 'document', 'code'])('leaves %s out of the list', async (tab) => {
     const { body } = await callRoute(GET, { request: makeRequest(url()) });
 
-    expect(body.items[0]).not.toHaveProperty('content');
+    expect(body.items[0]).not.toHaveProperty(tab);
   });
 
   it('fills missing thumbnail and counts with defaults', async () => {
@@ -275,7 +282,9 @@ describe('POST /api/portfolios', () => {
       category: null,
       thumbnail_url: null,
       description: null,
-      content: [],
+      overview: [],
+      document: [],
+      code: [],
       bg_color: '#F4FCFE',
       gap_px: 16,
       status: 'draft',
@@ -296,7 +305,9 @@ describe('POST /api/portfolios', () => {
           category: 'app',
           thumbnailUrl: 'https://cdn/x.png',
           description: '설명',
-          content: [{ type: 'text', html: '<p>hi</p>' }],
+          overview: [{ type: 'text', html: '<p>hi</p>' }],
+          document: [{ type: 'image', url: 'https://cdn/1.png' }],
+          code: [{ type: 'code', lang: 'js', body: 'a()' }],
           bgColor: '#FFFFFF',
           gapPx: 24,
           status: 'published',
@@ -309,57 +320,82 @@ describe('POST /api/portfolios', () => {
       bg_color: '#FFFFFF',
       gap_px: 24,
       status: 'published',
-      content: [{ type: 'text', html: '<p>hi</p>' }],
+      overview: [{ type: 'text', html: '<p>hi</p>' }],
+      document: [{ type: 'image', url: 'https://cdn/1.png' }],
+      code: [{ type: 'code', lang: 'js', body: 'a()' }],
     });
   });
 
-  it('answers 400 when content is not an array', async () => {
+  it('fills the tabs it was not given with empty arrays', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), { body: { overview: [{ type: 'text' }] } }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'portfolios')[0], 'insert')[0][0]).toMatchObject({
+      overview: [{ type: 'text' }],
+      document: [],
+      code: [],
+    });
+  });
+
+  it.each(SECTION_NAMES)('answers 400 when %s is not an array', async (tab) => {
     const { status, body } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { content: 'nope' } }),
+      request: makeRequest(url(), { body: { [tab]: 'nope' } }),
     });
 
     expect(status).toBe(400);
-    expect(body.error.message).toBe('content 는 블록 배열이어야 합니다.');
+    expect(body.error.message).toBe(`${tab} 는 블록 배열이어야 합니다.`);
   });
 
-  it('answers 400 for a block type outside the allow list', async () => {
+  it.each(SECTION_NAMES)('answers 400 for a bad block type in %s', async (tab) => {
     const { status, body } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { content: [{ type: 'audio' }] } }),
+      request: makeRequest(url(), { body: { [tab]: [{ type: 'audio' }] } }),
     });
 
     expect(status).toBe(400);
-    expect(body.error.message).toContain('블록 type');
+    expect(body.error.message).toContain(`${tab} 의 블록 type`);
   });
 
-  it('answers 400 for a block with no type', async () => {
+  it.each(SECTION_NAMES)('answers 400 for a block with no type in %s', async (tab) => {
     const { status } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { content: [{}] } }),
+      request: makeRequest(url(), { body: { [tab]: [{}] } }),
     });
 
     expect(status).toBe(400);
+  });
+
+  it('answers 400 for the retired content field', async () => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { content: [] } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('overview / document / code');
   });
 
   it.each(['image', 'video', 'text', 'code'])('a %s block is allowed', async (type) => {
     const { status } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { content: [{ type }] } }),
+      request: makeRequest(url(), { body: { overview: [{ type }] } }),
     });
 
     expect(status).toBe(200);
   });
 
-  it('accepts 15 image blocks', async () => {
-    const content = Array.from({ length: 15 }, () => ({ type: 'image' }));
+  it('accepts 15 images spread over the three tabs', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
 
-    const { status } = await callRoute(POST, { request: makeRequest(url(), { body: { content } }) });
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { overview: img(5), document: img(5), code: img(5) } }),
+    });
 
     expect(status).toBe(200);
   });
 
-  it('answers 400 at 16 image blocks', async () => {
-    const content = Array.from({ length: 16 }, () => ({ type: 'image' }));
+  it('answers 400 at a 16th image across the tabs', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
 
     const { status, body } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { content } }),
+      request: makeRequest(url(), { body: { overview: img(5), document: img(5), code: img(6) } }),
     });
 
     expect(status).toBe(400);
@@ -453,22 +489,24 @@ describe('GET /api/portfolios/:id', () => {
     expect(status).toBe(200);
     expect(body).toMatchObject({
       id: 'f1',
-      content: [{ type: 'image', url: 'https://cdn/1.png' }],
+      overview: [{ type: 'image', url: 'https://cdn/1.png' }],
+      document: [],
+      code: [{ type: 'code', lang: 'js', body: 'a()' }],
       bgColor: '#F4FCFE',
       gapPx: 16,
     });
   });
 
-  it('defaults missing content to an empty array', async () => {
+  it.each(SECTION_NAMES)('defaults a missing %s to an empty array', async (tab) => {
     setSupabase(
       createSupabaseStub({
-        tables: { v_portfolios: { data: { ...ROW, content: null }, error: null } },
+        tables: { v_portfolios: { data: { ...ROW, [tab]: null }, error: null } },
       })
     );
 
     const { body } = await callRoute(GET_DETAIL, { params: { id: 'f1' } });
 
-    expect(body.content).toEqual([]);
+    expect(body[tab]).toEqual([]);
   });
 
   it('answers 404 for a missing portfolio', async () => {
@@ -583,13 +621,54 @@ describe('PATCH /api/portfolios/:id', () => {
     ]);
   });
 
-  it('content is validated on update too', async () => {
+  it.each(SECTION_NAMES)('%s is validated on update too', async (tab) => {
     const { status } = await callRoute(PATCH_DETAIL, {
-      request: makeRequest(url(), { body: { content: [{ type: 'audio' }] } }),
+      request: makeRequest(url(), { body: { [tab]: [{ type: 'audio' }] } }),
       params: { id: 'f1' },
     });
 
     expect(status).toBe(400);
+  });
+
+  it('the retired content field is refused on update too', async () => {
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { content: [] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('adds the tabs already saved to the image budget', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { portfolios: { data: { overview: img(10), document: [], code: [] }, error: null } },
+      })
+    );
+
+    const { status, body } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { code: img(6) } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('15장');
+  });
+
+  it('answers 404 when updating a tab on someone else portfolio', async () => {
+    setSupabase(
+      createSupabaseStub({ user: { id: 'u1' }, tables: { portfolios: { data: null, error: null } } })
+    );
+
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { overview: [] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(404);
   });
 
   it('can clear category to null', async () => {
@@ -701,5 +780,239 @@ describe('DELETE /api/portfolios/:id', () => {
     const { status } = await callRoute(DELETE_DETAIL, { params: { id: 'other' } });
 
     expect(status).toBe(403);
+  });
+});
+
+describe('portfolio collaborators', () => {
+  const LINKS = [
+    { portfolio_id: 'f1', user_id: 'u9', sort_order: 0 },
+    { portfolio_id: 'f1', user_id: 'u8', sort_order: 1 },
+  ];
+  const MEMBERS = [
+    { id: 'u9', name: '김공동', avatar_url: 'https://cdn/9.png' },
+    { id: 'u8', name: '박공동', avatar_url: null },
+  ];
+
+  const withLinks = (extra = {}) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        v_portfolios: { data: [ROW], error: null, count: 1 },
+        portfolios: { data: ROW, error: null },
+        portfolio_collaborators: { data: LINKS, error: null },
+        profiles: { data: MEMBERS, error: null },
+      },
+      rpc: { save_portfolio_collaborators: { data: null, error: null } },
+      ...extra,
+    });
+
+  it('builds the collaborator list in saved order', async () => {
+    setSupabase(withLinks());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].collaborators).toEqual([
+      { id: 'u9', name: '김공동', avatarUrl: 'https://cdn/9.png' },
+      { id: 'u8', name: '박공동', avatarUrl: null },
+    ]);
+  });
+
+  it('skips a link whose member row is gone', async () => {
+    setSupabase(
+      withLinks({
+        tables: {
+          v_portfolios: { data: [ROW], error: null, count: 1 },
+          portfolio_collaborators: { data: LINKS, error: null },
+          profiles: { data: [MEMBERS[0]], error: null },
+        },
+      })
+    );
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].collaborators.map((c) => c.id)).toEqual(['u9']);
+  });
+
+  it('saves the list when the patch carries nothing else', async () => {
+    const supabaseWithLinks = withLinks();
+    setSupabase(supabaseWithLinks);
+
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds: ['u9'] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(200);
+    expect(supabaseWithLinks.rpcCalls[0]).toEqual({
+      name: 'save_portfolio_collaborators',
+      args: { p_portfolio_id: 'f1', p_user_ids: ['u9'] },
+    });
+  });
+
+  it('answers 404 when the collaborator-only patch is for someone else portfolio', async () => {
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { portfolios: { data: null, error: null } },
+      })
+    );
+
+    const { status } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds: ['u9'] } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(404);
+  });
+
+  it.each([
+    ['nope', 'collaboratorIds 는 배열이어야 합니다.'],
+    [[''], 'collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.'],
+    [[1, 2], 'collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.'],
+  ])('answers 400 for %p', async (collaboratorIds, message) => {
+    setSupabase(withLinks());
+
+    const { status, body } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), { body: { collaboratorIds } }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toBe(message);
+  });
+
+  it('answers 400 beyond twenty collaborators', async () => {
+    setSupabase(withLinks());
+
+    const { status, body } = await callRoute(PATCH_DETAIL, {
+      request: makeRequest(url(), {
+        body: { collaboratorIds: Array.from({ length: 21 }, (_, i) => `u${i}`) },
+      }),
+      params: { id: 'f1' },
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('20명');
+  });
+});
+
+describe('portfolio sorting and search', () => {
+  it.each([
+    ['oldest', 'created_at', true],
+    ['title', 'title', true],
+  ])('sort=%s orders by %s', async (sort, column, ascending) => {
+    await callRoute(GET, { request: makeRequest(url(`?sort=${sort}`)) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'order')[0]).toEqual([
+      column,
+      { ascending, nullsFirst: false },
+    ]);
+  });
+
+  it('searches the title only', async () => {
+    await callRoute(GET, { request: makeRequest(url('?q=%20협업%20')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'ilike')[0]).toEqual([
+      'title',
+      '%협업%',
+    ]);
+  });
+
+  it('skips the search when q is blank', async () => {
+    await callRoute(GET, { request: makeRequest(url('?q=%20%20')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_portfolios')[0], 'ilike')).toEqual([]);
+  });
+});
+
+describe('GET /api/portfolios?scrapped=1', () => {
+  const MARKS = [
+    { target_id: 'f1', created_at: '2026-08-03T00:00:00Z' },
+    { target_id: 'f2', created_at: '2026-08-01T00:00:00Z' },
+  ];
+  const ROWS = [
+    { ...ROW, id: 'f1', title: '나중에 담은 것' },
+    { ...ROW, id: 'f2', title: '가장 먼저 담은 것' },
+  ];
+
+  const scrapStub = (marks = MARKS, rows = ROWS) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        reactions: { data: marks, error: null },
+        v_portfolios: { data: rows, error: null },
+      },
+    });
+
+  it('answers 401 while signed out', async () => {
+    setSupabase(createSupabaseStub());
+
+    const { status } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(status).toBe(401);
+  });
+
+  it('puts the most recently scrapped first', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f1', 'f2']);
+    expect(body.total).toBe(2);
+  });
+
+  it('sort=oldest flips it to the first one scrapped', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=oldest')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f2', 'f1']);
+  });
+
+  it('sort=title orders by name', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=title')) });
+
+    expect(body.items.map((p) => p.title)).toEqual(['가장 먼저 담은 것', '나중에 담은 것']);
+  });
+
+  it('answers 400 for a sort the scrap list does not have', async () => {
+    setSupabase(scrapStub());
+
+    const { status, body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&sort=popular')),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('스크랩 목록');
+  });
+
+  it('pages the sorted list', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&page=2&pageSize=1')),
+    });
+
+    expect(body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(body.items.map((p) => p.id)).toEqual(['f2']);
+  });
+
+  it('answers an empty list when nothing is scrapped', async () => {
+    setSupabase(scrapStub([], []));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 20 });
+  });
+
+  it('leaves out a portfolio that is no longer visible', async () => {
+    setSupabase(scrapStub(MARKS, [ROWS[1]]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['f2']);
+    expect(body.total).toBe(1);
   });
 });

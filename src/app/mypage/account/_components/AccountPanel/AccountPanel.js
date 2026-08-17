@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { getMyAccount, deleteMyAccount, uploadAvatar } from '@backend/lib/api/mypage';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import AvatarPicker from '@/app/mypage/_components/AvatarPicker';
 import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './AccountPanel.module.sass';
 
@@ -15,13 +16,14 @@ const AVATAR_TYPES = 'image/jpeg,image/png,image/webp';
 
 export default function AccountPanel() {
   const router = useRouter();
-  const { profile, setProfile } = useMyProfile();
+  const { profile, setProfile, saveProfile } = useMyProfile();
   const [account, setAccount] = useState(null);
   const [confirmText, setConfirmText] = useState('');
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [isPicking, setIsPicking] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -63,6 +65,17 @@ export default function AccountPanel() {
     }
   };
 
+  const pickDefault = async (url) => {
+    setIsPicking(false);
+    setPhotoError('');
+
+    try {
+      await saveProfile({ avatar_url: url });
+    } catch {
+      setPhotoError('사진을 바꾸지 못했어요.');
+    }
+  };
+
   const canLeave = confirmText === CONFIRM_TEXT && !isLeaving;
 
   // 탈퇴하면 계정과 올린 파일이 모두 지워지고 되돌릴 수 없다
@@ -94,11 +107,35 @@ export default function AccountPanel() {
         <h2 className={`${styles.account_card_title} font_h4`}>로그인 정보</h2>
 
         <div className={styles.account_login}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt='' className={styles.account_avatar} />
-          ) : (
-            <span className={styles.account_avatar_dummy} />
-          )}
+          <div className={styles.account_avatar_col}>
+            <div className={styles.account_avatar_box}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt='' className={styles.account_avatar} />
+              ) : (
+                <span className={styles.account_avatar_dummy} />
+              )}
+
+              {/* 사진 위에 마우스를 올리면 어두워지면서 뜬다 */}
+              <div className={styles.account_photo_dim}>
+                <button
+                  type='button'
+                  className={`${styles.account_photo_btn} font_body_m_b`}
+                  onClick={() => setIsPicking(true)}
+                >
+                  기본 이미지
+                </button>
+              </div>
+            </div>
+
+            <button
+              type='button'
+              className={`${styles.account_photo_btn} font_body_m_b`}
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? '올리는 중…' : '사진 변경'}
+            </button>
+          </div>
 
           <dl className={styles.account_fields}>
             <div className={styles.account_field}>
@@ -121,15 +158,14 @@ export default function AccountPanel() {
             aria-label='프로필 사진 파일 선택'
           />
 
-          <button
-            type='button'
-            className={`${styles.account_photo_btn} font_body_s_b`}
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {isUploading ? '올리는 중…' : '사진 변경'}
-          </button>
         </div>
+
+        <AvatarPicker
+          isOpen={isPicking}
+          current={avatarUrl}
+          onSelect={pickDefault}
+          onClose={() => setIsPicking(false)}
+        />
 
         {photoError && (
           <p className={`${styles.account_photo_error} font_body_s_b`} role='alert'>

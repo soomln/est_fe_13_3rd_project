@@ -1,15 +1,85 @@
 import { badRequest, forbidden, notFound, unauthorized } from '../http/errors';
-import { defineRoute, unwrap } from '../http/route';
+import { defineRoute, pageOf, unwrap } from '../http/route';
+import { loadMyReactions, loadScrapMarks } from './reactions';
+
+const NO_MINE = { like: new Set(), bookmark: new Set() };
+
+const withMine = (item, mine) => ({
+  ...item,
+  likedByMe: mine.like.has(item.id),
+  bookmarkedByMe: mine.bookmark.has(item.id),
+});
+
+export const COLLABORATOR_LIMIT = 20;
+
+export async function loadCollaborators(supabase, portfolioIds) {
+  const ids = [...new Set(portfolioIds.filter(Boolean))];
+  if (ids.length === 0) return new Map();
+
+  const links = unwrap(
+    await supabase
+      .from('portfolio_collaborators')
+      .select('portfolio_id, user_id, sort_order')
+      .in('portfolio_id', ids)
+      .order('sort_order', { ascending: true })
+  );
+
+  const memberIds = [...new Set((links ?? []).map((l) => l.user_id))];
+  if (memberIds.length === 0) return new Map();
+
+  const members = unwrap(
+    await supabase.from('profiles').select('id, name, avatar_url').in('id', memberIds)
+  );
+
+  const byId = new Map((members ?? []).map((m) => [m.id, m]));
+  const grouped = new Map();
+
+  for (const link of links ?? []) {
+    const member = byId.get(link.user_id);
+    if (!member) continue;
+    if (!grouped.has(link.portfolio_id)) grouped.set(link.portfolio_id, []);
+    grouped.get(link.portfolio_id).push({
+      id: member.id,
+      name: member.name,
+      avatarUrl: member.avatar_url,
+    });
+  }
+
+  return grouped;
+}
+
+async function attachMine(items, supabase, user) {
+  const [mine, collaborators] = await Promise.all([
+    loadMyReactions(supabase, user, 'portfolio', items.map((i) => i.id)),
+    loadCollaborators(supabase, items.map((i) => i.id)),
+  ]);
+
+  return items.map((item) => ({
+    ...withMine(item, mine),
+    collaborators: collaborators.get(item.id) ?? [],
+  }));
+}
 
 const CATEGORIES = ['web', 'app'];
 const STATUSES = ['draft', 'published'];
 const BLOCK_TYPES = ['image', 'video', 'text', 'code'];
 
+export const SECTIONS = ['overview', 'document', 'code'];
+export const IMAGE_LIMIT = 15;
+
 const SORTS = {
   latest: { column: 'created_at', ascending: false },
+  oldest: { column: 'created_at', ascending: true },
+  title: { column: 'title', ascending: true },
   popular: { column: 'like_count', ascending: false },
   views: { column: 'view_count', ascending: false },
   bookmarks: { column: 'bookmark_count', ascending: false },
+};
+
+const SCRAP_SORTS = {
+  latest: (a, b) => b.scrappedAt.localeCompare(a.scrappedAt),
+  oldest: (a, b) => a.scrappedAt.localeCompare(b.scrappedAt),
+  title: (a, b) => (a.title ?? '').localeCompare(b.title ?? ''),
 };
 
 function toItem(row) {
@@ -35,7 +105,7 @@ function toItem(row) {
 function toDetail(row) {
   return {
     ...toItem(row),
-    content: row.content ?? [],
+    ...Object.fromEntries(SECTIONS.map((name) => [name, row[name] ?? []])),
     bgColor: row.bg_color,
     gapPx: row.gap_px,
   };
@@ -49,19 +119,88 @@ async function readJson(request) {
   }
 }
 
-function validateContent(content) {
-  if (content === undefined) return undefined;
-  if (!Array.isArray(content)) throw badRequest('content 는 블록 배열이어야 합니다.');
-
-  const images = content.filter((b) => b?.type === 'image').length;
-  if (images > 15) throw badRequest('이미지는 최대 15장까지 넣을 수 있습니다.');
-
-  for (const block of content) {
-    if (!BLOCK_TYPES.includes(block?.type)) {
-      throw badRequest(`블록 type 은 ${BLOCK_TYPES.join(' | ')} 중 하나여야 합니다.`);
-    }
+function validateCollaborators(ids) {
+  if (ids === undefined) return undefined;
+  if (!Array.isArray(ids)) throw badRequest('collaboratorIds 는 배열이어야 합니다.');
+  if (ids.some((id) => typeof id !== 'string' || !id.trim())) {
+    throw badRequest('collaboratorIds 는 사용자 id 문자열 배열이어야 합니다.');
   }
-  return content;
+  if (new Set(ids).size > COLLABORATOR_LIMIT) {
+    throw badRequest(`공동작업자는 최대 ${COLLABORATOR_LIMIT}명까지 추가할 수 있습니다.`);
+  }
+  return ids;
+}
+
+async function saveCollaborators(supabase, portfolioId, ids) {
+  unwrap(
+    await supabase.rpc('save_portfolio_collaborators', {
+      p_portfolio_id: portfolioId,
+      p_user_ids: ids,
+    })
+  );
+}
+
+async function detailWithExtras(row, supabase, user, mine) {
+  const collaborators = await loadCollaborators(supabase, [row.id]);
+  return { ...withMine(toDetail(row), mine), collaborators: collaborators.get(row.id) ?? [] };
+}
+
+function readSections(body) {
+  if ('content' in body) {
+    throw badRequest(`content 는 ${SECTIONS.join(' / ')} 로 나뉘었습니다. 탭별로 보내주세요.`);
+  }
+
+  const given = {};
+
+  for (const name of SECTIONS) {
+    if (!(name in body)) continue;
+
+    const blocks = body[name];
+    if (!Array.isArray(blocks)) throw badRequest(`${name} 는 블록 배열이어야 합니다.`);
+
+    for (const block of blocks) {
+      if (!BLOCK_TYPES.includes(block?.type)) {
+        throw badRequest(`${name} 의 블록 type 은 ${BLOCK_TYPES.join(' | ')} 중 하나여야 합니다.`);
+      }
+    }
+    given[name] = blocks;
+  }
+
+  return given;
+}
+
+function assertImageBudget(sections) {
+  const images = SECTIONS.reduce(
+    (n, name) => n + (sections[name] ?? []).filter((b) => b?.type === 'image').length,
+    0
+  );
+  if (images > IMAGE_LIMIT) {
+    throw badRequest(`이미지는 ${SECTIONS.join(' · ')} 를 합쳐 최대 ${IMAGE_LIMIT}장까지 넣을 수 있습니다.`);
+  }
+}
+
+const filled = (sections) => Object.fromEntries(SECTIONS.map((n) => [n, sections[n] ?? []]));
+
+async function listScrapped({ supabase, user, q, page, pageSize }) {
+  const sortKey = q.get('sort') ?? 'latest';
+  const compare = SCRAP_SORTS[sortKey];
+  if (!compare) {
+    throw badRequest(`스크랩 목록의 sort 는 ${Object.keys(SCRAP_SORTS).join(' | ')} 중 하나여야 합니다.`);
+  }
+
+  const marks = await loadScrapMarks(supabase, user, 'portfolio');
+  if (marks.size === 0) return { items: [], total: 0, page, pageSize };
+
+  const rows = unwrap(
+    await supabase.from('v_portfolios').select('*').in('id', [...marks.keys()])
+  );
+
+  const scrapped = (rows ?? [])
+    .map((row) => ({ ...toItem(row), scrappedAt: marks.get(row.id) ?? '' }))
+    .sort(compare);
+
+  const paged = pageOf(scrapped, page, pageSize);
+  return { ...paged, items: await attachMine(paged.items, supabase, user) };
 }
 
 export const GET = defineRoute(async ({ request, supabase, user }) => {
@@ -69,6 +208,11 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(q.get('pageSize') ?? 20)));
+  if (q.get('scrapped') === '1') {
+    if (!user) throw unauthorized();
+    return listScrapped({ supabase, user, q, page, pageSize });
+  }
+
   const sort = SORTS[q.get('sort') ?? 'latest'];
   if (!sort) throw badRequest(`sort 는 ${Object.keys(SORTS).join(' | ')} 중 하나여야 합니다.`);
 
@@ -98,6 +242,9 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
 
   if (category) query = query.eq('category', category);
 
+  const keyword = q.get('q')?.trim();
+  if (keyword) query = query.ilike('title', `%${keyword}%`);
+
   const ids = q.get('ids');
   if (ids) {
     const list = ids.split(',').map((s) => s.trim()).filter(Boolean);
@@ -112,7 +259,12 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
     .range(from, from + pageSize - 1);
   if (error) throw error;
 
-  return { items: (data ?? []).map(toItem), total: count ?? 0, page, pageSize };
+  return {
+    items: await attachMine((data ?? []).map(toItem), supabase, user),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 });
 
 export const POST = defineRoute(
@@ -126,6 +278,11 @@ export const POST = defineRoute(
       throw badRequest(`status 는 ${STATUSES.join(' | ')} 중 하나여야 합니다.`);
     }
 
+    const collaboratorIds = validateCollaborators(body.collaboratorIds);
+
+    const sections = readSections(body);
+    assertImageBudget(sections);
+
     const row = unwrap(
       await supabase
         .from('portfolios')
@@ -135,7 +292,7 @@ export const POST = defineRoute(
           category: body.category ?? null,
           thumbnail_url: body.thumbnailUrl ?? null,
           description: body.description ?? null,
-          content: validateContent(body.content) ?? [],
+          ...filled(sections),
           bg_color: body.bgColor ?? '#F4FCFE',
           gap_px: body.gapPx ?? 16,
           status: body.status ?? 'draft',
@@ -144,7 +301,14 @@ export const POST = defineRoute(
         .single()
     );
 
-    return toDetail({ ...row, author_name: null, like_count: 0, bookmark_count: 0 });
+    if (collaboratorIds) await saveCollaborators(supabase, row.id, collaboratorIds);
+
+    return detailWithExtras(
+      { ...row, author_name: null, like_count: 0, bookmark_count: 0 },
+      supabase,
+      user,
+      NO_MINE
+    );
   },
   { auth: true }
 );
@@ -170,7 +334,9 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   if (row.status !== 'published' && row.user_id !== user?.id) {
     throw notFound('포트폴리오를 찾을 수 없습니다.');
   }
-  return toDetail(row);
+
+  const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
+  return detailWithExtras(row, supabase, user, mine);
 });
 
 export const PATCH_DETAIL = defineRoute(
@@ -183,7 +349,6 @@ export const PATCH_DETAIL = defineRoute(
     if ('thumbnailUrl' in body) patch.thumbnail_url = body.thumbnailUrl;
     if ('bgColor' in body) patch.bg_color = body.bgColor;
     if ('gapPx' in body) patch.gap_px = body.gapPx;
-    if ('content' in body) patch.content = validateContent(body.content);
     if ('category' in body) {
       if (body.category && !CATEGORIES.includes(body.category)) {
         throw badRequest(`category 는 ${CATEGORIES.join(' | ')} 중 하나여야 합니다.`);
@@ -197,7 +362,44 @@ export const PATCH_DETAIL = defineRoute(
       patch.status = body.status;
     }
 
-    if (Object.keys(patch).length === 0) throw badRequest('수정할 내용이 없습니다.');
+    const collaboratorIds = validateCollaborators(body.collaboratorIds);
+
+    const sections = readSections(body);
+    if (Object.keys(sections).length > 0) {
+      const current = unwrap(
+        await supabase
+          .from('portfolios')
+          .select(SECTIONS.join(', '))
+          .eq('id', params.id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      );
+      if (!current) throw notFound('포트폴리오를 찾을 수 없습니다.');
+
+      assertImageBudget({ ...current, ...sections });
+      Object.assign(patch, sections);
+    }
+
+    if (Object.keys(patch).length === 0 && !collaboratorIds) {
+      throw badRequest('수정할 내용이 없습니다.');
+    }
+
+    if (Object.keys(patch).length === 0) {
+      const owned = unwrap(
+        await supabase
+          .from('portfolios')
+          .select('*')
+          .eq('id', params.id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      );
+      if (!owned) throw notFound('포트폴리오를 찾을 수 없습니다.');
+
+      await saveCollaborators(supabase, owned.id, collaboratorIds);
+
+      const mine = await loadMyReactions(supabase, user, 'portfolio', [owned.id]);
+      return detailWithExtras(owned, supabase, user, mine);
+    }
 
     const row = unwrap(
       await supabase
@@ -210,7 +412,10 @@ export const PATCH_DETAIL = defineRoute(
     );
     if (!row) throw notFound('포트폴리오를 찾을 수 없습니다.');
 
-    return toDetail(row);
+    if (collaboratorIds) await saveCollaborators(supabase, row.id, collaboratorIds);
+
+    const mine = await loadMyReactions(supabase, user, 'portfolio', [row.id]);
+    return detailWithExtras(row, supabase, user, mine);
   },
   { auth: true }
 );

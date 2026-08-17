@@ -38,13 +38,33 @@
 ```bash
 git pull
 npm install
-cp .env.example .env.local   # 값은 팀 노션 참고
 npm run dev
+```
+
+프로젝트 루트에 `.env.local` 을 만들고 아래 4개를 채우세요. **값은 팀 단톡 고정 메시지 참고.**
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_ALAN_BASE_URL=/alan
+NEXT_PUBLIC_ALAN_CLIENT_ID=
 ```
 
 동작 확인: <http://localhost:3000/backend-test> — 전부 초록불이면 준비 완료입니다.
 
 > `.env.local` 이 없어도 앱은 뜹니다. 다만 로그인/데이터 기능은 동작하지 않습니다.
+
+> ⚠️ **`/backend-test` 는 배포본에서 404 입니다.** 글을 만들고 지우는 버튼이 있는 개발용 페이지라
+> 프로덕션에서는 `src/proxy.js` 가 막습니다. 로컬(`npm run dev`)에서는 그냥 열립니다.
+> 배포본에서 확인해야 할 때만 Vercel 환경변수에 `ENABLE_BACKEND_TEST=1` 을 넣고 재배포하세요.
+> **끝나면 반드시 다시 지우거나 `0` 으로 바꿉니다.**
+
+### Alan AI 환경변수 ⚠️ 각자 값이 다릅니다
+
+`NEXT_PUBLIC_ALAN_CLIENT_ID` 는 **사람마다 다르게** 배정돼 있습니다. 팀 단톡의 배정표에서
+본인 것을 찾아 넣으세요. 남의 것을 쓰면 그 사람 할당량이 깎입니다.
+
+`NEXT_PUBLIC_ALAN_BASE_URL` 은 `/alan` 그대로 두세요. 호출법은 [9장 — Alan AI](#9-스펙-제약--미구현) 참고.
 
 ## 1. 구조
 
@@ -185,7 +205,8 @@ await labelOf('job_role', 'frontend');  // '프론트엔드'
 | `pass_result` | 합격 여부 | 3 |
 | `difficulty` | 면접 난이도 | 3 |
 | `language_level` | 어학 수준 | 3 |
-| `education_level` | 학력 | 5 |
+| `education_level` | 최종 학력 (프로필) · 학력 (면접 후기) | 5 |
+| `school_type` | 학교 구분 (프로필 학력) | 4 |
 | `career_level` | 경력 구분 | 4 |
 | `edu_status` | 재학/휴학/졸업/중퇴 | 4 |
 | `interviewer_style` | AI 면접관 성격 | 4 |
@@ -206,8 +227,10 @@ await updateProfile({
   name: '홍길동',
   desired_role: '프론트엔드 개발자',
   career_level: 'entry',
+  education_level: 'bachelor',                  // 최종 학력 — code_master(education_level)
   bio: '...',                                   // 1000자 제한
-  educations: [{ school, major, status, admission, graduation }],
+  educations: [{ type, school, major, status, admission, graduation }],
+  //            ↑ 학교 구분 — code_master(school_type)
   careers:    [{ start, end, company, role }],  // end 에 '재직 중' 문자열 허용
   awards:     [{ date, name }],
   languages:  [{ language, level, detail }],
@@ -222,9 +245,23 @@ const { docCount, portfolioCount, interviewScrapCount } = await getProfileStats(
 ⚠️ **프로필만 필드 이름이 `snake_case`입니다.** DB 컬럼을 그대로 주고받기 때문입니다.
 나머지 API는 전부 `camelCase` 입니다. 자세한 스키마는 [5.1 Profile](#51-profile) 참고.
 
-⚠️ **`email` 칸은 프로필에 그대로 공개됩니다.** 타인 프로필 페이지가 있어서 `profiles` 는 전체 공개 읽기입니다.
-입력란 옆에 **"프로필에 공개됩니다"** 를 표시해주세요. 로그인에 쓴 계정 이메일은 여기 들어가지 않고
-`getMyAccount()` (본인만) 로 따로 내려갑니다. 자세한 내용은 `SECURITY.md`.
+**`email` 은 본인에게만 내려갑니다.** 남의 프로필을 조회하면 항상 `null` 입니다.
+DB 컬럼 권한으로 막혀 있어 `anon` 키로 Supabase 를 직접 찔러도 읽히지 않습니다. 자세한 내용은 `SECURITY.md`.
+
+**학력 드롭다운 2개는 서로 다른 코드 그룹**입니다. 라벨이 비슷해 헷갈리기 쉬우니 주의하세요.
+
+| 화면 항목 | 저장 위치 | 코드 그룹 | 값 |
+|---|---|---|---|
+| 최종 학력 | `education_level` (프로필 컬럼) | `education_level` | 고졸 / 초대졸 / **대졸** / 석사 / 박사 |
+| 구분 | `educations[].type` (학력 항목 안) | `school_type` | 고등학교 / 전문대 / **대학교** / 대학원 |
+
+```js
+const { education_level, school_type } = await getCodeGroups(['education_level', 'school_type']);
+```
+
+**소셜 로그인 이메일이 자동으로 채워집니다.** 가입 시 한 번, 그리고 값이 비어 있는 기존 회원은
+다음 로그인 때 채워집니다. 사용자가 직접 고쳐 넣은 값은 **덮어쓰지 않습니다.**
+따라서 프로필 편집 폼의 이메일 칸은 대개 이미 채워진 상태로 열립니다.
 
 > 프로필 항목은 **전부 선택 입력**입니다. 빈 값이어도 저장됩니다.
 > `getProfileStats` 의 `docCount` / `interviewScrapCount` 는 **본인 프로필을 볼 때만** 값이 나옵니다.
@@ -240,12 +277,29 @@ import { toggleReaction, getMyReactionIds } from '@backend/lib/api/reactions';
 
 // 누르기 / 취소  →  true = 켜짐, false = 꺼짐
 const on = await toggleReaction(...REACTION.companyBookmark, companyId);
-
-// 목록 화면에서 "내가 누른 것"에 색 채우기
-// ⚠️ 카드마다 호출하지 말고, 목록을 받은 뒤 한 번만 호출하세요
-const liked = await getMyReactionIds('portfolio', 'like', items.map((i) => i.id));
-liked.has(item.id);
 ```
+
+**"내가 이미 눌렀는지"는 목록·상세 응답에 이미 들어 있습니다.** 따로 물어볼 필요가 없습니다.
+
+```js
+const { items } = await listPortfolios();
+items[0].likedByMe;        // true 면 아이콘을 채운 상태로 그리세요
+items[0].bookmarkedByMe;
+```
+
+| 리소스 | 필드 |
+|---|---|
+| 포트폴리오 | `likedByMe` · `bookmarkedByMe` |
+| 면접 후기·족보 | `likedByMe`(도움이 되었어요) · `scrappedByMe`(퍼가요) |
+| 댓글 | `likedByMe` |
+| 기업 | `bookmarkedByMe` |
+| AI 면접 질문 | `scrappedByMe` |
+| 무료 양식 | `bookmarkedByMe` |
+
+비로그인이면 전부 `false` 입니다. **다른 사람이 누른 것은 절대 `true` 로 오지 않습니다.**
+
+> ⚠️ 토글 버튼의 초기 상태를 `useState(false)` 로 두면, 다른 페이지를 갔다 돌아왔을 때
+> **이미 누른 것이 꺼진 채로 보입니다.** 반드시 이 필드로 초기값을 잡아주세요.
 
 | `REACTION.___` | 화면 | `targetType` / `kind` |
 |---|---|---|
@@ -259,9 +313,11 @@ liked.has(item.id);
 | `templateBookmark` | 양식 북마크 | `template` / `bookmark` |
 
 ⚠️ **`reactions` 테이블을 직접 조회하지 마세요.** 보안 점검(D11) 이후 **본인 행만** 읽을 수 있습니다.
-목록의 좋아요·스크랩 **숫자**는 이미 `listPortfolios()` / `listPosts()` / `listCompanies()` 응답에
-`likeCount` `bookmarkCount` `scrapCount` 로 들어 있으니 그대로 쓰면 됩니다.
-직접 세면 "내가 누른 것"만 세어져 전부 0 또는 1로 나옵니다.
+**숫자**(`likeCount` `bookmarkCount` `scrapCount`)와 **내가 눌렀는지**(`likedByMe` 등) 모두 목록 응답에
+이미 들어 있습니다. 직접 세면 "내가 누른 것"만 세어져 전부 0 또는 1로 나옵니다.
+
+`getMyReactionIds()` / `getMyPortfolioReactions()` / `getMyScrappedQaIds()` / `getMyBookmarkedTemplateIds()` 는
+호환을 위해 남겨 뒀지만 **이제 부를 필요가 없습니다.** 반응 대상 7종 전부 목록·상세 응답에 들어 있습니다.
 
 ### 기업 탐색 — `@backend/lib/api/companies`
 
@@ -276,7 +332,7 @@ import {
 const { items, total, page, pageSize } = await listCompanies({
   q: '토스',            // 회사명 검색 (기획 9-2: 제목만)
   industry: 'fintech',  // code_master(industry)
-  size: 'large',        // code_master(company_size)
+  size: 'large',        // code_master(company_size) — 카드의 size 는 라벨("대기업")로 옵니다
   jobRole: 'frontend',  // code_master(job_role)
   sort: 'popular',      // popular | rating | views | name | latest
   page: 1,
@@ -286,7 +342,8 @@ const company = await getCompany('estsoft');            // 상세
 const recommended = await getRecommendedCompanies(6);   // 메인 화면 추천 기업
 const on = await toggleCompanyBookmark(company.id);     // true = 등록됨
 const marked = await getMyBookmarkedCompanyIds(items.map((c) => c.id));
-const mine = await listMyBookmarkedCompanies({ page: 1 });   // 마이페이지 "스크랩한 기업"
+// 마이페이지 "스크랩한 기업" — sort 는 latest | oldest | name
+const mine = await listMyBookmarkedCompanies({ sort: 'latest', page: 1 });
 await incrementCompanyView(company.id);                 // 상세 진입 시 조회수 +1
 ```
 
@@ -321,6 +378,7 @@ await incrementTemplateView(id);          // 미리보기 열 때 조회수 +1
 import {
   listMyDocuments, getDocument, createDocument, createDocumentFromTemplate,
   updateDocument, deleteDocument, deleteDocuments,
+  createDocumentDraftId, uploadDocumentImage, uploadDocumentImages, removeDocumentImages,
 } from '@backend/lib/api/documents';
 
 const { items, total, counts } = await listMyDocuments({
@@ -343,6 +401,10 @@ await updateDocument(doc.id, {
   contentHtml: editor.getHTML(),
   contentText: editor.getText(),
 });
+
+// 본문에 이미지 넣기 — 저장 전(draft)에도 됩니다. 8장 참고
+const draftId  = createDocumentDraftId();
+const imageUrl = await uploadDocumentImage(draftId, file);   // 5MB / jpg·png·webp·gif
 
 await deleteDocuments([id1, id2]);   // 문서함 복수 삭제
 ```
@@ -372,12 +434,14 @@ import {
   uploadPortfolioImages, incrementPortfolioView,
   togglePortfolioLike, togglePortfolioBookmark, getMyPortfolioReactions,
   listMyBookmarkedPortfolios, removePortfolioBookmarks,
+  findMemberByEmail, setPortfolioCollaborators,
 } from '@backend/lib/api/portfolio';
 
 // 갤러리 (공개된 것만)
 const { items, total } = await listPortfolios({
   category: 'web',     // web | app
-  sort: 'latest',      // latest | views | popular(좋아요) | bookmarks(스크랩)
+  q: '협업',           // 제목 검색
+  sort: 'latest',      // latest | oldest | title | views | popular(좋아요) | bookmarks(스크랩)
   page: 1,
 });
 
@@ -385,7 +449,7 @@ const { items, total } = await listPortfolios({
 const draft = await createPortfolio({ title: '제목 없음', category: 'web' });
 const urls = await uploadPortfolioImages(draft.id, files);   // 최대 15장 / 5MB
 await updatePortfolio(draft.id, {
-  content: [...blocks, ...urls.map((url) => ({ type: 'image', url }))],
+  document: [...blocks, ...urls.map((url) => ({ type: 'image', url }))],
   bgColor: '#F4FCFE',
   gapPx: 16,
 });
@@ -395,7 +459,63 @@ await publishPortfolio(draft.id);   // 임시저장 → 공개
 const { liked, bookmarked } = await getMyPortfolioReactions(items.map((p) => p.id));
 ```
 
-**content 블록 형식** — `[{ type, ... }]`
+**공동작업자** — 이메일로 찾아서 id 배열로 저장합니다.
+
+```js
+// 1) 이메일로 찾기 (정확히 일치해야 하고, 로그인 필요)
+const member = await findMemberByEmail('teammate@example.com');
+// { id, name, avatarUrl }  ·  가입자가 없으면 null
+
+// 2) N명을 통째로 저장 (목록 교체 방식)
+const saved = await setPortfolioCollaborators(portfolioId, [member.id, another.id]);
+saved.collaborators;   // [{ id, name, avatarUrl }, ...]
+
+// 생성할 때 한 번에 넣어도 됩니다
+await createPortfolio({ title: '작업', collaboratorIds: [member.id] });
+```
+
+| 규칙 | 동작 |
+|---|---|
+| 저장 방식 | **통째로 교체.** 한 명만 빼려면 나머지 전체를 다시 보내세요 |
+| 본인 id | 자동으로 제외됩니다 (소유자는 공동작업자가 아님) |
+| 중복 id | 자동으로 한 번만 저장 |
+| 없는 사용자 id | **400** |
+| 최대 인원 | **20명** |
+| 남의 포트폴리오 | **404** — 소유자만 수정할 수 있습니다 |
+
+응답의 `collaborators` 는 **목록·상세 모두**에 들어 있어 따로 조회할 필요가 없습니다.
+비공개(`draft`) 포트폴리오의 공동작업자는 소유자에게만 보입니다.
+
+> ⚠️ `findMemberByEmail` 은 **이메일을 되돌려주지 않습니다.** 이름과 사진만 옵니다.
+> 부분 검색도 안 됩니다 — 정확한 이메일 전체를 알아야 찾을 수 있습니다.
+
+**본문은 탭 3개로 나뉘어 있습니다** — `content` 는 없어졌습니다.
+
+| 필드 | 탭 | 타입 |
+|---|---|---|
+| `overview` | 개요 | `Block[]` |
+| `document` | 문서 | `Block[]` |
+| `code` | 코드 | `Block[]` |
+
+```js
+await createPortfolio({
+  title: '내 작업',
+  category: 'web',
+  overview: [{ type: 'text',  html: '<p>소개</p>' }],
+  document:  [{ type: 'image', url: 'https://.../1.png' }],
+  code:     [{ type: 'code',  lang: 'js', body: 'const a = 1;' }],
+});
+```
+
+| 규칙 | 동작 |
+|---|---|
+| 셋 다 선택 | 안 보낸 탭은 생성 시 `[]`, 수정 시 **건드리지 않습니다** |
+| 값 | 반드시 배열. 아니면 **400** `overview 는 블록 배열이어야 합니다.` |
+| 블록 `type` | 아래 4종 밖이면 **400** `overview 의 블록 type 은 …` |
+| 이미지 15장 | **세 탭을 합쳐서** 15장. 수정할 때는 **이미 저장된 탭까지 합산**합니다 |
+| `content` 를 보내면 | **400** — 조용히 버려지지 않도록 막아뒀습니다 |
+
+**Block 형식** — 세 탭 모두 동일합니다.
 
 | type | 필드 |
 |---|---|
@@ -403,6 +523,9 @@ const { liked, bookmarked } = await getMyPortfolioReactions(items.map((p) => p.i
 | `video` | `{ youtubeUrl }` — **동영상 업로드는 없습니다. YouTube 링크만** |
 | `text` | `{ html }` |
 | `code` | `{ lang, body }` |
+
+> 이미지 15장은 **포트폴리오 하나당** 총량입니다. `overview` 에 10장을 저장해두고
+> `document` 에 6장을 추가하면 400입니다 — 서버가 저장된 탭을 다시 읽어서 함께 셉니다.
 
 ### 면접 후기·족보 — `@backend/lib/api/posts`
 
@@ -419,16 +542,21 @@ import {
 const { items, total } = await listPosts({
   type: 'review',            // review | qbank | (생략 = 전체)
   companySlug: 'naver',      // 기업 상세의 후기 탭
+  jobRole: 'frontend',       // code_master(job_role)
+  difficulty: 'hard',        // code_master(difficulty)
+  passResult: 'pass',        // code_master(pass_result)
   q: '프론트엔드',            // 제목 검색
-  sort: 'latest',            // latest | popular | scraps | comments | views
+  sort: 'latest',            // latest | oldest | company | popular | scraps | comments | views
   page: 1,
 });
+// 필터 3종은 DB 에서 걸러내므로 total 도 걸러낸 개수입니다.
+// 받아온 뒤 화면에서 filter() 하면 2페이지부터 개수가 어긋납니다.
 
 // 후기 작성
 await createPost({
   postType: 'review',
   companyId, title, body,
-  difficultyCode: 'normal', difficultyScore: 3.5,
+  difficultyCode: 'normal', difficultyScore: 3,
   passResultCode: 'pass',
   channelCode: 'online', channelEtc: null,    // '기타'(etc) 선택 시에만 channelEtc
   jobRoleCode: 'frontend', positionLevel: '신입', educationLevel: 'bachelor',
@@ -436,17 +564,37 @@ await createPost({
   overallComment: '...',
 });
 
-// 족보 작성 — title 없이 questions 배열
+// 족보 작성 — title 없이, 질문은 여러 줄 텍스트 (textarea 값을 그대로)
 await createPost({
   postType: 'qbank',
   companyId,
-  questions: ['REST API의 장점은?', '클로저를 설명해주세요.'],
-  problemScore: 4.0,
+  questions: 'REST API의 장점은?\n클로저를 설명해주세요.',
+  problemScore: 4,
 });
 ```
 
-`questionCount` 는 **서버가 `questions` 길이로 계산**합니다. 보내지 마세요 (보내도 무시됩니다).
+**질문은 `textarea` 값을 그대로 보내면 됩니다.** 한 줄에 질문 하나입니다. 배열을 보내면 400.
+
+응답은 **두 가지 모양으로 함께** 옵니다.
+
+| 필드 | 용도 |
+|---|---|
+| `questions` | **입력한 원본 텍스트.** 수정 화면의 `textarea` 에 그대로 넣으세요 |
+| `questionList` | 줄 단위로 자르고 공백·빈 줄을 걸러낸 **배열.** 목록 렌더링에 쓰세요 |
+
+```jsx
+{post.questionList.map((q, i) => <li key={i}>{q}</li>)}
+```
+
+`questionCount` 는 **서버가 빈 줄을 뺀 줄 수로 계산**합니다. 보내지 마세요 (보내도 무시됩니다).
 수정으로 질문을 늘리거나 줄이면 개수도 함께 갱신됩니다.
+
+**점수는 전부 1~5 정수만** 받습니다 — 면접 난이도(`difficultyScore`)와 문제 난이도(`problemScore`) 둘 다.
+별 5개짜리 선택 UI를 그대로 보내면 됩니다. `3.5` 같은 반 칸 점수나 범위 밖 값은 **400** 입니다.
+
+```js
+import { SCORE_SCALE } from '@backend/lib/constants';   // { min: 1, max: 5, step: 1 }
+```
 
 ### 댓글 — `@backend/lib/api/comments`
 
@@ -572,10 +720,13 @@ router.replace('/');
 ### 상수 — `@backend/lib/constants`
 
 ```js
-import { PAGE_SIZE, SORT, DOCUMENT_LIMIT, UPLOAD_LIMIT, REACTION } from '@backend/lib/constants';
+import {
+  PAGE_SIZE, SORT, DOCUMENT_LIMIT, SCORE_SCALE, UPLOAD_LIMIT, REACTION,
+} from '@backend/lib/constants';
 
 PAGE_SIZE.companies;   // 20  (디자인 그리드를 세어 정한 값)
 SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
+SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 ```
 
 | 상수 | 값 | 쓰는 곳 |
@@ -593,6 +744,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `PAGE_SIZE.interviewScraps` | 6 | 마이페이지 AI 면접 스크랩 |
 | `PAGE_SIZE.myQbank` | 4 | 마이페이지 내 활동 족보 |
 | `DOCUMENT_LIMIT` | 10 | 이력서·자소서 각각 |
+| `SCORE_SCALE` | `{ min: 1, max: 5, step: 1 }` | 면접 난이도 · 문제 난이도 점수 입력 UI |
 | `UPLOAD_LIMIT.avatar` | 2MB | jpg / png / webp |
 | `UPLOAD_LIMIT.portfolio` | 5MB × 15장 | jpg / png / webp / gif |
 
@@ -681,6 +833,26 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `pageSize` | number | 엔드포인트별 | **최대 50** (댓글만 100). 초과하면 상한으로 깎임 |
 | `sort` | string | 엔드포인트별 | 허용값 밖이면 **400**. 표는 각 엔드포인트 참고 |
 | `q` | string | — | 검색어. **기본적으로 제목만** 검색 (기획 9-2). 부분 일치·대소문자 무시 |
+| `scrapped` | `1` | — | 내가 스크랩한 것만. `/api/companies` · `/api/portfolios` · `/api/posts`. **인증 필요** |
+
+### 4.4-1 ⚠️ 스크랩 목록에서 `latest` 의 뜻
+
+**`scrapped=1` 을 붙이면 `latest`/`oldest` 는 리소스가 만들어진 시각이 아니라 "내가 스크랩한 시각" 입니다.**
+
+| 요청 | `latest` 의 기준 |
+|---|---|
+| `GET /api/companies?sort=latest` | 기업이 **등록된** 시각 |
+| `GET /api/companies?scrapped=1&sort=latest` | 내가 **스크랩한** 시각 |
+
+| 스크랩 목록 | 허용 sort |
+|---|---|
+| 기업 (`/api/companies?scrapped=1`) | `latest` · `oldest` · `name` |
+| 포트폴리오 (`/api/portfolios?scrapped=1`) | `latest` · `oldest` · `title` |
+| 후기·족보 (`/api/posts?scrapped=1`) | `latest` · `oldest` · `company` |
+
+마이페이지의 "스크랩한 기업/포트폴리오"는 **내 행동 목록**이라 방금 담은 것이 위로 오는 게 맞습니다.
+그래서 스크랩 목록에서는 리소스 기준 정렬(`popular` `views` 등)을 **허용하지 않고 400** 을 돌려줍니다 —
+같은 이름이 두 가지를 뜻하는 상황을 만들지 않기 위해서입니다.
 
 > `q` 가 본문까지 검색하는 곳은 `GET /api/interview-qas` **한 군데뿐**입니다 (질문·답변).
 
@@ -722,7 +894,8 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `avatar_url` | string \| null | ○ | 프로필 사진 공개 URL. `uploadAvatar()` 가 갱신 |
 | `desired_role` | string \| null | ○ | 희망 직무. **자유 텍스트** (`"프론트엔드 개발자"`) |
 | `career_level` | string \| null | ○ | `code_master(career_level)` 코드 — `entry` `1_3` `3_5` `5_plus` |
-| `email` | string \| null | ○ | ⚠️ **공개 표시용** 이력서 연락처. 로그인 이메일과 무관 |
+| `education_level` | string \| null | ○ | **최종 학력.** `code_master(education_level)` 코드 — `high_school` `associate` `bachelor` `master` `doctor` |
+| `email` | string \| null | ○ | 이력서용 연락처. **본인 조회일 때만 값이 옵니다.** 타인·비로그인 조회에서는 항상 `null`. 가입·재로그인 시 소셜 계정 이메일이 자동으로 채워짐(빈 값일 때만) |
 | `github_url` | string \| null | ○ | 깃허브 주소 |
 | `bio` | string \| null | ○ | 자기소개. **최대 1000자** (초과 시 400) |
 | `educations` | Education[] | ○ | 기본 `[]` |
@@ -734,15 +907,20 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `created_at` | datetime | ✕ | 가입 시각 |
 | `updated_at` | datetime | ✕ | 마지막 수정 시각 |
 
-**중첩 객체** — jsonb 컬럼입니다. **서버는 "배열인지"만 검사하고 내부 키는 검증하지 않습니다.**
-즉 아래 모양은 **프론트와의 약속**입니다. 다르게 넣으면 다르게 저장되고, 화면에서 깨집니다.
+**중첩 객체** — 각각 **별도 테이블**에 저장되고 응답에서는 아래 배열로 다시 조립됩니다.
+**코드 필드는 DB가 검증합니다** — 라벨(`'대학교'`)을 코드 자리에 넣으면 **400** 입니다.
 
 | 타입 | 모양 | 비고 |
 |---|---|---|
-| `Education` | `{ school, major, status, admission, graduation }` | `status` = `code_master(edu_status)` 코드. 디자인상 **1개만** 입력하지만 저장은 배열 |
+| `Education` | `{ type, school, major, status, admission, graduation }` | `type` = **학교 구분**, `code_master(school_type)` 코드 ⚠️검증됨. `status` = `code_master(edu_status)` 코드 ⚠️검증됨. 디자인상 **1개만** 입력하지만 저장은 배열 |
 | `Career` | `{ start, end, company, role }` | `end` 에 `"재직 중"` 문자열 허용 |
 | `Award` | `{ date, name }` | |
-| `Language` | `{ language, level, detail }` | `level` = `code_master(language_level)` 코드 (`high`/`mid`/`low`) |
+| `Language` | `{ language, level, detail }` | `level` = `code_master(language_level)` 코드 (`high`/`mid`/`low`) ⚠️검증됨 |
+
+> **저장은 목록 단위 통째 교체이고, 4개가 한 트랜잭션으로 처리됩니다.**
+> 항목 하나만 추가하려면 기존 배열에 넣어 전체를 보내세요. 저장이 실패하면 **기존 목록이 그대로 남습니다** —
+> 지워지고 못 채워지는 중간 상태는 생기지 않습니다.
+> 보내지 않은 목록은 건드리지 않습니다. `[]` 를 보내면 그 목록만 비웁니다.
 
 ### 5.2 ProfileStats
 
@@ -787,16 +965,18 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `name` | string | 회사명 |
 | `logo` | string \| null | 로고 URL. **현재 전부 null** |
 | `category` | string | 산업 **라벨**(`"플랫폼·포털"`). 코드가 아님 |
+| `size` | string \| null | 기업 규모 **라벨**(`"중견기업"`). 코드가 아님. 미입력이면 `null` |
 | `location` | string \| null | 근무지 (`"경기 성남"`) |
 | `tags` | string[] | 키워드 (`["검색","AI"]`) |
 | `rating` | number \| null | 종합 평점 `0.0~5.0` (샘플 값) |
 | `employees` | number \| null | 사원 수 |
 | `avgSalary` | string \| null | 평균 연봉 **표시 문자열** (`"5,800만원"`) |
 | `favorite` | number | 관심 등록 수 |
+| `bookmarkedByMe` | boolean | **내가 관심 등록했는지.** 비로그인이면 `false` |
 | `review` | number | 면접 후기 수 |
 | `jokbo` | number | 면접 족보 수 |
 | `passrate` | number \| null | 합격률 **퍼센트 정수** `0~100`. 합/불 후기가 없으면 `null` |
-| `difficulty` | number \| null | 후기들의 `difficultyScore` 평균 (소수 1자리). 후기가 없으면 `null` |
+| `difficulty` | number \| null | 후기들의 `difficultyScore` 평균 `1.0~5.0` (소수 1자리). 후기가 없으면 `null` |
 
 > ⚠️ `difficulty` 는 **숫자**입니다. [Post](#57-post) 의 `difficulty` 는 **라벨 문자열**(`"보통"`)입니다. 이름은 같지만 다른 값입니다.
 
@@ -835,6 +1015,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `category` | string \| null | 분류 코드 |
 | `thumbnail` | string \| null | 미리보기 이미지 URL |
 | `views` | number | 조회수 |
+| `bookmarkedByMe` | boolean | **내가 북마크했는지.** 비로그인이면 `false` |
 | `content` | object \| null | **상세에서만.** 에디터 원본 JSON (Tiptap `getJSON()` 형식) |
 | `contentHtml` | string \| null | **상세에서만.** 렌더링용 HTML |
 
@@ -869,32 +1050,44 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `companySlug` | string \| null | ● | ● | 기업 상세로 링크할 때 |
 | `title` | string | ● | △ | 없으면 `""` |
 | `body` | string | ● | ✕ | 후기 본문 |
-| `questions` | string[] | ✕ | ● | 족보 질문 목록 |
-| `questionCount` | number \| null | ✕ | ● | `questions.length` — **서버가 계산**. 요청으로 못 바꿈 |
+| `questions` | string | ✕ | ● | 족보 질문. **한 줄에 하나인 여러 줄 텍스트** (입력 원본 그대로). 없으면 `""` |
+| `questionList` | string[] | ✕ | ● | `questions` 를 줄 단위로 자르고 빈 줄을 뺀 배열. **목록 렌더링용** |
+| `questionCount` | number \| null | ✕ | ● | `questionList.length` — **서버가 계산**. 요청으로 못 바꿈 |
 | `difficulty` | string | ● | ● | 난이도 **라벨** (`"쉬움"`/`"보통"`/`"어려움"`). 값 없으면 `""` |
-| `difficultyScore` | number \| null | ● | ● | `0.0~9.9` (소수 1자리) |
-| `problemScore` | number \| null | ✕ | ● | 문제 난이도 `0.0~9.9` |
+| `difficultyScore` | number \| null | ● | ● | 면접 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
+| `problemScore` | number \| null | ✕ | ● | 문제 난이도 점수. **1 · 2 · 3 · 4 · 5 중 하나** (정수). 미입력이면 `null` |
 | `result` | string | ● | ✕ | 합격 여부 **라벨** (`"합격"`/`"대기"`/`"불합격"`) |
 | `channel` | string | ● | ● | 면접 경로 **라벨**. `channelCode='etc'` 면 `channelEtc` 값이 대신 들어감 |
 | `jobRole` | string | ● | ● | 직무 **라벨** (`"프론트엔드"`) |
 | `positionLevel` | string \| null | ● | ● | 자유 텍스트 (`"신입"`) |
 | `educationLevel` | string | ● | ● | 학력 **라벨** (`"대졸"`). 값 없으면 `""` |
 | `jobInfo` | string | ● | ● | `jobRole / positionLevel / educationLevel` 을 `" / "` 로 이은 표시용 문자열. 빈 값은 건너뜀 |
+| `jobRoleCode` | string \| null | ● | ● | 직무 **원본 코드** (`"frontend"`). 수정 폼의 dropdown 을 되채울 때 씁니다. 미기입이면 `null` |
+| `educationLevelCode` | string \| null | ● | ● | 학력 원본 코드 |
+| `difficultyCode` | string \| null | ● | ● | 난이도 원본 코드 |
+| `passResultCode` | string \| null | ● | ✕ | 합격 여부 원본 코드 |
+| `channelCode` | string \| null | ● | ● | 면접 경로 원본 코드. `'etc'` 면 `channelEtc` 를 함께 보세요 |
+| `channelEtc` | string \| null | ● | ● | `channelCode='etc'` 일 때 자유 입력값 |
 | `tags` | string[] | ● | ● | 해시태그 |
 | `overallComment` | string | ● | ● | 면접 총평 |
 | `authorId` | uuid | ● | ● | |
 | `authorName` | string \| null | ● | ● | |
 | `authorAvatar` | string \| null | ● | ● | |
-| `likeCount` | number | ● | ● | "도움이 되었어요" |
-| `scrapCount` | number | ● | ● | "퍼가요" |
+| `likeCount` | number | ● | ● | "도움이 되었어요" 수 |
+| `likedByMe` | boolean | ● | ● | **내가 눌렀는지.** 비로그인이면 `false` |
+| `scrapCount` | number | ● | ● | "퍼가요" 수 |
+| `scrappedByMe` | boolean | ● | ● | **내가 퍼갔는지.** 비로그인이면 `false` |
 | `commentCount` | number | ● | ● | |
 | `viewCount` | number | ● | ● | |
 | `date` | date | ● | ● | 표시용 `"2026.08.12"` |
 | `createdAt` / `updatedAt` | datetime | ● | ● | |
 
-> **코드는 요청, 라벨은 응답.** `difficulty` `result` `channel` `jobRole` `educationLevel` 다섯 필드는
-> 요청에서 `difficultyCode` 처럼 **코드**로 보내고, 응답에서는 **라벨**로 돌아옵니다.
-> `code_master` 에 없는 값을 보내면 변환 없이 그대로 돌아옵니다.
+> **코드로 보내고, 라벨과 코드를 함께 받습니다.** `difficulty` `result` `channel` `jobRole` `educationLevel`
+> 다섯 필드는 요청에서 `difficultyCode` 처럼 **코드**로 보냅니다.
+> 응답에는 화면에 그대로 찍을 **라벨**(`jobRole: "프론트엔드"`)과
+> dropdown 을 되채울 **원본 코드**(`jobRoleCode: "frontend"`)가 **둘 다** 들어 있습니다.
+>
+> 목록/상세는 라벨을, **수정 폼은 코드**를 쓰세요.
 
 **목업 호환 별칭** — 같은 값이 다른 이름으로도 들어 있습니다. **신규 코드에서는 쓰지 마세요.**
 
@@ -917,7 +1110,8 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `authorId` | uuid | |
 | `authorName` | string \| null | |
 | `authorAvatar` | string \| null | |
-| `likeCount` | number | |
+| `likeCount` | number | 좋아요 수 |
+| `likedByMe` | boolean | **내가 눌렀는지.** 비로그인이면 `false` |
 | `date` | date | 표시용 `"2026.08.12"` |
 | `createdAt` / `updatedAt` | datetime | |
 
@@ -935,15 +1129,20 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `authorName` | string \| null | |
 | `authorAvatar` | string \| null | |
 | `authorRole` | string \| null | 작성자의 희망 직무 |
-| `likeCount` | number | 좋아요 |
-| `bookmarkCount` | number | 스크랩 |
+| `likeCount` | number | 좋아요 수 |
+| `likedByMe` | boolean | **내가 눌렀는지.** 비로그인이면 `false` |
+| `bookmarkCount` | number | 스크랩 수 |
+| `bookmarkedByMe` | boolean | **내가 스크랩했는지.** 비로그인이면 `false` |
+| `collaborators` | Collaborator[] | 공동작업자. 없으면 `[]`. 목록·상세 모두 포함 |
 | `viewCount` | number | |
 | `createdAt` / `updatedAt` | datetime | |
-| `content` | Block[] | **상세에서만.** 아래 블록 배열 |
+| `overview` / `document` / `code` | Block[] | **상세에서만.** 탭별 블록 배열. 비어 있으면 `[]` |
 | `bgColor` | string | **상세에서만.** 배경색 hex. 기본 `"#F4FCFE"` |
 | `gapPx` | number | **상세에서만.** 블록 간격 px. 기본 `16` |
 
-**Block** — `content` 배열의 원소. `type` 은 4종만 허용되고 그 외는 **400**.
+> `content` 는 없어졌습니다. 목록 응답에는 세 탭이 **포함되지 않습니다**(용량 때문). 상세에서만 옵니다.
+
+**Block** — 탭 배열의 원소. `type` 은 4종만 허용되고 그 외는 **400**.
 
 | type | 필드 | 비고 |
 |---|---|---|
@@ -953,6 +1152,16 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `code` | `{ type:'code', lang, body }` | |
 
 > `type` 외의 내부 키는 서버가 검증하지 않습니다. 위 모양은 **프론트와의 약속**입니다.
+
+**Collaborator** — `collaborators` 배열의 원소
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | uuid | 공동작업자의 유저 id |
+| `name` | string | null | 이름 |
+| `avatarUrl` | string | null | 프로필 사진 |
+
+> 이메일은 포함되지 않습니다.
 
 ### 5.10 InterviewSession
 
@@ -987,6 +1196,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `feedback` | object | AI 피드백 원본. 권장 모양 `{ summary, strengths[], improvements[] }`. 기본 `{}` |
 | `feedbackText` | string | 서버가 `feedback` 을 **한 줄 문자열로 요약**한 것. 아코디언 요약줄에 그대로 쓰세요 |
 | `score` | number \| null | 이 답변의 점수 |
+| `scrappedByMe` | boolean | **내가 스크랩했는지.** 스크랩 아이콘 초기 상태에 쓰세요 |
 | `date` | date | 표시용 |
 | `createdAt` | datetime | |
 
@@ -1002,6 +1212,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 |---|---|---|:---:|---|
 | 1 | GET | `/api/health` | — | (진단 페이지 전용) |
 | 2 | GET | `/api/me` | — | `getCurrentUser()` |
+| 2-1 | GET | `/api/members/lookup` | ✔ | `findMemberByEmail()` |
 | 3 | DELETE | `/api/me` | ✔ | `deleteMyAccount()` |
 | 4 | GET | `/api/me/account` | ✔ | `getMyAccount()` |
 | 5 | GET | `/api/me/summary` | ✔ | `getMySummary()` |
@@ -1019,6 +1230,8 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | 17 | GET | `/api/templates` | — | `listTemplates()` |
 | 18 | GET | `/api/templates/{id}` | — | `getTemplate()` |
 | 19 | GET · POST · DELETE | `/api/documents` | ✔ | `listMyDocuments()` / `createDocument()` / `deleteDocuments()` |
+| 19-1 | GET | `/api/documents/{id}/images/{name}` | ✔ | 본문 이미지 서빙 (본인 것만) |
+| 19-2 | DELETE | `/api/documents/{id}/images` | ✔ | `removeDocumentImages()` — draft 정리 |
 | 20 | GET · PATCH · DELETE | `/api/documents/{id}` | ✔ | `getDocument()` / `updateDocument()` / `deleteDocument()` |
 | 21 | GET · POST · DELETE | `/api/portfolios` | 일부 | `listPortfolios()` / `createPortfolio()` / `deletePortfolios()` |
 | 22 | GET · PATCH · DELETE | `/api/portfolios/{id}` | 일부 | `getPortfolio()` / `updatePortfolio()` / `deletePortfolio()` |
@@ -1154,6 +1367,9 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 
 **응답 200** — [Profile](#51-profile) (**snake_case**)
 
+> ⚠️ **`email` 은 본인 조회일 때만 값이 옵니다.** 타인·비로그인 조회에서는 키는 있지만 항상 `null` 입니다.
+> "값이 없음"과 "가려짐"을 구분할 수 없습니다 — 의도된 동작입니다.
+
 **에러** — `401`(`me` + 미로그인) · `404 NOT_FOUND`(없는 유저)
 
 > `getMyProfile()` 은 401/404 를 잡아 `null` 로 바꿔 줍니다. 직접 호출할 때만 신경 쓰면 됩니다.
@@ -1172,13 +1388,14 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `avatar_url` | string \| null | `null` 로 보내면 사진 제거 |
 | `desired_role` | string \| null | |
 | `career_level` | string \| null | `code_master(career_level)` 코드 |
-| `email` | string \| null | ⚠️ 공개됨 |
+| `education_level` | string \| null | 최종 학력. `code_master(education_level)` 코드 |
+| `email` | string \| null | 이력서용 연락처. 본인만 볼 수 있음. 직접 넣은 값은 자동 채우기가 덮어쓰지 않음 |
 | `github_url` | string \| null | |
 | `bio` | string \| null | **1000자 초과 시 400** |
-| `educations` | array | **배열 아니면 400** |
-| `careers` | array | **배열 아니면 400** |
-| `awards` | array | **배열 아니면 400** |
-| `languages` | array | **배열 아니면 400** |
+| `educations` | array | **배열 아니면 400.** 목록 통째 교체. 코드값이 틀리면 400 `INVALID_REFERENCE` |
+| `careers` | array | **배열 아니면 400.** 목록 통째 교체 |
+| `awards` | array | **배열 아니면 400.** 목록 통째 교체 |
+| `languages` | array | **배열 아니면 400.** 목록 통째 교체. `level` 코드가 틀리면 400 `INVALID_REFERENCE` |
 | `skill_codes` | string[] | **배열 아니면 400** |
 | `interest_codes` | string[] | **배열 아니면 400** |
 
@@ -1315,7 +1532,8 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `industry` | string | — | `code_master(industry)` 코드 |
 | `size` | string | — | `code_master(company_size)` 코드 |
 | `jobRole` | string | — | `code_master(job_role)` 코드. 해당 직군을 채용하는 기업만 |
-| `ids` | string | — | **쉼표 구분** id 목록. 스크랩 목록 조회용 |
+| `ids` | string | — | **쉼표 구분** id 목록 |
+| `scrapped` | `1` | — | **내가 스크랩한 기업만.** 미로그인이면 401. sort 해석이 달라집니다 |
 | `sort` | enum | `popular` | 아래 표 |
 | `page` | number | `1` | |
 | `pageSize` | number | `20` | 최대 50 |
@@ -1330,6 +1548,9 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 | `name` | 이름 가나다순 |
 | `latest` | 등록 최신순 |
 
+**`scrapped=1` 일 때는 `latest`(기본) · `oldest` · `name` 만** 허용합니다. 그 외는 400 입니다.
+`latest`/`oldest` 는 **내가 스크랩한 시각** 기준입니다 — [4.4-1](#441-️-스크랩-목록에서-latest-의-뜻) 참고.
+
 > 값이 같으면 **이름 오름차순**으로 2차 정렬합니다. 페이지를 넘겨도 순서가 흔들리지 않습니다.
 
 **응답 200** — `items`: [CompanyCard](#companycard--목록추천에서-내려오는-카드)[]
@@ -1338,7 +1559,7 @@ SORT.latest;           // 'latest' | 'popular' | 'views' | 'bookmarks'
 {
   "items": [{
     "id": "3f9c…", "slug": "naver", "name": "네이버", "logo": null,
-    "category": "플랫폼·포털", "location": "경기 성남",
+    "category": "플랫폼·포털", "size": "대기업", "location": "경기 성남",
     "tags": ["검색", "AI", "클라우드", "커머스"],
     "rating": 4.3, "employees": 4500, "avgSalary": "5,800만원",
     "favorite": 12, "review": 5, "jokbo": 3, "passrate": 60, "difficulty": 3.4
@@ -1564,13 +1785,15 @@ try {
 | `userId` | uuid | — | 특정 작성자의 **공개** 포트폴리오 (타인 프로필 페이지용) |
 | `category` | enum | — | `web` \| `app`. **다른 값이면 400** |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
-| `sort` | enum | `latest` | `latest` \| `popular`(좋아요) \| `views`(조회) \| `bookmarks`(스크랩) |
+| `q` | string | — | **제목만** 검색 |
+| `scrapped` | `1` | — | **내가 스크랩한 것만.** 미로그인이면 401. sort 해석이 달라집니다(아래) |
+| `sort` | enum | `latest` | `latest` \| `oldest` \| `title` \| `popular`(좋아요) \| `views`(조회) \| `bookmarks`(스크랩) |
 | `page` | number | `1` | |
 | `pageSize` | number | `20` | 최대 50 |
 
 > `mine` 없이 부르면 **항상 `published` 만** 내려갑니다. 남의 초안은 어떤 조합으로도 볼 수 없습니다.
 
-**응답 200** — `items`: [Portfolio](#59-portfolio)[] (**`content` / `bgColor` / `gapPx` 제외**)
+**응답 200** — `items`: [Portfolio](#59-portfolio)[] (**`overview` / `document` / `code` / `bgColor` / `gapPx` 제외**)
 
 ---
 
@@ -1586,7 +1809,8 @@ try {
 | `category` | enum \| null | `null` | `web` \| `app`, 그 외 **400** |
 | `thumbnailUrl` | string \| null | `null` | |
 | `description` | string \| null | `null` | |
-| `content` | Block[] | `[]` | 배열 아니면 400 / `type` 오류 400 / **image 15개 초과 400** |
+| `overview` / `document` / `code` | Block[] | `[]` | 배열 아니면 400 / `type` 오류 400 / **세 탭 합쳐 image 15개 초과 400** |
+| `content` | — | — | **보내면 400.** `overview` / `document` / `code` 로 나뉘었습니다 |
 | `bgColor` | string | `"#F4FCFE"` | |
 | `gapPx` | number | `16` | |
 | `status` | enum | `"draft"` | `draft` \| `published`, 그 외 **400** |
@@ -1603,7 +1827,7 @@ createPortfolio()  →  id 확보
       ↓
 uploadPortfolioImages(id, files)  →  URL 배열
       ↓
-updatePortfolio(id, { content: [...blocks] })
+updatePortfolio(id, { overview: [...], document: [...], code: [...] })
       ↓
 publishPortfolio(id)
 ```
@@ -1626,7 +1850,7 @@ publishPortfolio(id)
 | `draft` + 본인 | 200 |
 | `draft` + 타인/비로그인 | **404** (403 아님) |
 
-**응답 200** — [Portfolio](#59-portfolio) + `content` / `bgColor` / `gapPx`
+**응답 200** — [Portfolio](#59-portfolio) + `overview` / `document` / `code` / `bgColor` / `gapPx`
 
 ---
 
@@ -1637,9 +1861,13 @@ publishPortfolio(id)
 | 필드 | 비고 |
 |---|---|
 | `title` `description` `thumbnailUrl` `bgColor` `gapPx` | 그대로 저장 |
-| `content` | 블록 검증 후 **통째로 교체** |
+| `overview` `document` `code` | 블록 검증 후 **보낸 탭만 통째로 교체.** 안 보낸 탭은 그대로 둡니다 |
+| `content` | **보내면 400** — 세 탭으로 나뉘었습니다 |
 | `category` | `web`/`app`/`null` 외 400 |
 | `status` | `draft`/`published` 외 400. `publishPortfolio()` 가 이걸 씁니다 |
+
+> 탭을 하나라도 보내면 서버가 **저장돼 있는 나머지 탭을 읽어서 이미지를 합산**합니다.
+> `overview` 에 10장이 있으면 `code` 로는 5장까지만 올라갑니다.
 
 **응답 200** — 수정된 [Portfolio](#59-portfolio)
 **에러** — `400` · `401` · `404`(없거나 내 것 아님)
@@ -1667,13 +1895,20 @@ publishPortfolio(id)
 | `mine` | `1` | — | 내가 쓴 글만. 미로그인 401 |
 | `companyId` | uuid | — | 기업 id로 필터 |
 | `companySlug` | string | — | 기업 slug로 필터 (기업 상세 탭에서 편함) |
+| `jobRole` | string | — | 직무로 필터. `code_master(job_role)` 코드 |
+| `difficulty` | string | — | 면접 난이도로 필터. `code_master(difficulty)` 코드 (`easy`/`normal`/`hard`) |
+| `passResult` | string | — | 합격 여부로 필터. `code_master(pass_result)` 코드 (`pass`/`waiting`/`fail`) |
 | `q` | string | — | **제목만** 검색 |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
-| `sort` | enum | `latest` | `latest` \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
+| `sort` | enum | `latest` | `latest` \| `oldest` \| `company`(기업명) \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
 | `page` | number | `1` | |
 | `pageSize` | number | `10` | 최대 50 |
 
 **응답 200** — `items`: [Post](#57-post)[]
+
+> `jobRole` · `difficulty` · `passResult` 는 **DB 에서 걸러내므로 `total` 도 걸러낸 뒤의 개수**입니다.
+> 목록을 받아 화면에서 `filter()` 하면 2페이지부터 개수가 어긋나니 쿼리로 보내주세요.
+> 없는 코드를 보내면 400 이 아니라 **빈 목록**이 옵니다 (`code_master` 대조를 하지 않습니다).
 
 ---
 
@@ -1689,21 +1924,21 @@ publishPortfolio(id)
 | `companyId` | uuid | ✕ | 공통 | 없는 id면 400 `INVALID_REFERENCE` |
 | `title` | string | ✕ | 후기 | 족보는 생략 |
 | `body` | string | ✕ | 후기 | 본문 |
-| `questions` | string[] | ✕ | 족보 | **배열 아니면 400.** 보내면 `questionCount` 도 함께 갱신됨 |
+| `questions` | string | ✕ | 족보 | **여러 줄 텍스트.** 한 줄에 질문 하나. 문자열이 아니면 400. 보내면 `questionCount` 도 함께 갱신됨 |
 | `difficultyCode` | string | ✕ | 공통 | `code_master(difficulty)` — `easy`/`normal`/`hard` |
-| `difficultyScore` | number | ✕ | 공통 | 소수 1자리, 최대 9.9 |
-| `problemScore` | number | ✕ | 족보 | 소수 1자리 |
+| `difficultyScore` | number \| null | ✕ | 공통 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
+| `problemScore` | number \| null | ✕ | 족보 | **1~5 정수만.** 소수·범위 밖이면 400. `null` 은 "점수 없음" |
 | `passResultCode` | string | ✕ | 후기 | `pass` \| `waiting` \| `fail` |
 | `channelCode` | string | ✕ | 공통 | `code_master(interview_channel)` 코드 |
 | `channelEtc` | string | ✕ | 공통 | **`channelCode: 'etc'` 일 때만** 자유 입력값 |
-| `jobRoleCode` | string | ✕ | 공통 | `code_master(job_role)` 코드 |
+| `jobRoleCode` | string \| null | ✕ | 공통 | 직무. `code_master(job_role)` 코드. **없는 코드면 400** (사용 가능한 코드 목록이 메시지에 들어옵니다). `null` 이면 미기입 |
 | `positionLevel` | string | ✕ | 공통 | 자유 텍스트 (`"신입"`) |
 | `educationLevel` | string | ✕ | 공통 | `code_master(education_level)` 코드 |
 | `tags` | string[] | ✕ | 공통 | **배열 아니면 400** |
 | `overallComment` | string | ✕ | 공통 | 총평 |
 
 > 위에 없는 키는 **조용히 무시**됩니다. `userId` 를 보낼 필요도, 보내도 소용도 없습니다(항상 토큰 주인으로 저장).
-> `questionCount` 도 마찬가지입니다 — 서버가 `questions.length` 로 계산합니다.
+> `questionCount` 도 마찬가지입니다 — 서버가 빈 줄을 뺀 줄 수로 계산합니다.
 
 **응답 200** — 생성된 [Post](#57-post) (라벨·카운트가 모두 채워진 완성형)
 
@@ -1726,7 +1961,7 @@ publishPortfolio(id)
 #### `PATCH /api/posts/{id}` — 수정
 
 **인증 필요.** `POST` 와 같은 필드를 보낸 것만 수정. **최소 1개 필요.**
-`postType` 은 변경 불가(보내도 무시). `questions` 를 보내면 `questionCount` 가 새 길이로 다시 계산됩니다.
+`postType` 은 변경 불가(보내도 무시). `questions` 를 보내면 `questionCount` 가 다시 계산됩니다.
 
 **응답 200** — 수정된 [Post](#57-post) · **에러** `400` · `401` · `404`
 
@@ -1916,6 +2151,32 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 `GET /api/codes?groups=…` 로 내려오는 전체 목록입니다. **하드코딩하지 말고 API로 받으세요.**
 아래 표는 값 확인용입니다. 라벨은 대시보드에서 바뀔 수 있지만 **코드는 바뀌지 않습니다.**
 
+### ⚠️ 라벨을 보내면 400 입니다
+
+코드 컬럼에는 **반드시 `code` 를 보내세요.** `label`(`"프론트엔드"`)을 보내면 저장되지 않고 400 입니다.
+
+```json
+{ "error": { "code": "BAD_REQUEST",
+  "message": "jobRoleCode 의 \"프론트엔드\" 는 code_master(job_role) 의 코드가 아닙니다. 사용 가능: frontend | backend | ..." } }
+```
+
+에러 메시지에 **사용 가능한 코드가 전부 들어 있으니** 그대로 보고 고치면 됩니다.
+
+검사는 두 겹입니다 — API 가 먼저 위 메시지로 막고, 그걸 우회해도 **DB 의 FK 가 막습니다.**
+대상은 아래 전부입니다.
+
+| 테이블 | 컬럼 | 그룹 |
+|---|---|---|
+| `posts` | `job_role_code` · `difficulty_code` · `pass_result_code` · `channel_code` · `education_level` | job_role · difficulty · pass_result · interview_channel · education_level |
+| `profiles` | `career_level` · `education_level` · `skill_codes[]` · `interest_codes[]` | career_level · education_level · tech_stack · interest_field |
+| `companies` | `industry_code` · `size_code` · `job_role_codes[]` | industry · company_size · job_role |
+| `portfolios` | `category` | portfolio_category |
+| `resume_templates` | `category_code` | template_category |
+| `interview_sessions` | `interviewer_style` | interviewer_style |
+| `interview_qas` | `category` | interview_category |
+
+`null` 은 "미기입"으로 통과합니다. 배열은 **원소 하나라도 틀리면** 전체가 400 입니다.
+
 <details>
 <summary><b>job_role</b> — 직무 (13) · 기업 필터 / 후기 작성</summary>
 
@@ -1934,6 +2195,22 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 | `embedded` | 임베디드 |
 | `pm` | PM·기획 |
 | `designer` | UI/UX 디자인 |
+
+</details>
+
+<details>
+<summary><b>template_category</b> — 양식 분류 (8) · 무료 양식</summary>
+
+| code | label |
+|---|---|
+| `basic` | 기본 |
+| `standard` | 표준 |
+| `newcomer` | 신입 |
+| `career` | 경력 |
+| `project` | 프로젝트 중심 |
+| `competency` | 역량 중심 |
+| `portfolio` | 포트폴리오형 |
+| `english` | 영문 |
 
 </details>
 
@@ -2022,6 +2299,7 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 | `difficulty` | `easy` 쉬움 · `normal` 보통 · `hard` 어려움 |
 | `language_level` | `high` 상 · `mid` 중 · `low` 하 |
 | `education_level` | `high_school` 고졸 · `associate` 초대졸 · `bachelor` 대졸 · `master` 석사 · `doctor` 박사 |
+| `school_type` | `high_school` 고등학교 · `college` 전문대 · `university` 대학교 · `graduate` 대학원 |
 | `career_level` | `entry` 신입 · `1_3` 1~3년 · `3_5` 3~5년 · `5_plus` 5년+ |
 | `edu_status` | `enrolled` 재학 · `leave` 휴학 · `graduated` 졸업 · `dropped` 중퇴 |
 | `interviewer_style` | `friendly` 친절한 · `neutral` 보통 · `pressure` 압박하는 · `technical` 기술 심층 |
@@ -2040,12 +2318,14 @@ Body `{ "ids": [...] }` → `{ "deleted": n }`
 ```js
 const url  = await uploadAvatar(file);                    // 업로드 + 프로필 갱신까지
 const urls = await uploadPortfolioImages(portfolioId, files);
+const url  = await uploadDocumentImage(documentId, file); // 이력서·자소서 본문 이미지 (비공개)
 ```
 
 | 용도 | 버킷 | 용량 | 허용 형식 | 개수 |
 |---|---|---|---|---|
 | 프로필 사진 | `avatars` | **2MB** | jpg / png / webp | 1장 |
 | 포트폴리오 이미지 | `portfolios` | **5MB / 장** | jpg / png / webp / gif | **최대 15장** |
+| 이력서·자소서 이미지 | `documents` 🔒 | **5MB / 장** | jpg / png / webp / gif | 한 번에 **최대 10장** |
 | 기업 로고 | `company-logos` | 1MB | png / svg / webp | 대시보드에서만 |
 | 양식 미리보기 | `templates` | 2MB | png / webp | 대시보드에서만 |
 
@@ -2056,9 +2336,81 @@ const urls = await uploadPortfolioImages(portfolioId, files);
 ```
 avatars/{userId}/avatar-{timestamp}.{ext}
 portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
+documents/{userId}/{documentId}/{timestamp}-{random}.{ext}
 ```
 
-**보안** — 자기 폴더(`{userId}/`)에만 쓸 수 있습니다. 읽기는 전체 공개(`getPublicUrl`).
+### 이력서·자소서 본문 이미지
+
+⚠️ **`documents` 버킷만 비공개입니다.** 이력서는 남에게 보이면 안 되므로 다른 버킷과 다르게 동작합니다.
+
+- Supabase 공개 URL 이 **없습니다**. 대신 `uploadDocumentImage` 가 **우리 API 경로**를 돌려줍니다.
+- 그 경로는 **만료되지 않습니다.** `contentHtml` 안에 그대로 저장하면 됩니다.
+- 서버가 **항상 로그인한 사람 본인 폴더로만** 경로를 만듭니다. 남의 이미지는 URL 을 알아도 404 입니다.
+
+```
+GET /api/documents/{documentId}/images/{fileName}
+   → 비로그인 401 · 남의 것 404 · 내 것 200 (Cache-Control: private)
+```
+
+#### 저장 전(draft)에도 업로드됩니다
+
+문서를 저장하기 전에도 이미지를 넣을 수 있어야 하므로, **id 를 먼저 만들어** 쓰는 방식입니다.
+
+```js
+import {
+  createDocument, createDocumentDraftId,
+  uploadDocumentImage, removeDocumentImages,
+} from '@backend/lib/api/documents';
+
+// 1) 에디터를 열 때 id 를 하나 만들어 둡니다 (아직 DB 에 아무것도 없습니다)
+const draftId = createDocumentDraftId();
+
+// 2) 저장 전에도 이미지가 올라갑니다
+const url = await uploadDocumentImage(draftId, file);
+editor.chain().focus().setImage({ src: url }).run();
+
+// 3) 저장할 때 그 id 를 그대로 넘기면 이미지가 그대로 붙어 있습니다
+await createDocument({
+  id: draftId,
+  docType: 'resume',
+  title,
+  content: editor.getJSON(),
+  contentHtml: editor.getHTML(),
+  contentText: editor.getText(),
+});
+
+// 3') 저장하지 않고 나갈 때는 올렸던 이미지를 정리해 주세요
+await removeDocumentImages(draftId);
+```
+
+`createDocument` 의 `id` 는 **선택**입니다. 안 넘기면 서버가 만들어 줍니다.
+넘길 경우 uuid 여야 하며, 아니면 400 입니다.
+
+#### 문서를 지우면 이미지도 지워집니다
+
+`deleteDocument(id)` · `deleteDocuments(ids)` 는 해당 문서 폴더의 이미지를 **서버에서 함께 지웁니다.**
+프론트가 따로 정리할 필요가 없습니다.
+
+여러 장을 한 번에 올릴 땐 `uploadDocumentImages(documentId, files)` — URL 배열이 돌아옵니다.
+
+#### 버려진 draft 도 알아서 정리됩니다
+
+3') 를 못 부르고 창을 닫아도(브라우저 강제 종료 등) 이미지가 남지 않습니다.
+문서함을 열 때(`listMyDocuments()`) 서버가 **문서 없는 이미지 폴더**를 함께 청소합니다.
+
+- 마지막 업로드로부터 **24시간**이 지난 것만 지웁니다. **지금 편집 중인 draft 는 안전합니다.**
+- 저장된 문서의 이미지는 대상이 아닙니다.
+- 남의 것은 건드리지 않습니다.
+
+즉시 지우고 싶으면 3') 의 `removeDocumentImages(draftId)` 를 쓰세요. 기다릴 필요가 없습니다.
+
+#### 회원 탈퇴하면 파일도 사라집니다
+
+`deleteMyAccount()` 는 DB 행뿐 아니라 그 사람의 **Storage 파일 전부**를 지웁니다 —
+`documents`(이력서 이미지) · `portfolios` · `avatars` 세 버킷의 본인 폴더.
+
+**보안** — 자기 폴더(`{userId}/`)에만 쓸 수 있습니다.
+읽기는 `documents` 만 **본인 전용**이고, 나머지 버킷은 전체 공개(`getPublicUrl`)입니다.
 용량·형식은 **함수에서 한 번, 버킷 설정에서 한 번** 두 겹으로 막힙니다.
 
 **에러** — 검증 실패 시 `ApiError` 가 던져집니다.
@@ -2067,7 +2419,8 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 |---|---|
 | `JPG, PNG, WEBP 이미지만 올릴 수 있습니다.` | MIME 타입 불허 |
 | `프로필 사진은 2MB 이하만 올릴 수 있습니다.` | 용량 초과 |
-| `이미지는 최대 15장까지 올릴 수 있습니다.` | 개수 초과 |
+| `이미지는 최대 15장까지 올릴 수 있습니다.` | 포트폴리오 개수 초과 |
+| `이미지는 한 번에 10장까지 올릴 수 있습니다.` | 문서 이미지 개수 초과 |
 | `로그인이 필요합니다.` (status 401) | 미로그인 |
 
 > `next/image` 로 렌더할 수 있게 `next.config.mjs` 에 `*.supabase.co` 가 등록돼 있습니다.
@@ -2085,21 +2438,74 @@ portfolios/{userId}/{portfolioId}/{timestamp}-{random}.{ext}
 | 기업 `logo` `ceo` `founded` `capital` `address` `news` | 값이 채워져 있지 않습니다. `null` 또는 `[]` 로 내려가므로 폴백 UI가 필요합니다 |
 | 기업 `rating` `ratings` `salary` | 샘플 값입니다. 실제 평점·연봉이 아닙니다 |
 | `POST /api/views` | 중복 호출 방지가 없습니다. 부른 만큼 조회수가 올라갑니다 |
-| `Post` 의 코드 필드 | 응답은 표시용 **라벨**만 포함합니다 (`difficulty: "어려움"`). 원본 코드(`difficulty_code` 등)는 내려가지 않습니다 |
+| `profiles` 직접 조회 | `email` 컬럼 권한이 회수돼 있어 `select('*')` 는 **403** 입니다. 컬럼을 명시해야 합니다 (어차피 REST API 만 쓰면 됩니다) |
 | jsonb 필드 내부 구조 | 서버는 배열/객체 여부만 검사하고 내부 키는 검증하지 않습니다. [5장](#5-데이터-모델)의 모양은 프론트와의 약속입니다 |
 
 ### 미구현
 
 | 모듈 | 내용 | 상태 |
 |---|---|---|
-| `ai.js` | AI 코치, 보조도구 5종, 면접 질문 생성 | **프론트에서 Alan AI 직접 호출** — 백엔드 프록시 없음 |
+| `ai.js` | AI 코치, 보조도구 5종, 면접 질문 생성 | **프론트가 Alan 을 직접 호출** — 래퍼 함수 없음 |
 
-질문 생성·피드백·첨삭은 프론트에서 Alan 을 직접 부르고, 그 **결과만** `@backend/lib/api/interview` 로 저장합니다.
+질문 생성·피드백·첨삭은 프론트에서 Alan 을 부르고, 그 **결과만** `@backend/lib/api/interview` 로 저장합니다.
 그 외 모듈은 전부 사용할 수 있습니다.
+
+### Alan AI 호출
+
+**⚠️ `https://kdt-api-function.azurewebsites.net` 을 브라우저에서 직접 부르면 100% 실패합니다.**
+Alan 서버가 `Access-Control-Allow-Origin` 을 내려주지 않아 CORS 로 차단됩니다.
+
+```
+Access to fetch at 'https://kdt-api-function.azurewebsites.net/...' from origin
+'http://localhost:3000' has been blocked by CORS policy
+```
+
+그래서 `next.config.mjs` 에 same-origin 우회 경로를 열어뒀습니다. **`/alan` 으로 부르세요.**
+
+```
+브라우저 ──► /alan/question ──(Next.js rewrite)──► kdt-api-function.azurewebsites.net/api/v1/question
+```
+
+| 엔드포인트 | 용도 |
+|---|---|
+| `GET /alan/question?content=&client_id=` | 한 번에 답변 (`{ answer, references }`) |
+| `GET /alan/question/sse-streaming?content=&client_id=` | 스트리밍 (`text/event-stream`) |
+| `DELETE /alan/reset-state` (body `{ client_id }`) | 대화 상태 초기화 |
+
+```js
+const BASE = process.env.NEXT_PUBLIC_ALAN_BASE_URL;
+const CLIENT_ID = process.env.NEXT_PUBLIC_ALAN_CLIENT_ID;
+
+export async function askAlan(content) {
+  const q = new URLSearchParams({ content, client_id: CLIENT_ID });
+  const res = await fetch(`${BASE}/question?${q}`);
+  if (!res.ok) throw new Error(`Alan ${res.status}`);
+  const { answer } = await res.json();
+  return answer;
+}
+```
+
+스트리밍은 `event: speak | action | complete` 형태로 내려옵니다.
+
+```
+event: speak
+data: {"type": "speak", "data": "질문의 의도를 이해하고 있어요."}
+event: action
+data: {"type": "action", "data": "search_web"}
+```
+
+**주의할 점**
+
+- **느립니다.** 실측으로 단답형 6초, 웹 검색이 붙으면 **23초**까지 갑니다. 로딩 UI 없이
+  붙이면 멈춘 것처럼 보입니다. 체감이 중요하면 `sse-streaming` 을 쓰세요.
+- `client_id` 는 **할당량 키**입니다. 사람마다 다르고, 브라우저 번들에 그대로 실립니다.
+  공용 계정 키가 아니므로 큰 문제는 아니지만, 배포본에서 남이 가져다 쓰면 본인 할당량이 깎입니다.
+- 답이 빈 문자열(`""`)로 오는 경우가 있습니다. 폴백을 준비하세요.
+- 프롬프트 조립은 전부 프론트 몫입니다. 서버는 관여하지 않습니다.
 
 ### 테스트
 
-이 문서의 스펙은 **유닛 796개 + E2E 367개 = 1,163개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
+이 문서의 스펙은 **유닛 963개 + E2E 485개 = 1,448개** 테스트로 검증돼 있습니다. 자세한 내용은 `TESTING.md`.
 
 ```bash
 npm run test:all
@@ -2117,6 +2523,7 @@ npm run test:all
    자유 텍스트로 쌓이면 통계를 영원히 못 만듭니다.
 4. **PDF 다운로드는 `window.print()` + `@media print`** 로 해주세요.
    서버 렌더링은 반나절 이상 걸립니다.
-5. **프로필 이메일 입력란 옆에 "프로필에 공개됩니다"** 를 표시해주세요.
+5. **타인 프로필 화면에서 이메일 칸을 그리지 마세요.** 항상 `null` 로 내려갑니다.
+   본인 프로필·편집 화면에서만 쓰면 됩니다.
 6. **목록 화면에서 카드마다 반응 API를 부르지 마세요.** 목록을 받은 뒤 id 배열로 **한 번만** 부르면 됩니다.
 7. 나머지 확인 요청 사항은 `DECISIONS.md` 에 정리해 뒀습니다.

@@ -1,4 +1,5 @@
 import { ensureProfile, nextId, nextTimestamp, rows, SCHEMA } from './database';
+import { registeredUsers } from './session';
 
 const VIEW_BASE = {
   v_posts: 'posts',
@@ -7,9 +8,24 @@ const VIEW_BASE = {
   v_companies: 'companies',
 };
 
-const PUBLIC_READ = ['profiles', 'code_master', 'companies', 'resume_templates', 'posts', 'comments', 'reaction_counts'];
+const COLLABORATORS = 'portfolio_collaborators';
+
+const PROFILE_LISTS = [
+  'profile_educations',
+  'profile_careers',
+  'profile_awards',
+  'profile_languages',
+];
+
+const PUBLIC_READ = [
+  'profiles', 'code_master', 'companies', 'resume_templates', 'posts', 'comments',
+  'reaction_counts', ...PROFILE_LISTS,
+];
 const OWNER_READ = ['documents', 'reactions', 'interview_sessions', 'interview_qas'];
-const OWNER_WRITE = ['profiles', 'documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas'];
+const OWNER_WRITE = [
+  'profiles', 'documents', 'portfolios', 'posts', 'comments', 'reactions',
+  'interview_sessions', 'interview_qas', COLLABORATORS, ...PROFILE_LISTS,
+];
 
 const FAULTS = Symbol.for('callback.e2e.faults');
 
@@ -69,6 +85,10 @@ const notFound = () => ({
 });
 
 function canRead(table, row, user) {
+  if (table === COLLABORATORS) {
+    const owner = rows('portfolios').find((p) => p.id === row.portfolio_id);
+    return Boolean(owner) && (owner.status === 'published' || owner.user_id === user?.id);
+  }
   if (PUBLIC_READ.includes(table)) return true;
   if (OWNER_READ.includes(table)) return Boolean(user) && row.user_id === user.id;
   if (table === 'portfolios') return row.status === 'published' || (user && row.user_id === user.id);
@@ -216,7 +236,10 @@ function cascadeDelete(table, row) {
     drop('reactions', (r) => r.target_type === 'post' && r.target_id === row.id);
   }
   if (table === 'comments') drop('reactions', (r) => r.target_type === 'comment' && r.target_id === row.id);
-  if (table === 'portfolios') drop('reactions', (r) => r.target_type === 'portfolio' && r.target_id === row.id);
+  if (table === 'portfolios') {
+    drop('reactions', (r) => r.target_type === 'portfolio' && r.target_id === row.id);
+    drop(COLLABORATORS, (l) => l.portfolio_id === row.id);
+  }
   if (table === 'interview_sessions') {
     drop('interview_qas', (q) => q.session_id === row.id);
     drop('reactions', (r) => r.target_type === 'interview_qa');
@@ -537,7 +560,7 @@ function incrementView(_user, { p_target_type, p_target_id }) {
 function deleteMyAccount(user) {
   if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
 
-  for (const table of ['documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas']) {
+  for (const table of ['documents', 'portfolios', 'posts', 'comments', 'reactions', 'interview_sessions', 'interview_qas', ...PROFILE_LISTS]) {
     const store = rows(table);
     for (const row of store.filter((r) => r.user_id === user.id)) {
       store.splice(store.indexOf(row), 1);
@@ -563,16 +586,249 @@ function recommendedCompanies(user, { p_limit = 6 } = {}) {
   return { data: list.slice(0, limit), error: null };
 }
 
+const LIST_SPECS = {
+  p_educations: {
+    table: 'profile_educations',
+    toRow: (e) => ({
+      school_type: e.type ?? null,
+      school: e.school ?? null,
+      major: e.major ?? null,
+      status: e.status ?? null,
+      admission: e.admission ?? null,
+      graduation: e.graduation ?? null,
+    }),
+  },
+  p_careers: {
+    table: 'profile_careers',
+    toRow: (c) => ({
+      started_on: c.start ?? null,
+      ended_on: c.end ?? null,
+      company: c.company ?? null,
+      job_role: c.role ?? null,
+    }),
+  },
+  p_awards: {
+    table: 'profile_awards',
+    toRow: (a) => ({ awarded_on: a.date ?? null, title: a.name ?? null }),
+  },
+  p_languages: {
+    table: 'profile_languages',
+    toRow: (l) => ({ language: l.language ?? null, level: l.level ?? null, detail: l.detail ?? null }),
+  },
+};
+
+const CODE_REFS = {
+  profile_educations: { school_type: 'school_type', status: 'edu_status' },
+  profile_languages: { level: 'language_level' },
+};
+
+function violatesCodeReference(table, row) {
+  const refs = CODE_REFS[table];
+  if (!refs) return null;
+
+  for (const [column, group] of Object.entries(refs)) {
+    const value = row[column];
+    if (value === null || value === undefined) continue;
+    const known = rows('code_master').some((c) => c.group_name === group && c.code === value);
+    if (!known) return column;
+  }
+  return null;
+}
+
+function saveProfileLists(user, args = {}) {
+  if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
+
+  const staged = [];
+
+  for (const [param, spec] of Object.entries(LIST_SPECS)) {
+    const list = args[param];
+    if (list === null || list === undefined) continue;
+
+    const prepared = list.map((item, index) => ({
+      id: nextId('profile_list'),
+      user_id: user.id,
+      sort_order: index,
+      ...spec.toRow(item),
+    }));
+
+    for (const row of prepared) {
+      const bad = violatesCodeReference(spec.table, row);
+      if (bad) {
+        return {
+          data: null,
+          error: { code: '23503', message: `insert on table "${spec.table}" violates foreign key constraint on ${bad}` },
+        };
+      }
+    }
+
+    staged.push([spec.table, prepared]);
+  }
+
+  for (const [table, prepared] of staged) {
+    const store = rows(table);
+    for (const row of store.filter((r) => r.user_id === user.id)) {
+      store.splice(store.indexOf(row), 1);
+    }
+    store.push(...prepared);
+  }
+
+  return { data: null, error: null };
+}
+
+function findMemberByEmail(user, { p_email } = {}) {
+  if (!user) return { data: [], error: null };
+
+  const wanted = String(p_email ?? '').trim().toLowerCase();
+  const found = registeredUsers().find((u) => (u.email ?? '').toLowerCase() === wanted);
+  if (!found) return { data: [], error: null };
+
+  const profile = rows('profiles').find((p) => p.id === found.id);
+  if (!profile) return { data: [], error: null };
+
+  return {
+    data: [{ id: profile.id, name: profile.name ?? null, avatar_url: profile.avatar_url ?? null }],
+    error: null,
+  };
+}
+
+function savePortfolioCollaborators(user, { p_portfolio_id, p_user_ids } = {}) {
+  if (!user) return { data: null, error: { message: 'NOT_AUTHENTICATED' } };
+
+  const portfolio = rows('portfolios').find((p) => p.id === p_portfolio_id);
+  if (!portfolio || portfolio.user_id !== user.id) {
+    return { data: null, error: { message: 'PORTFOLIO_NOT_MINE' } };
+  }
+
+  const store = rows('portfolio_collaborators');
+  for (const link of store.filter((l) => l.portfolio_id === p_portfolio_id)) {
+    store.splice(store.indexOf(link), 1);
+  }
+
+  const seen = new Set();
+  let order = 0;
+
+  for (const id of p_user_ids ?? []) {
+    if (!id || id === user.id || seen.has(id)) continue;
+    if (!rows('profiles').some((p) => p.id === id)) {
+      return {
+        data: null,
+        error: { code: '23503', message: 'violates foreign key constraint on user_id' },
+      };
+    }
+    seen.add(id);
+    store.push({
+      portfolio_id: p_portfolio_id,
+      user_id: id,
+      sort_order: order,
+      created_at: nextTimestamp(),
+    });
+    order += 1;
+  }
+
+  return { data: null, error: null };
+}
+
+function myProfileEmail(user) {
+  if (!user) return { data: null, error: { code: '42501', message: 'permission denied' } };
+  const profile = rows('profiles').find((p) => p.id === user.id);
+  return { data: profile?.email ?? null, error: null };
+}
+
 const RPCS = {
   toggle_reaction: toggleReaction,
   increment_view: incrementView,
   delete_my_account: deleteMyAccount,
   get_recommended_companies: recommendedCompanies,
+  my_profile_email: myProfileEmail,
+  save_profile_lists: saveProfileLists,
+  find_member_by_email: findMemberByEmail,
+  save_portfolio_collaborators: savePortfolioCollaborators,
 };
+
+const OBJECTS = Symbol.for('callback.e2e.storage');
+
+function objects() {
+  if (!globalThis[OBJECTS]) globalThis[OBJECTS] = new Map();
+  return globalThis[OBJECTS];
+}
+
+export function resetStorage() {
+  objects().clear();
+}
+
+export function putObject(bucket, path, body = 'x', createdAt = new Date().toISOString()) {
+  objects().set(`${bucket}/${path}`, { body, createdAt });
+}
+
+export function ageObject(bucket, path, createdAt) {
+  const found = objects().get(`${bucket}/${path}`);
+  if (found) found.createdAt = createdAt;
+}
+
+function stampOf(key) {
+  return objects().get(key)?.createdAt ?? new Date().toISOString();
+}
+
+export function listObjects(bucket) {
+  return [...objects().keys()]
+    .filter((key) => key.startsWith(`${bucket}/`))
+    .map((key) => key.slice(bucket.length + 1))
+    .sort();
+}
+
+function createStorage(user) {
+  return {
+    from: (bucket) => ({
+      async upload(path, file) {
+        if (!user) return { data: null, error: { message: 'not authenticated' } };
+        putObject(bucket, path, file);
+        return { data: { path }, error: null };
+      },
+      async list(prefix) {
+        const owned = listObjects(bucket).filter(
+          (path) => !user || path.startsWith(`${user.id}/`)
+        );
+
+        const seen = new Map();
+        for (const path of owned) {
+          if (!path.startsWith(`${prefix}/`)) continue;
+          const rest = path.slice(prefix.length + 1);
+          const slash = rest.indexOf('/');
+          const name = slash === -1 ? rest : rest.slice(0, slash);
+          if (seen.has(name)) continue;
+          seen.set(name, {
+            name,
+            id: slash === -1 ? 'file' : null,
+            created_at: stampOf(`${bucket}/${path}`),
+          });
+        }
+        return { data: [...seen.values()], error: null };
+      },
+      async remove(paths) {
+        for (const path of paths) {
+          if (user && !path.startsWith(`${user.id}/`)) continue;
+          objects().delete(`${bucket}/${path}`);
+        }
+        return { data: paths.map((name) => ({ name })), error: null };
+      },
+      async download(path) {
+        if (!user || !path.startsWith(`${user.id}/`)) {
+          return { data: null, error: { message: 'not found' } };
+        }
+        const found = objects().get(`${bucket}/${path}`);
+        if (found === undefined) return { data: null, error: { message: 'not found' } };
+        return { data: new Blob([String(found.body)], { type: 'image/png' }), error: null };
+      },
+      getPublicUrl: (path) => ({ data: { publicUrl: `https://storage.test/${bucket}/${path}` } }),
+    }),
+  };
+}
 
 export function createSupabase(user) {
   return {
     from: (table) => new Query(table, user),
+
+    storage: createStorage(user),
 
     rpc(name, args) {
       const fault = takeFault('rpcs', name);

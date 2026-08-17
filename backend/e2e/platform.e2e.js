@@ -164,6 +164,12 @@ describe('what a signed-out visitor may see', () => {
     await expect(listTemplates()).resolves.toMatchObject({ total: 3 });
   });
 
+  it('sees no template bookmark of its own', async () => {
+    const { items } = await listTemplates();
+
+    expect(items.every((t) => t.bookmarkedByMe === false)).toBe(true);
+  });
+
   it('may read the filter options', async () => {
     await expect(getCodes('job_role')).resolves.toHaveLength(2);
   });

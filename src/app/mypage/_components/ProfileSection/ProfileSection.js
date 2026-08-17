@@ -5,6 +5,8 @@ export default function ProfileSection({
   title,
   hideEdit = false,
   isEditing = false,
+  isLocked = false,
+  isSaving = false,
   onEdit,
   onCancel,
   onSave,
@@ -29,15 +31,18 @@ export default function ProfileSection({
               <button
                 type='button'
                 className={`${styles.profile_section_save} font_body_l_b`}
+                disabled={isSaving}
                 onClick={onSave}
               >
-                저장
+                {isSaving ? '저장 중…' : '저장'}
               </button>
             </div>
           ) : (
             <button
               type='button'
               className={`${styles.profile_section_edit} font_body_l_b`}
+              disabled={isLocked}
+              title={isLocked ? '수정 중인 섹션을 먼저 저장하거나 취소해주세요' : undefined}
               onClick={onEdit}
             >
               수정

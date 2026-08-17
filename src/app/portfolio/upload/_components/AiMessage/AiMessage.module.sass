@@ -1,1 +1,160 @@
 @use '@/app/_variables' as *
+
+.bubble
+  width: 100%
+  color: $black
+  line-height: 1.7
+  word-break: break-word
+  font-family: 'Pretendard'
+
+  // 문단
+  p
+    margin: 0 0 .75rem
+
+    &:last-child
+      margin-bottom: 0
+
+  // 굵게
+  strong
+    font-weight: 700
+
+  // 기울임
+  em
+    font-style: italic
+
+  // 제목
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6
+    margin: 1.25rem 0 .5rem
+    font-weight: 700
+    line-height: 1.4
+
+    &:first-child
+      margin-top: 0
+
+  h1
+    font-size: 1.5rem
+
+  h2
+    font-size: 1.35rem
+
+  h3
+    font-size: 1.2rem
+
+  h4
+    font-size: 1.1rem
+
+  h5,
+  h6
+    font-size: 1rem
+
+  // 리스트
+  ul,
+  ol
+    margin: .75rem 0
+    padding-left: 1.5rem
+
+  ul
+    list-style: disc
+
+  ol
+    list-style: decimal
+
+  li
+    margin: .25rem 0
+    padding-left: .25rem
+
+    p
+      margin: 0
+
+  // 중첩 리스트
+  ul ul,
+  ol ul
+    list-style: circle
+
+  ul ul ul,
+  ol ul ul
+    list-style: square
+
+  // 인라인 코드
+  code
+    padding: .15rem .35rem
+    border-radius: 4px
+    color: $brown
+    background: $light_yellow
+    font-family: monospace
+    font-size: .9em
+    word-break: break-word
+
+  // 코드 블록
+  pre
+    width: 100%
+    margin: .75rem 0
+    padding: 1rem
+    overflow-x: auto
+    border-radius: 8px
+    background: $light_gray
+    line-height: 1.6
+
+    code
+      padding: 0
+      background: transparent
+      font-size: .875rem
+      word-break: normal
+      white-space: pre
+
+  // 인용문
+  blockquote
+    margin: .75rem 0
+    padding-left: 1rem
+    border-left: 3px solid $amber
+    color: $brown
+
+    p
+      margin: 0
+
+  // 링크
+  a
+    color: $amber
+    text-decoration: underline
+    text-underline-offset: 2px
+    cursor: pointer
+
+    &:hover
+      opacity: .7
+
+  // 구분선
+  hr
+    margin: 1.25rem 0
+    border: 0
+    border-top: 1px solid $stroke3
+
+  // 표
+  table
+    width: 100%
+    margin: .75rem 0
+    border-collapse: collapse
+    font-size: .9rem
+
+  th,
+  td
+    padding: .5rem .75rem
+    border: 1px solid $stroke3
+    text-align: left
+    vertical-align: top
+
+  th
+    background: $light_gray
+    font-weight: 700
+
+  // 이미지
+  img
+    display: block
+    max-width: 100%
+    height: auto
+    margin: .75rem 0
+    border-radius: 8px

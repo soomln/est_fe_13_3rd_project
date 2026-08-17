@@ -1,0 +1,49 @@
+@use '@/app/_variables.sass' as *
+
+// flex 부모(에디터) 안에서도 남은 폭을 다 차지해야 화면 한가운데에 온다
+.error_state
+  flex: 1
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  width: 100%
+  min-height: 320px
+  padding: 100px 0
+  text-align: center
+
+.error_state_icon
+  font-size: 48px
+  color: $stroke1
+
+.error_state_title
+  margin-top: 16px
+  color: $black
+
+.error_state_desc
+  margin-top: 8px
+  color: $gray
+
+.error_state_reason
+  margin-top: 8px
+  color: $warning
+
+.error_state_actions
+  display: flex
+  justify-content: center
+  gap: 8px
+  margin-top: 24px
+
+.error_state_btn
+  height: 44px
+  padding: 0 18px
+  line-height: 44px
+  color: $green
+  text-decoration: none
+  cursor: pointer
+  background-color: $white
+  border: 1px solid $green
+  border-radius: 8px
+
+  &:hover
+    background-color: $sub_green

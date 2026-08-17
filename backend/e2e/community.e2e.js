@@ -93,17 +93,17 @@ describe('writing an interview review', () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['REST API 의 장점은?', 'CORS 란?'],
+      questions: 'REST API 의 장점은?\nCORS 란?',
     });
 
-    expect(post).toMatchObject({ postType: 'qbank', questions: ['REST API 의 장점은?', 'CORS 란?'] });
+    expect(post.questionList).toEqual(['REST API 의 장점은?', 'CORS 란?']);
   });
 
   it('counts the questions without being told how many there are', async () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['REST API 의 장점은?', 'CORS 란?', '클로저란?'],
+      questions: 'REST API 의 장점은?\nCORS 란?\n클로저란?',
     });
 
     expect(post.questionCount).toBe(3);
@@ -113,20 +113,65 @@ describe('writing an interview review', () => {
     const post = await createPost({
       postType: 'qbank',
       companyId: naver().id,
-      questions: ['Q1', 'Q2', 'Q3'],
+      questions: 'Q1\nQ2\nQ3',
     });
 
-    const edited = await updatePost(post.id, { questions: ['Q1'] });
+    const edited = await updatePost(post.id, { questions: 'Q1' });
 
     expect(edited.questionCount).toBe(1);
+  });
+
+  it('remembers my reaction when the board is loaded again', async () => {
+    const post = await writeReview();
+    await togglePostLike(post.id);
+    await togglePostScrap(post.id);
+
+    const { items } = await listPosts({ type: 'review' });
+    const card = items.find((p) => p.id === post.id);
+
+    expect(card).toMatchObject({ likedByMe: true, scrappedByMe: true, likeCount: 1, scrapCount: 1 });
+    await expect(getPost(post.id)).resolves.toMatchObject({ likedByMe: true, scrappedByMe: true });
+  });
+
+  it('never marks another member reaction as mine', async () => {
+    const post = await writeReview();
+    await togglePostLike(post.id);
+
+    signInAs(USERS.b);
+    const { items } = await listPosts({ type: 'review' });
+
+    expect(items.find((p) => p.id === post.id)).toMatchObject({ likedByMe: false, likeCount: 1 });
   });
 
   it('rejects an unknown post type', async () => {
     await expect(createPost({ postType: 'diary' })).rejects.toMatchObject({ status: 400 });
   });
 
+  it('rejects a difficulty score outside the 1 to 5 scale', async () => {
+    await expect(writeReview({ difficultyScore: 6 })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects a half point difficulty score', async () => {
+    await expect(writeReview({ difficultyScore: 3.5 })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('holds the question bank problem score to the same scale', async () => {
+    const write = (problemScore) =>
+      createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q', problemScore });
+
+    await expect(write(4.5)).rejects.toMatchObject({ status: 400 });
+    await expect(write(6)).rejects.toMatchObject({ status: 400 });
+    expect((await write(4)).problemScore).toBe(4);
+  });
+
+  it('keeps a whole point difficulty score', async () => {
+    const post = await writeReview({ difficultyScore: 1 });
+
+    expect(post.difficultyScore).toBe(1);
+  });
+
   it('rejects questions that are not a list', async () => {
-    await expect(createPost({ postType: 'qbank', questions: 'nope' })).rejects.toMatchObject({
+    await expect(createPost({ postType: 'qbank', questions: ['nope'] })).rejects.toMatchObject({
       status: 400,
     });
   });
@@ -159,7 +204,7 @@ describe('reading the board', () => {
   it('separates reviews from question banks', async () => {
     signInAs(USERS.a);
     await writeReview();
-    await createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'] });
+    await createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q' });
 
     await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: 1 });
     await expect(listPosts({ type: 'qbank' })).resolves.toMatchObject({ total: 1 });
@@ -265,7 +310,7 @@ describe('my posts and scraps', () => {
   it('separates my reviews from my question banks', async () => {
     signInAs(USERS.a);
     await writeReview();
-    await createPost({ postType: 'qbank', companyId: naver().id, questions: ['Q'] });
+    await createPost({ postType: 'qbank', companyId: naver().id, questions: 'Q' });
 
     await expect(listMyReviews()).resolves.toMatchObject({ total: 1 });
     await expect(listMyQbanks()).resolves.toMatchObject({ total: 1 });
@@ -459,6 +504,31 @@ describe('commenting on a post', () => {
     await expect(listComments(post.id, { sort: 'random' })).rejects.toMatchObject({ status: 400 });
   });
 
+  it('remembers my comment like when the list is loaded again', async () => {
+    const comment = await createComment(post.id, '댓글');
+    await toggleCommentLike(comment.id);
+
+    const { items } = await listComments(post.id);
+
+    expect(items.find((c) => c.id === comment.id)).toMatchObject({
+      likedByMe: true,
+      likeCount: 1,
+    });
+  });
+
+  it('never marks another member comment like as mine', async () => {
+    const comment = await createComment(post.id, '댓글');
+    await toggleCommentLike(comment.id);
+
+    signInAs(USERS.b);
+    const { items } = await listComments(post.id);
+
+    expect(items.find((c) => c.id === comment.id)).toMatchObject({
+      likedByMe: false,
+      likeCount: 1,
+    });
+  });
+
   it('marks which comments the member liked', async () => {
     const comment = await createComment(post.id, '댓글');
     await toggleCommentLike(comment.id);
@@ -507,5 +577,296 @@ describe('commenting on a post', () => {
 
     expect(page.items).toHaveLength(1);
     expect(page.total).toBe(3);
+  });
+});
+
+describe('sorting the board', () => {
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await writeReview({ title: '먼저 쓴 글' });
+    await writeReview({ title: '나중에 쓴 글' });
+  });
+
+  it('sorts oldest first', async () => {
+    const { items } = await listPosts({ type: 'review', sort: 'oldest' });
+
+    expect(items[0].title).toBe('먼저 쓴 글');
+  });
+
+  it('sorts by company name', async () => {
+    const { items } = await listPosts({ type: 'review', sort: 'company' });
+
+    const names = items.map((p) => p.companyName);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('rejects a sort it does not know', async () => {
+    await expect(listPosts({ sort: 'random' })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('sorting my scrapped posts', () => {
+  let first;
+  let second;
+
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    first = await writeReview({ title: '먼저 담을 글' });
+    second = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'Q1',
+      title: '나중에 담을 글',
+    });
+
+    signInAs(USERS.b);
+    await togglePostScrap(first.id);
+    await togglePostScrap(second.id);
+  });
+
+  it('shows the one I scrapped last at the top', async () => {
+    const { items, total } = await listMyScrappedPosts();
+
+    expect(total).toBe(2);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('flips to the one I scrapped first', async () => {
+    const { items } = await listMyScrappedPosts({ sort: 'oldest' });
+
+    expect(items[0].id).toBe(first.id);
+  });
+
+  it('still narrows by type', async () => {
+    const { items, total } = await listMyScrappedPosts({ type: 'qbank' });
+
+    expect(total).toBe(1);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('sorts by company name', async () => {
+    const { items } = await listMyScrappedPosts({ sort: 'company' });
+
+    const names = items.map((p) => p.companyName);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('rejects a sort the scrap list does not have', async () => {
+    await expect(listMyScrappedPosts({ sort: 'views' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('drops out of the list once I unscrap it', async () => {
+    await togglePostScrap(second.id);
+
+    await expect(listMyScrappedPosts()).resolves.toMatchObject({ total: 1 });
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(listMyScrappedPosts()).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('면접 후기·족보의 직무', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it('keeps the job role through save and reload', async () => {
+    const post = await writeReview({ jobRoleCode: 'be' });
+
+    const reopened = await getPost(post.id);
+
+    expect(reopened).toMatchObject({ jobRole: '백엔드', jobRoleCode: 'be' });
+  });
+
+  it('records the job role on a qbank as well', async () => {
+    const post = await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'REST 란?',
+      jobRoleCode: 'fe',
+    });
+
+    await expect(getPost(post.id)).resolves.toMatchObject({ jobRoleCode: 'fe' });
+  });
+
+  it('lets the writer change the job role later', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const edited = await updatePost(post.id, { jobRoleCode: 'be' });
+
+    expect(edited).toMatchObject({ jobRole: '백엔드', jobRoleCode: 'be' });
+  });
+
+  it('lets the writer clear it', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const edited = await updatePost(post.id, { jobRoleCode: null });
+
+    expect(edited).toMatchObject({ jobRole: '', jobRoleCode: null });
+  });
+
+  it('refuses a job role that is not a real code', async () => {
+    await expect(writeReview({ jobRoleCode: 'frontned' })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('writes nothing when the job role is refused', async () => {
+    const before = (await listPosts({ type: 'review' })).total;
+
+    await expect(writeReview({ jobRoleCode: 'nope' })).rejects.toMatchObject({ status: 400 });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: before });
+  });
+
+  it('is optional', async () => {
+    const post = await writeReview({ jobRoleCode: undefined });
+
+    await expect(getPost(post.id)).resolves.toMatchObject({ jobRoleCode: null });
+  });
+
+  it('narrows the board to one job role', async () => {
+    await writeReview({ jobRoleCode: 'fe' });
+    await writeReview({ jobRoleCode: 'be' });
+
+    const { items } = await listPosts({ type: 'review', jobRole: 'be' });
+
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((p) => p.jobRoleCode === 'be')).toBe(true);
+  });
+
+  it('shows the label next to the raw code so both are usable', async () => {
+    const post = await writeReview({ jobRoleCode: 'fe' });
+
+    const { items } = await listPosts({ type: 'review' });
+    const mine = items.find((p) => p.id === post.id);
+
+    expect(mine.jobRole).toBe('프론트엔드');
+    expect(mine.jobRoleCode).toBe('fe');
+    expect(mine.jobInfo).toContain('프론트엔드');
+  });
+});
+
+describe('코드 컬럼은 라벨을 거부한다', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it.each([
+    ['difficultyCode', '어려움'],
+    ['passResultCode', '합격'],
+    ['channelCode', '온라인'],
+    ['educationLevel', '대졸'],
+    ['jobRoleCode', '프론트엔드'],
+  ])('refuses a label in %s', async (field, label) => {
+    await expect(writeReview({ [field]: label })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('says which value was wrong and what is allowed', async () => {
+    await expect(writeReview({ difficultyCode: '어려움' })).rejects.toThrowError(/어려움/);
+  });
+
+  it('accepts the whole set of real codes', async () => {
+    const post = await writeReview({
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+      educationLevel: 'bachelor',
+      jobRoleCode: 'fe',
+    });
+
+    expect(post).toMatchObject({
+      difficulty: '어려움',
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+      jobRoleCode: 'fe',
+    });
+  });
+
+  it('still allows the free-text channel behind etc', async () => {
+    const post = await writeReview({ channelCode: 'etc', channelEtc: '잡코리아' });
+
+    expect(post).toMatchObject({ channel: '잡코리아', channelCode: 'etc' });
+  });
+
+  it('writes nothing when a code is refused', async () => {
+    const before = (await listPosts({ type: 'review' })).total;
+
+    await expect(writeReview({ passResultCode: '합격' })).rejects.toMatchObject({ status: 400 });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: before });
+  });
+});
+
+describe('난이도 · 합격 여부로 목록 좁히기', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it('narrows the board to one difficulty', async () => {
+    await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    const { items, total } = await listPosts({ type: 'review', difficulty: 'easy' });
+
+    expect(total).toBe(1);
+    expect(items.every((p) => p.difficultyCode === 'easy')).toBe(true);
+  });
+
+  it('narrows the board to one pass result', async () => {
+    await writeReview({ passResultCode: 'pass' });
+    await writeReview({ passResultCode: 'fail' });
+
+    const { items, total } = await listPosts({ type: 'review', passResult: 'fail' });
+
+    expect(total).toBe(1);
+    expect(items.every((p) => p.passResultCode === 'fail')).toBe(true);
+  });
+
+  it('applies both at once', async () => {
+    await writeReview({ difficultyCode: 'hard', passResultCode: 'pass' });
+    await writeReview({ difficultyCode: 'hard', passResultCode: 'fail' });
+    await writeReview({ difficultyCode: 'easy', passResultCode: 'fail' });
+
+    const { items, total } = await listPosts({
+      type: 'review',
+      difficulty: 'hard',
+      passResult: 'fail',
+    });
+
+    expect(total).toBe(1);
+    expect(items[0]).toMatchObject({ difficultyCode: 'hard', passResultCode: 'fail' });
+  });
+
+  it('counts every match instead of only the ones on this page', async () => {
+    for (let i = 0; i < 3; i += 1) await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    const page = await listPosts({ type: 'review', difficulty: 'hard', pageSize: 2 });
+
+    expect(page.total).toBe(3);
+    expect(page.items).toHaveLength(2);
+  });
+
+  it('filters a qbank list the same way', async () => {
+    await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'REST 란?',
+      difficultyCode: 'hard',
+    });
+    await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'CORS 란?',
+      difficultyCode: 'easy',
+    });
+
+    await expect(listPosts({ type: 'qbank', difficulty: 'hard' })).resolves.toMatchObject({
+      total: 1,
+    });
+  });
+
+  it('leaves the board alone when neither is given', async () => {
+    await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: 2 });
   });
 });

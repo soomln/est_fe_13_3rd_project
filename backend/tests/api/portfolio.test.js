@@ -14,6 +14,8 @@ const {
   createPortfolio,
   deletePortfolio,
   deletePortfolios,
+  findMemberByEmail,
+  setPortfolioCollaborators,
   getMyPortfolioReactions,
   getPortfolio,
   incrementPortfolioView,
@@ -208,40 +210,35 @@ describe('reactions', () => {
 });
 
 describe('listMyBookmarkedPortfolios', () => {
-  it('makes no further request when nothing is scrapped', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
-
-    await expect(listMyBookmarkedPortfolios()).resolves.toEqual({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 9,
-    });
-    expect(apiFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns items sorted in the scrapped order', async () => {
+  it('asks the server for my scrapped portfolios', async () => {
     mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['c', 'a', 'b'] },
-      'GET /api/portfolios': { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] },
+      'GET /api/portfolios': { items: [{ id: 'a' }], total: 1, page: 1, pageSize: 9 },
     });
 
     const result = await listMyBookmarkedPortfolios();
 
-    expect(result.items.map((i) => i.id)).toEqual(['c', 'a', 'b']);
-    expect(result.total).toBe(3);
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios', {
+      query: { scrapped: 1, sort: 'latest', page: 1, pageSize: 9 },
+    });
+    expect(result.total).toBe(1);
   });
 
-  it('fetches only the ids on the requested page', async () => {
-    mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['a', 'b', 'c', 'd'] },
-      'GET /api/portfolios': { items: [{ id: 'c' }, { id: 'd' }] },
+  it('passes the chosen sort and page through', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0 } });
+
+    await listMyBookmarkedPortfolios({ sort: 'title', page: 3, pageSize: 4 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios', {
+      query: { scrapped: 1, sort: 'title', page: 3, pageSize: 4 },
     });
+  });
 
-    const result = await listMyBookmarkedPortfolios({ page: 2, pageSize: 2 });
+  it('needs only one request', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/portfolios': { items: [], total: 0 } });
 
-    expect(apiFetch.mock.calls[1][1].query).toEqual({ ids: 'c,d', pageSize: 2 });
-    expect(result).toMatchObject({ total: 4, page: 2, pageSize: 2 });
+    await listMyBookmarkedPortfolios();
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -334,5 +331,39 @@ describe('uploadPortfolioImages', () => {
       '이미지는 최대 15장까지 올릴 수 있습니다.'
     );
     expect(storage.uploads).toHaveLength(0);
+  });
+});
+
+describe('findMemberByEmail', () => {
+  it('asks the lookup endpoint with the email', async () => {
+    mockApiFetch(apiFetch, {
+      'GET /api/members/lookup': { member: { id: 'u2', name: '김프론트', avatarUrl: null } },
+    });
+
+    await expect(findMemberByEmail('a@b.com')).resolves.toEqual({
+      id: 'u2',
+      name: '김프론트',
+      avatarUrl: null,
+    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/members/lookup', { query: { email: 'a@b.com' } });
+  });
+
+  it('unwraps a miss into null', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/members/lookup': { member: null } });
+
+    await expect(findMemberByEmail('nobody@b.com')).resolves.toBeNull();
+  });
+});
+
+describe('setPortfolioCollaborators', () => {
+  it('patches the portfolio with the id list', async () => {
+    mockApiFetch(apiFetch, { 'PATCH /api/portfolios/f1': { id: 'f1', collaborators: [] } });
+
+    await setPortfolioCollaborators('f1', ['u2', 'u3']);
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/portfolios/f1', {
+      method: 'PATCH',
+      body: { collaboratorIds: ['u2', 'u3'] },
+    });
   });
 });

@@ -1,0 +1,46 @@
+@use '@/app/_variables.sass' as *
+
+.pie
+  display: flex
+  flex-direction: column
+  gap: 20px
+  width: 100%
+
+.pie_title
+  color: $green
+
+.pie_body
+  display: flex
+  align-items: center
+  gap: 30px
+
+.pie_chart
+  flex-shrink: 0
+  width: 176px
+  height: 176px
+
+.pie_legend
+  display: flex
+  flex-direction: column
+  gap: 11px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.pie_legend_item
+  display: flex
+  align-items: center
+  gap: 11px
+
+.pie_dot
+  flex-shrink: 0
+  width: 30px
+  height: 30px
+  border-radius: 50%
+
+.pie_legend_text
+  display: flex
+  align-items: center
+  justify-content: space-between
+  width: 170px
+  color: $gray

@@ -1,0 +1,136 @@
+@use '@/app/_variables' as *
+
+$code-font: 'Consolas', 'Monaco', monospace
+
+.code_block
+  width: 100%
+  overflow: hidden
+  border: 1px solid $stroke3
+  border-radius: 8px
+  background: $light_green
+
+.header
+  min-height: 44px
+  padding: 0 .75rem 0 1rem
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 1rem
+  border-bottom: 1px solid $stroke3
+
+.file_info
+  flex: 1
+  min-width: 0
+
+.filename_input
+  width: 100%
+  padding: .4rem 0
+  border: none
+  outline: none
+  background: transparent
+  color: $black
+  font-size: 12px
+
+.filename
+  display: block
+  overflow: hidden
+  color: $gray
+  font-size: 12px
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.actions
+  display: flex
+  align-items: center
+  gap: .25rem
+  flex-shrink: 0
+
+.language_select,
+.language
+  padding: .35rem .5rem
+  color: $gray
+  font-size: 12px
+
+.language_select
+  border: none
+  border-radius: 4px
+  outline: none
+  background: transparent
+  cursor: pointer
+
+  &:hover
+    background: rgba(0, 0, 0, .05)
+
+.remove_btn
+  display: flex
+  justify-content: center
+  align-items: center
+  border: none
+  border-radius: 4px
+  background: transparent
+  color: $gray
+  cursor: pointer
+
+  &:hover
+    background: rgba(0, 0, 0, .05)
+
+.remove_btn
+  width: 30px
+  height: 30px
+
+  span
+    font-size: 18px
+
+.editor
+  display: block
+  width: 100%
+  min-height: 320px
+  padding: 1rem
+  border: none
+  outline: none
+  resize: vertical
+  background: transparent
+  color: $black
+  font-family: $code-font
+  font-size: 14px
+  line-height: 1.7
+  tab-size: 2
+
+.filename_input,
+.editor
+  &::placeholder
+    color: $stroke1
+    font-family: 'Pretendard'
+    font-size: 14px
+
+.highlighted_code
+  width: 100%
+  overflow-x: auto
+
+  :global(.shiki)
+    width: 100%
+    margin: 0
+    padding: 1rem
+    overflow-x: auto
+    border-radius: 0
+    font-family: $code-font
+    font-size: 14px
+    line-height: 1.7
+
+    code
+      font: inherit
+
+.fallback_code
+  width: 100%
+  margin: 0
+  padding: 1rem
+  overflow-x: auto
+  background: transparent
+  color: $black
+  font-family: $code-font
+  font-size: 14px
+  line-height: 1.7
+  white-space: pre
+
+  code
+    font: inherit

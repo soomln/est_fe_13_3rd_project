@@ -93,7 +93,8 @@ describe('records with almost nothing filled in', () => {
       companyLogo: null,
       title: '',
       body: '',
-      questions: [],
+      questions: '',
+      questionList: [],
       tags: [],
       overallComment: '',
       difficulty: '',
@@ -121,7 +122,9 @@ describe('records with almost nothing filled in', () => {
       likeCount: 0,
       bookmarkCount: 0,
       viewCount: 0,
-      content: [],
+      overview: [],
+      document: [],
+      code: [],
     });
   });
 

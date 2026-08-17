@@ -1,1 +1,1 @@
-export {default} from './CoreFeatureCard';
+export { default } from './CoreFeatureCard';

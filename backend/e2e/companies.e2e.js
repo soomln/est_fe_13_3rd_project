@@ -32,7 +32,22 @@ describe('browsing companies', () => {
       slug: 'naver',
       name: '네이버',
       category: 'IT·소프트웨어',
+      size: '대기업',
       location: '분당',
+    });
+  });
+
+  it('answers null for a company with no size', async () => {
+    const page = await listCompanies();
+    const sparse = page.items.find((c) => c.slug === 'sparse');
+
+    expect(sparse.size).toBeNull();
+  });
+
+  it('carries the size label into the detail too', async () => {
+    await expect(getCompany('naver')).resolves.toMatchObject({
+      category: 'IT·소프트웨어',
+      size: '대기업',
     });
   });
 
@@ -76,6 +91,17 @@ describe('browsing companies', () => {
     const page = await listCompanies({ sort: 'name' });
 
     expect(page.items.map((c) => c.name)).toEqual(['네이버', '정보없는회사', '카카오']);
+  });
+
+  it('remembers my bookmark when the list is loaded again', async () => {
+    signInAs(USERS.a);
+    await toggleCompanyBookmark(naver().id);
+
+    const { items } = await listCompanies();
+    const card = items.find((c) => c.id === naver().id);
+
+    expect(card).toMatchObject({ bookmarkedByMe: true, favorite: 1 });
+    await expect(getCompany('naver')).resolves.toMatchObject({ bookmarkedByMe: true });
   });
 
   it('rejects an unknown sort', async () => {

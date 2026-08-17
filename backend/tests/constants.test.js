@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { DOCUMENT_LIMIT, PAGE_SIZE, REACTION, SORT, UPLOAD_LIMIT } from '../lib/constants';
+import {
+  DOCUMENT_LIMIT,
+  PAGE_SIZE,
+  REACTION,
+  SCORE_SCALE,
+  SORT,
+  UPLOAD_LIMIT,
+} from '../lib/constants';
 
 describe('PAGE_SIZE', () => {
   it('holds the values measured from the design', () => {
@@ -17,6 +24,8 @@ describe('PAGE_SIZE', () => {
       scrappedCompanies: 9,
       myPortfolios: 9,
       comments: 20,
+      homeCompanies: 3,
+      homePortfolios: 5,
     });
   });
 
@@ -34,6 +43,12 @@ describe('SORT', () => {
 describe('DOCUMENT_LIMIT', () => {
   it('is 10 per document type', () => {
     expect(DOCUMENT_LIMIT).toBe(10);
+  });
+});
+
+describe('SCORE_SCALE', () => {
+  it('is a 1 to 5 scale in whole points', () => {
+    expect(SCORE_SCALE).toEqual({ min: 1, max: 5, step: 1 });
   });
 });
 

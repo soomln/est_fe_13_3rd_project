@@ -1,28 +1,48 @@
 'use client';
 
 import { getCurrentUser, OAUTH_PROVIDERS, onAuthChange, signInWith, signOut } from '@backend/lib/api/auth';
-import { getCodes } from '@backend/lib/api/codes';
-import { getCompany, listCompanies } from '@backend/lib/api/companies';
+import { getCodeGroups, getCodes, labelOf } from '@backend/lib/api/codes';
+import {
+  getCompany,
+  getMyBookmarkedCompanyIds,
+  getRecommendedCompanies,
+  incrementCompanyView,
+  listCompanies,
+  toggleCompanyBookmark,
+} from '@backend/lib/api/companies';
 import {
   createDocument,
   createDocumentFromTemplate,
+  createDocumentDraftId,
+  deleteDocument,
   deleteDocuments,
   listMyDocuments,
+  removeDocumentImages,
   updateDocument,
+  uploadDocumentImages,
 } from '@backend/lib/api/documents';
 import {
   createPortfolio,
   deletePortfolios,
+  findMemberByEmail,
   getPortfolio,
+  incrementPortfolioView,
   listMyPortfolios,
   listPortfolios,
   publishPortfolio,
+  setPortfolioCollaborators,
   togglePortfolioBookmark,
   togglePortfolioLike,
   updatePortfolio,
   uploadPortfolioImages,
 } from '@backend/lib/api/portfolio';
-import { createComment, deleteComment, listComments, toggleCommentLike } from '@backend/lib/api/comments';
+import {
+  createComment,
+  deleteComment,
+  listComments,
+  toggleCommentLike,
+  updateComment,
+} from '@backend/lib/api/comments';
 import {
   createSession,
   deleteSession,
@@ -38,14 +58,19 @@ import {
 import {
   createPost,
   deletePosts,
+  getPost,
+  incrementPostView,
   listMyPosts,
   listPosts,
   togglePostLike,
   togglePostScrap,
+  updatePost,
 } from '@backend/lib/api/posts';
 import {
   getMyAccount,
   getMySummary,
+  listMyQbanks,
+  listMyReviews,
   listMyScrappedCompanies,
   listMyScrappedPortfolios,
   removeCompanyBookmarks,
@@ -53,11 +78,70 @@ import {
   removePostScraps,
   removeQaScraps,
 } from '@backend/lib/api/mypage';
-import { getMyProfile, getProfileStats } from '@backend/lib/api/profile';
+import {
+  getMyProfile,
+  getProfileStats,
+  removeAvatar,
+  updateProfile,
+  uploadAvatar,
+} from '@backend/lib/api/profile';
 import { listMyScrappedPosts } from '@backend/lib/api/posts';
 import { buildResumeHtmlFromMyProfile } from '@backend/lib/api/resumeFill';
-import { listTemplates } from '@backend/lib/api/templates';
+import {
+  getTemplate,
+  incrementTemplateView,
+  listTemplates,
+  toggleTemplateBookmark,
+} from '@backend/lib/api/templates';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+const ALAN_BASE = process.env.NEXT_PUBLIC_ALAN_BASE_URL;
+const ALAN_CLIENT_ID = process.env.NEXT_PUBLIC_ALAN_CLIENT_ID;
+const ALAN_DIRECT = 'https://kdt-api-function.azurewebsites.net/api/v1';
+
+const DEFAULT_LIST_OPTS = {
+  gallery: 'latest',
+  galleryQuery: '',
+  posts: 'latest',
+  scrapCompanies: 'latest',
+  scrapPosts: 'latest',
+  scrapPortfolios: 'latest',
+};
+
+const SORT_OPTIONS = {
+  gallery: [
+    ['latest', '최신순'],
+    ['oldest', '오래된순'],
+    ['title', '이름순'],
+    ['popular', '인기순'],
+    ['views', '조회순'],
+    ['scraps', '스크랩순'],
+  ],
+  posts: [
+    ['latest', '최신순'],
+    ['oldest', '오래된순'],
+    ['company', '기업이름순'],
+    ['popular', '인기순'],
+    ['scraps', '스크랩순'],
+    ['comments', '댓글순'],
+    ['views', '조회순'],
+  ],
+  scrapCompanies: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['name', '기업이름순'],
+  ],
+  scrapPosts: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['company', '기업이름순'],
+  ],
+  scrapPortfolios: [
+    ['latest', '최근 스크랩순'],
+    ['oldest', '오래전 스크랩순'],
+    ['title', '이름순'],
+  ],
+};
 
 export default function BackendTestPage() {
   const [authError, setAuthError] = useState(null);
@@ -81,6 +165,55 @@ export default function BackendTestPage() {
   const [account, setAccount] = useState(null);
   const [summary, setSummary] = useState(null);
   const [myScraps, setMyScraps] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileForm, setProfileForm] = useState(null);
+  const [recommended, setRecommended] = useState(null);
+  const [templateDetail, setTemplateDetail] = useState(null);
+  const [postDetail, setPostDetail] = useState(null);
+  const [collabTarget, setCollabTarget] = useState(null);
+  const [collabEmail, setCollabEmail] = useState('');
+  const [collabFound, setCollabFound] = useState(null);
+  const [myWritings, setMyWritings] = useState(null);
+  const [codeGroups, setCodeGroups] = useState(null);
+  const [listOpts, setListOpts] = useState(DEFAULT_LIST_OPTS);
+  const [docDraft, setDocDraft] = useState(null);
+  const [postJobRole, setPostJobRole] = useState('frontend');
+  const [alan, setAlan] = useState(null);
+  const [alanBusy, setAlanBusy] = useState(false);
+  const [alanPrompt, setAlanPrompt] = useState('한 문장으로: 좋은 이력서의 조건은?');
+
+  const listOptsRef = useRef(DEFAULT_LIST_OPTS);
+
+  const setListOpt = useCallback((patch) => {
+    listOptsRef.current = { ...listOptsRef.current, ...patch };
+    setListOpts(listOptsRef.current);
+  }, []);
+
+  const patchForm = useCallback((patch) => setProfileForm((prev) => ({ ...prev, ...patch })), []);
+
+  const patchRow = useCallback((field, index, patch) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      [field]: prev[field].map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }, []);
+
+  const addRow = useCallback((field, blank) => {
+    setProfileForm((prev) => ({ ...prev, [field]: [...prev[field], blank] }));
+  }, []);
+
+  const removeRow = useCallback((field, index) => {
+    setProfileForm((prev) => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
+  }, []);
+
+  const toggleCode = useCallback((field, code) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      [field]: prev[field].includes(code)
+        ? prev[field].filter((c) => c !== code)
+        : [...prev[field], code],
+    }));
+  }, []);
 
   useEffect(() => {
     setAuthError(new URLSearchParams(window.location.search).get('auth_error'));
@@ -98,13 +231,14 @@ export default function BackendTestPage() {
     }
 
     try {
+      const o = listOptsRef.current;
       const [nextAccount, nextSummary, companyScraps, postScraps, portfolioScraps] =
         await Promise.all([
           getMyAccount(),
           getMySummary(),
-          listMyScrappedCompanies({ pageSize: 9 }),
-          listMyScrappedPosts({ pageSize: 10 }),
-          listMyScrappedPortfolios({ pageSize: 9 }),
+          listMyScrappedCompanies({ sort: o.scrapCompanies, pageSize: 9 }),
+          listMyScrappedPosts({ sort: o.scrapPosts, pageSize: 10 }),
+          listMyScrappedPortfolios({ sort: o.scrapPortfolios, pageSize: 9 }),
         ]);
 
       setAccount(nextAccount);
@@ -119,6 +253,38 @@ export default function BackendTestPage() {
       setSummary(null);
       setMyScraps(null);
     }
+  }, []);
+
+  const reloadCompanies = useCallback(async () => {
+    const { items } = await listCompanies({ sort: 'name', pageSize: 50 });
+    setCompanies(items);
+  }, []);
+
+  const reloadTemplates = useCallback(async () => {
+    setTemplates(await listTemplates({ sort: 'popular', pageSize: 20 }));
+  }, []);
+
+  const reloadProfile = useCallback(async () => {
+    const me = await getMyProfile();
+    setProfile(me);
+    setProfileForm(
+      me
+        ? {
+            name: me.name ?? '',
+            desired_role: me.desired_role ?? '',
+            career_level: me.career_level ?? '',
+            github_url: me.github_url ?? '',
+            bio: me.bio ?? '',
+            education_level: me.education_level ?? '',
+            educations: me.educations ?? [],
+            careers: me.careers ?? [],
+            languages: me.languages ?? [],
+            awards: me.awards ?? [],
+            skill_codes: me.skill_codes ?? [],
+            interest_codes: me.interest_codes ?? [],
+          }
+        : null
+    );
   }, []);
 
   const runChecks = useCallback(async () => {
@@ -153,10 +319,49 @@ export default function BackendTestPage() {
       return `${roles.slice(0, 3).map((r) => r.label).join(', ')} … (총 ${roles.length}개)`;
     });
 
-    await step('[client] getMyProfile()', async () => {
-      const profile = await getMyProfile();
-      return profile ? `name=${profile.name ?? '(없음)'}` : '비로그인 또는 프로필 없음';
+    await step('[client] getCodeGroups(프로필 편집 8종)', async () => {
+      const groups = await getCodeGroups([
+        'job_role',
+        'career_level',
+        'education_level',
+        'school_type',
+        'edu_status',
+        'language_level',
+        'tech_stack',
+        'interest_field',
+      ]);
+      setCodeGroups(groups);
+      return Object.entries(groups)
+        .map(([g, list]) => `${g} ${list.length}`)
+        .join(' · ');
     });
+
+    await step('[client] labelOf(education_level, bachelor)', async () => {
+      const label = await labelOf('education_level', 'bachelor');
+      if (label !== '대졸') throw new Error(`'대졸' 이 나와야 하는데 '${label}'`);
+      return label;
+    });
+
+    await step('[client] getMyProfile()', async () => {
+      const me = await getMyProfile();
+      return me ? `name=${me.name ?? '(없음)'}` : '비로그인 또는 프로필 없음';
+    });
+
+    await step('[client] getRecommendedCompanies(6)', async () => {
+      const items = await getRecommendedCompanies(6);
+      setRecommended(items);
+      return `${items.length}곳 — ${items.slice(0, 3).map((c) => c.name).join(', ')}`;
+    });
+
+    await step('[client] getMyBookmarkedCompanyIds()', async () => {
+      const me = await getCurrentUser();
+      if (!me) return '비로그인 - 건너뜀';
+      const { items } = await listCompanies({ pageSize: 50 });
+      const marked = await getMyBookmarkedCompanyIds(items.map((c) => c.id));
+      return `${marked.size}곳 관심 등록됨`;
+    });
+
+    await reloadProfile().catch(() => {});
 
     await step('[client] getProfileStats(me)', async () => {
       const me = await getCurrentUser();
@@ -188,7 +393,8 @@ export default function BackendTestPage() {
     }
 
     try {
-      setGallery(await listPortfolios({ pageSize: 20 }));
+      const { gallery: sort, galleryQuery } = listOptsRef.current;
+      setGallery(await listPortfolios({ sort, q: galleryQuery || undefined, pageSize: 20 }));
     } catch (e) {
       setGallery({ error: e.message });
     }
@@ -200,7 +406,7 @@ export default function BackendTestPage() {
     }
 
     try {
-      setPosts(await listPosts({ pageSize: 20 }));
+      setPosts(await listPosts({ sort: listOptsRef.current.posts, pageSize: 20 }));
     } catch (e) {
       setPosts({ error: e.message });
     }
@@ -217,7 +423,7 @@ export default function BackendTestPage() {
 
     setChecks(results);
     setBusy(false);
-  }, [loadMypage]);
+  }, [loadMypage, reloadProfile]);
 
   const reloadInterview = useCallback(async () => {
     setSessions(await listMySessions({ pageSize: 10 }).catch((e) => ({ error: e.message })));
@@ -225,7 +431,7 @@ export default function BackendTestPage() {
   }, []);
 
   const reloadPosts = useCallback(async () => {
-    setPosts(await listPosts({ pageSize: 20 }));
+    setPosts(await listPosts({ sort: listOptsRef.current.posts, pageSize: 20 }));
   }, []);
 
   const openComments = useCallback(async (postId) => {
@@ -234,7 +440,8 @@ export default function BackendTestPage() {
   }, []);
 
   const reloadPortfolios = useCallback(async () => {
-    setGallery(await listPortfolios({ pageSize: 20 }));
+    const { gallery: sort, galleryQuery } = listOptsRef.current;
+    setGallery(await listPortfolios({ sort, q: galleryQuery || undefined, pageSize: 20 }));
     setMyPortfolios(await listMyPortfolios({ pageSize: 20 }).catch((e) => ({ error: e.message })));
   }, []);
 
@@ -263,6 +470,42 @@ export default function BackendTestPage() {
     [log, reloadDocuments]
   );
 
+  const runProfileAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadProfile().catch(() => {});
+    },
+    [log, reloadProfile]
+  );
+
+  const runCompanyAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadCompanies().catch(() => {});
+    },
+    [log, reloadCompanies]
+  );
+
+  const runTemplateAction = useCallback(
+    async (label, fn) => {
+      try {
+        log(true, `${label} — ${(await fn()) ?? '완료'}`);
+      } catch (e) {
+        log(false, `${label} — ${e.message}`);
+      }
+      await reloadTemplates().catch(() => {});
+    },
+    [log, reloadTemplates]
+  );
+
   const runMypageAction = useCallback(
     async (label, fn) => {
       try {
@@ -274,6 +517,61 @@ export default function BackendTestPage() {
     },
     [log, loadMypage]
   );
+
+  const changeSort = useCallback(
+    async (name, value) => {
+      setListOpt({ [name]: value });
+      const reload =
+        name === 'posts' ? reloadPosts : name.startsWith('scrap') ? loadMypage : reloadPortfolios;
+      try {
+        await reload();
+        log(true, `정렬 ${name} → ${value}`);
+      } catch (e) {
+        log(false, `정렬 ${name} → ${value} — ${e.message}`);
+      }
+    },
+    [log, loadMypage, reloadPortfolios, reloadPosts, setListOpt]
+  );
+
+  const callAlan = useCallback(
+    async (base, label) => {
+      if (!ALAN_CLIENT_ID) {
+        setAlan({ ok: false, text: 'NEXT_PUBLIC_ALAN_CLIENT_ID 가 비어 있습니다.' });
+        return;
+      }
+
+      setAlanBusy(true);
+      const startedAt = Date.now();
+      try {
+        const q = new URLSearchParams({ content: alanPrompt, client_id: ALAN_CLIENT_ID });
+        const res = await fetch(`${base}/question?${q}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { answer } = await res.json();
+        const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+        setAlan({ ok: true, text: `${label} ${secs}초 — ${answer || '(빈 응답)'}` });
+        log(true, `Alan ${label} — ${secs}초`);
+      } catch (e) {
+        setAlan({ ok: false, text: `${label} 실패 — ${e.message}` });
+        log(false, `Alan ${label} — ${e.message}`);
+      }
+      setAlanBusy(false);
+    },
+    [alanPrompt, log]
+  );
+
+  const askAlan = useCallback(() => callAlan(ALAN_BASE, '/alan 경유'), [callAlan]);
+
+  const askAlanDirect = useCallback(() => callAlan(ALAN_DIRECT, '직접 호출'), [callAlan]);
+
+  const searchGallery = useCallback(async () => {
+    const keyword = listOptsRef.current.galleryQuery;
+    try {
+      await reloadPortfolios();
+      log(true, `갤러리 검색 "${keyword || '(전체)'}"`);
+    } catch (e) {
+      log(false, `갤러리 검색 "${keyword}" — ${e.message}`);
+    }
+  }, [log, reloadPortfolios]);
 
   useEffect(() => {
     runChecks();
@@ -351,6 +649,47 @@ export default function BackendTestPage() {
       </section>
 
       <section style={S.card}>
+        <h2 style={S.h2}>2-1. Alan AI 연결</h2>
+
+        <ul style={S.summary}>
+          <li>
+            BASE_URL <b>{ALAN_BASE || '(없음)'}</b>
+          </li>
+          <li>
+            CLIENT_ID <b>{ALAN_CLIENT_ID ? `${ALAN_CLIENT_ID.slice(0, 8)}…` : '(없음)'}</b>
+          </li>
+        </ul>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <input
+            value={alanPrompt}
+            onChange={(e) => setAlanPrompt(e.target.value)}
+            placeholder='Alan 에게 물어볼 내용'
+            style={{ ...S.input, minWidth: 280 }}
+          />
+          <button type='button' style={S.btn} disabled={alanBusy} onClick={askAlan}>
+            {alanBusy ? '묻는 중…' : '질문 보내기'}
+          </button>
+          <button type='button' style={S.btn} disabled={alanBusy} onClick={askAlanDirect}>
+            직접 호출 (CORS 확인용)
+          </button>
+        </div>
+
+        {alan && (
+          <p style={{ ...S.mono, marginTop: 12, color: alan.ok ? '#111111' : '#DC2626' }}>
+            {alan.text}
+          </p>
+        )}
+
+        <p style={S.hint}>
+          <code>client_id</code> 는 사람마다 다릅니다. 팀 단톡 배정표에서 본인 것을 찾아{' '}
+          <code>.env.local</code> 의 <code>NEXT_PUBLIC_ALAN_CLIENT_ID</code> 에 넣으세요. 오른쪽
+          버튼은 Alan 을 브라우저에서 직접 부르면 CORS 로 막힌다는 것을 보여줍니다 — 실패가
+          정상입니다.
+        </p>
+      </section>
+
+      <section style={S.card}>
         <h2 style={S.h2}>3. 기업 데이터 ({companies.length}곳)</h2>
 
         {companyError && (
@@ -371,16 +710,14 @@ export default function BackendTestPage() {
               <li>
                 태그 <b>{companies.filter((c) => c.tags?.length).length}</b>/{companies.length}
               </li>
+              <li>
+                규모 <b>{companies.filter((c) => c.size).length}</b>/{companies.length}
+              </li>
             </ul>
 
             <div style={S.grid}>
               {companies.map((c) => (
-                <button
-                  key={c.id}
-                  type='button'
-                  style={S.companyCard}
-                  onClick={() => getCompany(c.slug).then(setDetail)}
-                >
+                <div key={c.id} style={S.companyCard}>
                   <span style={S.logoBox}>
                     {c.logo ? (
                       <img src={c.logo} alt='' style={S.logoImg} />
@@ -389,13 +726,52 @@ export default function BackendTestPage() {
                     )}
                   </span>
                   <span style={S.companyName}>{c.name}</span>
-                  <span style={S.companyMeta}>{c.category}</span>
+                  <span style={S.companyMeta}>
+                    {[c.category, c.size].filter(Boolean).join(' · ') || '-'}
+                  </span>
                   <span style={S.companyMeta}>
                     ★ {c.rating ?? '-'} · 관심 {c.favorite} · 후기 {c.review}
                   </span>
-                </button>
+                  <span style={S.companyMeta}>
+                    {c.bookmarkedByMe ? '★ 내가 관심 등록함' : '☆ 관심 없음'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runCompanyAction(`상세 열기 + 조회수 (${c.name})`, async () => {
+                          await incrementCompanyView(c.id);
+                          const full = await getCompany(c.slug);
+                          setDetail(full);
+                          return `조회 ${full.views}`;
+                        })
+                      }
+                    >
+                      상세 + 조회수
+                    </button>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runCompanyAction(`관심 토글 (${c.name})`, async () =>
+                          (await toggleCompanyBookmark(c.id)) ? '등록됨' : '해제됨'
+                        )
+                      }
+                    >
+                      {c.bookmarkedByMe ? '관심 해제' : '관심 등록'}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
+
+            {recommended && (
+              <p style={S.mono}>
+                추천 기업 {recommended.length}곳 —{' '}
+                {recommended.map((c) => c.name).join(', ') || '없음'}
+              </p>
+            )}
 
             {detail && (
               <div style={S.detailBox}>
@@ -406,6 +782,7 @@ export default function BackendTestPage() {
                   {[
                     ['로고', detail.logo],
                     ['업종', detail.industry],
+                    ['규모', detail.size],
                     ['소개', detail.intro],
                     ['대표자', detail.ceo],
                     ['설립일', detail.founded],
@@ -479,6 +856,9 @@ export default function BackendTestPage() {
                   </span>
                   <span style={S.companyName}>{t.title}</span>
                   <span style={S.companyMeta}>조회 {t.views.toLocaleString()}</span>
+                  <span style={S.companyMeta}>
+                    {t.bookmarkedByMe ? '★ 내가 북마크함' : '☆ 북마크 없음'}
+                  </span>
                   <button
                     type='button'
                     style={S.miniBtn}
@@ -491,9 +871,60 @@ export default function BackendTestPage() {
                   >
                     이 양식으로 문서 만들기
                   </button>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runTemplateAction(`양식 상세 + 조회수 (${t.title})`, async () => {
+                          await incrementTemplateView(t.id);
+                          const full = await getTemplate(t.id);
+                          setTemplateDetail(full);
+                          return `조회 ${full.views} · content ${full.content ? '있음' : '없음'}`;
+                        })
+                      }
+                    >
+                      상세 + 조회수
+                    </button>
+                    <button
+                      type='button'
+                      style={S.miniBtn}
+                      onClick={() =>
+                        runTemplateAction(`양식 북마크 토글 (${t.title})`, async () =>
+                          (await toggleTemplateBookmark(t.id)) ? '등록됨' : '해제됨'
+                        )
+                      }
+                    >
+                      {t.bookmarkedByMe ? '북마크 해제' : '북마크'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {templateDetail && (
+              <div style={S.detailBox}>
+                <p style={S.detailTitle}>{templateDetail.title} — 상세</p>
+                <ul style={S.list}>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>조회수</span>
+                    <span style={S.itemDetail}>{templateDetail.views}</span>
+                  </li>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>북마크</span>
+                    <span style={S.itemDetail}>
+                      {templateDetail.bookmarkedByMe ? '내가 함' : '안 함'}
+                    </span>
+                  </li>
+                  <li style={S.item}>
+                    <span style={S.itemLabel}>contentHtml</span>
+                    <span style={S.itemDetail}>
+                      {templateDetail.contentHtml ? `${templateDetail.contentHtml.length}자` : '없음'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -550,6 +981,33 @@ export default function BackendTestPage() {
               >
                 10개 제한 확인
               </button>
+              <label style={{ ...S.btn, display: 'inline-flex', alignItems: 'center' }}>
+                draft 상태로 이미지 업로드
+                <input
+                  type='file'
+                  accept='image/*'
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    if (files.length === 0) return;
+
+                    runDocAction(`draft 이미지 업로드 (${files.length}장)`, async () => {
+                      const draftId = docDraft?.id ?? createDocumentDraftId();
+                      const urls = await uploadDocumentImages(draftId, files);
+
+                      setDocDraft((prev) => ({
+                        id: draftId,
+                        saved: prev?.id === draftId ? prev.saved : false,
+                        urls: [...(prev?.id === draftId ? prev.urls : []), ...urls],
+                      }));
+
+                      return `문서 저장 전 ${urls.length}장 업로드됨 (draft ${draftId.slice(0, 8)}…)`;
+                    });
+                  }}
+                />
+              </label>
               <button
                 type='button'
                 style={S.btn}
@@ -581,6 +1039,90 @@ export default function BackendTestPage() {
                 전체 삭제
               </button>
             </div>
+
+            {docDraft && (
+              <div style={S.detailBox}>
+                <div style={S.detailTitle}>
+                  draft {docDraft.id.slice(0, 8)}… — 이미지 {docDraft.urls.length}장 ·{' '}
+                  {docDraft.saved ? '저장됨' : '아직 저장 안 됨'}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {docDraft.urls.map((url) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt=''
+                      style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8 }}
+                    />
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    disabled={docDraft.saved}
+                    onClick={() =>
+                      runDocAction('draft 를 같은 id 로 저장', async () => {
+                        const html = docDraft.urls.map((u) => `<img src="${u}" />`).join('');
+                        const doc = await createDocument({
+                          id: docDraft.id,
+                          docType: 'resume',
+                          title: 'draft 에서 저장한 이력서',
+                          contentHtml: html,
+                        });
+                        setDocDraft((prev) => ({ ...prev, saved: true }));
+                        return `id 유지됨 (${doc.id === docDraft.id ? '동일' : '다름!'}) · 이미지 ${docDraft.urls.length}장 그대로`;
+                      })
+                    }
+                  >
+                    이 draft 저장
+                  </button>
+
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('문서 삭제 → 이미지도 지워지는지', async () => {
+                        const [first] = docDraft.urls;
+                        await deleteDocument(docDraft.id);
+                        const res = await fetch(first);
+                        setDocDraft(null);
+                        return res.ok
+                          ? `이미지가 아직 살아있음 (${res.status}) — 문제`
+                          : `이미지도 함께 삭제됨 (${res.status})`;
+                      })
+                    }
+                  >
+                    문서 삭제 (이미지 연쇄 확인)
+                  </button>
+
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('저장 없이 draft 버리기', async () => {
+                        const [first] = docDraft.urls;
+                        await removeDocumentImages(docDraft.id);
+                        const res = await fetch(first);
+                        setDocDraft(null);
+                        return res.ok ? `아직 살아있음 (${res.status}) — 문제` : `정리됨 (${res.status})`;
+                      })
+                    }
+                  >
+                    draft 버리기
+                  </button>
+                </div>
+
+                <p style={S.hint}>
+                  <code>documents</code> 버킷은 <b>비공개</b>입니다. 위 이미지는{' '}
+                  <code>/api/documents/{'{id}'}/images/{'{name}'}</code> 로 서빙되며, 로그아웃하거나
+                  다른 계정으로 열면 보이지 않습니다. 저장하지 않고 떠난 draft 는 24시간 뒤 문서함을
+                  열 때 자동으로 정리됩니다.
+                </p>
+              </div>
+            )}
 
             <ul style={S.list}>
               {documents.items.map((d, i) => (
@@ -640,6 +1182,26 @@ export default function BackendTestPage() {
           </li>
         </ul>
 
+        <div style={S.sortBar}>
+          <SortSelect
+            label='갤러리 정렬'
+            name='gallery'
+            value={listOpts.gallery}
+            onChange={changeSort}
+          />
+          <input
+            type='search'
+            placeholder='포트폴리오 이름 검색'
+            value={listOpts.galleryQuery}
+            onChange={(e) => setListOpt({ galleryQuery: e.target.value })}
+            onKeyDown={(e) => e.key === 'Enter' && searchGallery()}
+            style={{ ...S.sortSelect, minWidth: 200 }}
+          />
+          <button type='button' style={S.miniBtn} onClick={searchGallery}>
+            검색
+          </button>
+        </div>
+
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           <button
             type='button'
@@ -650,14 +1212,62 @@ export default function BackendTestPage() {
                   title: '테스트 포트폴리오',
                   category: 'web',
                   description: '스모크 테스트',
-                  content: [{ type: 'text', html: '<p>본문</p>' }],
+                  overview: [{ type: 'text', html: '<p>개요</p>' }],
+                  document: [{ type: 'image', url: 'https://cdn.test/1.png' }],
+                  code: [{ type: 'code', lang: 'js', body: 'const a = 1;' }],
                 });
+
+                const read = await getPortfolio(p.id);
                 await reloadPortfolios();
-                return `draft 생성 id=${p.id.slice(0, 8)}…`;
+
+                return `draft 생성 id=${p.id.slice(0, 8)}… · overview ${read.overview.length} · document ${read.document.length} · code ${read.code.length}`;
               })
             }
           >
             임시저장 생성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('이미지 15장 합산 확인', async () => {
+                const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+                const tried = async (label, call) => {
+                  try {
+                    await call();
+                    return `${label} 통과`;
+                  } catch (e) {
+                    if (e.status !== 400) throw e;
+                    return `${label} 400`;
+                  }
+                };
+
+                const spread = await tried('세 탭 합쳐 16장 →', () =>
+                  createPortfolio({
+                    title: '15장 확인',
+                    overview: img(5),
+                    document: img(5),
+                    code: img(6),
+                  })
+                );
+
+                const base = await createPortfolio({ title: '15장 확인 누적', overview: img(10) });
+                const cumulative = await tried('저장된 10장 + 6장 →', () =>
+                  updatePortfolio(base.id, { code: img(6) })
+                );
+
+                const legacy = await tried('content 필드 →', () =>
+                  createPortfolio({ title: 'content 확인', content: [] })
+                );
+
+                await reloadPortfolios();
+                return `${spread} · ${cumulative} · ${legacy}`;
+              })
+            }
+          >
+            이미지 15장 합산 확인
           </button>
 
           <label style={{ ...S.btn, display: 'inline-flex', alignItems: 'center' }}>
@@ -686,8 +1296,8 @@ export default function BackendTestPage() {
 
                   await updatePortfolio(target.id, {
                     thumbnailUrl: current.thumbnailUrl || urls[0],
-                    content: [
-                      ...(current.content ?? []),
+                    document: [
+                      ...(current.document ?? []),
                       ...urls.map((url) => ({ type: 'image', url })),
                     ],
                   });
@@ -730,6 +1340,12 @@ export default function BackendTestPage() {
               <span style={S.itemDetail}>
                 {p.category ?? '-'} · 👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
               </span>
+              <span style={S.itemDetail}>
+                공동작업자{' '}
+                {p.collaborators?.length
+                  ? p.collaborators.map((m) => m.name ?? m.id.slice(0, 6)).join(', ')
+                  : '없음'}
+              </span>
               {p.status !== 'published' && (
                 <button
                   type='button'
@@ -745,9 +1361,26 @@ export default function BackendTestPage() {
                   공개
                 </button>
               )}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => {
+                  setCollabTarget(p);
+                  setCollabFound(null);
+                }}
+              >
+                공동작업자
+              </button>
             </li>
           ))}
         </ul>
+
+        {user && (myPortfolios?.items?.length ?? 0) === 0 && (
+          <p style={S.hint}>
+            공동작업자는 <b>내가 만든 포트폴리오에만</b> 추가할 수 있습니다. 위에서 먼저 하나
+            만들어주세요.
+          </p>
+        )}
 
         <div style={S.grid}>
           {(gallery?.items ?? []).map((p) => (
@@ -761,12 +1394,20 @@ export default function BackendTestPage() {
               </span>
               <span style={S.companyName}>{p.title}</span>
               <span style={S.companyMeta}>
-                {p.authorName ?? '작성자 없음'} · {p.category ?? '-'}
+                {p.authorName ?? '작성자 없음'} · {p.category ?? '-'} · {p.createdAt?.slice(0, 10)}
               </span>
               <span style={S.companyMeta}>
-                👍 {p.likeCount} · 🔖 {p.bookmarkCount} · 👁 {p.viewCount}
+                👍 {p.likeCount}
+                {p.likedByMe ? '(내가)' : ''} · 🔖 {p.bookmarkCount}
+                {p.bookmarkedByMe ? '(내가)' : ''} · 👁 {p.viewCount}
               </span>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <span style={S.companyMeta}>
+                공동작업자{' '}
+                {p.collaborators?.length
+                  ? p.collaborators.map((m) => m.name ?? m.id.slice(0, 6)).join(', ')
+                  : '없음'}
+              </span>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 <button
                   type='button'
                   style={S.miniBtn}
@@ -793,10 +1434,131 @@ export default function BackendTestPage() {
                 >
                   북마크
                 </button>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('조회수 +1', async () => {
+                      await incrementPortfolioView(p.id);
+                      await reloadPortfolios();
+                      const full = await getPortfolio(p.id);
+                      return `조회 ${full.viewCount}`;
+                    })
+                  }
+                >
+                  조회수 +1
+                </button>
+                {p.authorId === user?.id ? (
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() => {
+                      setCollabTarget(p);
+                      setCollabFound(null);
+                    }}
+                  >
+                    공동작업자
+                  </button>
+                ) : (
+                  <span style={S.itemDetail}>공동작업자는 소유자만</span>
+                )}
               </div>
             </div>
           ))}
         </div>
+
+        {collabTarget && (
+          <div style={S.detailBox}>
+            <p style={S.detailTitle}>공동작업자 — {collabTarget.title}</p>
+
+            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type='email'
+                placeholder='초대할 사람의 로그인 이메일'
+                value={collabEmail}
+                onChange={(e) => setCollabEmail(e.target.value)}
+                style={{ ...S.input, minWidth: 260 }}
+              />
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction(`이메일 조회 (${collabEmail})`, async () => {
+                    const member = await findMemberByEmail(collabEmail);
+                    setCollabFound(member);
+                    return member ? `찾음 — ${member.name ?? '(이름없음)'}` : '가입자 없음';
+                  })
+                }
+              >
+                이메일로 찾기
+              </button>
+              <button type='button' style={S.miniBtn} onClick={() => setCollabTarget(null)}>
+                닫기
+              </button>
+            </p>
+
+            {collabFound && (
+              <p style={S.mono}>
+                {collabFound.avatarUrl && (
+                  <img
+                    src={collabFound.avatarUrl}
+                    alt=''
+                    style={{ width: 24, height: 24, borderRadius: '50%', verticalAlign: 'middle' }}
+                  />
+                )}{' '}
+                {collabFound.name ?? '(이름 없음)'} · {collabFound.id.slice(0, 8)}…{' '}
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() =>
+                    runDocAction('공동작업자 추가', async () => {
+                      const current = (collabTarget.collaborators ?? []).map((m) => m.id);
+                      const saved = await setPortfolioCollaborators(collabTarget.id, [
+                        ...current,
+                        collabFound.id,
+                      ]);
+                      await reloadPortfolios();
+                      setCollabTarget(saved);
+                      return `${saved.collaborators.length}명`;
+                    })
+                  }
+                >
+                  이 사람 추가
+                </button>
+              </p>
+            )}
+
+            <ul style={S.list}>
+              {(collabTarget.collaborators ?? []).map((m) => (
+                <li key={m.id} style={S.item}>
+                  <span style={S.itemLabel}>{m.name ?? '(이름 없음)'}</span>
+                  <span style={S.itemDetail}>{m.id.slice(0, 8)}…</span>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('공동작업자 제거', async () => {
+                        const rest = collabTarget.collaborators
+                          .filter((x) => x.id !== m.id)
+                          .map((x) => x.id);
+                        const saved = await setPortfolioCollaborators(collabTarget.id, rest);
+                        await reloadPortfolios();
+                        setCollabTarget(saved);
+                        return `${saved.collaborators.length}명 남음`;
+                      })
+                    }
+                  >
+                    제거
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <p style={S.hint}>
+              이메일은 정확히 일치해야 찾힙니다. 응답에는 이름과 사진만 들어 있고 이메일은 없습니다.
+            </p>
+          </div>
+        )}
       </section>
 
       <section style={S.card}>
@@ -820,6 +1582,93 @@ export default function BackendTestPage() {
           </li>
         </ul>
 
+        <div style={S.sortBar}>
+          <label style={S.sortLabel}>
+            직무 (작성 시 기입)
+            <select
+              style={S.sortSelect}
+              value={postJobRole}
+              onChange={(e) => setPostJobRole(e.target.value)}
+            >
+              <option value=''>미기입 (null)</option>
+              {(codeGroups?.job_role ?? []).map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label} ({c.code})
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type='button'
+            style={S.miniBtn}
+            onClick={() =>
+              runDocAction('없는 직무 코드로 작성 시도', async () => {
+                try {
+                  await createPost({
+                    postType: 'review',
+                    companyId: companies[0]?.id ?? null,
+                    title: '거부돼야 하는 글',
+                    jobRoleCode: 'frontned',
+                  });
+                  return '저장됨 — 문제 (검증이 안 걸림)';
+                } catch (e) {
+                  return `거부됨 (정상) — ${e.message}`;
+                }
+              })
+            }
+          >
+            없는 직무 코드 거부 확인
+          </button>
+          <button
+            type='button'
+            style={S.miniBtn}
+            onClick={() =>
+              runDocAction('코드 자리에 라벨 투입 (5개 필드)', async () => {
+                const cases = [
+                  ['jobRoleCode', '프론트엔드'],
+                  ['difficultyCode', '어려움'],
+                  ['passResultCode', '합격'],
+                  ['channelCode', '온라인'],
+                  ['educationLevel', '대졸'],
+                ];
+
+                const leaked = [];
+                for (const [field, label] of cases) {
+                  try {
+                    const p = await createPost({
+                      postType: 'review',
+                      companyId: companies[0]?.id ?? null,
+                      title: `라벨 투입 ${field}`,
+                      [field]: label,
+                    });
+                    leaked.push(field);
+                    await deletePosts([p.id]);
+                  } catch {
+                    /* 400 이 정상 */
+                  }
+                }
+
+                await reloadPosts();
+                return leaked.length === 0
+                  ? `5개 필드 모두 차단됨 (정상)`
+                  : `통과해버림 — 문제: ${leaked.join(', ')}`;
+              })
+            }
+          >
+            라벨 투입 거부 확인
+          </button>
+        </div>
+
+        <div style={S.sortBar}>
+          <SortSelect label='정렬' name='posts' value={listOpts.posts} onChange={changeSort} />
+          <span style={S.sortLabel}>
+            {(posts?.items ?? [])
+              .slice(0, 3)
+              .map((p) => `${p.companyName || '-'}/${p.date}`)
+              .join(' → ')}
+          </span>
+        </div>
+
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           <button
             type='button'
@@ -832,18 +1681,17 @@ export default function BackendTestPage() {
                   title: '테스트 면접 후기',
                   body: '분위기는 편안했고 꼬리질문이 많았습니다.',
                   difficultyCode: 'normal',
-                  difficultyScore: 3.0,
+                  difficultyScore: 3,
                   passResultCode: 'pass',
                   channelCode: 'online',
-                  jobRoleCode: 'frontend',
+                  jobRoleCode: postJobRole || null,
                   positionLevel: '신입',
-                  educationLevel: '대졸',
+                  educationLevel: 'bachelor',
                   tags: ['CS', '기술면접'],
                   overallComment: '준비한 만큼 나옵니다',
                 });
                 await reloadPosts();
-                console.log(p);
-                return `${p.companyName} · ${p.difficulty} · ${p.result} · ${p.route}`;
+                return `${p.companyName} · ${p.difficulty} · ${p.result} · 직무 "${p.jobRole || '미기입'}"(${p.jobRoleCode ?? 'null'})`;
               })
             }
           >
@@ -858,22 +1706,75 @@ export default function BackendTestPage() {
                 const p = await createPost({
                   postType: 'qbank',
                   companyId: companies[0]?.id ?? null,
-                  questions: ['REST API의 장점은?', '브라우저 렌더링 과정을 설명하세요', '클로저란?'],
+                  questions: 'REST API의 장점은?\n브라우저 렌더링 과정을 설명하세요\n클로저란?',
                   difficultyCode: 'hard',
-                  difficultyScore: 4.5,
+                  difficultyScore: 5,
                   passResultCode: 'waiting',
                   channelCode: 'etc',
                   channelEtc: '잡코리아',
-                  jobRoleCode: 'backend',
+                  jobRoleCode: postJobRole || null,
                   positionLevel: '신입',
-                  educationLevel: '대졸',
+                  educationLevel: 'bachelor',
                 });
                 await reloadPosts();
-                return `질문 ${p.questions.length}개 · 경로 "${p.route}" (기타 처리 확인)`;
+                return `질문 ${p.questionCount}개 · 직무 "${p.jobRole || '미기입'}" · 경로 "${p.route}"`;
               })
             }
           >
             면접 족보 작성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('난이도 · 합격 여부 필터 확인', async () => {
+                const write = (difficultyCode, passResultCode) =>
+                  createPost({
+                    postType: 'review',
+                    companyId: companies[0]?.id ?? null,
+                    title: `필터 확인 ${difficultyCode}/${passResultCode}`,
+                    body: '필터 확인용',
+                    difficultyCode,
+                    passResultCode,
+                  });
+
+                const made = [
+                  await write('hard', 'pass'),
+                  await write('hard', 'fail'),
+                  await write('easy', 'fail'),
+                ];
+
+                try {
+                  const [hard, fail, both, all] = await Promise.all([
+                    listPosts({ type: 'review', difficulty: 'hard', pageSize: 50 }),
+                    listPosts({ type: 'review', passResult: 'fail', pageSize: 50 }),
+                    listPosts({
+                      type: 'review',
+                      difficulty: 'hard',
+                      passResult: 'fail',
+                      pageSize: 50,
+                    }),
+                    listPosts({ type: 'review', pageSize: 50 }),
+                  ]);
+
+                  const clean =
+                    hard.items.every((p) => p.difficultyCode === 'hard') &&
+                    fail.items.every((p) => p.passResultCode === 'fail') &&
+                    both.items.every(
+                      (p) => p.difficultyCode === 'hard' && p.passResultCode === 'fail'
+                    ) &&
+                    hard.total < all.total;
+
+                  return `${clean ? '정상' : '문제'} — 전체 ${all.total} · 어려움 ${hard.total} · 불합격 ${fail.total} · 둘 다 ${both.total}`;
+                } finally {
+                  await deletePosts(made.map((p) => p.id));
+                  await reloadPosts();
+                }
+              })
+            }
+          >
+            난이도 · 합격 여부 필터
           </button>
 
           <button
@@ -901,14 +1802,52 @@ export default function BackendTestPage() {
                 {p.postType === 'review' ? '후기' : '족보'}
               </span>
               <span style={{ ...S.itemLabel, minWidth: 170 }}>
-                {p.title || `질문 ${p.questions.length}개`}
+                {p.title || `질문 ${p.questionCount}개`}
               </span>
               <span style={S.itemDetail}>
-                {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo}
+                {p.companyName} · {p.difficulty} · {p.result} · {p.route} · {p.jobInfo} · 직무코드{' '}
+                <code>{p.jobRoleCode ?? 'null'}</code>
               </span>
               <span style={S.itemDetail}>
-                👍 {p.likeCount} · 🔖 {p.scrapCount} · 💬 {p.commentCount}
+                👍 {p.likeCount}
+                {p.likedByMe ? '(내가)' : ''} · 🔖 {p.scrapCount}
+                {p.scrappedByMe ? '(내가)' : ''} · 💬 {p.commentCount} · 👁 {p.viewCount}
               </span>
+              {p.postType === 'qbank' && (
+                <span style={S.itemDetail}>
+                  질문 {p.questionCount ?? 0}개 — {(p.questionList ?? []).join(' / ') || '없음'}
+                </span>
+              )}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('상세 + 조회수', async () => {
+                    await incrementPostView(p.id);
+                    const full = await getPost(p.id);
+                    setPostDetail(full);
+                    await reloadPosts();
+                    return `조회 ${full.viewCount} · 질문 ${full.questionList?.length ?? 0}개`;
+                  })
+                }
+              >
+                상세 + 조회수
+              </button>
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() =>
+                  runDocAction('글 제목 수정', async () => {
+                    const edited = await updatePost(p.id, {
+                      title: `${p.title || '제목 없음'} (수정 ${new Date().toLocaleTimeString()})`,
+                    });
+                    await reloadPosts();
+                    return edited.title;
+                  })
+                }
+              >
+                제목 수정
+              </button>
               <button
                 type='button'
                 style={S.miniBtn}
@@ -980,7 +1919,23 @@ export default function BackendTestPage() {
                       })
                     }
                   >
-                    좋아요
+                    좋아요{c.likedByMe ? ' ✓' : ''}
+                  </button>
+                  <button
+                    type='button'
+                    style={S.miniBtn}
+                    onClick={() =>
+                      runDocAction('댓글 수정', async () => {
+                        const edited = await updateComment(
+                          c.id,
+                          `${c.body} (수정 ${new Date().toLocaleTimeString()})`
+                        );
+                        await openComments(openPostId);
+                        return edited.body;
+                      })
+                    }
+                  >
+                    수정
                   </button>
                   <button
                     type='button'
@@ -1005,6 +1960,40 @@ export default function BackendTestPage() {
           </div>
         )}
       </section>
+
+      {postDetail && (
+        <section style={S.card}>
+          <h2 style={S.h2}>7-1. 글 상세 (getPost)</h2>
+          <ul style={S.list}>
+            <li style={S.item}>
+              <span style={S.itemLabel}>제목</span>
+              <span style={S.itemDetail}>{postDetail.title || '(없음)'}</span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>라벨 변환</span>
+              <span style={S.itemDetail}>
+                난이도 {postDetail.difficulty || '-'} · 결과 {postDetail.result || '-'} · 경로{' '}
+                {postDetail.channel || '-'} · 학력 {postDetail.educationLevel || '-'}
+              </span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>내 반응</span>
+              <span style={S.itemDetail}>
+                도움돼요 {String(postDetail.likedByMe)} · 퍼가요 {String(postDetail.scrappedByMe)}
+              </span>
+            </li>
+            <li style={S.item}>
+              <span style={S.itemLabel}>질문</span>
+              <span style={S.itemDetail}>
+                {postDetail.questionCount ?? 0}개 — {(postDetail.questionList ?? []).join(' / ') || '없음'}
+              </span>
+            </li>
+          </ul>
+          <button type='button' style={S.miniBtn} onClick={() => setPostDetail(null)}>
+            닫기
+          </button>
+        </section>
+      )}
 
       <section style={S.card}>
         <h2 style={S.h2}>8. AI 면접 (저장·조회)</h2>
@@ -1172,7 +2161,410 @@ export default function BackendTestPage() {
       </section>
 
       <section style={S.card}>
-        <h2 style={S.h2}>9. 마이페이지 (요약·스크랩·계정)</h2>
+        <div style={S.headRow}>
+          <div>
+            <h2 style={S.h2}>9. 프로필 편집</h2>
+            <p style={S.sub}>여기서 채운 정보로 이력서를 자동으로 채울 수 있어요.</p>
+          </div>
+          {user && profileForm && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type='button' style={S.cancelBtn} onClick={() => reloadProfile()}>
+                수정 취소
+              </button>
+              <button
+                type='button'
+                style={S.saveBtn}
+                onClick={() =>
+                  runProfileAction('프로필 저장', async () => {
+                    const f = profileForm;
+                    const saved = await updateProfile({
+                      name: f.name || null,
+                      desired_role: f.desired_role || null,
+                      career_level: f.career_level || null,
+                      github_url: f.github_url || null,
+                      bio: f.bio || null,
+                      education_level: f.education_level || null,
+                      educations: f.educations,
+                      careers: f.careers,
+                      languages: f.languages,
+                      awards: f.awards,
+                      skill_codes: f.skill_codes,
+                      interest_codes: f.interest_codes,
+                    });
+                    return `학력 ${saved.educations.length} · 경력 ${saved.careers.length} · 어학 ${saved.languages.length} · 수상 ${saved.awards.length} · 기술 ${saved.skill_codes.length}`;
+                  })
+                }
+              >
+                수정 완료
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!user && <p style={S.hint}>로그인하면 편집할 수 있습니다.</p>}
+
+        {user && profileForm && (
+          <>
+            <p style={S.notice}>
+              실제 마이페이지 수정 화면과 같은 구성입니다. 저장하면 백엔드 응답이 로그에 남습니다.
+            </p>
+
+            <div style={S.basicRow}>
+              <div style={S.avatarCol}>
+                <span style={S.avatarBox}>
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt='' style={S.avatarImg} />
+                  ) : (
+                    <span style={S.itemDetail}>사진 없음</span>
+                  )}
+                </span>
+                <label style={{ ...S.miniBtn, cursor: 'pointer', textAlign: 'center' }}>
+                  사진 변경
+                  <input
+                    type='file'
+                    accept='image/jpeg,image/png,image/webp'
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (!file) return;
+                      runProfileAction('사진 변경', async () => await uploadAvatar(file));
+                    }}
+                  />
+                </label>
+                <button
+                  type='button'
+                  style={S.miniBtn}
+                  onClick={() => runProfileAction('사진 삭제', async () => (await removeAvatar()) ?? '삭제됨')}
+                >
+                  사진 삭제
+                </button>
+              </div>
+
+              <div style={S.fieldGrid}>
+                <Field label='이름'>
+                  <input
+                    style={S.input}
+                    placeholder='홍길동'
+                    value={profileForm.name}
+                    onChange={(e) => patchForm({ name: e.target.value })}
+                  />
+                </Field>
+                <Field label='희망 직무'>
+                  <CodeSelect
+                    group={codeGroups?.job_role}
+                    value={profileForm.desired_role}
+                    onChange={(v) => patchForm({ desired_role: v })}
+                  />
+                </Field>
+                <Field label='경력 구분'>
+                  <CodeSelect
+                    group={codeGroups?.career_level}
+                    value={profileForm.career_level}
+                    onChange={(v) => patchForm({ career_level: v })}
+                  />
+                </Field>
+                <Field label='링크 (선택)'>
+                  <input
+                    style={S.input}
+                    placeholder='github.com/아이디'
+                    value={profileForm.github_url}
+                    onChange={(e) => patchForm({ github_url: e.target.value })}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>자기소개</p>
+              <textarea
+                style={{ ...S.input, minHeight: 90, resize: 'vertical' }}
+                placeholder='어떤 사람인지 짧게 적어주세요.'
+                value={profileForm.bio}
+                onChange={(e) => patchForm({ bio: e.target.value })}
+              />
+              <p style={S.hint}>{profileForm.bio.length} / 1000자</p>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>학력</p>
+              <div style={{ maxWidth: 240 }}>
+                <Field label='최종학력'>
+                  <CodeSelect
+                    group={codeGroups?.education_level}
+                    value={profileForm.education_level}
+                    onChange={(v) => patchForm({ education_level: v })}
+                  />
+                </Field>
+              </div>
+              <p style={S.hint}>고등학교부터 순서대로 적어요.</p>
+
+              {profileForm.educations.map((item, i) => (
+                <div key={`edu-${i}`} style={S.rowBox}>
+                  <Field label='구분'>
+                    <CodeSelect
+                      group={codeGroups?.school_type}
+                      value={item.type ?? ''}
+                      onChange={(v) => patchRow('educations', i, { type: v })}
+                    />
+                  </Field>
+                  <Field label='학교명'>
+                    <input
+                      style={S.input}
+                      value={item.school ?? ''}
+                      onChange={(e) => patchRow('educations', i, { school: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='전공'>
+                    <input
+                      style={S.input}
+                      value={item.major ?? ''}
+                      onChange={(e) => patchRow('educations', i, { major: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='상태'>
+                    <CodeSelect
+                      group={codeGroups?.edu_status}
+                      value={item.status ?? ''}
+                      onChange={(v) => patchRow('educations', i, { status: v })}
+                    />
+                  </Field>
+                  <Field label='입학'>
+                    <input
+                      style={S.input}
+                      placeholder='2015-03'
+                      value={item.admission ?? ''}
+                      onChange={(e) => patchRow('educations', i, { admission: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='졸업'>
+                    <input
+                      style={S.input}
+                      placeholder='2019-02'
+                      value={item.graduation ?? ''}
+                      onChange={(e) => patchRow('educations', i, { graduation: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('educations', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('educations', { type: '', school: '', major: '', status: '', admission: '', graduation: '' })}
+              >
+                학력 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>경력</p>
+              {profileForm.careers.map((item, i) => (
+                <div key={`car-${i}`} style={S.rowBox}>
+                  <Field label='회사명'>
+                    <input
+                      style={S.input}
+                      value={item.company ?? ''}
+                      onChange={(e) => patchRow('careers', i, { company: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='직무'>
+                    <input
+                      style={S.input}
+                      value={item.role ?? ''}
+                      onChange={(e) => patchRow('careers', i, { role: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='시작'>
+                    <input
+                      style={S.input}
+                      placeholder='2024-03'
+                      value={item.start ?? ''}
+                      onChange={(e) => patchRow('careers', i, { start: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='종료'>
+                    <input
+                      style={S.input}
+                      placeholder='재직 중'
+                      value={item.end ?? ''}
+                      onChange={(e) => patchRow('careers', i, { end: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('careers', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('careers', { company: '', role: '', start: '', end: '재직 중' })}
+              >
+                경력 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>언어</p>
+              {profileForm.languages.map((item, i) => (
+                <div key={`lan-${i}`} style={S.rowBox}>
+                  <Field label='언어'>
+                    <input
+                      style={S.input}
+                      placeholder='영어'
+                      value={item.language ?? ''}
+                      onChange={(e) => patchRow('languages', i, { language: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='설명 (예: TOEIC 800점)'>
+                    <input
+                      style={S.input}
+                      value={item.detail ?? ''}
+                      onChange={(e) => patchRow('languages', i, { detail: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='수준'>
+                    <CodeSelect
+                      group={codeGroups?.language_level}
+                      value={item.level ?? ''}
+                      onChange={(v) => patchRow('languages', i, { level: v })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('languages', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                type='button'
+                style={S.miniBtn}
+                onClick={() => addRow('languages', { language: '', detail: '', level: '' })}
+              >
+                언어 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>수상 내역</p>
+              {profileForm.awards.map((item, i) => (
+                <div key={`awd-${i}`} style={S.rowBox}>
+                  <Field label='수상명'>
+                    <input
+                      style={S.input}
+                      value={item.name ?? ''}
+                      onChange={(e) => patchRow('awards', i, { name: e.target.value })}
+                    />
+                  </Field>
+                  <Field label='수상일'>
+                    <input
+                      style={S.input}
+                      placeholder='2026-05'
+                      value={item.date ?? ''}
+                      onChange={(e) => patchRow('awards', i, { date: e.target.value })}
+                    />
+                  </Field>
+                  <button type='button' style={S.miniBtn} onClick={() => removeRow('awards', i)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button type='button' style={S.miniBtn} onClick={() => addRow('awards', { name: '', date: '' })}>
+                수상 추가
+              </button>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>기술 스택</p>
+              <div style={S.chipWrap}>
+                {(codeGroups?.tech_stack ?? []).map((c) => (
+                  <button
+                    key={c.code}
+                    type='button'
+                    style={profileForm.skill_codes.includes(c.code) ? S.chipOn : S.chip}
+                    onClick={() => toggleCode('skill_codes', c.code)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={S.sectionBox}>
+              <p style={S.sectionTitle}>관심 분야</p>
+              <div style={S.chipWrap}>
+                {(codeGroups?.interest_field ?? []).map((c) => (
+                  <button
+                    key={c.code}
+                    type='button'
+                    style={profileForm.interest_codes.includes(c.code) ? S.chipOn : S.chip}
+                    onClick={() => toggleCode('interest_codes', c.code)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p style={S.hint}>
+              저장된 값: 최종학력 <b>{profile?.education_level ?? '-'}</b> · 학력{' '}
+              <b>{profile?.educations?.length ?? 0}</b> · 경력 <b>{profile?.careers?.length ?? 0}</b> ·
+              어학 <b>{profile?.languages?.length ?? 0}</b> · 수상{' '}
+              <b>{profile?.awards?.length ?? 0}</b> · 이메일 <b>{profile?.email ?? '(없음)'}</b>
+            </p>
+
+            <button
+              type='button'
+              style={S.miniBtn}
+              onClick={() =>
+                runProfileAction('잘못된 코드 거부 확인 (구분=대학교)', async () => {
+                  try {
+                    await updateProfile({ educations: [{ type: '대학교', school: 'x' }] });
+                    throw new Error('거부되지 않았습니다 — FK 확인 필요');
+                  } catch (e) {
+                    if (e.message.includes('거부되지 않았습니다')) throw e;
+                    return `정상 거부됨 (${e.status}) ${e.message}`;
+                  }
+                })
+              }
+            >
+              잘못된 코드 거부 확인
+            </button>
+          </>
+        )}
+      </section>
+
+      <section style={S.card}>
+        <h2 style={S.h2}>10. 마이페이지 (요약·스크랩·계정)</h2>
+
+        {user && (
+          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type='button'
+              style={S.miniBtn}
+              onClick={() =>
+                runMypageAction('내가 쓴 후기·족보 조회', async () => {
+                  const [reviews, qbanks] = await Promise.all([listMyReviews(), listMyQbanks()]);
+                  setMyWritings({ reviews, qbanks });
+                  return `후기 ${reviews.total} · 족보 ${qbanks.total}`;
+                })
+              }
+            >
+              내가 쓴 후기·족보
+            </button>
+            {myWritings && (
+              <span style={S.itemDetail}>
+                후기 {myWritings.reviews.total}건 · 족보 {myWritings.qbanks.total}건 —{' '}
+                {[...myWritings.reviews.items, ...myWritings.qbanks.items]
+                  .map((p) => p.title || `질문 ${p.questionCount ?? 0}개`)
+                  .slice(0, 3)
+                  .join(', ') || '없음'}
+              </span>
+            )}
+          </p>
+        )}
 
         {account?.error && (
           <p className='font_body_s_r' style={S.error} role='alert'>
@@ -1252,10 +2644,16 @@ export default function BackendTestPage() {
 
         {myScraps && (
           <div style={S.detailBox}>
-            <div style={S.detailTitle}>스크랩 목록 (복수 삭제)</div>
+            <div style={S.detailTitle}>스크랩 목록 (정렬 · 복수 삭제)</div>
             <ul style={S.list}>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>기업</span>
+                <SortSelect
+                  label=''
+                  name='scrapCompanies'
+                  value={listOpts.scrapCompanies}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.companies.total}건
                   {myScraps.companies.items.length > 0 &&
@@ -1264,16 +2662,28 @@ export default function BackendTestPage() {
               </li>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>면접 후기·족보</span>
+                <SortSelect
+                  label=''
+                  name='scrapPosts'
+                  value={listOpts.scrapPosts}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.posts.total}건
                   {myScraps.posts.items.length > 0 &&
                     ` — ${myScraps.posts.items
-                      .map((p) => p.title || p.companyName || p.id.slice(0, 8))
+                      .map((p) => `${p.companyName || '-'}/${p.title || p.id.slice(0, 8)}`)
                       .join(', ')}`}
                 </span>
               </li>
               <li style={S.item}>
                 <span style={{ ...S.itemLabel, minWidth: 120 }}>포트폴리오</span>
+                <SortSelect
+                  label=''
+                  name='scrapPortfolios'
+                  value={listOpts.scrapPortfolios}
+                  onChange={changeSort}
+                />
                 <span style={S.itemDetail}>
                   {myScraps.portfolios.total}건
                   {myScraps.portfolios.items.length > 0 &&
@@ -1281,6 +2691,10 @@ export default function BackendTestPage() {
                 </span>
               </li>
             </ul>
+            <p style={S.hint}>
+              스크랩 목록의 <code>latest</code> 는 <b>내가 스크랩한 시각</b> 기준입니다. 목록
+              화면의 <code>latest</code>(글이 등록된 시각)와 뜻이 다릅니다.
+            </p>
           </div>
         )}
 
@@ -1349,8 +2763,10 @@ export default function BackendTestPage() {
         </div>
 
         <p style={S.hint}>
-          회원 탈퇴는 <code>deleteMyAccount()</code> 한 줄이며 계정·문서·포트폴리오·스크랩·업로드
-          파일이 모두 삭제됩니다. 되돌릴 수 없으므로 이 페이지에는 버튼을 두지 않았습니다.
+          회원 탈퇴는 <code>deleteMyAccount()</code> 한 줄이며 계정·문서·포트폴리오·스크랩이 모두
+          삭제됩니다. Storage 파일도 <code>documents</code> · <code>portfolios</code> ·{' '}
+          <code>avatars</code> 세 버킷에서 함께 지워집니다. 되돌릴 수 없으므로 이 페이지에는 버튼을
+          두지 않았습니다.
         </p>
       </section>
 
@@ -1394,6 +2810,47 @@ export default function BackendTestPage() {
         )}
       </section>
     </main>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label style={S.field}>
+      <span style={S.fieldLabel}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function SortSelect({ label, name, value, onChange }) {
+  return (
+    <label style={S.sortLabel}>
+      {label}
+      <select
+        style={S.sortSelect}
+        value={value}
+        onChange={(e) => onChange(name, e.target.value)}
+      >
+        {SORT_OPTIONS[name].map(([code, text]) => (
+          <option key={code} value={code}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function CodeSelect({ group, value, onChange }) {
+  return (
+    <select style={S.input} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value=''>선택 안 함</option>
+      {(group ?? []).map((c) => (
+        <option key={c.code} value={c.code}>
+          {c.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -1472,6 +2929,104 @@ const S = {
     flexDirection: 'column',
     gap: 8,
   },
+  input: {
+    padding: '6px 8px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 6,
+    fontSize: 13,
+    fontFamily: 'inherit',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  headRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  saveBtn: {
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: 8,
+    background: '#8635F6',
+    color: '#fff',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  cancelBtn: {
+    padding: '8px 16px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 8,
+    background: '#fff',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  notice: {
+    margin: '10px 0',
+    padding: '8px 12px',
+    background: '#F4FCFE',
+    borderRadius: 8,
+    fontSize: 13,
+    color: '#3C3C3C',
+  },
+  basicRow: { display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', margin: '12px 0' },
+  avatarCol: { display: 'grid', gap: 6, width: 120 },
+  avatarBox: {
+    width: 120,
+    height: 120,
+    borderRadius: '50%',
+    background: '#F2F2F2',
+    display: 'grid',
+    placeItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  fieldGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: 12,
+    flex: 1,
+    minWidth: 280,
+  },
+  field: { display: 'grid', gap: 4 },
+  fieldLabel: { fontSize: 12, color: '#6D6D6D', fontWeight: 700 },
+  sectionBox: {
+    border: '1px solid #EDEDED',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 12,
+    display: 'grid',
+    gap: 8,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: 700, margin: 0 },
+  rowBox: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 10,
+    alignItems: 'end',
+    padding: 10,
+    background: '#FAFAFA',
+    borderRadius: 8,
+  },
+  chipWrap: { display: 'flex', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    padding: '4px 10px',
+    border: '1px solid #D4D4D4',
+    borderRadius: 999,
+    background: '#fff',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  chipOn: {
+    padding: '4px 10px',
+    border: '1px solid #8635F6',
+    borderRadius: 999,
+    background: '#8635F6',
+    color: '#fff',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
   miniBtn: {
     padding: '4px 8px',
     border: '1px solid #ACAEAD',
@@ -1502,6 +3057,15 @@ const S = {
   },
   mono: { fontSize: 13, lineHeight: 1.6, marginBottom: 12, wordBreak: 'break-all' },
   hint: { marginTop: 12, fontSize: 12, color: '#6F6F6F' },
+  sortBar: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 },
+  sortLabel: { display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, color: '#6F6F6F' },
+  sortSelect: {
+    padding: '6px 10px',
+    border: '1px solid #ACAEAD',
+    borderRadius: 8,
+    background: '#FFFFFF',
+    fontSize: 13,
+  },
   error: {
     border: '1px solid #FECACA',
     background: '#FEF2F2',

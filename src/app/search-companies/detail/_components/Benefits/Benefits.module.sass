@@ -1,0 +1,39 @@
+@use '@/app/_variables.sass' as *
+
+.benefits
+  display: flex
+  flex-direction: column
+  gap: 20px
+  box-sizing: border-box
+  padding: 20px
+  background-color: $light_green
+  border-radius: 5px
+
+.benefits_title
+  color: $green
+
+.benefits_list
+  display: grid
+  grid-template-columns: repeat(5, 1fr)
+  gap: 92px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.benefits_item
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 17px
+
+.benefits_icon
+  font-size: 30px
+  color: $green
+
+.benefits_name
+  color: $black
+  text-align: center
+
+.benefits_desc
+  color: $gray
+  text-align: center

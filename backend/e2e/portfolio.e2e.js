@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { resetWorld, signInAs, startWorld, stopWorld, USERS } from './support/harness';
+import { resetWorld, signInAs, signOutOfBrowser, startWorld, stopWorld, USERS } from './support/harness';
 import { failNextUpload, browserState } from './support/browser';
 import {
   createPortfolio,
   deletePortfolio,
   deletePortfolios,
+  findMemberByEmail,
+  setPortfolioCollaborators,
   getMyPortfolioReactions,
   getPortfolio,
   incrementPortfolioView,
@@ -21,6 +23,8 @@ import {
   uploadPortfolioImages,
 } from '@backend/lib/api/portfolio';
 import { listMyScrappedPortfolios } from '@backend/lib/api/mypage';
+import { updateProfile } from '@backend/lib/api/profile';
+import { rows } from './support/database';
 
 const imageFile = (name = 'shot.PNG', type = 'image/png', size = 1024) => ({ name, type, size });
 
@@ -45,7 +49,9 @@ describe('building a portfolio', () => {
       status: 'draft',
       bgColor: '#F4FCFE',
       gapPx: 16,
-      content: [],
+      overview: [],
+      document: [],
+      code: [],
     });
   });
 
@@ -59,35 +65,72 @@ describe('building a portfolio', () => {
     await expect(createPortfolio({ category: 'vr' })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('accepts the four block types', async () => {
+  it('fills the three tabs independently', async () => {
     const draft = await createPortfolio({
-      content: [
-        { type: 'image', url: 'https://cdn.test/1.png' },
-        { type: 'video', youtube_url: 'https://youtu.be/x' },
-        { type: 'text', html: '<p>hi</p>' },
+      overview: [{ type: 'text', html: '<p>hi</p>' }],
+      document: [{ type: 'image', url: 'https://cdn.test/1.png' }],
+      code: [
         { type: 'code', lang: 'js', body: 'const a = 1;' },
+        { type: 'video', youtube_url: 'https://youtu.be/x' },
       ],
     });
 
-    expect(draft.content).toHaveLength(4);
+    const read = await getPortfolio(draft.id);
+
+    expect(read.overview).toHaveLength(1);
+    expect(read.document).toHaveLength(1);
+    expect(read.code).toHaveLength(2);
   });
 
-  it('rejects an unsupported block', async () => {
-    await expect(createPortfolio({ content: [{ type: 'audio' }] })).rejects.toMatchObject({
+  it('leaves the tabs it was not given alone', async () => {
+    const draft = await createPortfolio({ overview: [{ type: 'text', html: '<p>hi</p>' }] });
+
+    await updatePortfolio(draft.id, { code: [{ type: 'code', body: 'x' }] });
+    const read = await getPortfolio(draft.id);
+
+    expect(read.overview).toHaveLength(1);
+    expect(read.code).toHaveLength(1);
+    expect(read.document).toEqual([]);
+  });
+
+  it.each(['overview', 'document', 'code'])('rejects an unsupported block in %s', async (tab) => {
+    await expect(createPortfolio({ [tab]: [{ type: 'audio' }] })).rejects.toMatchObject({
       status: 400,
     });
   });
 
-  it('allows fifteen images', async () => {
-    const content = Array.from({ length: 15 }, () => ({ type: 'image' }));
-
-    await expect(createPortfolio({ content })).resolves.toMatchObject({ status: 'draft' });
+  it.each(['overview', 'document', 'code'])('rejects a non-array %s', async (tab) => {
+    await expect(createPortfolio({ [tab]: 'nope' })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('stops at sixteen images', async () => {
-    const content = Array.from({ length: 16 }, () => ({ type: 'image' }));
+  it('rejects the retired content field outright', async () => {
+    await expect(createPortfolio({ content: [] })).rejects.toMatchObject({ status: 400 });
+  });
 
-    await expect(createPortfolio({ content })).rejects.toMatchObject({ status: 400 });
+  it('spends the fifteen image budget across all three tabs', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+    await expect(
+      createPortfolio({ overview: img(5), document: img(5), code: img(5) })
+    ).resolves.toMatchObject({ status: 'draft' });
+
+    await expect(
+      createPortfolio({ overview: img(5), document: img(5), code: img(6) })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('counts tabs already saved when only one tab is updated', async () => {
+    const img = (n) => Array.from({ length: n }, () => ({ type: 'image' }));
+
+    const draft = await createPortfolio({ overview: img(10) });
+
+    await expect(updatePortfolio(draft.id, { code: img(5) })).resolves.toMatchObject({
+      status: 'draft',
+    });
+
+    await expect(updatePortfolio(draft.id, { document: img(1) })).rejects.toMatchObject({
+      status: 400,
+    });
   });
 
   it('edits the canvas settings', async () => {
@@ -280,6 +323,69 @@ describe('reacting to portfolios', () => {
     expect(gallery.items[0]).toMatchObject({ likeCount: 1, bookmarkCount: 1 });
   });
 
+  it('remembers my reaction when the gallery is loaded again', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    const { items } = await listPortfolios();
+    const card = items.find((p) => p.id === item.id);
+
+    expect(card.likedByMe).toBe(true);
+    expect(card.bookmarkedByMe).toBe(false);
+    expect(card.likeCount).toBe(1);
+  });
+
+  it('remembers my reaction on the detail page too', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioBookmark(item.id);
+
+    await expect(getPortfolio(item.id)).resolves.toMatchObject({
+      likedByMe: false,
+      bookmarkedByMe: true,
+    });
+  });
+
+  it('forgets the reaction once it is toggled off', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+    await togglePortfolioLike(item.id);
+
+    const { items } = await listPortfolios();
+
+    expect(items.find((p) => p.id === item.id).likedByMe).toBe(false);
+  });
+
+  it('never marks someone else reaction as mine', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    signInAs(USERS.b);
+    const { items } = await listPortfolios();
+    const card = items.find((p) => p.id === item.id);
+
+    expect(card.likedByMe).toBe(false);
+    expect(card.likeCount).toBe(1);
+  });
+
+  it('reports no reaction to a visitor who is not signed in', async () => {
+    signInAs(USERS.a);
+    const item = await publish('작업');
+    await togglePortfolioLike(item.id);
+
+    signOutOfBrowser();
+    const { items } = await listPortfolios();
+
+    expect(items.find((p) => p.id === item.id)).toMatchObject({
+      likedByMe: false,
+      bookmarkedByMe: false,
+      likeCount: 1,
+    });
+  });
+
   it('marks which cards the member already reacted to', async () => {
     signInAs(USERS.a);
     const item = await publish('작업');
@@ -440,5 +546,208 @@ describe('deleting portfolios', () => {
     await deletePortfolio(item.id);
 
     await expect(listMyBookmarkedPortfolios()).resolves.toMatchObject({ total: 0 });
+  });
+});
+
+describe('portfolio collaborators', () => {
+  const invite = async (email) => findMemberByEmail(email);
+
+  beforeEach(async () => {
+    signInAs(USERS.b);
+    await updateProfile({ name: 'User B' });
+    signInAs(USERS.a);
+  });
+
+  it('finds a member by their exact email', async () => {
+    const member = await invite(USERS.b.email);
+
+    expect(member).toEqual({ id: USERS.b.id, name: 'User B', avatarUrl: null });
+  });
+
+  it('ignores case and padding around the email', async () => {
+    const member = await invite(`  ${USERS.b.email.toUpperCase()}  `);
+
+    expect(member.id).toBe(USERS.b.id);
+  });
+
+  it('never leaks the email back', async () => {
+    const member = await invite(USERS.b.email);
+
+    expect(member).not.toHaveProperty('email');
+  });
+
+  it('answers null for an email nobody signed up with', async () => {
+    await expect(invite('nobody@callback.test')).resolves.toBeNull();
+  });
+
+  it('rejects a malformed email', async () => {
+    await expect(invite('not-an-email')).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('turns a visitor away from the lookup', async () => {
+    signOutOfBrowser();
+
+    await expect(invite(USERS.b.email)).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('adds collaborators found by email', async () => {
+    const item = await publish('공동 작업');
+    const member = await invite(USERS.b.email);
+
+    const saved = await setPortfolioCollaborators(item.id, [member.id]);
+
+    expect(saved.collaborators).toEqual([{ id: USERS.b.id, name: 'User B', avatarUrl: null }]);
+  });
+
+  it('keeps the collaborators on the gallery card and the detail page', async () => {
+    const item = await publish('공동 작업');
+    const member = await invite(USERS.b.email);
+    await setPortfolioCollaborators(item.id, [member.id]);
+
+    const { items } = await listPortfolios();
+    expect(items.find((p) => p.id === item.id).collaborators).toHaveLength(1);
+    await expect(getPortfolio(item.id)).resolves.toMatchObject({
+      collaborators: [{ id: USERS.b.id, name: 'User B' }],
+    });
+  });
+
+  it('replaces the whole list instead of piling names up', async () => {
+    const item = await publish('공동 작업');
+    await setPortfolioCollaborators(item.id, [USERS.b.id]);
+
+    const saved = await setPortfolioCollaborators(item.id, []);
+
+    expect(saved.collaborators).toEqual([]);
+  });
+
+  it('drops the owner and duplicates from the list', async () => {
+    const item = await publish('공동 작업');
+
+    const saved = await setPortfolioCollaborators(item.id, [USERS.a.id, USERS.b.id, USERS.b.id]);
+
+    expect(saved.collaborators.map((c) => c.id)).toEqual([USERS.b.id]);
+  });
+
+  it('accepts collaborators while creating the portfolio', async () => {
+    const draft = await createPortfolio({ title: '초안', collaboratorIds: [USERS.b.id] });
+
+    expect(draft.collaborators.map((c) => c.id)).toEqual([USERS.b.id]);
+  });
+
+  it('rejects a member id that does not exist', async () => {
+    const item = await publish('공동 작업');
+
+    await expect(
+      setPortfolioCollaborators(item.id, ['00000000-0000-4000-8000-000000000999'])
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects a list that is not a list', async () => {
+    const item = await publish('공동 작업');
+
+    await expect(updatePortfolio(item.id, { collaboratorIds: 'nope' })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('never lets another member edit the list', async () => {
+    const item = await publish('공동 작업');
+
+    signInAs(USERS.b);
+
+    await expect(setPortfolioCollaborators(item.id, [USERS.a.id])).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('goes away with the portfolio', async () => {
+    const item = await publish('공동 작업');
+    await setPortfolioCollaborators(item.id, [USERS.b.id]);
+
+    await deletePortfolio(item.id);
+
+    expect(rows('portfolio_collaborators')).toEqual([]);
+  });
+});
+
+describe('sorting and searching the gallery', () => {
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    await publish('가나다 작업');
+    await publish('하하 작업');
+    await publish('마바사 작업');
+  });
+
+  it('sorts oldest first', async () => {
+    const { items } = await listPortfolios({ sort: 'oldest' });
+
+    expect(items[0].title).toBe('가나다 작업');
+  });
+
+  it('sorts by title', async () => {
+    const { items } = await listPortfolios({ sort: 'title' });
+
+    expect(items.map((p) => p.title)).toEqual(['가나다 작업', '마바사 작업', '하하 작업']);
+  });
+
+  it('searches the title', async () => {
+    const { items, total } = await listPortfolios({ q: '마바사' });
+
+    expect(total).toBe(1);
+    expect(items[0].title).toBe('마바사 작업');
+  });
+
+  it('finds nothing for a title that is not there', async () => {
+    await expect(listPortfolios({ q: '없는제목' })).resolves.toMatchObject({ total: 0 });
+  });
+
+  it('searches my own list too', async () => {
+    await expect(listMyPortfolios({ q: '하하' })).resolves.toMatchObject({ total: 1 });
+  });
+});
+
+describe('sorting my scrapped portfolios', () => {
+  let first;
+  let second;
+
+  beforeEach(async () => {
+    signInAs(USERS.a);
+    first = await publish('하하 먼저 담은 것');
+    second = await publish('가나다 나중에 담은 것');
+
+    signInAs(USERS.b);
+    await togglePortfolioBookmark(first.id);
+    await togglePortfolioBookmark(second.id);
+  });
+
+  it('shows the one I scrapped last at the top', async () => {
+    const { items, total } = await listMyBookmarkedPortfolios();
+
+    expect(total).toBe(2);
+    expect(items[0].id).toBe(second.id);
+  });
+
+  it('flips to the one I scrapped first', async () => {
+    const { items } = await listMyBookmarkedPortfolios({ sort: 'oldest' });
+
+    expect(items[0].id).toBe(first.id);
+  });
+
+  it('sorts by title', async () => {
+    const { items } = await listMyBookmarkedPortfolios({ sort: 'title' });
+
+    expect(items.map((p) => p.title)).toEqual(['가나다 나중에 담은 것', '하하 먼저 담은 것']);
+  });
+
+  it('rejects a sort the scrap list does not have', async () => {
+    await expect(listMyBookmarkedPortfolios({ sort: 'popular' })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(listMyBookmarkedPortfolios()).rejects.toMatchObject({ status: 401 });
   });
 });

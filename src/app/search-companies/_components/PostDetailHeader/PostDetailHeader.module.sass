@@ -1,0 +1,93 @@
+@use '@/app/_variables.sass' as *
+
+.head
+  display: flex
+  flex-direction: column
+  gap: 10px
+
+.head_back
+  display: inline-flex
+  align-items: center
+  align-self: flex-start
+  gap: 2px
+  margin-bottom: 10px
+  color: $gray
+  text-decoration: none
+
+  :global(.material-symbols-rounded)
+    font-size: 18px
+
+  &:hover
+    color: $green
+
+.head_top
+  display: flex
+  flex-direction: column
+  gap: 10px
+  margin-bottom: 40px
+
+.head_label
+  color: $green
+
+.head_title
+  color: $black
+
+.head_meta
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+.head_tags
+  display: flex
+  align-items: center
+  gap: 10px
+
+.head_tag
+  display: flex
+  align-items: center
+  gap: 16px
+  padding-right: 10px
+  color: $black
+
+.head_value
+  color: $gray
+
+.head_value_point
+  color: $green
+  font-weight: 600
+
+.head_writer
+  display: flex
+  align-items: center
+  color: $gray
+
+.head_writer_icon
+  margin-right: 10px
+  font-size: 24px
+
+.head_date
+  margin-left: 30px
+  color: $stroke1
+
+.head_delete
+  margin-left: 30px
+  padding: 0
+  color: $warning
+  background: transparent
+  border: 0
+  cursor: pointer
+
+.head_counts
+  display: flex
+  align-items: center
+  justify-content: space-between
+  color: $stroke1
+
+.head_scrap
+  display: flex
+  align-items: center
+  gap: 5px
+
+.head_scrap_icon
+  font-size: 19px
+  font-variation-settings: 'FILL' 1

@@ -1,0 +1,82 @@
+@use "../../../_variables" as *
+
+.core_feature_card
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  width: 100%
+  min-height: 260px
+  padding: 50px
+  gap: 40px
+  border-radius: 12px
+  overflow: hidden
+
+  @media (max-width: 1439px)
+    padding: 36px 28px
+    gap: 24px
+
+.feature_content
+  display: flex
+  flex-direction: column
+  flex: 1 1 0%
+  gap: 25px
+
+.feature_title
+  margin: 0
+  white-space: nowrap
+
+.feature_description
+  margin: 0
+  color: $gray
+
+.feature_list
+  display: flex
+  flex-direction: column
+  gap: 16px
+  margin: 0
+  padding: 0
+  list-style: none
+  color: $gray
+
+  li
+    display: flex
+    align-items: center
+    gap: 8px
+
+.feature_check_icon
+  flex-shrink: 0
+  font-size: 16px
+
+.feature_image
+  flex: 0 1 260px
+  max-width: 260px
+  min-width: 150px
+  align-self: flex-end
+
+  @media (max-width: 1439px)
+    flex-basis: 200px
+    max-width: 200px
+
+  img
+    display: block
+    width: 100%
+    height: auto
+    object-fit: contain
+
+.green
+  background: $light_green
+
+  .feature_title
+    color: $green
+
+  .feature_check_icon
+    color: $green
+
+.yellow
+  background: $light_yellow
+
+  .feature_title
+    color: $amber
+
+  .feature_check_icon
+    color: $amber

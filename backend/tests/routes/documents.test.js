@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { argsOf, createSupabaseStub, queriesFor } from '../helpers/supabase';
+import { argsOf, createStorageStub, createSupabaseStub, queriesFor } from '../helpers/supabase';
 import { brokenJsonRequest, callRoute, makeRequest, setSupabase } from '../helpers/routeHarness';
 
 vi.mock('../../lib/supabase/server', async () => {
@@ -8,9 +8,8 @@ vi.mock('../../lib/supabase/server', async () => {
   return { createClient: async () => getSupabase() };
 });
 
-const { DELETE, DELETE_DETAIL, GET, GET_DETAIL, PATCH_DETAIL, POST } = await import(
-  '../../lib/routes/documents'
-);
+const { DELETE, DELETE_DETAIL, DELETE_IMAGES, GET, GET_DETAIL, GET_IMAGE, PATCH_DETAIL, POST } =
+  await import('../../lib/routes/documents');
 
 const url = (qs = '') => `http://localhost/api/documents${qs}`;
 
@@ -573,5 +572,168 @@ describe('DELETE /api/documents/:id', () => {
     const { status } = await callRoute(DELETE_DETAIL, { params: { id: 'other' } });
 
     expect(status).toBe(404);
+  });
+});
+
+describe('문서를 지우면 이미지도 지운다', () => {
+  it('removes every image under the deleted document folder', async () => {
+    const storage = createStorageStub({ files: { 'u1/d1': ['a.png', 'b.png'] } });
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { documents: { data: [{ id: 'd1' }], error: null } },
+        storage,
+      })
+    );
+
+    await callRoute(DELETE_DETAIL, { params: { id: 'd1' } });
+
+    expect(storage.listed).toEqual(['u1/d1']);
+    expect(storage.removed).toEqual(['u1/d1/a.png', 'u1/d1/b.png']);
+  });
+
+  it('cleans up each document in a bulk delete', async () => {
+    const storage = createStorageStub({ files: { 'u1/d1': ['a.png'], 'u1/d2': ['b.png'] } });
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { documents: { data: [{ id: 'd1' }, { id: 'd2' }], error: null } },
+        storage,
+      })
+    );
+
+    await callRoute(DELETE, { request: makeRequest(url(), { body: { ids: ['d1', 'd2'] } }) });
+
+    expect(storage.listed).toEqual(['u1/d1', 'u1/d2']);
+    expect(storage.removed).toEqual(['u1/d1/a.png', 'u1/d2/b.png']);
+  });
+
+  it('does not call remove when the document had no images', async () => {
+    const storage = createStorageStub();
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { documents: { data: [{ id: 'd1' }], error: null } },
+        storage,
+      })
+    );
+
+    await callRoute(DELETE_DETAIL, { params: { id: 'd1' } });
+
+    expect(storage.bucket.remove).not.toHaveBeenCalled();
+  });
+
+  it('leaves storage alone when the document was not mine', async () => {
+    const storage = createStorageStub({ files: { 'u1/d1': ['a.png'] } });
+    setSupabase(
+      createSupabaseStub({
+        user: { id: 'u1' },
+        tables: { documents: { data: [], error: null } },
+        storage,
+      })
+    );
+
+    const { status } = await callRoute(DELETE_DETAIL, { params: { id: 'd1' } });
+
+    expect(status).toBe(404);
+    expect(storage.removed).toEqual([]);
+  });
+
+  it('discards draft images through DELETE /images', async () => {
+    const storage = createStorageStub({ files: { 'u1/draft-1': ['a.png'] } });
+    setSupabase(createSupabaseStub({ user: { id: 'u1' }, storage }));
+
+    const { status } = await callRoute(DELETE_IMAGES, { params: { id: 'draft-1' } });
+
+    expect(status).toBe(200);
+    expect(storage.removed).toEqual(['u1/draft-1/a.png']);
+  });
+
+  it('answers 401 when signed out', async () => {
+    setSupabase(createSupabaseStub({ user: null }));
+
+    const { status } = await callRoute(DELETE_IMAGES, { params: { id: 'd1' } });
+
+    expect(status).toBe(401);
+  });
+});
+
+describe('GET /api/documents/:id/images/:name', () => {
+  const png = () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+
+  it('answers 401 when signed out', async () => {
+    setSupabase(createSupabaseStub({ user: null }));
+
+    const { status } = await callRoute(GET_IMAGE, { params: { id: 'd1', name: 'a.png' } });
+
+    expect(status).toBe(401);
+  });
+
+  it('serves the file under my own folder', async () => {
+    const storage = createStorageStub({ download: png() });
+    setSupabase(createSupabaseStub({ user: { id: 'u1' }, storage }));
+
+    const { status } = await callRoute(GET_IMAGE, { params: { id: 'd1', name: 'a.png' } });
+
+    expect(status).toBe(200);
+    expect(storage.bucket.download).toHaveBeenCalledWith('u1/d1/a.png');
+  });
+
+  it('builds the path from the session user, never from the request', async () => {
+    const storage = createStorageStub({ download: png() });
+    setSupabase(createSupabaseStub({ user: { id: 'someone-else' }, storage }));
+
+    await callRoute(GET_IMAGE, { params: { id: 'd1', name: 'a.png' } });
+
+    expect(storage.bucket.download).toHaveBeenCalledWith('someone-else/d1/a.png');
+  });
+
+  it.each(['../secret.png', 'a/b.png', 'a\\b.png', ''])('rejects %j as a name', async (name) => {
+    const storage = createStorageStub({ download: png() });
+    setSupabase(createSupabaseStub({ user: { id: 'u1' }, storage }));
+
+    const { status } = await callRoute(GET_IMAGE, { params: { id: 'd1', name } });
+
+    expect(status).toBe(400);
+    expect(storage.bucket.download).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 when the file is missing', async () => {
+    const storage = createStorageStub({ downloadError: { message: 'not found' } });
+    setSupabase(createSupabaseStub({ user: { id: 'u1' }, storage }));
+
+    const { status } = await callRoute(GET_IMAGE, { params: { id: 'd1', name: 'a.png' } });
+
+    expect(status).toBe(404);
+  });
+});
+
+describe('draft id 로 문서 만들기', () => {
+  it('accepts a client supplied uuid', async () => {
+    const id = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { id, docType: 'resume', title: '초안' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'documents')[0], 'insert')[0][0]).toMatchObject({ id });
+  });
+
+  it('omits id when none is given', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { docType: 'resume', title: '초안' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'documents')[0], 'insert')[0][0]).not.toHaveProperty('id');
+  });
+
+  it('rejects an id that is not a uuid', async () => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { id: 'draft-1', docType: 'resume' } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('uuid');
   });
 });

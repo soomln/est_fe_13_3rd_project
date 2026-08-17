@@ -1,5 +1,8 @@
 import { badRequest, notFound } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import { loadMyReactions } from './reactions';
+
+const withMine = (item, mine) => ({ ...item, bookmarkedByMe: mine.bookmark.has(item.id) });
 
 const DOC_TYPES = ['resume', 'cover_letter'];
 
@@ -21,7 +24,7 @@ function toItem(row) {
   };
 }
 
-export const GET = defineRoute(async ({ request, supabase }) => {
+export const GET = defineRoute(async ({ request, supabase, user }) => {
   const q = request.nextUrl.searchParams;
 
   const page = Math.max(1, Number(q.get('page') ?? 1));
@@ -55,8 +58,11 @@ export const GET = defineRoute(async ({ request, supabase }) => {
     await supabase.from('resume_templates').select('doc_type').eq('is_active', true)
   );
 
+  const items = (data ?? []).map(toItem);
+  const mine = await loadMyReactions(supabase, user, 'template', items.map((i) => i.id));
+
   return {
-    items: (data ?? []).map(toItem),
+    items: items.map((item) => withMine(item, mine)),
     total: count ?? 0,
     page,
     pageSize,
@@ -68,7 +74,7 @@ export const GET = defineRoute(async ({ request, supabase }) => {
   };
 });
 
-export const GET_DETAIL = defineRoute(async ({ params, supabase }) => {
+export const GET_DETAIL = defineRoute(async ({ params, supabase, user }) => {
   const row = unwrap(
     await supabase
       .from('resume_templates')
@@ -79,9 +85,14 @@ export const GET_DETAIL = defineRoute(async ({ params, supabase }) => {
   );
   if (!row) throw notFound('양식을 찾을 수 없습니다.');
 
-  return {
-    ...toItem(row),
-    content: row.content,
-    contentHtml: row.content_html,
-  };
+  const mine = await loadMyReactions(supabase, user, 'template', [row.id]);
+
+  return withMine(
+    {
+      ...toItem(row),
+      content: row.content,
+      contentHtml: row.content_html,
+    },
+    mine
+  );
 });

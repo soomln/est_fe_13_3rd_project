@@ -1,5 +1,10 @@
 import { badRequest, notFound } from '../http/errors';
 import { defineRoute, unwrap } from '../http/route';
+import {
+  DOCUMENT_BUCKET,
+  removeDocumentImages,
+  sweepOrphanDocumentImages,
+} from './storage';
 
 const DOC_TYPES = ['resume', 'cover_letter'];
 
@@ -39,6 +44,8 @@ async function readJson(request) {
   }
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = defineRoute(
   async ({ request, supabase, user }) => {
     const q = request.nextUrl.searchParams;
@@ -70,8 +77,10 @@ export const GET = defineRoute(
     if (error) throw error;
 
     const all = unwrap(
-      await supabase.from('documents').select('doc_type').eq('user_id', user.id)
+      await supabase.from('documents').select('id, doc_type').eq('user_id', user.id)
     );
+
+    await sweepOrphanDocumentImages(supabase, user.id, all.map((r) => r.id));
 
     return {
       items: (data ?? []).map(toItem),
@@ -96,10 +105,15 @@ export const POST = defineRoute(
       throw badRequest(`docType 은 ${DOC_TYPES.join(' | ')} 중 하나여야 합니다.`);
     }
 
+    if (body.id != null && !UUID.test(body.id)) {
+      throw badRequest('id 는 uuid 형식이어야 합니다.');
+    }
+
     const row = unwrap(
       await supabase
         .from('documents')
         .insert({
+          ...(body.id ? { id: body.id } : {}),
           user_id: user.id,
           doc_type: body.docType,
           title: body.title?.trim() || '제목 없음',
@@ -127,6 +141,8 @@ export const DELETE = defineRoute(
     const rows = unwrap(
       await supabase.from('documents').delete().eq('user_id', user.id).in('id', ids).select('id')
     );
+
+    await removeDocumentImages(supabase, user.id, (rows ?? []).map((r) => r.id));
 
     return { deleted: rows?.length ?? 0 };
   },
@@ -189,7 +205,40 @@ export const DELETE_DETAIL = defineRoute(
         .select('id')
     );
     if (!rows?.length) throw notFound('문서를 찾을 수 없습니다.');
+
+    await removeDocumentImages(supabase, user.id, [params.id]);
+
     return { deleted: 1 };
+  },
+  { auth: true }
+);
+
+export const GET_IMAGE = defineRoute(
+  async ({ params, supabase, user }) => {
+    const name = decodeURIComponent(params.name ?? '');
+    if (!name || name.includes('/') || name.includes('\\') || name.includes('..')) {
+      throw badRequest('잘못된 이미지 이름입니다.');
+    }
+
+    const { data, error } = await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .download(`${user.id}/${params.id}/${name}`);
+    if (error || !data) throw notFound('이미지를 찾을 수 없습니다.');
+
+    return new Response(data, {
+      headers: {
+        'Content-Type': data.type || 'application/octet-stream',
+        'Cache-Control': 'private, max-age=3600',
+      },
+    });
+  },
+  { auth: true }
+);
+
+export const DELETE_IMAGES = defineRoute(
+  async ({ params, supabase, user }) => {
+    await removeDocumentImages(supabase, user.id, [params.id]);
+    return { deleted: true };
   },
   { auth: true }
 );

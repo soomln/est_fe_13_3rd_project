@@ -1,108 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import './InterviewFeedbackModal.sass';
-
-const questionData = {
-  자기소개: {
-    question: '본인을 간단하게 소개해주세요.',
-    answer:
-      '안녕하세요. 저는 프론트엔드 개발자를 목표로 하고 있는 지원자입니다.',
-  },
-  '기술 질문 1': {
-    question:
-      '프론트엔드 개발자로 지원한 이유는 무엇인가요?',
-    answer:
-      '사용자 경험을 중요하게 생각하며, 직관적이고 유지보수하기 좋은 프론트엔드 개발을 지향하고 있습니다.',
-  },
-  '기술 질문 2': {
-    question:
-      '프로젝트에서 가장 어려웠던 기술적인 문제는 무엇이었나요?',
-    answer:
-      '프로젝트에서 상태 관리와 API 응답 처리 과정에서 발생한 문제를 해결한 경험이 있습니다.',
-  },
-  '인성 질문': {
-    question:
-      '팀원과 의견이 충돌했을 때 어떻게 해결했나요?',
-    answer:
-      '서로의 의견을 정리한 뒤 근거를 비교하고 가장 적절한 방향을 함께 결정했습니다.',
-  },
-  '마무리 질문': {
-    question:
-      '마지막으로 하고 싶은 말이 있나요.',
-    answer:
-      '지속적으로 배우고 성장하는 개발자가 되겠습니다.',
-  },
-};
-
-const feedbackData = {
-  good: [
-    '지원 직무에 대한 방향성이 잘 드러났습니다.',
-    '답변의 핵심 내용을 명확하게 전달했습니다.',
-  ],
-  improve: [
-    '관련 프로젝트 경험을 함께 이야기하면 신뢰도가 높아집니다.',
-    '구체적인 기술 스택이나 경험을 추가하면 더 인상적인 답변이 됩니다.',
-  ],
-  summary:
-    '질문에 대한 방향은 잘 전달되었으며, 구체적인 경험을 추가하면 더욱 설득력 있는 답변이 됩니다.',
-};
+import styles from './InterviewFeedbackModal.module.sass';
+import { getMyScrappedQaIds, toggleQaScrap } from '@backend/lib/api/interview';
 
 export default function InterviewFeedbackModal({
-  selectedQuestions = [],
+  results = [],
   onClose,
 }) {
   const [openQuestionId, setOpenQuestionId] =
-    useState(selectedQuestions[0] || null);
+    useState(results[0]?.category || null);
   const [bookmarkedQuestions, setBookmarkedQuestions] =
     useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const qaIds = results.map((r) => r.qaId).filter(Boolean);
+    if (qaIds.length === 0) return undefined;
+
+    getMyScrappedQaIds(qaIds)
+      .then((scrappedIds) => {
+        if (cancelled) return;
+        const bookmarked = results
+          .filter((r) => r.qaId && scrappedIds.has(r.qaId))
+          .map((r) => r.category);
+        setBookmarkedQuestions(bookmarked);
+      })
+      .catch((err) => {
+        console.error('북마크 상태 조회 실패:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [results]);
+
   const handleToggle = (id) => {
     setOpenQuestionId((prev) =>
       prev === id ? null : id,
     );
   };
-  const handleBookmark = (id) => {
+  const handleBookmark = async (item) => {
+    const wasBookmarked = bookmarkedQuestions.includes(item.id);
     setBookmarkedQuestions((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id],
+      wasBookmarked ? prev.filter((v) => v !== item.id) : [...prev, item.id],
     );
+
+    if (!item.qaId) return;
+
+    try {
+      await toggleQaScrap(item.qaId);
+    } catch (err) {
+      console.error('질문 스크랩 실패:', err);
+      setBookmarkedQuestions((prev) =>
+        wasBookmarked ? [...prev, item.id] : prev.filter((v) => v !== item.id),
+      );
+    }
   };
-  const feedbackList = selectedQuestions.map(
-    (question) => ({
-      id: question,
-      title: question,
-      question:
-        questionData[question]?.question || '',
-      answer:
-        questionData[question]?.answer || '',
-      feedback: feedbackData,
-      summary: feedbackData.summary,
+  const feedbackList = results.map(
+    (item) => ({
+      id: item.category,
+      qaId: item.qaId ?? null,
+      title: item.title,
+      question: item.question,
+      answer: item.answer || '',
+      score: item.score,
+      good: item.feedback?.strengths || [],
+      improve: item.feedback?.improvements || [],
+      summary: item.feedback?.summary || '',
     }),
   );
 
   return (
-    <div className="feedback_overlay">
-      <div className="interview_feedback_modal">
-        <div className="modal_header">
+    <div className={styles.feedback_overlay}>
+      <div className={styles.interview_feedback_modal}>
+        <div className={styles.modal_header}>
           <div>
-            <div className="modal_title_wrap">
+            <div className={styles.modal_title_wrap}>
               <span className="material-symbols-outlined">
                 feedback
               </span>
-              <h2 className="modal_title font_h4">
+              <h2 className={`${styles.modal_title} font_h4`}>
                 질문별 피드백
               </h2>
             </div>
-            <p className="modal_description font_body_s_r">
+            <p className={`${styles.modal_description} font_body_s_r`}>
               원하는 질문에 북마크를 클릭하면, 마이페이지에 두고
               언제든지 다시 볼 수 있어요!
+            </p>
+            <p className={`${styles.modal_notice} font_body_s_r`}>
+              질문별 점수는 각 10점 만점이에요. 100점 만점인 최종 점수와는
+              별도의 기준으로 채점돼요.
             </p>
           </div>
           <button
             type="button"
-            className="close_button"
+            className={styles.close_button}
             onClick={onClose}
             aria-label="닫기"
           >
@@ -111,7 +105,7 @@ export default function InterviewFeedbackModal({
             </span>
           </button>
         </div>
-        <div className="feedback_content">
+        <div className={styles.feedback_content}>
           {feedbackList.map((item) => {
             const isOpen =
               openQuestionId === item.id;
@@ -121,21 +115,26 @@ export default function InterviewFeedbackModal({
             return (
               <div
                 key={item.id}
-                className={`feedback_item ${
+                className={`${styles.feedback_item} ${
                   isOpen ? 'is_open' : ''
                 }`}
               >
-                <div className="feedback_item_header">
+                <div className={styles.feedback_item_header}>
                   <button
                     type="button"
-                    className="question_toggle"
+                    className={styles.question_toggle}
                     onClick={() =>
                       handleToggle(item.id)
                     }
                   >
-                    <span className="question_title font_body_l_b">
+                    <span className={`${styles.question_title} font_body_l_b`}>
                       {item.title}
                     </span>
+                    {typeof item.score === 'number' && (
+                      <span className={`${styles.question_score} font_body_m_b`}>
+                        {item.score}점 <span className={styles.score_max}>/ 10점</span>
+                      </span>
+                    )}
                     <span className="material-symbols-outlined">
                       {isOpen
                         ? 'keyboard_arrow_up'
@@ -144,13 +143,13 @@ export default function InterviewFeedbackModal({
                   </button>
                   <button
                     type="button"
-                    className={`bookmark_button ${
+                    className={`${styles.bookmark_button} ${
                       isBookmarked
-                        ? 'is_bookmarked'
+                        ? styles.is_bookmarked
                         : ''
                     }`}
                     onClick={() =>
-                      handleBookmark(item.id)
+                      handleBookmark(item)
                     }
                     aria-label="북마크"
                   >
@@ -163,12 +162,12 @@ export default function InterviewFeedbackModal({
                 </div>
 
                 {isOpen && (
-                  <div className="feedback_detail">
+                  <div className={styles.feedback_detail}>
                     <section>
                       <h3 className="font_body_l_b">
-                        {item.title} 질문
+                        AI면접관 질문
                       </h3>
-                      <p className="font_body_l_r">
+                      <p className={`font_body_l_r ${styles.question_text}`}>
                         {item.question}
                       </p>
                     </section>
@@ -186,12 +185,12 @@ export default function InterviewFeedbackModal({
                       <h3 className="font_body_l_b">
                         피드백
                       </h3>
-                      <div className="feedback_group">
+                      <div className={styles.feedback_group}>
                         <h4 className="font_body_l_r">
                           잘한 점
                         </h4>
                         <ul>
-                          {item.feedback.good.map(
+                          {item.good.map(
                             (text) => (
                               <li
                                 key={text}
@@ -203,12 +202,12 @@ export default function InterviewFeedbackModal({
                           )}
                         </ul>
                       </div>
-                      <div className="feedback_group">
+                      <div className={styles.feedback_group}>
                         <h4 className="font_body_l_r">
                           보완할 점
                         </h4>
                         <ul>
-                          {item.feedback.improve.map(
+                          {item.improve.map(
                             (text) => (
                               <li
                                 key={text}

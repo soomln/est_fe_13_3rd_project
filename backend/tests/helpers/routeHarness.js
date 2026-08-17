@@ -28,7 +28,8 @@ export async function callRoute(handler, { request = makeRequest(), params } = {
   const context = params === undefined ? undefined : { params };
   const response = await handler(request, context);
   const status = response.status;
-  const body = status === 204 ? null : await response.json();
+  const isJson = response.headers.get('content-type')?.includes('application/json');
+  const body = status === 204 || !isJson ? null : await response.json();
   return { status, body, response };
 }
 

@@ -10,6 +10,8 @@ const ROUTES = [
   ['/api/reactions', () => import('@/app/api/reactions/route.js')],
   ['/api/interview-qas', () => import('@/app/api/interview-qas/route.js')],
 
+  ['/api/members/lookup', () => import('@/app/api/members/lookup/route.js')],
+
   ['/api/me/account', () => import('@/app/api/me/account/route.js')],
   ['/api/me/summary', () => import('@/app/api/me/summary/route.js')],
   ['/api/me', () => import('@/app/api/me/route.js')],
@@ -21,6 +23,11 @@ const ROUTES = [
   ['/api/templates/[id]', () => import('@/app/api/templates/[id]/route.js')],
   ['/api/templates', () => import('@/app/api/templates/route.js')],
 
+  [
+    '/api/documents/[id]/images/[name]',
+    () => import('@/app/api/documents/[id]/images/[name]/route.js'),
+  ],
+  ['/api/documents/[id]/images', () => import('@/app/api/documents/[id]/images/route.js')],
   ['/api/documents/[id]', () => import('@/app/api/documents/[id]/route.js')],
   ['/api/documents', () => import('@/app/api/documents/route.js')],
 

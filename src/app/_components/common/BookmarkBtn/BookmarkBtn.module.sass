@@ -1,0 +1,31 @@
+@use '@/app/_variables.sass' as *
+
+.bookmark_btn
+  position: relative
+  display: block
+  width: var(--bookmark-size, 60px)
+  height: var(--bookmark-size, 60px)
+  padding: 0
+  background-color: transparent
+  border: 0
+  cursor: pointer
+
+  :global(.material-symbols-sharp)
+    position: absolute
+    top: 0
+    left: 0
+    font-size: var(--bookmark-size, 60px)
+    line-height: var(--bookmark-size, 60px)
+    font-weight: 200
+    color: $stroke1
+    transition: color 0.2s ease
+
+// 애니메이션을 쓰지 않는 화면용
+.bookmark_btn_static
+  :global(.material-symbols-sharp)
+    transition: none
+
+.bookmark_btn_saved
+  :global(.material-symbols-sharp)
+    color: $amber
+    font-variation-settings: 'FILL' 1

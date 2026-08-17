@@ -1,0 +1,41 @@
+@use '@/app/_variables.sass' as *
+
+.page
+  padding: 40px 0 80px
+
+.page_inner
+  display: flex
+  flex-direction: column
+  gap: 24px
+
+.content
+  display: flex
+  align-items: flex-start
+  gap: 24px
+
+.list
+  display: flex
+  flex-direction: column
+  flex: 1
+  min-width: 0
+  gap: 20px
+  padding-top: 10px
+
+.list_count
+  color: $black
+
+.list_count_point
+  color: $green
+
+.list_grid
+  display: grid
+  grid-template-columns: repeat(5, minmax(0, 1fr))
+  gap: 10px 8px
+
+.list_state
+  padding: 80px 0
+  text-align: center
+  color: $gray
+
+.list_pagination
+  margin-top: 60px

@@ -1,1 +1,1 @@
-export {default} from './CompanyCard';
+export { default } from './CompanyCard';

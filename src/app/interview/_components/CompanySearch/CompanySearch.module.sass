@@ -1,0 +1,104 @@
+@use '@/app/_variables.sass' as *
+
+.company_search
+  width: 100%
+  flex: 2
+  min-height: 0
+  padding: 20px
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  gap: 20px
+  border-radius: 10px
+  background: $warning_bg
+  overflow: hidden
+  
+  h3
+    margin: 0
+    color: $black
+
+.company_search_input
+  width: 100%
+  height: 40px
+  box-sizing: border-box
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: 0 12px
+  border: 1px solid $warning
+  border-radius: 30px
+  background: $white
+
+  input
+    flex: 1
+    width: 100%
+    min-width: 0
+    padding: 0
+    border: 0
+    outline: 0
+    background: transparent
+    color: $black
+
+    &::placeholder
+      color: $gray
+
+
+.company_search_button
+  width: 32px
+  height: 32px
+  flex-shrink: 0
+  padding: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  border: 0
+  background: transparent
+  color: $warning
+  cursor: pointer
+
+  :global(.material-symbols-outlined)
+    font-size: 22px
+
+
+.company_list
+  width: 100%
+  flex: 1
+  min-height: 0
+  margin: 0
+  padding: 0 5px 0 0
+  box-sizing: border-box
+  list-style: none
+  display: flex
+  flex-direction: column
+  gap: 5px
+  overflow-y: auto
+  overflow-x: hidden
+
+  &::-webkit-scrollbar
+    width: 4px
+
+  &::-webkit-scrollbar-track
+    background: transparent
+
+  &::-webkit-scrollbar-thumb
+    border-radius: 4px
+    min-height: 40px
+    max-height: 40px
+    background: $warning
+
+
+.company_list_item
+  width: 100%
+  min-width: 0
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  gap: 8px
+  color: $gray
+  cursor: pointer
+
+
+.company_checkbox
+  flex-shrink: 0
+  color: $warning
+  font-size: 20px

@@ -20,7 +20,8 @@ export function defineRoute(handler, { auth = false } = {}) {
 
       const params = context?.params ? await context.params : {};
 
-      return jsonOk(await handler({ request, params, supabase, user }));
+      const result = await handler({ request, params, supabase, user });
+      return result instanceof Response ? result : jsonOk(result);
     } catch (error) {
       return jsonError(error);
     }
@@ -30,6 +31,11 @@ export function defineRoute(handler, { auth = false } = {}) {
 export function unwrap({ data, error }) {
   if (error) throw error;
   return data;
+}
+
+export function pageOf(items, page, pageSize) {
+  const from = (page - 1) * pageSize;
+  return { items: items.slice(from, from + pageSize), total: items.length, page, pageSize };
 }
 
 export function resolveUserId(rawUserId, user) {

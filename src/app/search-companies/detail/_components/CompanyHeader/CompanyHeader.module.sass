@@ -1,0 +1,73 @@
+@use '@/app/_variables.sass' as *
+
+.brand
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+  min-height: 144px
+  padding: 20px 30px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 10px
+
+.brand_company
+  display: flex
+  align-items: center
+  gap: 50px
+
+.brand_logo
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 227px
+  height: 82px
+  overflow: hidden
+
+  img
+    max-width: 100%
+    max-height: 100%
+    object-fit: contain
+
+.brand_info
+  display: flex
+  flex-direction: column
+  gap: 26px
+
+.brand_name
+  color: $black
+
+.brand_industry
+  color: $gray
+
+.brand_tags
+  display: flex
+  gap: 10px
+
+.brand_tag
+  color: $green
+
+.brand_stats
+  display: flex
+  margin: 0
+
+.brand_stat
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 4px
+  width: 118px
+  padding: 0 10px
+  border-left: 1px solid $stroke3
+
+  &:first-child
+    border-left: 0
+
+  dt
+    color: $gray
+
+  dd
+    margin: 0
+    color: $black

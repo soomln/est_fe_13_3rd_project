@@ -1,8 +1,13 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.sass';
 import Image from 'next/image';
 
 import Header from '../_components/common/Header/Header';
 import Footer from '../_components/common/Footer/Footer';
+import { useAuth } from '@/app/_components/auth';
 
 import ActionButton from '@/app/interview/_components/ActionButton';
 import FeatureCard from '@/app/interview/_components/FeatureCard';
@@ -10,83 +15,143 @@ import CompanyCard from '@/app/interview/_components/CompanyCard';
 import FaqItem from '@/app/interview/_components/FaqItem';
 import CoreFeatureCard from '@/app/interview/_components/CoreFeatureCard';
 import GuideCard from '@/app/interview/_components/GuideCard';
+import { listCompanies, listMyBookmarkedCompanies } from '@backend/lib/api/companies';
 
-// 임시 데이터
-const dummyCompanies = [
-  {
-    id: 1,
-    logo: '/images/estSoft 1.png',
-    companyName: '이스트소프트',
-    position: '프론트엔드 개발자',
-    salary: '4,500만원',
-    rating: 4.2,
-  },
-  {
-    id: 2,
-    logo: '/images/estSoft 1.png',
-    companyName: '이스트소프트',
-    position: '백엔드 개발자',
-    salary: '4,800만원',
-    rating: 4.0,
-  },
-  {
-    id: 3,
-    logo: '/images/estSoft 1.png',
-    companyName: '이스트소프트',
-    position: 'AI 엔지니어',
-    salary: '5,200만원',
-    rating: 4.5,
-  },
-  {
-    id: 4,
-    logo: '/images/estSoft 1.png',
-    companyName: '이스트소프트',
-    position: '보안',
-    salary: '4,300만원',
-    rating: 3.9,
-  },
-];
+const INTEREST_COMPANY_COUNT = 4;
+
+function toCompanyCardProps(company) {
+  return {
+    id: company.id,
+    logo: company.logo,
+    companyName: company.name,
+    position: company.category,
+    salary: company.avgSalary,
+    rating: company.rating,
+  };
+}
 
 const faqList = [
   {
     id: 1,
-    question: '자기소개를 해주세요.',
+    question: 'AI 면접 질문은 어떻게 생성되나요?',
+    answerTitle: '네, 맞춤형으로 생성됩니다!',
     answer:
-      '안녕하세요. 사용자 경험을 중요하게 생각하는 프론트엔드 개발자입니다. React와 TypeScript를 활용한 프로젝트 경험이 있으며, 문제 해결 과정과 협업을 통해 지속적으로 성장하고 있습니다.',
+      '선택한 이력서와 자기소개서의 내용, 지원 기업과 질문 카테고리를 함께 분석해 지원 직무와 경험에 맞는 질문을 생성합니다.',
+    details: [
+      '이력서와 자기소개서 기반 질문 생성',
+      '지원 기업 및 직무 정보 반영',
+      '개인의 경험에 맞는 맞춤 질문 제공',
+    ],
   },
   {
     id: 2,
-    question: '지원 동기를 말씀해주세요.',
+    question: '질문을 원하는 것만 골라서 진행할 수 있나요?',
+    answerTitle: '네, 원하는 질문만 선택할 수 있어요!',
     answer:
-      '회사의 비전과 직무에 매력을 느껴 지원하게 되었습니다. 사용자에게 좋은 경험을 제공하는 서비스를 만드는 것이 목표입니다.',
+      '생성된 질문 중 원하는 카테고리와 질문을 선택해 필요한 내용만 골라서 면접을 진행할 수 있습니다.',
+    details: [
+      '원하는 질문 카테고리 선택',
+      '필요한 질문만 골라 면접 진행',
+      '선택한 질문으로 집중 연습 가능',
+    ],
   },
   {
     id: 3,
-    question: '프로젝트에서 어려웠던 점은 무엇인가요?',
+    question: '지원하는 기업에 맞는 질문도 받을 수 있나요?',
+    answerTitle: '네, 기업별 맞춤 질문을 받을 수 있어요!',
     answer:
-      'API 응답 구조가 변경되었을 때 컴포넌트를 리팩터링하고 상태 관리를 수정하여 문제를 해결했습니다.',
+      '지원 기업의 정보와 선택한 직무를 바탕으로 해당 기업과 직무에 맞는 예상 면접 질문을 생성합니다.',
+    details: [
+      '지원 기업 정보 반영',
+      '지원 직무에 맞는 질문 생성',
+      '기업별 예상 질문으로 면접 준비',
+    ],
   },
   {
     id: 4,
-    question: '협업 경험을 말씀해주세요.',
+    question: '면접 시간은 어떻게 확인할 수 있나요?',
+    answerTitle: '면접 진행 시간을 확인할 수 있어요!',
     answer:
-      'Git Flow를 사용하여 브랜치 전략을 지키며 협업했고, 코드 리뷰를 통해 품질을 개선했습니다.',
+      '면접을 시작하면 진행 시간이 기록되며, 면접이 끝난 후 실제 소요 시간을 확인할 수 있습니다.',
+    details: [
+      '면접 진행 시간 자동 기록',
+      '면접 종료 후 소요 시간 확인',
+      '실제 면접과 비슷한 환경에서 연습',
+    ],
   },
   {
     id: 5,
-    question: '본인의 장단점을 말씀해주세요.',
+    question: '면접이 끝나면 어떤 결과를 확인할 수 있나요?',
+    answerTitle: '면접 결과와 AI 피드백을 확인할 수 있어요!',
     answer:
-      '장점은 책임감과 문제 해결 능력이며, 단점은 완벽주의 성향이 있어 일정 관리를 통해 보완하고 있습니다.',
+      '면접이 끝나면 답변 내용을 분석해 전달력, 논리성, 전문성 등을 기준으로 피드백과 개선 방향을 제공합니다.',
+    details: [
+      '답변별 AI 피드백 확인',
+      '면접 평가 점수 확인',
+      '개선이 필요한 답변과 방향 확인',
+    ],
   },
   {
     id: 6,
-    question: '마지막으로 하고 싶은 말이 있나요?',
+    question: '면접 결과를 다시 확인할 수 있나요?',
+    answerTitle: '네, 언제든 다시 확인할 수 있어요!',
     answer:
-      '좋은 기회를 주셔서 감사합니다. 항상 배우는 자세로 성장하는 개발자가 되겠습니다.',
+      '완료된 면접 결과를 저장하면 마이페이지에서 이전 면접의 질문과 답변, 평가 결과를 다시 확인할 수 있습니다.',
+    details: [
+      '지난 면접 기록 다시 확인',
+      '질문과 답변 내용 열람',
+      '이전 면접 결과와 비교 분석',
+    ],
   },
 ];
 
 export default function InterviewPage() {
+  const router = useRouter();
+  const { isLoggedIn, isLoading: isAuthLoading, openLogin } = useAuth();
+  const [companies, setCompanies] = useState([]);
+
+  const handleStartInterview = () => {
+    if (!isLoggedIn) {
+      openLogin();
+      return;
+    }
+    router.push('/interview/chat');
+  };
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      let items = [];
+
+      if (isLoggedIn) {
+        try {
+          const page = await listMyBookmarkedCompanies({ pageSize: INTEREST_COMPANY_COUNT });
+          items = page?.items ?? [];
+        } catch { }
+      }
+
+      if (items.length === 0) {
+        try {
+          const page = await listCompanies({ pageSize: INTEREST_COMPANY_COUNT });
+          items = page?.items ?? [];
+        } catch { }
+      }
+
+      if (!cancelled) setCompanies(items);
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthLoading, isLoggedIn]);
+
+  const interestedCompanies = companies.map(toCompanyCardProps);
+
   return (
     <>
       <Header />
@@ -95,7 +160,6 @@ export default function InterviewPage() {
         <section className={styles.hero_section}>
           <div className="container">
             <div className={styles.hero_content}>
-
               <div className={styles.hero_left}>
                 <div className={styles.hero_title}>
                   <span className="font_body_l_r">
@@ -126,22 +190,70 @@ export default function InterviewPage() {
 
                 <ActionButton
                   text="AI 면접 연습 시작하기"
-                  href="/interview/chat"
+                  onClick={handleStartInterview}
                   className="font_h4"
                   showArrow
                 />
               </div>
-
               <div className={styles.hero_right}>
-                <Image
-                  src="/images/AIimg.png"
-                  alt="AI 면접 로봇"
-                  width={650}
-                  height={650}
-                  priority
-                />
-              </div>
+                <div className={styles.hero_visual}>
+                  <img
+                    src="/images/interview/AIimg.png"
+                    alt="AI 면접 플랫폼"
+                    className={styles.hero_image}
+                  />
 
+                  <div
+                    className={`${styles.hero_bubble} ${styles.hero_bubble_green}`}
+                  >
+                    <span>•••</span>
+                  </div>
+
+                  <div
+                    className={`${styles.hero_bubble} ${styles.hero_bubble_purple}`}
+                  >
+                    <span>•••</span>
+                  </div>
+
+                  <div
+                    className={`${styles.hero_bubble} ${styles.hero_bubble_yellow}`}
+                  >
+                    <span>•••</span>
+                  </div>
+
+                  <span className={`${styles.hero_shape} ${styles.hero_heart}`}>
+                    ♥
+                  </span>
+
+                  <span className={`${styles.hero_star} ${styles.hero_star_1}`}>
+                    ✦
+                  </span>
+
+                  <span className={`${styles.hero_star} ${styles.hero_star_2}`}>
+                    ✦
+                  </span>
+
+                  <span className={`${styles.hero_star} ${styles.hero_star_3}`}>
+                    ✦
+                  </span>
+
+                  <span
+                    className={`${styles.hero_circle} ${styles.hero_circle_1}`}
+                  />
+
+                  <span
+                    className={`${styles.hero_circle} ${styles.hero_circle_2}`}
+                  />
+
+                  <span
+                    className={`${styles.hero_circle} ${styles.hero_circle_3}`}
+                  />
+
+                  <span
+                    className={`${styles.hero_circle} ${styles.hero_circle_4}`}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -150,20 +262,37 @@ export default function InterviewPage() {
           <section className={styles.content_section}>
             <section className={styles.company_section}>
               <div className={styles.company_header}>
-                <h2 className="font_h3">
-                  ⭐ 나의 관심 기업
-                </h2>
+                <div className={styles.company_heading}>
+                  <div className={styles.company_title}>
+                    <span className={`${styles.title_star} material-symbols-rounded`}>
+                      star
+                    </span>
+
+                    <h2 className="font_h3">
+                      나의 관심 기업
+                    </h2>
+                  </div>
+
+                  <p className="font_body_s_r">
+                    관심 등록한 기업을 확인하고, 맞춤 면접을 준비해보세요!
+                  </p>
+                </div>
 
                 <button
                   type="button"
                   className={`${styles.view_all_btn} font_body_s_r`}
+                  onClick={() => router.push('/mypage/activity')}
                 >
-                  전체 보기
+                  <span>전체 보기</span>
+
+                  <span className="material-symbols-rounded">
+                    arrow_forward
+                  </span>
                 </button>
               </div>
 
               <div className={styles.company_list}>
-                {dummyCompanies.map((company) => (
+                {interestedCompanies.map((company) => (
                   <CompanyCard
                     key={company.id}
                     {...company}
@@ -173,9 +302,21 @@ export default function InterviewPage() {
             </section>
 
             <section className={styles.question_section}>
-              <h2 className="font_h3">
-                ❓ 자주 묻는 면접 질문
-              </h2>
+              <div className={styles.question_heading}>
+                <div className={styles.question_title}>
+                  <span className={`${styles.question_icon} material-symbols-rounded`}>
+                    question_mark
+                  </span>
+
+                  <h2 className="font_h3">
+                    자주 묻는 질문
+                  </h2>
+                </div>
+
+                <p className="font_body_s_r">
+                  AI 면접에 대해 자주 묻는 질문을 확인해보세요!
+                </p>
+              </div>
 
               <div className={styles.question_list}>
                 {faqList.map((faq) => (
@@ -183,6 +324,8 @@ export default function InterviewPage() {
                     key={faq.id}
                     question={faq.question}
                     answer={faq.answer}
+                    answerTitle={faq.answerTitle}
+                    details={faq.details}
                   />
                 ))}
               </div>
@@ -216,7 +359,7 @@ export default function InterviewPage() {
                   '채용공고별 면접 보기',
                   '직무별 면접 보기',
                 ]}
-                image="/images/feature-interview.png"
+                image="/images/interview/feature-interview.png"
               />
 
               <CoreFeatureCard
@@ -240,7 +383,7 @@ export default function InterviewPage() {
                   '자소서 기반 질문 생성',
                   '예상 질문 리스트 생성',
                 ]}
-                image="/images/feature-resume.png"
+                image="/images/interview/feature-resume.png"
               />
             </div>
           </section>
@@ -264,14 +407,14 @@ export default function InterviewPage() {
 
               <ActionButton
                 text="AI 면접 시작하기"
-                href="/interview/chat"
+                onClick={handleStartInterview}
                 variant="purple"
                 className="font_body_s_b"
               />
             </div>
             <div className={styles.guide_robot}>
               <Image
-                src="/images/AIguide.png"
+                src="/images/interview/AIguide.png"
                 alt="AI 면접 가이드 로봇"
                 width={130}
                 height={210}
