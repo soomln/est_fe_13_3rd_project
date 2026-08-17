@@ -90,6 +90,12 @@ const handleSubmit = async () => {
   }
 };
 
+const handleCancel = () => {
+  router.push(
+    `/search-companies/detail/${company.slug}/interview-review`
+  );
+};
+
   return(
     <>
       <FormSelect 
@@ -129,7 +135,7 @@ const handleSubmit = async () => {
       label="내용"
       placeholder="내용을 작성해주세요."
       />   {/* 내용 */}
-      <FormWriteButton onSubmitClick={handleSubmit}/>
+      <FormWriteButton onSubmitClick={handleSubmit} onCancelClick={handleCancel}/>
     </>
   );
 }

@@ -101,7 +101,13 @@ export default function QuestionWriteForm({company}){
     console.error(err);
     alert("족보 등록에 실패했습니다.");
   }
-};
+  };
+  
+  const handleCancel = () => {
+  router.push(
+    `/search-companies/detail/${company.slug}/interview-question`
+  );
+  };
 
   return(
     <>
@@ -130,7 +136,7 @@ export default function QuestionWriteForm({company}){
         onAddQuestion={handleAddQuestion}
         onRemoveQuestion={handleRemoveQuestion}
       />
-      <FormWriteButton onSubmitClick={handleSubmit}/>
+      <FormWriteButton onSubmitClick={handleSubmit} onCancelClick={handleCancel}/>
     </>
   );
 }
