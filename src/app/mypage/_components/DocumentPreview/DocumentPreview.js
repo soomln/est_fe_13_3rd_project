@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getDocument } from '@backend/lib/api/documents';
 import useDialog from '@/app/mypage/_lib/useDialog';
 import formatDate from '@/app/mypage/_lib/formatDate';
+import FONT_VARS from '@/app/resume/editor/_lib/editorFonts';
 import styles from './DocumentPreview.module.sass';
 
 const TYPE_LABEL = { resume: '이력서', cover_letter: '자기소개서' };
@@ -96,7 +97,7 @@ export default function DocumentPreview({ id, onClose }) {
           {status === 'ready' &&
             (doc.contentHtml ? (
               <article
-                className={styles.document_preview_paper}
+                className={`${styles.document_preview_paper} ${FONT_VARS}`}
                 dangerouslySetInnerHTML={{ __html: doc.contentHtml }}
               />
             ) : (

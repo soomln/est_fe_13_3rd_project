@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import { listTemplates } from '@backend/lib/api/templates';
 import Pagination from '@/app/_components/common/Pagination';
+import ErrorState from '@/app/mypage/_components/ErrorState';
 import CategoryBtn from '@/app/resume/_components/CategoryBtn';
 import TemplateCard from '@/app/resume/_components/TemplateCard';
 import SearchBar from '@/app/resume/free-form/_components/SearchBar';
@@ -24,24 +26,25 @@ const SORT_OPTIONS = [
   { value: 'title', label: '이름순' },
 ];
 
-const SORTERS = {
-  popular: (a, b) => b.views - a.views,
-  latest: (a, b) => a.order - b.order,
-  title: (a, b) => a.title.localeCompare(b.title, 'ko'),
-};
+const SORTS = SORT_OPTIONS.map((option) => option.value);
 
 // 쿼리에서 생략하는 기본값
 const DEFAULTS = { docType: '', q: '', sort: 'popular', page: '1' };
 
-export default function FreeFormBrowser({ templates }) {
+export default function FreeFormBrowser() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [data, setData] = useState({ items: [], total: 0 });
+  const [counts, setCounts] = useState({});
+  const [status, setStatus] = useState('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+
   const docType = searchParams.get('docType') ?? '';
   const keyword = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort') ?? '';
-  const sort = SORTERS[sortParam] ? sortParam : 'popular';
+  const sort = SORTS.includes(sortParam) ? sortParam : 'popular';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
 
   const updateQuery = (changes) => {
@@ -57,28 +60,51 @@ export default function FreeFormBrowser({ templates }) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const counts = useMemo(
-    () => ({
-      '': templates.length,
-      resume: templates.filter((item) => item.docType === 'resume').length,
-      cover_letter: templates.filter((item) => item.docType === 'cover_letter').length,
-    }),
-    [templates]
-  );
+  // 거르기·검색·정렬·쪽나누기는 서버가 한다
+  useEffect(() => {
+    let alive = true;
+    setStatus('loading');
 
-  const filtered = useMemo(() => {
-    const text = keyword.trim().toLowerCase();
+    listTemplates({ docType: docType || undefined, q: keyword || undefined, sort, page, pageSize: PAGE_SIZE })
+      .then((result) => {
+        if (!alive) return;
+        setData(result);
+        setStatus('ready');
 
-    return templates
-      .map((item, index) => ({ ...item, order: index }))
-      .filter((item) => (docType ? item.docType === docType : true))
-      .filter((item) => (text ? item.title.toLowerCase().includes(text) : true))
-      .sort(SORTERS[sort]);
-  }, [templates, docType, keyword, sort]);
+        const lastPage = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
+        if (page > lastPage) updateQuery({ page: lastPage });
+      })
+      .catch(() => {
+        if (alive) setStatus('error');
+      });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    return () => {
+      alive = false;
+    };
+  }, [docType, keyword, sort, page, reloadKey]);
+
+  // 분류별 개수는 검색어에 맞춰 따로 센다
+  useEffect(() => {
+    let alive = true;
+
+    Promise.all(
+      DOC_TYPES.map((type) =>
+        listTemplates({ docType: type.value || undefined, q: keyword || undefined, pageSize: 1 })
+          .then((result) => [type.value, result.total])
+          .catch(() => [type.value, 0]),
+      ),
+    ).then((pairs) => {
+      if (alive) setCounts(Object.fromEntries(pairs));
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [keyword, reloadKey]);
+
+  const items = data.items;
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const items = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <>
@@ -109,7 +135,17 @@ export default function FreeFormBrowser({ templates }) {
         </div>
       </div>
 
-      {items.length > 0 ? (
+      {status === 'loading' && (
+        <p className={`${styles.free_form_state} font_body_m_r`} role='status'>
+          불러오는 중이에요…
+        </p>
+      )}
+
+      {status === 'error' && (
+        <ErrorState title='양식을 불러오지 못했어요' onRetry={() => setReloadKey((prev) => prev + 1)} />
+      )}
+
+      {status === 'ready' && items.length > 0 ? (
         <ul className={styles.free_form_grid}>
           {items.map((item) => (
             <TemplateCard
@@ -121,7 +157,7 @@ export default function FreeFormBrowser({ templates }) {
             />
           ))}
         </ul>
-      ) : (
+      ) : status === 'ready' ? (
         <div className={styles.free_form_empty}>
           <span className={`material-symbols-sharp ${styles.free_form_empty_icon}`} aria-hidden='true'>
             search_off
@@ -138,9 +174,9 @@ export default function FreeFormBrowser({ templates }) {
             전체 보기
           </button>
         </div>
-      )}
+      ) : null}
 
-      {items.length > 0 && (
+      {status === 'ready' && items.length > 0 && (
         <div className={styles.free_form_pagination}>
           <Pagination
             currentPage={currentPage}

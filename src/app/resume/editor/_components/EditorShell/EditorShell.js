@@ -1,7 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import useResumeEditor from '@/app/resume/editor/_lib/useResumeEditor';
+import downloadPdf from '@/app/resume/editor/_lib/downloadPdf';
+import UnsavedGuard from '@/app/mypage/_components/UnsavedGuard';
+import Toast from '@/app/mypage/_components/Toast';
 import EditorHeader from '@/app/resume/editor/_components/EditorHeader';
 import EditorToolbar from '@/app/resume/editor/_components/EditorToolbar';
 import DocumentPage from '@/app/resume/editor/_components/DocumentPage';
@@ -13,10 +17,59 @@ const PAGE_WIDTH = 794;
 // 처음 열 때 이 배율까지는 알아서 키운다
 const FIT_MAX = 125;
 
-export default function EditorShell({ pages }) {
+export default function EditorShell({ doc, onSave }) {
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [zoom, setZoom] = useState(100);
+  const [title, setTitle] = useState(doc?.title ?? '');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState({ message: '', tone: 'done', id: 0 });
+  const [isDownloading, setIsDownloading] = useState(false);
   const docAreaRef = useRef(null);
+  const pagesRef = useRef(null);
+
+  const showToast = (message, tone = 'done') =>
+    setToast((prev) => ({ message, tone, id: prev.id + 1 }));
+
+  const editor = useResumeEditor({
+    content: doc?.contentHtml ?? '',
+    onChange: () => setIsDirty(true),
+  });
+
+  const save = useCallback(async () => {
+    if (!editor || isSaving) return;
+
+    setIsSaving(true);
+
+    try {
+      await onSave({
+        title: title.trim() || '제목 없음',
+        content: editor.getJSON(),
+        contentHtml: editor.getHTML(),
+        contentText: editor.getText(),
+      });
+      setIsDirty(false);
+      showToast('저장되었습니다');
+    } catch {
+      showToast('저장하지 못했어요. 잠시 뒤 다시 시도해주세요.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editor, isSaving, onSave, title]);
+
+  const download = useCallback(async () => {
+    if (!pagesRef.current || isDownloading) return;
+
+    setIsDownloading(true);
+
+    try {
+      await downloadPdf(pagesRef.current, title.trim() || '이력서');
+    } catch {
+      showToast('PDF 를 만들지 못했어요. 잠시 뒤 다시 시도해주세요.', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading, title]);
 
   // 처음 열 때 한 장이 다 보이는 배율로 맞춘다
   useEffect(() => {
@@ -36,17 +89,44 @@ export default function EditorShell({ pages }) {
     <>
       <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
+      <UnsavedGuard isDirty={isDirty} />
+      <Toast
+        key={toast.id}
+        message={toast.message}
+        tone={toast.tone}
+        onHide={() => setToast((prev) => ({ ...prev, message: '' }))}
+      />
+
       <div className={styles.editor_main}>
-        <EditorHeader isChatOpen={isChatOpen} onOpenChat={() => setIsChatOpen(true)} />
+        <EditorHeader
+          isChatOpen={isChatOpen}
+          onOpenChat={() => setIsChatOpen(true)}
+          title={title}
+          onChangeTitle={(next) => {
+            setTitle(next);
+            setIsDirty(true);
+          }}
+          isSaving={isSaving}
+          onSave={save}
+          isStored={Boolean(doc?.id)}
+          isDownloading={isDownloading}
+          onDownload={download}
+          editor={editor}
+        />
 
         <div className={`${styles.editor_body} ${isChatOpen ? '' : styles.editor_body_wide}`}>
-          <EditorToolbar />
+          <EditorToolbar
+            editor={editor}
+            documentId={doc?.id ?? doc?.draftId}
+            onNotify={showToast}
+          />
 
           <div className={styles.editor_doc_area} ref={docAreaRef}>
-            <div className={`${styles.editor_doc_pages} ${styles[`editor_doc_pages_${zoom}`]}`}>
-              {pages.map((html, index) => (
-                <DocumentPage key={index} html={html} />
-              ))}
+            <div
+              ref={pagesRef}
+              className={`${styles.editor_doc_pages} ${styles[`editor_doc_pages_${zoom}`]}`}
+            >
+              <DocumentPage editor={editor} />
             </div>
           </div>
 
