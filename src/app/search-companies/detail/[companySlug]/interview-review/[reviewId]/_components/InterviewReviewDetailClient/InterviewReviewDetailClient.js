@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { getPost } from '@backend/lib/api/posts';
+import { deletePost, getPost } from '@backend/lib/api/posts';
+import { useAuth } from '@/app/_components/auth';
 import CommentSection from '@/app/search-companies/_components/CommentSection';
 import MetaLegend from '@/app/search-companies/_components/MetaLegend';
 import PostDetailHeader from '@/app/search-companies/_components/PostDetailHeader';
@@ -10,8 +12,13 @@ import PostSummary from '@/app/search-companies/_components/PostSummary';
 import styles from './InterviewReviewDetailClient.module.sass';
 
 export default function InterviewReviewDetailClient({ companySlug, reviewId }) {
+  const router = useRouter();
+  const { user } = useAuth();
+
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState('loading');
+
+  const listHref = `/search-companies/detail/${companySlug}/interview-review`;
 
   useEffect(() => {
     let ignore = false;
@@ -38,6 +45,18 @@ export default function InterviewReviewDetailClient({ companySlug, reviewId }) {
     };
   }, [reviewId]);
 
+  const handleDeleteClick = async () => {
+    if (!window.confirm('면접 후기를 삭제할까요?')) return;
+
+    try {
+      await deletePost(reviewId);
+      router.push(listHref);
+    } catch (error) {
+      console.error(error);
+      alert('면접 후기 삭제에 실패했습니다.');
+    }
+  };
+
   if (status === 'error') {
     return <p className={styles.detail_state}>면접 후기를 불러오지 못했습니다.</p>;
   }
@@ -63,7 +82,9 @@ export default function InterviewReviewDetailClient({ companySlug, reviewId }) {
           <PostDetailHeader
             label='면접 후기'
             post={review}
-            backHref={`/search-companies/detail/${companySlug}/interview-review`}
+            backHref={listHref}
+            isMine={!!user && review.authorId === user.id}
+            onDeleteClick={handleDeleteClick}
           />
 
           <PostSummary items={summaryItems} description={review.overallComment} />
