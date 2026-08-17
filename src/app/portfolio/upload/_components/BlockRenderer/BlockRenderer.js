@@ -3,7 +3,7 @@ import styles from './BlockRenderer.module.sass';
 import TextBlock from '../TextBlock';
 import ImageBlock from '../ImageBlock';
 import VideoBlock from '../VideoBlock';
-// import CodeBlock from '../CodeBlock';
+import CodeBlock from '../CodeBlock';
 
 export default function BlockRenderer({
   block,
@@ -43,15 +43,8 @@ export default function BlockRenderer({
     case 'video':
       return <VideoBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 
-    // case 'code':
-    //   return (
-    //     <CodeBlock
-    //       block={block}
-    //       isEditMode={isEditMode}
-    //       updateBlock={updateBlock}
-    //       removeBlock={removeBlock}
-    //     />
-    //   );
+    case 'code':
+      return <CodeBlock block={block} isEditMode={isEditMode} updateBlock={updateBlock} removeBlock={removeBlock} />;
 
     default:
       return null;
