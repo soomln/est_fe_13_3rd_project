@@ -1,7 +1,11 @@
-// src/app/api/alan/question 은 다른 페이지 팀원들과 공유하는 라우트라 이 페이지에서 고치지 않는다.
-// 이력서·자소서·기업정보를 합친 긴 프롬프트를 GET 쿼리스트링으로 보내면 URL 길이 제한(414/431)에
-// 걸리므로, interview 페이지 전용으로 POST body를 받아 서버에서 Alan을 대신 호출하는 라우트를 둔다.
-// Alan(kdt-api-function.azurewebsites.net) 쪽은 여전히 GET만 지원하므로, 서버→Alan 구간은 그대로 GET이다.
+const RETRY_DELAY_MS = 1000;
+
+async function callAlan(url) {
+  const res = await fetch(url);
+  const data = await res.json();
+  return { data, status: res.status };
+}
+
 export async function POST(request) {
   const body = await request.json().catch(() => null);
   const content = body?.content;
@@ -15,10 +19,16 @@ export async function POST(request) {
   const url = `${base}/question?${new URLSearchParams({ content, client_id: clientId })}`;
 
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    return Response.json(data, { status: res.status });
+    const { data, status } = await callAlan(url);
+    if (status >= 500) throw new Error(`Alan 응답 실패 (HTTP ${status})`);
+    return Response.json(data, { status });
   } catch {
-    return Response.json({ error: 'Alan AI 호출에 실패했습니다.' }, { status: 502 });
+    try {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      const { data, status } = await callAlan(url);
+      return Response.json(data, { status });
+    } catch {
+      return Response.json({ error: 'Alan AI 호출에 실패했습니다.' }, { status: 502 });
+    }
   }
 }

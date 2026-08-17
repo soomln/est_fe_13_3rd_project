@@ -44,67 +44,397 @@
 
 .hero_right
   flex: 1
-  display: flex
-  justify-content: center
-  align-items: center
+  min-width: 0
 
-  img
-    width: 100%
-    max-width: 560px
-    height: auto
+.hero_visual
+  position: relative
+  width: 100%
+  height: 600px
+  overflow: hidden
+
+.hero_image
+  position: absolute
+  z-index: 3
+  top: 50%
+  left: 50%
+  width: 470px
+  height: 470px
+  object-fit: contain
+  transform: translate(-50%, -50%)
+  animation: robot_float 4s ease-in-out infinite
+
+.hero_bubble
+  position: absolute
+  z-index: 4
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 100px
+  height: 62px
+  border-radius: 50%
+  pointer-events: none
+
+  &::after
+    content: ''
+    position: absolute
+    bottom: -10px
+    width: 0
+    height: 0
+    border-style: solid
+
+  span
+    font-size: 22px
+    font-weight: 700
+    letter-spacing: 3px
+
+.hero_bubble_green
+  top: 12%
+  left: 5%
+  color: $white
+  background-color: #65D99A
+  animation: bubble_left 3.5s ease-in-out infinite
+
+  &::after
+    left: 22px
+    border-width: 14px 8px 0 0
+    border-color: #65D99A transparent transparent transparent
+
+.hero_bubble_purple
+  top: 35%
+  right: 2%
+  color: $white
+  background-color: #B98CFF
+  animation: bubble_right 4s ease-in-out 0.5s infinite
+
+  &::after
+    right: 20px
+    border-width: 14px 0 0 8px
+    border-color: #B98CFF transparent transparent transparent
+
+.hero_bubble_yellow
+  bottom: 17%
+  left: 8%
+  color: $white
+  background-color: #FFD84D
+  animation: bubble_bottom 3.8s ease-in-out 1s infinite
+
+  &::after
+    left: 25px
+    border-width: 14px 8px 0 0
+    border-color: #FFD84D transparent transparent transparent
+
+.hero_circle
+  position: absolute
+  z-index: 2
+  display: block
+  border-radius: 50%
+  pointer-events: none
+
+.hero_circle_1
+  top: 8%
+  right: 20%
+  width: 22px
+  height: 22px
+  background-color: #B8F3C8
+  animation: circle_1 3.5s ease-in-out infinite
+
+.hero_circle_2
+  top: 24%
+  right: 0
+  width: 16px
+  height: 16px
+  background-color: #DCC8FF
+  animation: circle_2 4s ease-in-out 0.5s infinite
+
+.hero_circle_3
+  bottom: 15%
+  right: 13%
+  width: 28px
+  height: 28px
+  background-color: #FFF0A8
+  animation: circle_3 3.2s ease-in-out 1s infinite
+
+.hero_circle_4
+  bottom: 30%
+  left: 4%
+  width: 16px
+  height: 16px
+  background-color: #A9EFC4
+  animation: circle_4 4.2s ease-in-out 0.3s infinite
+
+.hero_star
+  position: absolute
+  z-index: 4
+  color: $green
+  line-height: 1
+  pointer-events: none
+  animation: star_float 2.8s ease-in-out infinite
+
+.hero_star_1
+  top: 18%
+  right: 28%
+  font-size: 34px
+
+.hero_star_2
+  bottom: 16%
+  left: 20%
+  font-size: 26px
+  animation-delay: 0.8s
+
+.hero_star_3
+  top: 48%
+  right: 4%
+  font-size: 20px
+  animation-delay: 1.4s
+
+.hero_shape
+  position: absolute
+  z-index: 4
+  pointer-events: none
+
+.hero_heart
+  top: 27%
+  right: 15%
+  color: #54D98D
+  font-size: 48px
+  animation: heart_float 3s ease-in-out infinite
+
+.hero_orbit
+  position: absolute
+  z-index: 1
+  top: 50%
+  left: 50%
+  width: 480px
+  height: 260px
+  border: 2px dashed rgba(0, 166, 61, 0.25)
+  border-radius: 50%
+  transform: translate(-50%, -50%) rotate(-12deg)
+  animation: orbit_rotate 12s linear infinite
+
+
+@keyframes robot_float
+  0%,
+  100%
+    transform: translate(-50%, -50%) translateY(0) rotate(0deg)
+
+  50%
+    transform: translate(-50%, -50%) translateY(-12px) rotate(-2deg)
+
+
+@keyframes bubble_left
+  0%,
+  100%
+    transform: translate(0, 0) rotate(-3deg)
+
+  50%
+    transform: translate(-8px, -12px) rotate(3deg)
+
+@keyframes bubble_right
+  0%,
+  100%
+    transform: translate(0, 0) rotate(3deg)
+
+  50%
+    transform: translate(8px, -14px) rotate(-3deg)
+
+@keyframes bubble_bottom
+  0%,
+  100%
+    transform: translate(0, 0) rotate(-2deg)
+
+  50%
+    transform: translate(-6px, -10px) rotate(4deg)
+
+
+@keyframes circle_1
+  0%,
+  100%
+    transform: translate(0, 0)
+
+  50%
+    transform: translate(8px, -14px)
+
+@keyframes circle_2
+  0%,
+  100%
+    transform: translate(0, 0)
+
+  50%
+    transform: translate(-10px, 12px)
+
+@keyframes circle_3
+  0%,
+  100%
+    transform: translate(0, 0)
+
+  50%
+    transform: translate(8px, -12px)
+
+@keyframes circle_4
+  0%,
+  100%
+    transform: translate(0, 0)
+
+  50%
+    transform: translate(-7px, -10px)
+
+@keyframes star_float
+  0%,
+  100%
+    transform: translateY(0) rotate(0deg)
+    opacity: 0.7
+
+  50%
+    transform: translateY(-10px) rotate(18deg)
+    opacity: 1
+
+@keyframes heart_float
+  0%,
+  100%
+    transform: translateY(0) rotate(-5deg)
+
+  50%
+    transform: translateY(-12px) rotate(5deg)
 
 .content_section
   display: flex
+  align-items: stretch
   gap: 40px
   margin-bottom: 80px
+
+  > section
+    flex: 1 1 0
+    min-width: 0
 
 .company_section
   display: flex
   flex-direction: column
   box-sizing: border-box
-  flex: 1
-  height: 600px
-  gap: 50px
+  flex: 1 1 0
+  min-width: 0
+  gap: 20px
   padding: 20px
   border: 1px solid $stroke3
   border-radius: 15px
 
-.company_header
-  display: flex
-  justify-content: space-between
-  align-items: center
-  width: 100%
-
 .company_list
   display: flex
   flex-direction: column
-  gap: 20px
+  gap: 16px
+
+.company_header
+  position: relative
+  display: flex
+  width: 100%
+
+.company_heading
+  display: flex
+  flex-direction: column
+  gap: 4px
+
+.company_title
+  display: flex
+  align-items: center
+  gap: 10px
+
+  h2
+    margin: 0
+
+.title_star
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 44px
+  height: 44px
+  border-radius: 50%
+  background: $light_yellow
+  color: $amber
+  font-size: 24px
+  font-variation-settings: 'FILL' 1
+
+.company_heading p
+  margin: 0
+  padding-left: 54px
+  color: $gray
 
 .view_all_btn
-  background: none
-  border: none
-  padding: 0
-  color: $gray
+  position: absolute
+  top: 2px
+  right: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 3px
+  height: 40px
+  padding: 0 16px
+  background: $white
+  border: 1px solid $amber
+  border-radius: 20px
+  color: $amber
   cursor: pointer
 
+  .material-symbols-rounded
+    font-size: 17px
+    line-height: 1
+
   &:hover
-    color: $black
+    background: $light_yellow
 
 .question_section
   display: flex
   flex-direction: column
   box-sizing: border-box
-  gap: 25px
-  flex: 1
-  min-height: 560px
+  flex: 1 1 0
+  min-width: 0
+  gap: 20px
   padding: 20px
+
   border: 1px solid $stroke3
   border-radius: 15px
+
+.question_heading
+  display: flex
+  flex-direction: column
+  gap: 4px
+
+.question_title
+  display: flex
+  align-items: center
+  gap: 10px
+
+  h2
+    margin: 0
+
+.question_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 44px
+  height: 44px
+  border-radius: 50%
+  background: $light_green
+  color: $green
+  font-size: 24px
+  font-variation-settings: 'FILL' 1
+
+.question_heading p
+  margin: 0
+  padding-left: 54px
+  color: $gray
 
 .question_list
   display: flex
   flex-direction: column
+  flex: 1
+  min-height: 0
   gap: 10px
+
+  justify-content: space-between
+
+  &:has(.faq_item.open)
+    justify-content: flex-start
 
 .feature_section
   display: flex
@@ -125,14 +455,24 @@
   align-items: center
   gap: 100px
   box-sizing: border-box
+
   padding: 30px 100px
+
   background: $light_purple
   border-radius: 15px
+
   margin-bottom: 80px
+
+  @media (max-width: 1439px)
+    gap: 50px
+    padding: 30px 60px
 
 .guide_intro
   display: flex
   flex-direction: column
+  flex: 0 1 260px
+  min-width: 200px
+  max-width: 300px
 
   h2
     margin: 0 0 20px
@@ -148,12 +488,25 @@
   display: flex
   align-items: center
   justify-content: center
-  flex-shrink: 0
+  flex: 0 1 140px
+  min-width: 90px
+  max-width: 140px
 
   img
-    width: 140px
+    display: block
+    width: 100%
     height: auto
+    max-width: 140px
 
 .guide_cards
   display: flex
+  flex: 1 1 0%
+  min-width: 0
   gap: 60px
+
+  @media (max-width: 1439px)
+    gap: 32px
+
+  > *
+    flex: 1 1 0
+    min-width: 0
