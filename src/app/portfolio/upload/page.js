@@ -8,6 +8,7 @@ import styles from './page.module.sass';
 import TabGroup from '../_components/TabGroup';
 import Contents from '../_components/Contents';
 import UploadBtn from './_components/UploadBtn';
+import OrderModal from './_components/OrderModal';
 import CustomSetting from './_components/CustomSetting';
 import AiChatPanel from './_components/AiChatPanel';
 import AiChatBtn from './_components/AiChatBtn';
@@ -44,6 +45,8 @@ export default function Upload() {
     code: ['text', 'code', 'image'],
   };
   const [activeTab, setActiveTab] = useState('overview');
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const activeBlocks = item[activeTab] ?? [];
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
 
@@ -125,6 +128,13 @@ export default function Upload() {
     setItem((prev) => ({
       ...prev,
       [activeTab]: prev[activeTab].filter((block) => block.id !== id),
+    }));
+  };
+
+  const onApplyBlockOrder = (sortedBlocks) => {
+    setItem((prev) => ({
+      ...prev,
+      [activeTab]: sortedBlocks,
     }));
   };
 
@@ -290,7 +300,13 @@ export default function Upload() {
               onClick={() => addBlock('code')}
             />
           </div>
-          <UploadBtn iconText='import_export' text='순서 바꾸기' />
+          <UploadBtn iconText='import_export' text='콘텐츠 순서 변경' onClick={() => setIsOrderModalOpen(true)} />
+          <OrderModal
+            isOpen={isOrderModalOpen}
+            onClose={() => setIsOrderModalOpen(false)}
+            blocks={activeBlocks}
+            onApply={onApplyBlockOrder}
+          />
           <CustomSetting bgColor={item.bgColor} onSetColor={setBgColor} gap={item.gapPx} onSetGap={setGap} />
         </aside>
       </div>
