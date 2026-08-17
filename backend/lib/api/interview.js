@@ -6,7 +6,7 @@ export async function createSession({
   companyId = null,
   resumeIds = [],
   coverLetterIds = [],
-  interviewerStyle = 'neutral',
+  interviewerStyle = 'friendly',
   selectedCategories = [],
   showTimer = true,
 } = {}) {
