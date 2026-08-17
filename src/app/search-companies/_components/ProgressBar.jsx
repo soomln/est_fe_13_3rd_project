@@ -1,6 +1,6 @@
 import styles from './ProgressBar.module.sass';
 
-export default function ProgressBar({ value, max = 5 }) {
+export default function ProgressBar({ value, grade = '', max = 5 }) {
   const percent = (value / max) * 100;
 
   return (
@@ -8,7 +8,7 @@ export default function ProgressBar({ value, max = 5 }) {
 
       <div className={styles.score}>
         <h2>{value}</h2>
-        <p>보통</p>
+        <p>{grade}</p>
       </div>
 
       <div className={styles.barSection}>

@@ -56,6 +56,27 @@ const handleChange = (e) => {
 
 
 const handleSubmit = async () => {
+  if (!form.difficultyCode) {
+    alert("난이도를 선택해주세요.");
+    return;
+  }
+  if (!form.passResultCode) {
+    alert("합격 여부를 선택해주세요.");
+    return;
+  }
+  if (!form.channelCode) {
+    alert("면접 경로를 입력해주세요.");
+    return;
+  }
+  if (!form.title) {
+    alert("제목을 입력해주세요.");
+    return;
+  }
+  if (!form.body) {
+    alert("내용을 입력해주세요.");
+    return;
+  }
+
   try {
     await createPost({
       postType: "review",
@@ -66,27 +87,6 @@ const handleSubmit = async () => {
       passResultCode: form.passResultCode,
       channelCode: form.channelCode,
     });
-
-    if (!form.difficultyCode) {
-      alert("난이도를 선택해주세요.");
-      return;
-    }
-    if (!form.passResultCode) {
-      alert("합격 여부를 선택해주세요.");
-      return;
-    }
-    if (!form.channelCode) {
-      alert("면접 경로를 입력해주세요.");
-      return;
-    }
-    if (!form.title) {
-      alert("제목을 입력해주세요.");
-      return;
-    }
-    if (!form.body) {
-      alert("내용을 입력해주세요.");
-      return;
-    }
 
     router.push(
       `/search-companies/detail/${company.slug}/interview-review`

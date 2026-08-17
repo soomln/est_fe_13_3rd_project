@@ -1,12 +1,10 @@
 import InfoRow from "./InfoRow";
 import NewsItem from "./NewsItem";
 import CompanySummary from "./CompanySummary";
-import "./RightSidebar.module.sass";
 
 export default function RightSidebar({company}){
   return(
     <>
-    <h1>=========RightSidebar==========</h1>
       <section>
           <h2>기업 기본 정보</h2>
           <InfoRow company={company}/>
