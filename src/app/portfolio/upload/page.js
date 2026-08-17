@@ -8,6 +8,7 @@ import styles from './page.module.sass';
 import TabGroup from '../_components/TabGroup';
 import Contents from '../_components/Contents';
 import UploadBtn from './_components/UploadBtn';
+import OrderModal from './_components/OrderModal';
 import CustomSetting from './_components/CustomSetting';
 import AiChatPanel from './_components/AiChatPanel';
 import AiChatBtn from './_components/AiChatBtn';
@@ -27,7 +28,9 @@ export default function Upload() {
     category: '',
     thumbnailUrl: '',
     description: '',
-    content: [],
+    overview: [],
+    document: [],
+    code: [],
     tags: [],
     bgColor: '#ffffff',
     gapPx: Number(16),
@@ -36,7 +39,14 @@ export default function Upload() {
 
   const [isCreated, setIsCreated] = useState(false);
 
+  const allowedBlockTypes = {
+    overview: ['text', 'image', 'video'],
+    document: ['text', 'image'],
+    code: ['text', 'code', 'image'],
+  };
   const [activeTab, setActiveTab] = useState('overview');
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const activeBlocks = item[activeTab] ?? [];
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
 
@@ -64,38 +74,46 @@ export default function Upload() {
     fetchCurrentUser();
   }, []);
 
+  const isBlockAllowed = (type) => {
+    return allowedBlockTypes[activeTab]?.includes(type);
+  };
+
   const addBlock = (type) => {
     const newBlock = {
       id: crypto.randomUUID(),
       type,
     };
 
-    if (type === 'text') {
-      newBlock.html = '';
-    }
+    switch (type) {
+      case 'text':
+        newBlock.html = '';
+        break;
 
-    if (type === 'image') {
-      newBlock.url = '';
-    }
+      case 'image':
+      case 'video':
+        newBlock.url = '';
+        break;
 
-    if (type === 'video') {
-      newBlock.url = '';
-    }
+      case 'code':
+        newBlock.language = 'javascript';
+        newBlock.code = '';
+        newBlock.filename = '';
+        break;
 
-    if (type === 'code') {
-      newBlock.code = '';
+      default:
+        return;
     }
 
     setItem((prev) => ({
       ...prev,
-      content: [...prev.content, newBlock],
+      [activeTab]: [...prev[activeTab], newBlock],
     }));
   };
 
   const updateBlock = (id, updatedBlock) => {
     setItem((prev) => ({
       ...prev,
-      content: prev.content.map((block) =>
+      [activeTab]: prev[activeTab].map((block) =>
         block.id === id
           ? {
               ...block,
@@ -109,7 +127,14 @@ export default function Upload() {
   const removeBlock = (id) => {
     setItem((prev) => ({
       ...prev,
-      content: prev.content.filter((block) => block.id !== id),
+      [activeTab]: prev[activeTab].filter((block) => block.id !== id),
+    }));
+  };
+
+  const onApplyBlockOrder = (sortedBlocks) => {
+    setItem((prev) => ({
+      ...prev,
+      [activeTab]: sortedBlocks,
     }));
   };
 
@@ -143,7 +168,9 @@ export default function Upload() {
         category: item.category || null,
         thumbnailUrl: item.thumbnailUrl,
         description: item.description,
-        content: item.content,
+        overview: item.overview,
+        document: item.document,
+        code: item.code,
         bgColor: item.bgColor,
         gapPx: item.gapPx,
         status: 'draft',
@@ -235,17 +262,51 @@ export default function Upload() {
 
         <main>
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
-          <Contents item={item} setItem={setItem} isEditMode updateBlock={updateBlock} removeBlock={removeBlock} />
+          <Contents
+            item={item}
+            setItem={setItem}
+            activeTab={activeTab}
+            isEditMode
+            updateBlock={updateBlock}
+            removeBlock={removeBlock}
+          />
         </main>
 
         <aside className={styles.btns_wrapper}>
           <div className={styles.add_btns}>
-            <UploadBtn iconText='image' text='이미지' isIconFill={true} onClick={() => addBlock('image')} />
-            <UploadBtn iconText='ondemand_video' text='동영상' onClick={() => addBlock('video')} />
-            <UploadBtn iconText='text_fields' text='텍스트' onClick={() => addBlock('text')} />
-            <UploadBtn iconText='code' text='코드' onClick={() => addBlock('code')} />
+            <UploadBtn
+              iconText='image'
+              text='이미지'
+              isIconFill={true}
+              disabled={!isBlockAllowed('image')}
+              onClick={() => addBlock('image')}
+            />
+            <UploadBtn
+              iconText='ondemand_video'
+              text='동영상'
+              disabled={!isBlockAllowed('video')}
+              onClick={() => addBlock('video')}
+            />
+            <UploadBtn
+              iconText='text_fields'
+              text='텍스트'
+              disabled={!isBlockAllowed('text')}
+              onClick={() => addBlock('text')}
+            />
+            <UploadBtn
+              iconText='code'
+              text='코드'
+              disabled={!isBlockAllowed('code')}
+              onClick={() => addBlock('code')}
+            />
           </div>
-          <UploadBtn iconText='import_export' text='순서 바꾸기' />
+          <UploadBtn iconText='import_export' text='콘텐츠 순서 변경' onClick={() => setIsOrderModalOpen(true)} />
+          <OrderModal
+            isOpen={isOrderModalOpen}
+            onClose={() => setIsOrderModalOpen(false)}
+            blocks={activeBlocks}
+            onApply={onApplyBlockOrder}
+          />
           <CustomSetting bgColor={item.bgColor} onSetColor={setBgColor} gap={item.gapPx} onSetGap={setGap} />
         </aside>
       </div>
