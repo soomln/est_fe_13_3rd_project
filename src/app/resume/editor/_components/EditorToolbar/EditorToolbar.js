@@ -16,7 +16,7 @@ import { DEFAULT_SIZE, FONTS } from '@/app/resume/editor/_lib/editorFonts';
 import styles from './EditorToolbar.module.sass';
 const ALIGNS = ['left', 'center', 'right', 'justify'];
 
-export default function EditorToolbar({ editor, documentId, onNotify }) {
+export default function EditorToolbar({ editor, documentId, onNotify, onAiTool }) {
   const [isLinkOpen, setIsLinkOpen] = useState(false);
   // null | 'color' | 'highlight'
   const [palette, setPalette] = useState(null);
@@ -228,7 +228,7 @@ export default function EditorToolbar({ editor, documentId, onNotify }) {
   return (
     <div className={styles.toolbar}>
       <div className={styles.toolbar_inner} ref={innerRef}>
-        <AiToolMenu />
+        <AiToolMenu onPick={onAiTool} />
 
         <FontTools
           font={font}
