@@ -234,6 +234,12 @@ export const GET = defineRoute(async ({ request, supabase, user }) => {
   const jobRole = q.get('jobRole');
   if (jobRole) query = query.eq('job_role_code', jobRole);
 
+  const difficulty = q.get('difficulty');
+  if (difficulty) query = query.eq('difficulty_code', difficulty);
+
+  const passResult = q.get('passResult');
+  if (passResult) query = query.eq('pass_result_code', passResult);
+
   const companyId = q.get('companyId');
   if (companyId) query = query.eq('company_id', companyId);
 
