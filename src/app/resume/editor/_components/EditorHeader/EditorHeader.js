@@ -17,6 +17,8 @@ export default function EditorHeader({
   isSaving,
   onSave,
   isStored,
+  isDownloading,
+  onDownload,
   editor,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -60,9 +62,9 @@ export default function EditorHeader({
   };
 
   // 문서함에 없으면 인쇄도 다운로드도 막고 저장 버튼을 깜빡인다
-  const handleExport = () => {
+  const guard = (action) => () => {
     if (canExport) {
-      handlePrint();
+      action();
       return;
     }
 
@@ -77,7 +79,7 @@ export default function EditorHeader({
   };
 
   // 마우스를 올렸을 때 안내가 뜨는 건 스타일이 맡는다
-  const exportProps = { 'aria-disabled': !canExport, onClick: handleExport };
+  const exportProps = { 'aria-disabled': !canExport };
 
   const handleSave = async () => {
     clearTimers();
@@ -174,6 +176,7 @@ export default function EditorHeader({
             className={styles.editor_header_print}
             aria-label='인쇄'
             {...exportProps}
+            onClick={guard(handlePrint)}
           >
             <span className='material-symbols-sharp' aria-hidden='true'>
               print
@@ -196,11 +199,13 @@ export default function EditorHeader({
             type='button'
             className={`${styles.editor_header_download} font_body_m_b`}
             {...exportProps}
+            disabled={isDownloading}
+            onClick={guard(() => onDownload?.())}
           >
             <span className='material-symbols-sharp' aria-hidden='true'>
-              download
+              {isDownloading ? 'hourglass_top' : 'download'}
             </span>
-            다운로드
+            {isDownloading ? '만드는 중…' : '다운로드'}
           </button>
 
           {!canExport && (
