@@ -6,7 +6,7 @@ export default function PostSummary({ items, description }) {
     <section className={styles.summary}>
       <h2 className={`${styles.summary_title} font_h2`}>면접 총평</h2>
 
-      <div className={styles.summary_box}>
+      <div className={`${styles.summary_box} ${description ? styles.summary_box_with_desc : ''}`}>
         {items.map((item) => (
           <div key={item.label} className={styles.summary_item}>
             {item.icon && (
@@ -19,7 +19,9 @@ export default function PostSummary({ items, description }) {
               <p className={`${styles.summary_label} font_body_l_b`}>{item.label}</p>
 
               <p className={styles.summary_value}>
-                <span className={styles.summary_score}>{item.value}</span>
+                <span className={`${styles.summary_score} ${item.muted ? styles.summary_score_muted : ''}`}>
+                  {item.value}
+                </span>
                 {item.unit && <span className={`${styles.summary_unit} font_body_l_r`}>{item.unit}</span>}
               </p>
             </div>

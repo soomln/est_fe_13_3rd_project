@@ -3,7 +3,7 @@ import Link from 'next/link';
 import styles from './PostDetailHeader.module.sass';
 
 // 후기 / 족보 상세 상단 (목록으로 · 라벨 · 제목 · 메타 · 카운트)
-export default function PostDetailHeader({ label, post, backHref }) {
+export default function PostDetailHeader({ label, post, backHref, showTitle = true }) {
   const metaItems = [
     { label: '면접 난이도', value: post.difficulty, isPoint: true },
     { label: '합격 여부', value: post.result },
@@ -21,8 +21,12 @@ export default function PostDetailHeader({ label, post, backHref }) {
         </Link>
       )}
 
-      <p className={`${styles.head_label} font_body_l_b`}>{label}</p>
-      <h1 className={`${styles.head_title} font_h1`}>{post.title}</h1>
+      {(label || showTitle) && (
+        <div className={styles.head_top}>
+          {label && <p className={`${styles.head_label} font_body_l_b`}>{label}</p>}
+          {showTitle && <h1 className={`${styles.head_title} font_h1`}>{post.title}</h1>}
+        </div>
+      )}
 
       <div className={styles.head_meta}>
         <div className={styles.head_tags}>
