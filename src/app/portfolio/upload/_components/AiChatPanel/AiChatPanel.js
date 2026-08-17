@@ -1,22 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 
-import styles from './AiChatPanel.module.sass';
 import UserMessage from '../UserMessage';
 import AiMessage from '../AiMessage';
 import SuggestionList from '../SuggestionList';
 
-export default function AiChatPanel({ activeTab, messages, setMessages, onClose }) {
+const GITHUB_QUESTION = 'GitHub 레포지토리를 분석해서 어필할 부분을 찾아줘';
+
+const SUGGESTIONS = {
+  overview: ['지금 작성한 프로젝트 소개를 평가해줘', '더 강조하면 좋을 부분을 알려줘', '보완하면 좋을 내용을 추천해줘'],
+
+  code: [GITHUB_QUESTION, '면접에서 설명하기 좋은 코드 포인트를 알려줘'],
+};
+
+import styles from './AiChatPanel.module.sass';
+
+export default function AiChatPanel({ activeTab, item, messages, setMessages, showToast, onClose }) {
   const [input, setInput] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [isGithubMode, setIsGithubMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const chatRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const SUGGESTIONS = {
-    overview: ['프로젝트 설명 다듬어줘', '핵심 기능 정리해줘', '차별점 찾아줘'],
 
-    document: ['문장을 더 전문적으로 다듬어줘', '내용을 간결하게 정리해줘', '지원 직무에 맞게 다듬어줘'],
-
-    code: ['어필할 코드 골라줘', '기술적 강점 알려줘', '개선할 부분 알려줘'],
-  };
   const handleSubmit = async (e) => {
     e?.preventDefault();
 
@@ -24,14 +30,29 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
 
     if (!message || isLoading) return;
 
+    const currentContent = item[activeTab] ?? [];
+
+    // GitHub 질문이 아닌데 현재 탭에 작성된 내용이 없으면 막기
+    if (message !== GITHUB_QUESTION && !hasContent(currentContent)) {
+      showToast('먼저 분석할 내용을 작성해주세요.');
+      return;
+    }
+
+    // GitHub 질문인데 URL이 없으면 막기
+    if (message === GITHUB_QUESTION && !githubUrl.trim()) {
+      showToast('GitHub 레포지토리 주소를 입력해주세요.');
+      return;
+    }
+
     const aiMessageId = crypto.randomUUID();
+    const recentMessages = messages.slice(-6);
 
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: 'user',
-        content: message,
+        content: message === GITHUB_QUESTION ? `${message}\n${githubUrl.trim()}` : message,
       },
       {
         id: aiMessageId,
@@ -46,11 +67,17 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
     try {
       const response = await fetch('/api/gemini', {
         method: 'POST',
+
         headers: {
           'Content-Type': 'application/json',
         },
+
         body: JSON.stringify({
           message,
+          activeTab,
+          content: currentContent,
+          messages: recentMessages,
+          githubUrl: message === GITHUB_QUESTION ? githubUrl.trim() : null,
         }),
       });
 
@@ -83,6 +110,11 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
           ),
         );
       }
+
+      if (message === GITHUB_QUESTION) {
+        setGithubUrl('');
+        setIsGithubMode(false);
+      }
     } catch (error) {
       console.error('AI 채팅 에러:', error);
 
@@ -91,7 +123,7 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
           m.id === aiMessageId
             ? {
                 ...m,
-                content: 'AI 답변을 불러오지 못했습니다.',
+                content: error.message || 'AI 답변을 불러오지 못했습니다.',
               }
             : m,
         ),
@@ -107,6 +139,28 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
       handleSubmit();
     }
   };
+
+  const hasContent = (blocks) => {
+    if (!blocks?.length) return false;
+
+    return blocks.some((block) => {
+      switch (block.type) {
+        case 'text':
+          return block.html?.replace(/<[^>]*>/g, '').trim();
+
+        case 'code':
+          return block.code?.trim();
+
+        case 'image':
+        case 'video':
+          return block.url?.trim();
+
+        default:
+          return false;
+      }
+    });
+  };
+
   const handleScroll = () => {
     const chat = chatRef.current;
 
@@ -119,6 +173,14 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
 
   const handleSuggestionClick = (suggestion) => {
     setInput(suggestion);
+
+    if (suggestion === GITHUB_QUESTION) {
+      setIsGithubMode(true);
+      return;
+    }
+
+    setIsGithubMode(false);
+    setGithubUrl('');
   };
 
   useEffect(() => {
@@ -128,6 +190,13 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
 
     chat.scrollTop = chat.scrollHeight;
   }, [messages, isAtBottom]);
+
+  useEffect(() => {
+    if (activeTab !== 'code') {
+      setIsGithubMode(false);
+      setGithubUrl('');
+    }
+  }, [activeTab]);
 
   return (
     <div className={styles.panel}>
@@ -154,7 +223,24 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
       </div>
 
       <footer className={styles.footer}>
-        <SuggestionList suggestions={SUGGESTIONS[activeTab]} onSuggestionClick={handleSuggestionClick} />
+        <SuggestionList suggestions={SUGGESTIONS[activeTab] ?? []} onSuggestionClick={handleSuggestionClick} />
+
+        {isGithubMode && (
+          <div className={styles.github_input_wrapper}>
+            <span className='material-symbols-sharp'>link</span>
+
+            <input
+              type='url'
+              value={githubUrl}
+              placeholder='https://github.com/username/repository'
+              onChange={(e) => {
+                setGithubUrl(e.target.value);
+              }}
+              disabled={isLoading}
+            />
+          </div>
+        )}
+
         <form className={styles.input_wrapper} onSubmit={handleSubmit}>
           <textarea
             className='font_body_m_r'
@@ -166,7 +252,11 @@ export default function AiChatPanel({ activeTab, messages, setMessages, onClose 
             onKeyDown={handleKeyDown}
           />
 
-          <button type='submit' aria-label='메시지 전송' disabled={!input.trim() || isLoading}>
+          <button
+            type='submit'
+            aria-label='메시지 전송'
+            disabled={!input.trim() || isLoading || (isGithubMode && !githubUrl.trim())}
+          >
             <span className='material-symbols-sharp'>arrow_upward</span>
           </button>
         </form>
