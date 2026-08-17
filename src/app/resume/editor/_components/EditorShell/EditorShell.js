@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useResumeEditor from '@/app/resume/editor/_lib/useResumeEditor';
+import downloadPdf from '@/app/resume/editor/_lib/downloadPdf';
 import UnsavedGuard from '@/app/mypage/_components/UnsavedGuard';
 import Toast from '@/app/mypage/_components/Toast';
 import EditorHeader from '@/app/resume/editor/_components/EditorHeader';
@@ -23,7 +24,9 @@ export default function EditorShell({ doc, onSave }) {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState({ message: '', tone: 'done', id: 0 });
+  const [isDownloading, setIsDownloading] = useState(false);
   const docAreaRef = useRef(null);
+  const pagesRef = useRef(null);
 
   const showToast = (message, tone = 'done') =>
     setToast((prev) => ({ message, tone, id: prev.id + 1 }));
@@ -53,6 +56,20 @@ export default function EditorShell({ doc, onSave }) {
       setIsSaving(false);
     }
   }, [editor, isSaving, onSave, title]);
+
+  const download = useCallback(async () => {
+    if (!pagesRef.current || isDownloading) return;
+
+    setIsDownloading(true);
+
+    try {
+      await downloadPdf(pagesRef.current, title.trim() || '이력서');
+    } catch {
+      showToast('PDF 를 만들지 못했어요. 잠시 뒤 다시 시도해주세요.', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading, title]);
 
   // 처음 열 때 한 장이 다 보이는 배율로 맞춘다
   useEffect(() => {
@@ -92,6 +109,8 @@ export default function EditorShell({ doc, onSave }) {
           isSaving={isSaving}
           onSave={save}
           isStored={Boolean(doc?.id)}
+          isDownloading={isDownloading}
+          onDownload={download}
           editor={editor}
         />
 
@@ -103,7 +122,10 @@ export default function EditorShell({ doc, onSave }) {
           />
 
           <div className={styles.editor_doc_area} ref={docAreaRef}>
-            <div className={`${styles.editor_doc_pages} ${styles[`editor_doc_pages_${zoom}`]}`}>
+            <div
+              ref={pagesRef}
+              className={`${styles.editor_doc_pages} ${styles[`editor_doc_pages_${zoom}`]}`}
+            >
               <DocumentPage editor={editor} />
             </div>
           </div>
