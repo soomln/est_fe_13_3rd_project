@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useResumeEditor from '@/app/resume/editor/_lib/useResumeEditor';
 import downloadPdf from '@/app/resume/editor/_lib/downloadPdf';
+import useCoach from '@/app/resume/editor/_lib/useCoach';
 import UnsavedGuard from '@/app/mypage/_components/UnsavedGuard';
 import Toast from '@/app/mypage/_components/Toast';
 import EditorHeader from '@/app/resume/editor/_components/EditorHeader';
@@ -35,6 +36,14 @@ export default function EditorShell({ doc, onSave }) {
     content: doc?.contentHtml ?? '',
     onChange: () => setIsDirty(true),
   });
+
+  const coach = useCoach({ editor });
+
+  // 보조도구 결과는 채팅에 나오니 패널을 같이 연다
+  const runAiTool = (kind) => {
+    setIsChatOpen(true);
+    coach.runTool(kind);
+  };
 
   const save = useCallback(async () => {
     if (!editor || isSaving) return;
@@ -87,7 +96,12 @@ export default function EditorShell({ doc, onSave }) {
 
   return (
     <>
-      <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <ChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        coach={coach}
+        onPickChoice={coach.pickChoice}
+      />
 
       <UnsavedGuard isDirty={isDirty} />
       <Toast
@@ -119,6 +133,7 @@ export default function EditorShell({ doc, onSave }) {
             editor={editor}
             documentId={doc?.id ?? doc?.draftId}
             onNotify={showToast}
+            onAiTool={runAiTool}
           />
 
           <div className={styles.editor_doc_area} ref={docAreaRef}>
