@@ -1,0 +1,82 @@
+@use '@/app/_variables.sass' as *
+
+.hero
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 50px
+  box-sizing: border-box
+  height: 340px
+  background-color: $light_green
+  background-image: url('/images/search-companies/hero-bg.png')
+  background-position: center
+  background-size: cover
+  border-radius: 10px
+  overflow: hidden
+
+.hero_title
+  color: $black
+
+.hero_point
+  color: $green
+
+.hero_search
+  display: flex
+  align-items: center
+  gap: 10px
+  box-sizing: border-box
+  width: 720px
+  max-width: 100%
+  height: 53px
+  padding: 10px 20px
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 90px
+
+.hero_input
+  flex: 1
+  min-width: 0
+  color: $black
+  background: transparent
+  border: 0
+  outline: none
+
+  &::placeholder
+    color: $gray
+
+.hero_submit
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 0
+  background: transparent
+  border: 0
+  cursor: pointer
+
+  :global(.material-symbols-rounded)
+    font-size: 30px
+    color: $green
+
+.hero_recommend
+  display: flex
+  align-items: center
+  gap: 29px
+  color: $black
+
+.hero_tags
+  display: flex
+  align-items: center
+  gap: 20px
+
+.hero_tag
+  padding: 8px 16px
+  color: $green
+  background-color: $sub_green
+  border: 1px solid $green
+  border-radius: 16px
+  cursor: pointer
+  transition: background-color 0.2s ease
+
+  &:hover
+    background-color: $white
