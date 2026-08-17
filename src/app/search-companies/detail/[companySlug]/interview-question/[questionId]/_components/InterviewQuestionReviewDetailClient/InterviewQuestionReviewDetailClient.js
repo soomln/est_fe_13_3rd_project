@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { getPost } from '@backend/lib/api/posts';
+import { deletePost, getPost } from '@backend/lib/api/posts';
+import { useAuth } from '@/app/_components/auth';
 import CommentSection from '@/app/search-companies/_components/CommentSection';
 import MetaLegend from '@/app/search-companies/_components/MetaLegend';
 import PostDetailHeader from '@/app/search-companies/_components/PostDetailHeader';
@@ -12,8 +14,13 @@ import styles from './InterviewQuestionReviewDetailClient.module.sass';
 const toScore = (value) => (value == null ? '-' : value.toFixed(1));
 
 export default function InterviewQuestionReviewDetailClient({ companySlug, questionId }) {
+  const router = useRouter();
+  const { user } = useAuth();
+
   const [qbank, setQbank] = useState(null);
   const [status, setStatus] = useState('loading');
+
+  const listHref = `/search-companies/detail/${companySlug}/interview-question`;
 
   useEffect(() => {
     let ignore = false;
@@ -39,6 +46,18 @@ export default function InterviewQuestionReviewDetailClient({ companySlug, quest
       ignore = true;
     };
   }, [questionId]);
+
+  const handleDeleteClick = async () => {
+    if (!window.confirm('면접 족보를 삭제할까요?')) return;
+
+    try {
+      await deletePost(questionId);
+      router.push(listHref);
+    } catch (error) {
+      console.error(error);
+      alert('면접 족보 삭제에 실패했습니다.');
+    }
+  };
 
   if (status === 'error') {
     return <p className={styles.detail_state}>면접 족보를 불러오지 못했습니다.</p>;
@@ -71,7 +90,9 @@ export default function InterviewQuestionReviewDetailClient({ companySlug, quest
           <PostDetailHeader
             post={qbank}
             showTitle={false}
-            backHref={`/search-companies/detail/${companySlug}/interview-question`}
+            backHref={listHref}
+            isMine={!!user && qbank.authorId === user.id}
+            onDeleteClick={handleDeleteClick}
           />
 
           <PostSummary items={summaryItems} />
