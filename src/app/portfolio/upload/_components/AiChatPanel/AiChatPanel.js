@@ -4,15 +4,22 @@ import UserMessage from '../UserMessage';
 import AiMessage from '../AiMessage';
 import SuggestionList from '../SuggestionList';
 
+import styles from './AiChatPanel.module.sass';
+
 const GITHUB_QUESTION = 'GitHub 레포지토리를 분석해서 어필할 부분을 찾아줘';
+
+const CONTENT_QUESTIONS = [
+  '지금 작성한 프로젝트 소개를 평가해줘',
+  '더 강조하면 좋을 부분을 알려줘',
+  '보완하면 좋을 내용을 추천해줘',
+  '면접에서 설명하기 좋은 코드 포인트를 알려줘',
+];
 
 const SUGGESTIONS = {
   overview: ['지금 작성한 프로젝트 소개를 평가해줘', '더 강조하면 좋을 부분을 알려줘', '보완하면 좋을 내용을 추천해줘'],
 
   code: [GITHUB_QUESTION, '면접에서 설명하기 좋은 코드 포인트를 알려줘'],
 };
-
-import styles from './AiChatPanel.module.sass';
 
 export default function AiChatPanel({ activeTab, item, messages, setMessages, showToast, onClose }) {
   const [input, setInput] = useState('');
@@ -23,6 +30,27 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
   const chatRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
+  const hasContent = (blocks) => {
+    if (!blocks?.length) return false;
+
+    return blocks.some((block) => {
+      switch (block.type) {
+        case 'text':
+          return block.html?.replace(/<[^>]*>/g, '').trim();
+
+        case 'code':
+          return block.code?.trim();
+
+        case 'image':
+        case 'video':
+          return block.url?.trim();
+
+        default:
+          return false;
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
 
@@ -31,28 +59,31 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     if (!message || isLoading) return;
 
     const currentContent = item[activeTab] ?? [];
+    const isContentQuestion = CONTENT_QUESTIONS.includes(message);
+    const isGithubQuestion = message === GITHUB_QUESTION;
+    const submittedGithubUrl = githubUrl.trim();
 
-    // GitHub 질문이 아닌데 현재 탭에 작성된 내용이 없으면 막기
-    if (message !== GITHUB_QUESTION && !hasContent(currentContent)) {
+    // 블록 분석이 필요한 추천 질문일 때만 검사
+    if (isContentQuestion && !hasContent(currentContent)) {
       showToast('먼저 분석할 내용을 작성해주세요.');
       return;
     }
 
-    // GitHub 질문인데 URL이 없으면 막기
-    if (message === GITHUB_QUESTION && !githubUrl.trim()) {
+    // GitHub 질문은 URL 필요
+    if (isGithubQuestion && !submittedGithubUrl) {
       showToast('GitHub 레포지토리 주소를 입력해주세요.');
       return;
     }
 
-    const aiMessageId = crypto.randomUUID();
     const recentMessages = messages.slice(-6);
+    const aiMessageId = crypto.randomUUID();
 
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: 'user',
-        content: message === GITHUB_QUESTION ? `${message}\n${githubUrl.trim()}` : message,
+        content: isGithubQuestion ? `${message}\n${submittedGithubUrl}` : message,
       },
       {
         id: aiMessageId,
@@ -62,6 +93,13 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     ]);
 
     setInput('');
+
+    // GitHub 질문 전송 시 URL input 바로 닫기
+    if (isGithubQuestion) {
+      setGithubUrl('');
+      setIsGithubMode(false);
+    }
+
     setIsLoading(true);
 
     try {
@@ -77,7 +115,7 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           activeTab,
           content: currentContent,
           messages: recentMessages,
-          githubUrl: message === GITHUB_QUESTION ? githubUrl.trim() : null,
+          githubUrl: isGithubQuestion ? submittedGithubUrl : null,
         }),
       });
 
@@ -110,11 +148,6 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           ),
         );
       }
-
-      if (message === GITHUB_QUESTION) {
-        setGithubUrl('');
-        setIsGithubMode(false);
-      }
     } catch (error) {
       console.error('AI 채팅 에러:', error);
 
@@ -138,27 +171,6 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
       e.preventDefault();
       handleSubmit();
     }
-  };
-
-  const hasContent = (blocks) => {
-    if (!blocks?.length) return false;
-
-    return blocks.some((block) => {
-      switch (block.type) {
-        case 'text':
-          return block.html?.replace(/<[^>]*>/g, '').trim();
-
-        case 'code':
-          return block.code?.trim();
-
-        case 'image':
-        case 'video':
-          return block.url?.trim();
-
-        default:
-          return false;
-      }
-    });
   };
 
   const handleScroll = () => {

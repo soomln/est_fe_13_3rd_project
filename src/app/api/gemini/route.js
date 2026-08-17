@@ -6,6 +6,13 @@ const ai = new GoogleGenAI({
 
 const GITHUB_QUESTION = 'GitHub 레포지토리를 분석해서 어필할 부분을 찾아줘';
 
+const CONTENT_QUESTIONS = [
+  '지금 작성한 프로젝트 소개를 평가해줘',
+  '더 강조하면 좋을 부분을 알려줘',
+  '보완하면 좋을 내용을 추천해줘',
+  '면접에서 설명하기 좋은 코드 포인트를 알려줘',
+];
+
 const SOURCE_EXTENSIONS = [
   '.js',
   '.jsx',
@@ -40,13 +47,11 @@ const MAX_REPOSITORY_LENGTH = 100000;
 function getGithubHeaders() {
   const headers = {
     Accept: 'application/vnd.github+json',
-
     'X-GitHub-Api-Version': '2022-11-28',
-
     'User-Agent': 'optime-portfolio-ai',
   };
 
-  // *********** 토근 발급 후 주석 해제 *********** //
+  // *********** 토큰 발급 후 주석 해제 *********** //
   // if (process.env.GITHUB_TOKEN) {
   //   headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   // }
@@ -69,7 +74,6 @@ function parseGithubUrl(githubUrl) {
     }
 
     const owner = pathParts[0];
-
     const repo = pathParts[1].replace(/\.git$/, '');
 
     if (!owner || !repo) {
@@ -266,17 +270,11 @@ async function getGithubRepositoryData(githubUrl) {
 
   return {
     name: repository.name,
-
     fullName: repository.full_name,
-
     description: repository.description ?? '',
-
     language: repository.language ?? '',
-
     defaultBranch: branch,
-
     topics: repository.topics ?? [],
-
     files,
   };
 }
@@ -301,147 +299,150 @@ function createGithubPrompt({ message, repository, messages }) {
   const fileContents = repository.files
     .map(
       (file) => `
-        ==============================
-        파일: ${file.path}
-        ==============================
+==============================
+파일: ${file.path}
+==============================
 
-        ${file.content}
-      `,
+${file.content}
+`,
     )
     .join('\n');
 
   return `
-    너는 개발자 취업용 포트폴리오를 피드백하는 AI 어시스턴트야.
+너는 개발자 취업용 포트폴리오를 피드백하는 AI 어시스턴트야.
 
-    이전 대화:
-    ${conversationText}
+이전 대화:
+${conversationText}
 
-    현재 사용자의 질문:
-    ${message}
+현재 사용자의 질문:
+${message}
 
-    이전 대화가 있다면 그 맥락을 이어서 답변해줘.
+이전 대화가 있다면 그 맥락을 이어서 답변해줘.
 
-    분석할 GitHub 레포지토리:
+분석할 GitHub 레포지토리:
 
-    레포지토리:
-    ${repository.fullName}
+레포지토리:
+${repository.fullName}
 
-    설명:
-    ${repository.description || '없음'}
+설명:
+${repository.description || '없음'}
 
-    주요 언어:
-    ${repository.language || '알 수 없음'}
+주요 언어:
+${repository.language || '알 수 없음'}
 
-    Topics:
-    ${repository.topics.join(', ') || '없음'}
+Topics:
+${repository.topics.join(', ') || '없음'}
 
-    다음은 레포지토리에서 선별한 주요 파일들이야.
+다음은 레포지토리에서 선별한 주요 파일들이야.
 
-    ${fileContents}
+${fileContents}
 
-    위 GitHub 레포지토리 내용을 바탕으로 사용자의 질문에 답변해줘.
+위 GitHub 레포지토리 내용을 바탕으로 사용자의 질문에 답변해줘.
 
-    분석 기준:
-    - 개발자 채용 담당자와 기술 면접관의 관점에서 분석해줘.
-    - 단순히 사용 기술을 나열하지 마.
-    - 실제 코드에서 확인할 수 있는 내용을 근거로 설명해줘.
-    - 개발자의 기술적 선택이 드러나는 부분을 찾아줘.
-    - 문제 해결 능력이 드러나는 구현을 찾아줘.
-    - 구조적으로 잘 설계된 부분을 찾아줘.
-    - 상태 관리, 데이터 흐름, 컴포넌트 구조, 재사용성, API 설계 등 개발 역량이 드러나는 부분을 찾아줘.
-    - 포트폴리오에서 특히 강조하면 좋은 구현을 알려줘.
-    - 면접에서 설명하기 좋은 코드 포인트를 알려줘.
-    - 가능하면 근거가 되는 파일명도 함께 알려줘.
-    - 확인할 수 없는 내용은 추측해서 사실처럼 말하지 마.
+분석 기준:
+- 개발자 채용 담당자와 기술 면접관의 관점에서 분석해줘.
+- 단순히 사용 기술을 나열하지 마.
+- 실제 코드에서 확인할 수 있는 내용을 근거로 설명해줘.
+- 개발자의 기술적 선택이 드러나는 부분을 찾아줘.
+- 문제 해결 능력이 드러나는 구현을 찾아줘.
+- 구조적으로 잘 설계된 부분을 찾아줘.
+- 상태 관리, 데이터 흐름, 컴포넌트 구조, 재사용성, API 설계 등 개발 역량이 드러나는 부분을 찾아줘.
+- 포트폴리오에서 특히 강조하면 좋은 구현을 알려줘.
+- 면접에서 설명하기 좋은 코드 포인트를 알려줘.
+- 가능하면 근거가 되는 파일명도 함께 알려줘.
+- 확인할 수 없는 내용은 추측해서 사실처럼 말하지 마.
 
-    답변은 다음 순서로 정리해줘.
+답변은 다음 순서로 정리해줘.
 
-    1. 가장 어필할 만한 부분
-    2. 기술적으로 잘 구현된 부분
-    3. 포트폴리오에서 강조하면 좋은 내용
-    4. 면접에서 설명하기 좋은 코드 포인트
-    5. 개선하면 좋은 부분
-  `;
+1. 가장 어필할 만한 부분
+2. 기술적으로 잘 구현된 부분
+3. 포트폴리오에서 강조하면 좋은 내용
+4. 면접에서 설명하기 좋은 코드 포인트
+5. 개선하면 좋은 부분
+`;
 }
 
 function createPortfolioPrompt({ message, activeTab, content, messages }) {
   const conversationText = createConversationText(messages);
+  const isContentQuestion = CONTENT_QUESTIONS.includes(message);
+
   const basePrompt = `
-    너는 개발자 취업용 포트폴리오 작성을 도와주는 AI 어시스턴트야.
+너는 개발자 취업용 포트폴리오 작성을 도와주는 AI 어시스턴트야.
 
-    이전 대화:
-    ${conversationText}
+이전 대화:
+${conversationText}
 
-    현재 사용자의 질문:
-    ${message}
+현재 사용자의 질문:
+${message}
 
-    답변 원칙:
-    - 이전 대화가 있다면 맥락을 이어서 답변해줘.
-    - "그중에서", "왜?", "좀 더 자세히", "그걸 어떻게 설명해?" 같은 표현은 이전 대화를 참고해서 이해해줘.
-    - 사용자의 현재 질문에 가장 직접적으로 답변해줘.
-    - 개발자 취업용 포트폴리오라는 목적을 고려해서 답변해줘.
-    - 구체적이고 실제로 적용할 수 있는 내용을 제안해줘.
-    - 불필요하게 긴 설명은 피하고 이해하기 쉽게 정리해줘.
-    - 제공된 내용에서 확인할 수 없는 사실은 임의로 만들어내지 마.
-  `;
+답변 원칙:
+- 이전 대화가 있다면 맥락을 이어서 답변해줘.
+- "그중에서", "왜?", "좀 더 자세히", "그걸 어떻게 설명해?" 같은 표현은 이전 대화를 참고해서 이해해줘.
+- 사용자의 현재 질문에 가장 직접적으로 답변해줘.
+- 개발, 개발자 취업, 포트폴리오와 관련된 질문이라면 이해하기 쉽게 설명해줘.
+- 구체적이고 실제로 적용할 수 있는 내용을 제안해줘.
+- 불필요하게 긴 설명은 피하고 이해하기 쉽게 정리해줘.
+- 제공된 내용에서 확인할 수 없는 사실은 임의로 만들어내지 마.
+`;
 
+  // 일반 질문
+  if (!isContentQuestion) {
+    return `
+${basePrompt}
+
+현재 사용자가 보고 있는 탭:
+${activeTab}
+
+현재 탭에 작성된 내용:
+${JSON.stringify(content, null, 2)}
+
+현재 탭에 작성된 내용은 사용자의 질문과 관련이 있을 때만 참고해줘.
+질문과 관계없다면 현재 탭의 내용을 억지로 연결하지 마.
+`;
+  }
+
+  // Overview 추천 질문
   if (activeTab === 'overview') {
     return `
-      ${basePrompt}
+${basePrompt}
 
-      현재 사용자가 Overview 탭에 작성한 내용:
-      ${JSON.stringify(content, null, 2)}
+현재 사용자가 Overview 탭에 작성한 내용:
+${JSON.stringify(content, null, 2)}
 
-      위 내용을 참고해서 사용자의 질문에 답변해줘.
+위 내용을 참고해서 사용자의 질문에 답변해줘.
 
-      Overview 분석 기준:
-      - 프로젝트의 목적이 명확하게 전달되는지 확인해줘.
-      - 프로젝트의 핵심 기능이 잘 드러나는지 확인해줘.
-      - 개발자가 어떤 문제를 해결했는지 드러나는지 확인해줘.
-      - 사용자의 역할이나 기여도가 충분히 드러나는지 확인해줘.
-      - 개발자 포트폴리오에서 강조하면 좋을 부분을 찾아줘.
-      - 부족한 내용이 있다면 무엇을 어떻게 보완하면 좋은지 구체적으로 알려줘.
-      - 이미 잘 작성된 부분은 억지로 수정하도록 권하지 마.
-      - 단순히 좋다거나 부족하다고 평가하지 말고 이유를 설명해줘.
-    `;
+Overview 분석 기준:
+- 프로젝트의 목적이 명확하게 전달되는지 확인해줘.
+- 프로젝트의 핵심 기능이 잘 드러나는지 확인해줘.
+- 개발자가 어떤 문제를 해결했는지 드러나는지 확인해줘.
+- 사용자의 역할이나 기여도가 충분히 드러나는지 확인해줘.
+- 개발자 포트폴리오에서 강조하면 좋을 부분을 찾아줘.
+- 부족한 내용이 있다면 무엇을 어떻게 보완하면 좋은지 구체적으로 알려줘.
+- 이미 잘 작성된 부분은 억지로 수정하도록 권하지 마.
+- 단순히 좋다거나 부족하다고 평가하지 말고 이유를 설명해줘.
+`;
   }
 
+  // Code 추천 질문
   if (activeTab === 'code') {
     return `
-      ${basePrompt}
+${basePrompt}
 
-      현재 사용자가 Code 탭에 등록한 내용:
-      ${JSON.stringify(content, null, 2)}
+현재 사용자가 Code 탭에 등록한 내용:
+${JSON.stringify(content, null, 2)}
 
-      위 내용을 참고해서 사용자의 질문에 답변해줘.
+위 내용을 참고해서 사용자의 질문에 답변해줘.
 
-      Code 분석 기준:
-      - 개발자 채용 담당자와 기술 면접관 관점에서 분석해줘.
-      - 코드가 단순히 무엇을 하는지 설명하는 데 그치지 마.
-      - 구현 의도와 기술적인 선택을 중심으로 분석해줘.
-      - 문제 해결 능력이 드러나는 부분을 찾아줘.
-      - 구조적으로 잘 설계된 부분이 있다면 알려줘.
-      - 개발 역량을 어필할 수 있는 기술적인 포인트를 찾아줘.
-      - 면접에서 질문받기 좋은 부분이 있다면 예상 질문이나 설명 포인트를 알려줘.
-      - 개선할 부분이 있다면 이유와 함께 설명해줘.
-    `;
-  }
-
-  if (activeTab === 'document') {
-    return `
-      ${basePrompt}
-
-      현재 사용자가 Document 탭에 작성한 내용:
-      ${JSON.stringify(content, null, 2)}
-
-      위 내용을 참고해서 사용자의 질문에 답변해줘.
-
-      Document 작성 기준:
-      - 문장이 자연스럽고 전문적으로 보이는지 확인해줘.
-      - 지나치게 길거나 반복되는 내용을 찾아줘.
-      - 개발자의 경험과 역할이 명확하게 드러나도록 도와줘.
-      - 필요하면 더 간결하고 읽기 좋은 표현을 제안해줘.
-    `;
+Code 분석 기준:
+- 개발자 채용 담당자와 기술 면접관 관점에서 분석해줘.
+- 코드가 단순히 무엇을 하는지 설명하는 데 그치지 마.
+- 구현 의도와 기술적인 선택을 중심으로 분석해줘.
+- 문제 해결 능력이 드러나는 부분을 찾아줘.
+- 구조적으로 잘 설계된 부분이 있다면 알려줘.
+- 개발 역량을 어필할 수 있는 기술적인 포인트를 찾아줘.
+- 면접에서 질문받기 좋은 부분이 있다면 예상 질문이나 설명 포인트를 알려줘.
+- 개선할 부분이 있다면 이유와 함께 설명해줘.
+`;
   }
 
   return basePrompt;
@@ -496,7 +497,6 @@ export async function POST(request) {
 
     const stream = await ai.models.generateContentStream({
       model: 'gemini-3.6-flash',
-
       contents: prompt,
     });
 
@@ -525,7 +525,6 @@ export async function POST(request) {
     return new Response(readableStream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-
         'Cache-Control': 'no-cache',
       },
     });
