@@ -2,7 +2,7 @@
 
 .chat_input
   display: flex
-  align-items: center
+  align-items: flex-end
   box-sizing: border-box
   gap: 8px
   width: 100%
@@ -11,13 +11,19 @@
   border: 1px solid $gray
   border-radius: 16px
 
+// 한 줄일 때 보내기 버튼과 높이를 맞춰 글자가 가운데 오게 한다
 .chat_input_field
   flex: 1
+  display: block
+  box-sizing: border-box
   min-width: 0
-  padding: 0
+  max-height: 120px
+  padding: 9px 0
   color: $black
   background-color: transparent
   border: 0
+  resize: none
+  overflow-y: auto
 
   &::placeholder
     color: $gray
