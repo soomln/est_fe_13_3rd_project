@@ -1,0 +1,60 @@
+@use '@/app/_variables.sass' as *
+
+.select
+  position: relative
+  display: inline-flex
+  align-items: center
+  box-sizing: border-box
+  border: 1px solid $gray
+  border-radius: 5px
+
+.select_input
+  padding: 10px 38px 10px 10px
+  color: $gray
+  background: transparent
+  border: 0
+  outline: none
+  appearance: none
+  cursor: pointer
+
+.select_arrow
+  position: absolute
+  right: 10px
+  font-size: 18px
+  color: $gray
+  pointer-events: none
+
+.input
+  box-sizing: border-box
+  width: 100%
+  padding: 20px
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke1
+  border-radius: 5px
+  outline: none
+
+  &::placeholder
+    color: $stroke1
+
+.input_compact
+  width: auto
+  padding: 10px
+  border-color: $gray
+
+  &::placeholder
+    color: $gray
+
+.textarea
+  box-sizing: border-box
+  width: 100%
+  padding: 20px
+  color: $black
+  background-color: $white
+  border: 1px solid $stroke1
+  border-radius: 5px
+  outline: none
+  resize: none
+
+  &::placeholder
+    color: $stroke1
