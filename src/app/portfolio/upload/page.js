@@ -83,7 +83,9 @@ export default function Upload() {
         break;
 
       case 'code':
+        newBlock.language = 'javascript';
         newBlock.code = '';
+        newBlock.filename = '';
         break;
 
       default:
