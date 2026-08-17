@@ -39,18 +39,21 @@
   background-color: $white
   border: 1px solid $gray
   border-radius: 8px
+  overflow: hidden
 
+// AI 답에 줄바꿈이 들어 있다. 그대로 살린다
 .bubble_box
+  white-space: pre-wrap
   max-width: 425px
   padding: 16px 24px
 
 .bubble_ai .bubble_box
   color: $black
   background-color: $white
-  border-radius: 0 16px 16px 16px
+  border-radius: 0 15px 15px 15px
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
 
 .bubble_user .bubble_box
   color: $white
   background-color: $black
-  border-radius: 16px 0 16px 16px
+  border-radius: 15px 0 15px 15px

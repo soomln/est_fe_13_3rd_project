@@ -1,10 +1,20 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import Bubble from '@/app/resume/editor/_components/Chat/Bubble';
 import ChatInput from '@/app/resume/editor/_components/Chat/Input';
 import styles from './Panel.module.sass';
 
-export default function Panel({ isOpen, onClose }) {
+export default function Panel({ isOpen, onClose, coach, onPickChoice }) {
+  const viewRef = useRef(null);
+
+  // 새 말풍선이 생기면 아래로 따라간다
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view) view.scrollTop = view.scrollHeight;
+  }, [coach.turns, coach.isThinking]);
+
   return (
     <aside
       className={`${styles.chat_panel} ${isOpen ? '' : styles.chat_panel_closed}`}
@@ -39,47 +49,56 @@ export default function Panel({ isOpen, onClose }) {
           </button>
         </div>
 
-        <div className={styles.chat_panel_view}>
-          {/* 주의: Alan AI 연결 전까지 쓰는 임시 대화 */}
+        <div className={styles.chat_panel_view} ref={viewRef}>
           <div className={styles.chat_panel_list}>
-            <div className={styles.chat_panel_turn}>
-              <Bubble role='ai'>
-                안녕하세요.
-                <br />
-                작성을 도와드릴 AI 코치입니다.
-                <br />
-                <br />
-                작성 시작 전 마이페이지에 등록된 정보를 바탕으로 자동 기입해드릴까요? 🙂
-              </Bubble>
+            {coach.turns.map((turn) => (
+              <div key={turn.id} className={styles.chat_panel_turn}>
+                <Bubble role={turn.role} avatarUrl={coach.avatarUrl}>
+                  {turn.text}
+                </Bubble>
 
-              <div className={styles.chat_panel_tags}>
-                <button type='button' className={`${styles.chat_panel_tag} font_body_s_b`}>
-                  내 정보 불러오기
-                </button>
-                <button type='button' className={`${styles.chat_panel_tag} font_body_s_b`}>
-                  직접 작성하기
-                </button>
+                {turn.choices && (
+                  <div className={styles.chat_panel_tags}>
+                    {turn.choices.map((choice) => (
+                      <button
+                        key={choice.key}
+                        type='button'
+                        className={`${styles.chat_panel_tag} font_body_s_b`}
+                        onClick={() => onPickChoice(turn.id, choice)}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {turn.choices && turn.hint && (
+                  <p className={`${styles.chat_panel_hint} font_caption_r`}>{turn.hint}</p>
+                )}
               </div>
-            </div>
+            ))}
 
-            <Bubble role='user'>내가 언제 졸업했는지 모르겠어.</Bubble>
-
-            <Bubble role='ai'>
-              🔎 정부24에서 확인하실 수 있어요.
-              <br />
-              <br />
-              www.gov.kr에 로그인하신 뒤,
-              <br />
-              ‘졸업(예정) 증명서’ 발급 메뉴에서 정확한 졸업 연월을 확인하실 수 있습니다.
-              <br />
-              <br />
-              확인 후 직접 작성하거나 저에게 알려주시면 이력서에 자동으로 채워드릴게요.
-            </Bubble>
+            {coach.isThinking && (
+              <Bubble role='ai'>
+                <span className={styles.chat_panel_thinking} role='status' aria-label='생각하는 중입니다'>
+                  {coach.thinkingNote || '생각하는 중입니다'}
+                  <span className={styles.chat_panel_dot} aria-hidden='true'>
+                    .
+                  </span>
+                  <span className={styles.chat_panel_dot} aria-hidden='true'>
+                    .
+                  </span>
+                  <span className={styles.chat_panel_dot} aria-hidden='true'>
+                    .
+                  </span>
+                </span>
+              </Bubble>
+            )}
           </div>
         </div>
 
         <div className={styles.chat_panel_foot}>
-          <ChatInput />
+          <ChatInput onSend={coach.askCoach} isThinking={coach.isThinking} />
         </div>
       </div>
     </aside>
