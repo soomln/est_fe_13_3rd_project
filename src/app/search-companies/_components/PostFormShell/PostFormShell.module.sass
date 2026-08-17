@@ -1,0 +1,67 @@
+@use '@/app/_variables.sass' as *
+
+.form
+  display: flex
+  flex-direction: column
+  gap: 50px
+  box-sizing: border-box
+  padding: 32px 40px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 15px
+
+.form_body
+  display: flex
+  flex-direction: column
+  gap: 50px
+
+.form_head
+  display: flex
+  flex-direction: column
+
+  h1
+    color: $black
+
+.form_desc
+  color: $stroke1
+
+.form_fields
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+  h2
+    color: $black
+
+.form_actions
+  display: flex
+  gap: 20px
+
+.form_cancel,
+.form_submit
+  flex: 1
+  box-sizing: border-box
+  padding: 20px
+  border-radius: 5px
+  cursor: pointer
+
+.form_cancel
+  color: $black
+  background-color: $white
+  border: 1px solid $black
+
+  &:hover
+    background-color: $light_gray
+
+.form_submit
+  color: $white
+  background-color: $black
+  border: 1px solid $stroke1
+
+  &:hover
+    background-color: $gray
+
+  &:disabled
+    background-color: $stroke1
+    border-color: $stroke1
+    cursor: not-allowed

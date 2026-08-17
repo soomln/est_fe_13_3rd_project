@@ -1,0 +1,64 @@
+@use '@/app/_variables.sass' as *
+
+.comments
+  display: flex
+  flex-direction: column
+  gap: 30px
+  box-sizing: border-box
+  padding: 50px
+  background-color: $light_gray
+  border-radius: 15px
+
+.comments_form
+  display: flex
+  align-items: center
+  gap: 30px
+
+.comments_avatar
+  font-size: 50px
+  color: $gray
+
+.comments_input
+  flex: 1
+  min-width: 0
+  box-sizing: border-box
+  height: 50px
+  padding: 10px
+  color: $black
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 5px
+  outline: none
+
+  &::placeholder
+    color: $stroke1
+
+.comments_submit
+  flex-shrink: 0
+  box-sizing: border-box
+  height: 50px
+  padding: 10px 20px
+  color: $white
+  background-color: $black
+  border: 0
+  border-radius: 5px
+  cursor: pointer
+
+  &:hover
+    background-color: $gray
+
+.comments_sort
+  margin-top: 20px
+
+.comments_list
+  display: flex
+  flex-direction: column
+  gap: 30px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.comments_empty
+  padding: 40px 0
+  text-align: center
+  color: $gray

@@ -1,0 +1,31 @@
+@use '@/app/_variables.sass' as *
+
+.highlights
+  display: flex
+  flex-direction: column
+  gap: 10px
+  box-sizing: border-box
+  padding: 16px 24px
+  background-color: $sub_purple
+  border-radius: 5px
+
+.highlights_title
+  color: $purple
+
+.highlights_list
+  display: flex
+  flex-direction: column
+  gap: 7px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.highlights_item
+  display: flex
+  align-items: center
+  gap: 10px
+  color: $black
+
+  :global(.material-symbols-rounded)
+    font-size: 18px
+    color: $purple
