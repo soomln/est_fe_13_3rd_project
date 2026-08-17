@@ -18,15 +18,19 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
 
 // overflow 를 두면 색 팔레트가 잘려서 안 보인다. 대신 줄바꿈으로 처리한다
+// AI·글꼴·크기 세 개가 한 덩어리로 가운데에 오도록 justify-content 를 center 로 둔다
 .toolbar_inner
   flex: 1
   min-width: 0
-  margin-left: 12px
   display: flex
   flex-wrap: wrap
   align-items: center
-  justify-content: space-between
+  justify-content: center
   gap: 4px
+
+  // AI 버튼만 살짝 떼어 둔다
+  > :first-child
+    margin-right: 8px
 
 // 헤더·툴바 구분선 색 (와이어프레임 전용이라 변수에 없음)
 .toolbar_divider
@@ -36,6 +40,23 @@
   background-color: #767779
 
 // 색 팔레트가 이 버튼 아래에 붙는다
+// 글꼴·크기 말고는 통째로 움직인다. 좁아지면 이 덩어리만 아래 줄로 내려간다
+// shrink 0 이어야 줄어드는 대신 아래로 내려간다
+.toolbar_rest
+  flex: 1 0 auto
+  display: flex
+  flex-wrap: nowrap
+  align-items: center
+  justify-content: space-between
+  gap: 4px
+
+// 아래 줄로 내려가면 맨 앞 구분선이 줄 맨 앞에 혼자 남는다
+// display: none 으로 지우면 그만큼 좁아져 다시 한 줄이 되고, 그러면 선이 살아나 또 두 줄이 된다.
+// 자리는 두고 안 보이게만 해야 폭이 그대로라 깜빡이지 않는다
+.toolbar_rest_wrapped
+  .toolbar_divider:first-child
+    visibility: hidden
+
 .toolbar_tool
   position: relative
   display: inline-flex
