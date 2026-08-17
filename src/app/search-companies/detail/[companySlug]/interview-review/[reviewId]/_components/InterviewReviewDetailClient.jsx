@@ -6,6 +6,9 @@ import { getCompany } from "@backend/lib/api/companies";
 import CompanyHeader from "@/app/search-companies/detail/_components/CompanyHeader/CompanyHeader";
 import TabNavigation from "@/app/search-companies/detail/_components/TabNavigation/TabNavigation";
 import InterviewReviewDetailContent from "./InterviewReviewDetailContent";
+import { useRouter } from "next/navigation";
+
+
 
 export default function InterviewReviewDetailClient({companySlug,reviewId}){
   const [company, setCompany] = useState(null);
@@ -16,7 +19,7 @@ export default function InterviewReviewDetailClient({companySlug,reviewId}){
   const commentData = await listComments(reviewId);
   setComments(commentData.items ?? []);
   };
-
+  
   useEffect(() => {
   async function fetchData() {
     const [companyData, reviewData, commentData] = await Promise.all([
@@ -34,22 +37,28 @@ export default function InterviewReviewDetailClient({companySlug,reviewId}){
   fetchData();
   }, [companySlug, reviewId]);
 
+  const router = useRouter();
+  const handleBack = () => {
+  router.push(
+    `/search-companies/detail/${companySlug}/interview-review`
+  );
+  };
+  
   if (!company || !review) {
     return <div>로딩 중...</div>;
   }
-
-  // console.log(comments)
 
 
   return(
   <>
     <CompanyHeader company={company} />
-    <TabNavigation />
+    <TabNavigation companySlug={companySlug}/>
     
     <InterviewReviewDetailContent 
     review={review} 
     comments={comments} 
     reloadComments={fetchComments}
+    handleBack={handleBack}
     />
   </>
   );

@@ -14,7 +14,6 @@ export default function ReviewCard({
   onClick,
 }) {
 
-  console.log(review);
 
 const card = (
   <li key={review.id} className={styles.review_card} onClick={onClick}>

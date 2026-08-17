@@ -26,7 +26,7 @@ export default function DetailClient({ companySlug }) {
   return (
     <>
       <CompanyHeader company={company} />
-      <TabNavigation />
+      <TabNavigation companySlug={companySlug}/>
       <LeftContent company={company} />
       <RightSidebar company={company} />
     </>

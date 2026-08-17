@@ -17,7 +17,7 @@ export default function InterviewReviewDetailComments({comments, postId, reloadC
     };
 
   return(
-    <div className="styles.review_card">
+    <div className={styles.review_card}>
       <span>
         {/* <img src="" alt="프로필 사진" /> */}
         <span>프로필 사진</span>

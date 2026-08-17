@@ -68,7 +68,6 @@ export default function QuestionWriteForm({company}){
     ...prev,
     [name]: value,
     }));
-    console.log(name + ": "+ value)
   }; 
 
   const handleSubmit = async () => {

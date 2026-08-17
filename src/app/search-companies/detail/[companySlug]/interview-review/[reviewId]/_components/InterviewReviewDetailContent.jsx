@@ -5,11 +5,15 @@ import InterviewReviewDetailSummary from "./InterviewReviewDetailSummary";
 import InterviewReviewDetailComments from "./InterviewReviewDetailComments";
 
 
-export default function InterviewReviewDetailContent({review, comments, reloadComments}){
+
+export default function InterviewReviewDetailContent({review, comments, reloadComments, handleBack}){
   return (
     <div>
       <div className={styles.review_card}>
         <h1>면접 후기</h1>
+        <button type="button" onClick={handleBack}>
+          ← 목록으로
+        </button>
         <h2>{review.title}</h2>
         <InterviewReviewDetailHeader review={review}/>
         <InterviewReviewDetailFooter review={review}/>

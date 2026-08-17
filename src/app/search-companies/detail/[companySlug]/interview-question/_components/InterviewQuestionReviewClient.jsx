@@ -22,12 +22,8 @@ export default function InterviewQuestionReviewClient({companySlug}){
         }),
       ]);
 
-      console.log("company =", companyData);
-      console.log("qbank =", result);
-
       setCompany(companyData);
       setReviews(result.items);
-      console.log("qbank[0] =", result.items[0]);
     } catch (err) {
       console.error(err);
     }
@@ -40,7 +36,7 @@ export default function InterviewQuestionReviewClient({companySlug}){
   return (
     <>
       <CompanyHeader company={company}/>
-      <TabNavigation />
+      <TabNavigation companySlug={companySlug}/>
       {reviews.map((review) => (
       <ReviewCard
         key={review.id}
