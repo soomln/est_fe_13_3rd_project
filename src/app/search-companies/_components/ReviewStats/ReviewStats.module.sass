@@ -1,0 +1,20 @@
+@use '@/app/_variables.sass' as *
+
+.stats
+  display: grid
+  grid-template-columns: repeat(2, 1fr)
+  box-sizing: border-box
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 10px
+
+.stats_col
+  display: flex
+  flex-direction: column
+  gap: 50px
+  box-sizing: border-box
+  padding: 20px 30px
+  border-right: 1px solid $stroke3
+
+  &:last-child
+    border-right: 0

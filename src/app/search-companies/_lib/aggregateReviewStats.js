@@ -50,7 +50,9 @@ export default function aggregateReviewStats(reviews = []) {
   const difficultyAvg =
     scores.length === 0 ? 0 : Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 10) / 10;
 
-  const difficultyGrade = DIFFICULTY_GRADE.find((grade) => difficultyAvg <= grade.max)?.label ?? '-';
+  // 후기가 없으면 등급을 매기지 않는다
+  const difficultyGrade =
+    scores.length === 0 ? '집계된 후기 없음' : (DIFFICULTY_GRADE.find((grade) => difficultyAvg <= grade.max)?.label ?? '-');
 
   return {
     total: reviews.length,
