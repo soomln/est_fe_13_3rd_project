@@ -32,7 +32,22 @@ describe('browsing companies', () => {
       slug: 'naver',
       name: '네이버',
       category: 'IT·소프트웨어',
+      size: '대기업',
       location: '분당',
+    });
+  });
+
+  it('answers null for a company with no size', async () => {
+    const page = await listCompanies();
+    const sparse = page.items.find((c) => c.slug === 'sparse');
+
+    expect(sparse.size).toBeNull();
+  });
+
+  it('carries the size label into the detail too', async () => {
+    await expect(getCompany('naver')).resolves.toMatchObject({
+      category: 'IT·소프트웨어',
+      size: '대기업',
     });
   });
 

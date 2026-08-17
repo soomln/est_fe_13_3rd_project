@@ -327,7 +327,7 @@ import {
 const { items, total, page, pageSize } = await listCompanies({
   q: '토스',            // 회사명 검색 (기획 9-2: 제목만)
   industry: 'fintech',  // code_master(industry)
-  size: 'large',        // code_master(company_size)
+  size: 'large',        // code_master(company_size) — 카드의 size 는 라벨("대기업")로 옵니다
   jobRole: 'frontend',  // code_master(job_role)
   sort: 'popular',      // popular | rating | views | name | latest
   page: 1,
@@ -537,10 +537,15 @@ import {
 const { items, total } = await listPosts({
   type: 'review',            // review | qbank | (생략 = 전체)
   companySlug: 'naver',      // 기업 상세의 후기 탭
+  jobRole: 'frontend',       // code_master(job_role)
+  difficulty: 'hard',        // code_master(difficulty)
+  passResult: 'pass',        // code_master(pass_result)
   q: '프론트엔드',            // 제목 검색
   sort: 'latest',            // latest | oldest | company | popular | scraps | comments | views
   page: 1,
 });
+// 필터 3종은 DB 에서 걸러내므로 total 도 걸러낸 개수입니다.
+// 받아온 뒤 화면에서 filter() 하면 2페이지부터 개수가 어긋납니다.
 
 // 후기 작성
 await createPost({
@@ -955,6 +960,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 | `name` | string | 회사명 |
 | `logo` | string \| null | 로고 URL. **현재 전부 null** |
 | `category` | string | 산업 **라벨**(`"플랫폼·포털"`). 코드가 아님 |
+| `size` | string \| null | 기업 규모 **라벨**(`"중견기업"`). 코드가 아님. 미입력이면 `null` |
 | `location` | string \| null | 근무지 (`"경기 성남"`) |
 | `tags` | string[] | 키워드 (`["검색","AI"]`) |
 | `rating` | number \| null | 종합 평점 `0.0~5.0` (샘플 값) |
@@ -1548,7 +1554,7 @@ SCORE_SCALE;           // { min: 1, max: 5, step: 1 }
 {
   "items": [{
     "id": "3f9c…", "slug": "naver", "name": "네이버", "logo": null,
-    "category": "플랫폼·포털", "location": "경기 성남",
+    "category": "플랫폼·포털", "size": "대기업", "location": "경기 성남",
     "tags": ["검색", "AI", "클라우드", "커머스"],
     "rating": 4.3, "employees": 4500, "avgSalary": "5,800만원",
     "favorite": 12, "review": 5, "jokbo": 3, "passrate": 60, "difficulty": 3.4
@@ -1885,6 +1891,8 @@ publishPortfolio(id)
 | `companyId` | uuid | — | 기업 id로 필터 |
 | `companySlug` | string | — | 기업 slug로 필터 (기업 상세 탭에서 편함) |
 | `jobRole` | string | — | 직무로 필터. `code_master(job_role)` 코드 |
+| `difficulty` | string | — | 면접 난이도로 필터. `code_master(difficulty)` 코드 (`easy`/`normal`/`hard`) |
+| `passResult` | string | — | 합격 여부로 필터. `code_master(pass_result)` 코드 (`pass`/`waiting`/`fail`) |
 | `q` | string | — | **제목만** 검색 |
 | `ids` | string | — | 쉼표 구분 id 목록 (스크랩 목록용) |
 | `sort` | enum | `latest` | `latest` \| `oldest` \| `company`(기업명) \| `popular`(도움돼요) \| `scraps`(퍼가요) \| `comments` \| `views` |
@@ -1892,6 +1900,10 @@ publishPortfolio(id)
 | `pageSize` | number | `10` | 최대 50 |
 
 **응답 200** — `items`: [Post](#57-post)[]
+
+> `jobRole` · `difficulty` · `passResult` 는 **DB 에서 걸러내므로 `total` 도 걸러낸 뒤의 개수**입니다.
+> 목록을 받아 화면에서 `filter()` 하면 2페이지부터 개수가 어긋나니 쿼리로 보내주세요.
+> 없는 코드를 보내면 400 이 아니라 **빈 목록**이 옵니다 (`code_master` 대조를 하지 않습니다).
 
 ---
 

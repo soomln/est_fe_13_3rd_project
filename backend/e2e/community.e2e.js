@@ -795,3 +795,78 @@ describe('코드 컬럼은 라벨을 거부한다', () => {
     await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: before });
   });
 });
+
+describe('난이도 · 합격 여부로 목록 좁히기', () => {
+  beforeEach(() => signInAs(USERS.a));
+
+  it('narrows the board to one difficulty', async () => {
+    await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    const { items, total } = await listPosts({ type: 'review', difficulty: 'easy' });
+
+    expect(total).toBe(1);
+    expect(items.every((p) => p.difficultyCode === 'easy')).toBe(true);
+  });
+
+  it('narrows the board to one pass result', async () => {
+    await writeReview({ passResultCode: 'pass' });
+    await writeReview({ passResultCode: 'fail' });
+
+    const { items, total } = await listPosts({ type: 'review', passResult: 'fail' });
+
+    expect(total).toBe(1);
+    expect(items.every((p) => p.passResultCode === 'fail')).toBe(true);
+  });
+
+  it('applies both at once', async () => {
+    await writeReview({ difficultyCode: 'hard', passResultCode: 'pass' });
+    await writeReview({ difficultyCode: 'hard', passResultCode: 'fail' });
+    await writeReview({ difficultyCode: 'easy', passResultCode: 'fail' });
+
+    const { items, total } = await listPosts({
+      type: 'review',
+      difficulty: 'hard',
+      passResult: 'fail',
+    });
+
+    expect(total).toBe(1);
+    expect(items[0]).toMatchObject({ difficultyCode: 'hard', passResultCode: 'fail' });
+  });
+
+  it('counts every match instead of only the ones on this page', async () => {
+    for (let i = 0; i < 3; i += 1) await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    const page = await listPosts({ type: 'review', difficulty: 'hard', pageSize: 2 });
+
+    expect(page.total).toBe(3);
+    expect(page.items).toHaveLength(2);
+  });
+
+  it('filters a qbank list the same way', async () => {
+    await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'REST 란?',
+      difficultyCode: 'hard',
+    });
+    await createPost({
+      postType: 'qbank',
+      companyId: naver().id,
+      questions: 'CORS 란?',
+      difficultyCode: 'easy',
+    });
+
+    await expect(listPosts({ type: 'qbank', difficulty: 'hard' })).resolves.toMatchObject({
+      total: 1,
+    });
+  });
+
+  it('leaves the board alone when neither is given', async () => {
+    await writeReview({ difficultyCode: 'hard' });
+    await writeReview({ difficultyCode: 'easy' });
+
+    await expect(listPosts({ type: 'review' })).resolves.toMatchObject({ total: 2 });
+  });
+});
