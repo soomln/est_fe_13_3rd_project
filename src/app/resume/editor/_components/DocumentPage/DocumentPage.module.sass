@@ -18,6 +18,10 @@
   background-color: $white
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
 
+// PDF 로 찍는 동안. 그림자가 장 경계에 회색 줄로 남는다
+.document_stack[data-capture='true'] &
+  box-shadow: none
+
 // 본문은 종이 위에 겹쳐 놓는다
 // 끌어서 옮길 때 뜨는 자리 표시가 이 상자를 기준으로 놓인다
 .document_page
