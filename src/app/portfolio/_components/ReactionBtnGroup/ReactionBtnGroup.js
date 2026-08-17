@@ -9,7 +9,7 @@ export default function ReactionBtnGroup({ item, contentsRef, showToast, updateR
 
   const onCopyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(`${window.location.origin}/portfolio?modal=${item.id}`);
       showToast('URL이 복사되었습니다!');
     } catch (err) {
       console.error('url 복사 실패:', err);
