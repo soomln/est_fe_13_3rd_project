@@ -44,6 +44,12 @@ const MAX_FILES = 20;
 const MAX_FILE_LENGTH = 12000;
 const MAX_REPOSITORY_LENGTH = 100000;
 
+// 추가
+const MAX_USER_COMMITS = 15;
+const MAX_COMMIT_FILES = 40;
+const MAX_PATCH_LENGTH = 5000;
+const MAX_CONTRIBUTION_LENGTH = 80000;
+
 function getGithubHeaders() {
   const headers = {
     Accept: 'application/vnd.github+json',
@@ -178,6 +184,10 @@ async function githubFetch(url, options = {}) {
       throw new Error('GitHub API 요청 한도를 초과했거나 레포지토리에 접근할 권한이 없습니다.');
     }
 
+    if (response.status === 422) {
+      throw new Error('GitHub 정보를 조회할 수 없습니다. 입력한 정보를 확인해주세요.');
+    }
+
     throw new Error(`GitHub API 요청에 실패했습니다. (${response.status})`);
   }
 
@@ -215,6 +225,7 @@ async function getFileContent(owner, repo, path, branch) {
   return response.text();
 }
 
+// 기존 레포 전체 분석용
 async function getGithubRepositoryData(githubUrl) {
   const parsed = parseGithubUrl(githubUrl);
 
@@ -269,6 +280,9 @@ async function getGithubRepositoryData(githubUrl) {
   }
 
   return {
+    owner,
+    repo,
+
     name: repository.name,
     fullName: repository.full_name,
     description: repository.description ?? '',
@@ -277,6 +291,99 @@ async function getGithubRepositoryData(githubUrl) {
     topics: repository.topics ?? [],
     files,
   };
+}
+
+// ==============================
+// 여기부터 사용자 기여도 분석용 추가
+// ==============================
+
+async function getUserCommits(owner, repo, githubUsername) {
+  const params = new URLSearchParams({
+    author: githubUsername,
+    per_page: String(MAX_USER_COMMITS),
+  });
+
+  const response = await githubFetch(`https://api.github.com/repos/${owner}/${repo}/commits?${params.toString()}`);
+
+  return response.json();
+}
+
+async function getCommitDetail(owner, repo, sha) {
+  const response = await githubFetch(`https://api.github.com/repos/${owner}/${repo}/commits/${sha}`);
+
+  return response.json();
+}
+
+async function getGithubUserContributionData(owner, repo, githubUsername) {
+  const commits = await getUserCommits(owner, repo, githubUsername);
+
+  if (!commits.length) {
+    throw new Error(`${githubUsername} 사용자의 커밋을 이 레포지토리에서 찾지 못했습니다.`);
+  }
+
+  const result = [];
+
+  let totalLength = 0;
+  let totalFileCount = 0;
+
+  for (const commit of commits) {
+    if (totalLength >= MAX_CONTRIBUTION_LENGTH || totalFileCount >= MAX_COMMIT_FILES) {
+      break;
+    }
+
+    try {
+      const detail = await getCommitDetail(owner, repo, commit.sha);
+
+      const files = [];
+
+      for (const file of detail.files ?? []) {
+        if (totalLength >= MAX_CONTRIBUTION_LENGTH || totalFileCount >= MAX_COMMIT_FILES) {
+          break;
+        }
+
+        // lock 파일 등은 기여도 분석에서 제외
+        if (!isSourceFile(file.filename)) {
+          continue;
+        }
+
+        const remainingLength = MAX_CONTRIBUTION_LENGTH - totalLength;
+
+        const patch = (file.patch ?? '').slice(0, Math.min(MAX_PATCH_LENGTH, remainingLength));
+
+        files.push({
+          filename: file.filename,
+          status: file.status,
+          additions: file.additions ?? 0,
+          deletions: file.deletions ?? 0,
+          changes: file.changes ?? 0,
+          patch,
+        });
+
+        totalLength += patch.length;
+        totalFileCount += 1;
+      }
+
+      if (!files.length) {
+        continue;
+      }
+
+      result.push({
+        sha: detail.sha,
+        message: detail.commit?.message ?? '',
+        date: detail.commit?.author?.date ?? '',
+        authorLogin: detail.author?.login ?? null,
+        files,
+      });
+    } catch (error) {
+      console.error(`GitHub 커밋 상세 조회 실패: ${commit.sha}`, error);
+    }
+  }
+
+  if (!result.length) {
+    throw new Error(`${githubUsername} 사용자의 분석 가능한 코드 변경 내역을 찾지 못했습니다.`);
+  }
+
+  return result;
 }
 
 function createConversationText(messages) {
@@ -293,19 +400,63 @@ function createConversationText(messages) {
     .join('\n\n');
 }
 
-function createGithubPrompt({ message, repository, messages }) {
+function createGithubPrompt({ message, repository, contributions, githubUsername, position, messages }) {
   const conversationText = createConversationText(messages);
 
+  // 기존 레포 전체 코드
   const fileContents = repository.files
     .map(
       (file) => `
 ==============================
-파일: ${file.path}
+레포지토리 파일: ${file.path}
 ==============================
 
 ${file.content}
 `,
     )
+    .join('\n');
+
+  // 추가: 사용자 커밋 / 변경 코드
+  const contributionContents = contributions
+    .map((commit) => {
+      const changedFiles = commit.files
+        .map(
+          (file) => `
+------------------------------
+변경 파일: ${file.filename}
+
+상태:
+${file.status}
+
+추가:
+${file.additions} lines
+
+삭제:
+${file.deletions} lines
+
+변경 코드:
+${file.patch || '변경 코드 정보 없음'}
+`,
+        )
+        .join('\n');
+
+      return `
+==============================
+커밋
+==============================
+
+커밋 메시지:
+${commit.message}
+
+커밋 날짜:
+${commit.date}
+
+GitHub 작성자:
+${commit.authorLogin || githubUsername}
+
+${changedFiles}
+`;
+    })
     .join('\n');
 
   return `
@@ -318,6 +469,16 @@ ${conversationText}
 ${message}
 
 이전 대화가 있다면 그 맥락을 이어서 답변해줘.
+
+
+지원자가 입력한 정보:
+
+GitHub 닉네임:
+${githubUsername}
+
+지원 포지션:
+${position}
+
 
 분석할 GitHub 레포지토리:
 
@@ -333,32 +494,83 @@ ${repository.language || '알 수 없음'}
 Topics:
 ${repository.topics.join(', ') || '없음'}
 
-다음은 레포지토리에서 선별한 주요 파일들이야.
+
+아래는 프로젝트 전체 구조와 맥락을 이해하기 위해
+레포지토리에서 선별한 주요 파일들이야.
 
 ${fileContents}
 
-위 GitHub 레포지토리 내용을 바탕으로 사용자의 질문에 답변해줘.
 
-분석 기준:
+아래는 ${githubUsername} 사용자가 작성한 커밋에서
+실제로 변경된 파일과 코드야.
+
+사용자가 직접 구현한 부분을 판단할 때는
+이 변경 내역을 가장 중요한 근거로 사용해줘.
+
+${contributionContents}
+
+
+분석 목적:
+
+이 사용자가 ${position} 포지션에 지원한다고 가정하고,
+해당 사용자가 실제로 구현한 부분 중
+채용 과정에서 어필할 가치가 높은 부분을 찾아줘.
+
+
+중요한 판단 기준:
+
+- 레포지토리 전체 코드는 프로젝트 구조와 구현 맥락을 이해하는 용도로 사용해줘.
+
+- 사용자의 실제 기여도를 판단할 때는 ${githubUsername} 사용자의 커밋과 변경 코드를 우선적인 근거로 사용해줘.
+
+- 팀 프로젝트 전체 기능을 ${githubUsername} 사용자가 구현했다고 단정하지 마.
+
+- 변경 내역에서 근거를 찾을 수 없는 기능은 해당 사용자의 구현이라고 말하지 마.
+
+- 여러 커밋에서 같은 기능을 반복해서 수정했다면 하나의 기능 단위로 묶어서 분석해줘.
+
+- 단순한 오타 수정, 텍스트 수정, 포맷팅 등의 작업보다 기술적인 구현을 우선적으로 분석해줘.
+
+- 커밋 개수나 변경 라인 수가 많다는 이유만으로 중요한 구현이라고 평가하지 마.
+
+- ${position} 포지션과 관련성이 높은 구현을 우선적으로 찾아줘.
+
 - 개발자 채용 담당자와 기술 면접관의 관점에서 분석해줘.
-- 단순히 사용 기술을 나열하지 마.
-- 실제 코드에서 확인할 수 있는 내용을 근거로 설명해줘.
+
+- 단순히 React, Next.js 등의 기술 이름만 나열하지 말고 실제로 어떻게 사용했는지 설명해줘.
+
 - 개발자의 기술적 선택이 드러나는 부분을 찾아줘.
+
 - 문제 해결 능력이 드러나는 구현을 찾아줘.
+
 - 구조적으로 잘 설계된 부분을 찾아줘.
-- 상태 관리, 데이터 흐름, 컴포넌트 구조, 재사용성, API 설계 등 개발 역량이 드러나는 부분을 찾아줘.
+
+- 상태 관리, 데이터 흐름, 컴포넌트 구조, 재사용성, API 연동, 비동기 처리, 사용자 경험, 예외 처리 등의 개발 역량이 드러나는 부분을 찾아줘.
+
 - 포트폴리오에서 특히 강조하면 좋은 구현을 알려줘.
+
 - 면접에서 설명하기 좋은 코드 포인트를 알려줘.
-- 가능하면 근거가 되는 파일명도 함께 알려줘.
+
+- 가능하면 근거가 되는 파일명을 함께 알려줘.
+
 - 확인할 수 없는 내용은 추측해서 사실처럼 말하지 마.
+
+- 판단하기 어려운 내용은 판단하기 어렵다고 명확하게 알려줘.
+
 
 답변은 다음 순서로 정리해줘.
 
-1. 가장 어필할 만한 부분
-2. 기술적으로 잘 구현된 부분
-3. 포트폴리오에서 강조하면 좋은 내용
-4. 면접에서 설명하기 좋은 코드 포인트
-5. 개선하면 좋은 부분
+1. 사용자가 구현한 것으로 판단되는 주요 기능
+
+2. ${position} 지원 시 가장 어필할 만한 부분
+
+3. 기술적으로 잘 구현된 부분
+
+4. 포트폴리오에서 강조하면 좋은 내용
+
+5. 면접에서 설명하기 좋은 코드 포인트
+
+6. 개선하면 좋은 부분
 `;
 }
 
@@ -450,7 +662,15 @@ Code 분석 기준:
 
 export async function POST(request) {
   try {
-    const { message, activeTab, content = [], messages = [], githubUrl } = await request.json();
+    const {
+      message,
+      activeTab,
+      content = [],
+      messages = [],
+      githubUrl,
+      githubUsername,
+      position,
+    } = await request.json();
 
     if (!message?.trim()) {
       return Response.json(
@@ -468,7 +688,7 @@ export async function POST(request) {
     let prompt;
 
     if (isGithubRequest) {
-      if (!githubUrl) {
+      if (!githubUrl?.trim()) {
         return Response.json(
           {
             error: 'GitHub 레포지토리 주소를 입력해주세요.',
@@ -479,11 +699,44 @@ export async function POST(request) {
         );
       }
 
-      const repository = await getGithubRepositoryData(githubUrl);
+      if (!githubUsername?.trim()) {
+        return Response.json(
+          {
+            error: 'GitHub 닉네임을 입력해주세요.',
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (!position?.trim()) {
+        return Response.json(
+          {
+            error: '지원 포지션을 입력해주세요.',
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      // 기존 레포 전체 코드 분석
+      const repository = await getGithubRepositoryData(githubUrl.trim());
+
+      // 추가: 해당 사용자의 커밋 / 변경 코드
+      const contributions = await getGithubUserContributionData(
+        repository.owner,
+        repository.repo,
+        githubUsername.trim(),
+      );
 
       prompt = createGithubPrompt({
         message,
         repository,
+        contributions,
+        githubUsername: githubUsername.trim(),
+        position: position.trim(),
         messages,
       });
     } else {
@@ -531,9 +784,22 @@ export async function POST(request) {
   } catch (error) {
     console.error('Gemini API Error:', error);
 
+    const errorMessage = error?.message ?? '';
+
+    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+      return Response.json(
+        {
+          error: 'AI 사용량이 초과되었습니다. 잠시 후 다시 시도해주세요.',
+        },
+        {
+          status: 429,
+        },
+      );
+    }
+
     return Response.json(
       {
-        error: error?.message || 'AI 응답 생성에 실패했습니다.',
+        error: errorMessage || 'AI 응답 생성에 실패했습니다.',
       },
       {
         status: 500,
