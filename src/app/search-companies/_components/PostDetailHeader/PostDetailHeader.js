@@ -47,7 +47,7 @@ export default function PostDetailHeader({ label, post, backHref, showTitle = tr
             account_circle
           </span>
 
-          <span className='font_body_l_r'>{post.jobInfo || post.authorName}</span>
+          <span className='font_body_l_r'>{post.jobInfo}</span>
           <span className={`${styles.head_date} font_body_l_r`}>{post.date}</span>
 
           {isMine && (
