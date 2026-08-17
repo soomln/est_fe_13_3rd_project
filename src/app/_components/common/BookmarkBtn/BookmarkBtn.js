@@ -5,7 +5,7 @@ import { useState } from 'react';
 import styles from './BookmarkBtn.module.sass';
 
 // 북마크 버튼
-export default function BookmarkBtn({ isActive, size = 60, onClick }) {
+export default function BookmarkBtn({ isActive, size = 60, animated = true, onClick }) {
   const [isSaved, setIsSaved] = useState(false);
 
   // isActive 를 넘기면 제어 컴포넌트, 안 넘기면 내부 state
@@ -19,10 +19,18 @@ export default function BookmarkBtn({ isActive, size = 60, onClick }) {
     if (onClick) onClick();
   };
 
+  const className = [
+    styles.bookmark_btn,
+    animated ? '' : styles.bookmark_btn_static,
+    saved ? styles.bookmark_btn_saved : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <button
       type='button'
-      className={`${styles.bookmark_btn} ${saved ? styles.bookmark_btn_saved : ''}`}
+      className={className}
       style={{ '--bookmark-size': `${size}px` }}
       onClick={handleClick}
       aria-label={saved ? '북마크 해제' : '북마크 추가'}
