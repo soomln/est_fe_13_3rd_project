@@ -1,0 +1,28 @@
+@use '@/app/_variables.sass' as *
+
+// 툴바 아래에 한 줄로 붙는 메뉴. 표 메뉴와 이미지 메뉴가 같이 쓴다
+=toolRow
+  flex-basis: 100%
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  justify-content: center
+  gap: 4px
+  margin-top: 6px
+  padding-top: 6px
+  border-top: 1px solid $stroke3
+
+=toolRowTitle
+  margin-right: 8px
+  color: $green
+
+// 묶음 사이에 선을 둔다
+=toolRowGroup
+  display: flex
+  align-items: center
+  gap: 2px
+
+  & + &
+    margin-left: 4px
+    padding-left: 8px
+    border-left: 1px solid $stroke3

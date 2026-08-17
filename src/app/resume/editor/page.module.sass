@@ -1,6 +1,15 @@
+@use '@/app/_variables.sass' as *
+
 // 채팅 패널 폭. 헤더·문서 영역도 이 값을 기준으로 왼쪽을 비운다
 .editor
   --chat-width: clamp(400px, 31.6vw, 606px)
   display: flex
   height: 100vh
+  background-color: $white
   overflow: hidden
+
+@media print
+  .editor
+    display: block
+    height: auto
+    overflow: visible

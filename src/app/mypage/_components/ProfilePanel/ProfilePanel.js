@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
 import ProfileView from '@/app/mypage/_components/ProfileView';
 import ProfileEdit from '@/app/mypage/_components/ProfileEdit';
+import ErrorState from '@/app/mypage/_components/ErrorState';
 import { toView } from '@/app/mypage/_lib/profileMap';
 import styles from './ProfilePanel.module.sass';
 
@@ -29,18 +30,7 @@ export default function ProfilePanel() {
 
   if (status === 'error') {
     return (
-      <div className={styles.profile_panel_state}>
-        <p className='font_body_m_r' role='status'>
-          프로필을 불러오지 못했어요.
-        </p>
-        <button
-          type='button'
-          className={`${styles.profile_panel_retry} font_body_l_b`}
-          onClick={reload}
-        >
-          다시 불러오기
-        </button>
-      </div>
+      <ErrorState title='프로필을 불러오지 못했어요' onRetry={reload} />
     );
   }
 
