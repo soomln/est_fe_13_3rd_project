@@ -12,11 +12,16 @@
 .summary_box
   display: flex
   align-items: center
-  gap: 80px
+  justify-content: space-between
   box-sizing: border-box
   padding: 20px 50px
   border: 1px solid $stroke1
   border-radius: 15px
+
+// 후기 총평은 지표 1개 + 요약문이라 왼쪽으로 모은다
+.summary_box_with_desc
+  justify-content: flex-start
+  gap: 80px
 
 .summary_item
   display: flex
@@ -25,7 +30,7 @@
   flex-shrink: 0
 
 .summary_icon
-  font-size: 40px
+  font-size: 50px
   color: $amber
 
 .summary_item_text
@@ -45,6 +50,9 @@
 .summary_score
   +setFont(36px, 48px, 700)
   color: $amber
+
+.summary_score_muted
+  color: $gray
 
 .summary_unit
   color: $gray
