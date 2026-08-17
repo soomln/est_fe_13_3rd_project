@@ -25,7 +25,16 @@ export const STATS_SAMPLE_SIZE = 50;
 
 export const CHANNEL_ETC_CODE = 'etc';
 
-export const QUESTION_COUNT_OPTIONS = Array.from({ length: 10 }, (_, index) => ({
-  value: String(index + 1),
-  label: `${index + 1}개`,
+// 난이도 점수 선택지. posts.difficulty_score / problem_score 는 1~5 정수만 받는다
+export const SCORE_OPTIONS = [1, 2, 3, 4, 5].map((score) => ({
+  code: String(score),
+  label: `${score}점`,
 }));
+
+// 1~5 점수를 code_master 의 difficulty 코드로 변환
+export function toDifficultyCode(score) {
+  if (score <= 2) return 'easy';
+  if (score === 3) return 'normal';
+
+  return 'hard';
+}
