@@ -14,8 +14,10 @@ const url = (qs = '') => `http://localhost/api/companies${qs}`;
 
 const CODES = {
   data: [
-    { code: 'it', label: 'IT·소프트웨어' },
-    { code: 'game', label: '게임' },
+    { group_name: 'industry', code: 'it', label: 'IT·소프트웨어' },
+    { group_name: 'industry', code: 'game', label: '게임' },
+    { group_name: 'company_size', code: 'large', label: '대기업' },
+    { group_name: 'company_size', code: 'startup', label: '스타트업' },
   ],
   error: null,
 };
@@ -26,6 +28,7 @@ const ROW = {
   name: '네이버',
   logo_url: 'https://cdn/naver.png',
   industry_code: 'it',
+  size_code: 'large',
   location: '분당',
   tags: ['플랫폼'],
   rating: 4.3,
@@ -80,7 +83,7 @@ beforeEach(() => {
 });
 
 describe('GET /api/companies', () => {
-  it('maps the industry code to a label and returns a card', async () => {
+  it('maps the industry and size codes to labels and returns a card', async () => {
     const { status, body } = await callRoute(GET, { request: makeRequest(url()) });
 
     expect(status).toBe(200);
@@ -90,6 +93,7 @@ describe('GET /api/companies', () => {
       name: '네이버',
       logo: 'https://cdn/naver.png',
       category: 'IT·소프트웨어',
+      size: '대기업',
       location: '분당',
       tags: ['플랫폼'],
       rating: 4.3,
@@ -117,6 +121,45 @@ describe('GET /api/companies', () => {
     const { body } = await callRoute(GET, { request: makeRequest(url()) });
 
     expect(body.items[0].category).toBe('unknown');
+  });
+
+  it('shows an unknown size code as-is', async () => {
+    setSupabase(
+      createSupabaseStub({
+        tables: {
+          v_companies: { data: [{ ...ROW, size_code: 'unknown' }], error: null, count: 1 },
+          code_master: CODES,
+        },
+      })
+    );
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].size).toBe('unknown');
+  });
+
+  it('answers null for a company with no size', async () => {
+    setSupabase(
+      createSupabaseStub({
+        tables: {
+          v_companies: { data: [{ ...ROW, size_code: null }], error: null, count: 1 },
+          code_master: CODES,
+        },
+      })
+    );
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].size).toBeNull();
+  });
+
+  it('reads the industry and company_size groups in one query', async () => {
+    await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(argsOf(queriesFor(supabase, 'code_master')[0], 'in')[0]).toEqual([
+      'group_name',
+      ['industry', 'company_size'],
+    ]);
   });
 
   it('defaults missing counts to 0 and tags to an empty array', async () => {
@@ -481,7 +524,10 @@ describe('GET /api/companies?scrapped=1', () => {
       tables: {
         reactions: { data: marks, error: null },
         v_companies: { data: rows, error: null },
-        code_master: { data: [{ code: 'it', label: 'IT·소프트웨어' }], error: null },
+        code_master: {
+          data: [{ group_name: 'industry', code: 'it', label: 'IT·소프트웨어' }],
+          error: null,
+        },
       },
     });
 

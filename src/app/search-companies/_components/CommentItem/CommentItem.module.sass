@@ -1,0 +1,62 @@
+@use '@/app/_variables.sass' as *
+
+.comment
+  display: flex
+  flex-direction: column
+  gap: 20px
+  padding-bottom: 30px
+  border-bottom: 1px solid $stroke3
+
+  &:last-child
+    padding-bottom: 0
+    border-bottom: 0
+
+.comment_meta
+  display: flex
+  align-items: center
+  gap: 10px
+  color: $black
+
+.comment_avatar
+  font-size: 24px
+  color: $gray
+
+.comment_date
+  color: $stroke1
+
+.comment_delete
+  padding: 0
+  color: $warning
+  background: transparent
+  border: 0
+  cursor: pointer
+
+.comment_body
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 20px
+  color: $black
+
+.comment_like
+  display: flex
+  align-items: center
+  gap: 5px
+  flex-shrink: 0
+  padding: 0
+  color: $gray
+  background: transparent
+  border: 0
+  cursor: pointer
+
+  :global(.material-symbols-rounded)
+    font-size: 20px
+
+  &:hover
+    color: $green
+
+.comment_like_active
+  color: $green
+
+  :global(.material-symbols-rounded)
+    font-variation-settings: 'FILL' 1

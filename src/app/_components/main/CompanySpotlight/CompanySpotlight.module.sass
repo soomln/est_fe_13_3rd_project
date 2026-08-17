@@ -27,6 +27,32 @@
 
 .brand_name
   color: $gray
+  flex: 1
+
+.spotlight_nav
+  display: flex
+  align-items: center
+  gap: 8px
+
+.spotlight_nav_btn
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 32px
+  height: 32px
+  background-color: $light_gray
+  border: none
+  border-radius: 50%
+  color: $gray
+  cursor: pointer
+  transition: background-color 0.15s ease, color 0.15s ease
+
+  span
+    font-size: 18px
+
+  &:hover
+    background-color: $green
+    color: $white
 
 // ===== 연봉 · 점수 카드 =====
 
