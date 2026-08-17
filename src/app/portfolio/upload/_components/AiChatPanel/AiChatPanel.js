@@ -23,7 +23,11 @@ const SUGGESTIONS = {
 
 export default function AiChatPanel({ activeTab, item, messages, setMessages, showToast, onClose }) {
   const [input, setInput] = useState('');
+
   const [githubUrl, setGithubUrl] = useState('');
+  const [githubUsername, setGithubUsername] = useState('');
+  const [position, setPosition] = useState('');
+
   const [isGithubMode, setIsGithubMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -59,19 +63,31 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     if (!message || isLoading) return;
 
     const currentContent = item[activeTab] ?? [];
+
     const isContentQuestion = CONTENT_QUESTIONS.includes(message);
     const isGithubQuestion = message === GITHUB_QUESTION;
-    const submittedGithubUrl = githubUrl.trim();
 
-    // 블록 분석이 필요한 추천 질문일 때만 검사
+    const submittedGithubUrl = githubUrl.trim();
+    const submittedGithubUsername = githubUsername.trim();
+    const submittedPosition = position.trim();
+
     if (isContentQuestion && !hasContent(currentContent)) {
       showToast('먼저 분석할 내용을 작성해주세요.');
       return;
     }
 
-    // GitHub 질문은 URL 필요
     if (isGithubQuestion && !submittedGithubUrl) {
       showToast('GitHub 레포지토리 주소를 입력해주세요.');
+      return;
+    }
+
+    if (isGithubQuestion && !submittedGithubUsername) {
+      showToast('GitHub 닉네임을 입력해주세요.');
+      return;
+    }
+
+    if (isGithubQuestion && !submittedPosition) {
+      showToast('지원 포지션을 입력해주세요.');
       return;
     }
 
@@ -83,7 +99,10 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
       {
         id: crypto.randomUUID(),
         role: 'user',
-        content: isGithubQuestion ? `${message}\n${submittedGithubUrl}` : message,
+
+        content: isGithubQuestion
+          ? `${message}\n${submittedGithubUrl}\nGitHub 닉네임: ${submittedGithubUsername}\n지원 포지션: ${submittedPosition}`
+          : message,
       },
       {
         id: aiMessageId,
@@ -94,9 +113,10 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
 
     setInput('');
 
-    // GitHub 질문 전송 시 URL input 바로 닫기
     if (isGithubQuestion) {
       setGithubUrl('');
+      setGithubUsername('');
+      setPosition('');
       setIsGithubMode(false);
     }
 
@@ -115,7 +135,12 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           activeTab,
           content: currentContent,
           messages: recentMessages,
+
           githubUrl: isGithubQuestion ? submittedGithubUrl : null,
+
+          githubUsername: isGithubQuestion ? submittedGithubUsername : null,
+
+          position: isGithubQuestion ? submittedPosition : null,
         }),
       });
 
@@ -193,6 +218,8 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
 
     setIsGithubMode(false);
     setGithubUrl('');
+    setGithubUsername('');
+    setPosition('');
   };
 
   useEffect(() => {
@@ -207,6 +234,8 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     if (activeTab !== 'code') {
       setIsGithubMode(false);
       setGithubUrl('');
+      setGithubUsername('');
+      setPosition('');
     }
   }, [activeTab]);
 
@@ -238,18 +267,48 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
         <SuggestionList suggestions={SUGGESTIONS[activeTab] ?? []} onSuggestionClick={handleSuggestionClick} />
 
         {isGithubMode && (
-          <div className={styles.github_input_wrapper}>
-            <span className='material-symbols-sharp'>link</span>
+          <div className={styles.github_inputs}>
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>link</span>
 
-            <input
-              type='url'
-              value={githubUrl}
-              placeholder='https://github.com/username/repository'
-              onChange={(e) => {
-                setGithubUrl(e.target.value);
-              }}
-              disabled={isLoading}
-            />
+              <input
+                type='url'
+                value={githubUrl}
+                placeholder='https://github.com/username/repository'
+                onChange={(e) => {
+                  setGithubUrl(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>person</span>
+
+              <input
+                type='text'
+                value={githubUsername}
+                placeholder='GitHub 닉네임'
+                onChange={(e) => {
+                  setGithubUsername(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>work</span>
+
+              <input
+                type='text'
+                value={position}
+                placeholder='지원 포지션 (예: 프론트엔드 개발자)'
+                onChange={(e) => {
+                  setPosition(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
           </div>
         )}
 
@@ -267,7 +326,11 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           <button
             type='submit'
             aria-label='메시지 전송'
-            disabled={!input.trim() || isLoading || (isGithubMode && !githubUrl.trim())}
+            disabled={
+              !input.trim() ||
+              isLoading ||
+              (isGithubMode && (!githubUrl.trim() || !githubUsername.trim() || !position.trim()))
+            }
           >
             <span className='material-symbols-sharp'>arrow_upward</span>
           </button>
