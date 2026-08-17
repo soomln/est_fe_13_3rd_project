@@ -4,8 +4,9 @@ import InterviewQuestionDetailFooter from "./InterviewQuestionReviewDetailFooter
 import InterviewQuestionDetailComments from "./InterviewQuestionReviewDetailComments";
 
 
-export default function InterviewQuestionReviewDetailContent({question, comments}){
+export default function InterviewQuestionReviewDetailContent({question, comments, reloadComments}){
   console.log(comments) 
+  
   
   return (
     <div>
@@ -16,15 +17,18 @@ export default function InterviewQuestionReviewDetailContent({question, comments
         <InterviewQuestionDetailFooter question={question}/>
         
         <div className={styles.content}>
-          {question.questions.map((question, index) => (
+          {question.questionList.map((question, index) => (
           <div key={index}>
             <p>{index+1}. {question}</p>
           </div>
           ))}
         </div>
 
-
-        <InterviewQuestionDetailComments comments={comments}/>
+      <InterviewQuestionDetailComments
+        comments={comments}
+        postId={question.id}
+        reloadComments={reloadComments}
+      />
       </div>
     </div>
   );

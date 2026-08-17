@@ -8,8 +8,6 @@ import ReviewCard from "@/app/_components/common/ReviewCard";
 import Pagination from "@/app/_components/common/Pagination";
 
 export default function InterviewQuestionReviewClient({companySlug}){
-  console.log("companySlug =", companySlug);
-
   const [company, setCompany] = useState(null);
   const [reviews, setReviews] = useState([]);
   
@@ -29,6 +27,7 @@ export default function InterviewQuestionReviewClient({companySlug}){
 
       setCompany(companyData);
       setReviews(result.items);
+      console.log("qbank[0] =", result.items[0]);
     } catch (err) {
       console.error(err);
     }

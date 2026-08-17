@@ -12,6 +12,12 @@ export default function InterviewQuestionReviewDetailClient({companySlug,questio
   const [qbank, setQbank] = useState(null);
   const [comments, setComments] = useState([]);
 
+  const fetchComments = async () => {
+  const commentData = await listComments(questionId);
+  setComments(commentData.items ?? []);
+  };
+
+
   useEffect(() => {
   async function fetchData() {
     const [companyData, qbankData, commentData] = await Promise.all([
@@ -23,7 +29,7 @@ export default function InterviewQuestionReviewDetailClient({companySlug,questio
     setCompany(companyData);
     setQbank(qbankData);
     setComments(commentData.items ?? []);
-    console.log(commentData)
+    await fetchComments();
   }
 
   fetchData();
@@ -38,7 +44,11 @@ export default function InterviewQuestionReviewDetailClient({companySlug,questio
   <>
     <CompanyHeader company={company} />
     <TabNavigation />
-    <InterviewQuestionReviewDetailContent question={qbank} comments={comments} />
+    <InterviewQuestionReviewDetailContent 
+    question={qbank} 
+    comments={comments} 
+    reloadComments={fetchComments}
+    />
   </>
   );
 }

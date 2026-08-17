@@ -19,6 +19,14 @@ const resultOption = [
   { value: "fail", label: "불합격" },
   { value: "waiting", label: "대기중" },
 ];
+const channelCodeOption = [
+  { value: "online", label: "온라인" },
+  { value: "referral_friend", label: "지인 추천" },
+  { value: "referral_school", label: "학교 추천" },
+  { value: "job_fair", label: "채용 박람회" },
+  { value: "recruiter", label: "채용 담장자 제안" },
+  { value: "etc", label: "기타" },
+]
 
 
 export default function QuestionWriteForm({company}){
@@ -30,7 +38,7 @@ export default function QuestionWriteForm({company}){
     questions: [],
     difficultyCode: "easy",
     passResultCode: "pass",
-    channelCode: "",
+    channelCode: "online",
   });
 
   const handleAddQuestion = () => {
@@ -75,7 +83,7 @@ export default function QuestionWriteForm({company}){
       return;
     }
     if (!form.channelCode) {
-      alert("면접 경로를 입력해주세요.");
+      alert("면접 경로를 선택해주세요.");
       return;
     }
     if (questions.some((q) => q.trim() === "")) {
@@ -123,11 +131,12 @@ export default function QuestionWriteForm({company}){
       label="합격 여부"
       options={resultOption}
       />
-      <FormInput 
+      <FormSelect
       name="channelCode"
       onChange={handleChange}
       label="면접 경로"
-      placeholder="면접 경로를 작성해주세요."
+      options={channelCodeOption}
+      // placeholder="면접 경로를 작성해주세요."
       /> {/* 면접 경로 */}
 
       <QuestionArrayWriteForm 

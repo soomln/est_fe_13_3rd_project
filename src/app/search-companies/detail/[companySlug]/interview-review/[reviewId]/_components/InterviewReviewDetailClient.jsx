@@ -12,6 +12,11 @@ export default function InterviewReviewDetailClient({companySlug,reviewId}){
   const [review, setReview] = useState(null);
   const [comments, setComments] = useState([]);
 
+  const fetchComments = async () => {
+  const commentData = await listComments(reviewId);
+  setComments(commentData.items ?? []);
+  };
+
   useEffect(() => {
   async function fetchData() {
     const [companyData, reviewData, commentData] = await Promise.all([
@@ -23,6 +28,7 @@ export default function InterviewReviewDetailClient({companySlug,reviewId}){
     setCompany(companyData);
     setReview(reviewData);
     setComments(commentData.items ?? []);
+    await fetchComments();
   }
 
   fetchData();
@@ -40,7 +46,11 @@ export default function InterviewReviewDetailClient({companySlug,reviewId}){
     <CompanyHeader company={company} />
     <TabNavigation />
     
-    <InterviewReviewDetailContent review={review} comments={comments} />
+    <InterviewReviewDetailContent 
+    review={review} 
+    comments={comments} 
+    reloadComments={fetchComments}
+    />
   </>
   );
 }
