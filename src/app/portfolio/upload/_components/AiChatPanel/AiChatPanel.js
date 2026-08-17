@@ -4,7 +4,16 @@ import UserMessage from '../UserMessage';
 import AiMessage from '../AiMessage';
 import SuggestionList from '../SuggestionList';
 
+import styles from './AiChatPanel.module.sass';
+
 const GITHUB_QUESTION = 'GitHub 레포지토리를 분석해서 어필할 부분을 찾아줘';
+
+const CONTENT_QUESTIONS = [
+  '지금 작성한 프로젝트 소개를 평가해줘',
+  '더 강조하면 좋을 부분을 알려줘',
+  '보완하면 좋을 내용을 추천해줘',
+  '면접에서 설명하기 좋은 코드 포인트를 알려줘',
+];
 
 const SUGGESTIONS = {
   overview: ['지금 작성한 프로젝트 소개를 평가해줘', '더 강조하면 좋을 부분을 알려줘', '보완하면 좋을 내용을 추천해줘'],
@@ -12,16 +21,39 @@ const SUGGESTIONS = {
   code: [GITHUB_QUESTION, '면접에서 설명하기 좋은 코드 포인트를 알려줘'],
 };
 
-import styles from './AiChatPanel.module.sass';
-
 export default function AiChatPanel({ activeTab, item, messages, setMessages, showToast, onClose }) {
   const [input, setInput] = useState('');
+
   const [githubUrl, setGithubUrl] = useState('');
+  const [githubUsername, setGithubUsername] = useState('');
+  const [position, setPosition] = useState('');
+
   const [isGithubMode, setIsGithubMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const chatRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const hasContent = (blocks) => {
+    if (!blocks?.length) return false;
+
+    return blocks.some((block) => {
+      switch (block.type) {
+        case 'text':
+          return block.html?.replace(/<[^>]*>/g, '').trim();
+
+        case 'code':
+          return block.code?.trim();
+
+        case 'image':
+        case 'video':
+          return block.url?.trim();
+
+        default:
+          return false;
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
@@ -32,27 +64,45 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
 
     const currentContent = item[activeTab] ?? [];
 
-    // GitHub 질문이 아닌데 현재 탭에 작성된 내용이 없으면 막기
-    if (message !== GITHUB_QUESTION && !hasContent(currentContent)) {
+    const isContentQuestion = CONTENT_QUESTIONS.includes(message);
+    const isGithubQuestion = message === GITHUB_QUESTION;
+
+    const submittedGithubUrl = githubUrl.trim();
+    const submittedGithubUsername = githubUsername.trim();
+    const submittedPosition = position.trim();
+
+    if (isContentQuestion && !hasContent(currentContent)) {
       showToast('먼저 분석할 내용을 작성해주세요.');
       return;
     }
 
-    // GitHub 질문인데 URL이 없으면 막기
-    if (message === GITHUB_QUESTION && !githubUrl.trim()) {
+    if (isGithubQuestion && !submittedGithubUrl) {
       showToast('GitHub 레포지토리 주소를 입력해주세요.');
       return;
     }
 
-    const aiMessageId = crypto.randomUUID();
+    if (isGithubQuestion && !submittedGithubUsername) {
+      showToast('GitHub 닉네임을 입력해주세요.');
+      return;
+    }
+
+    if (isGithubQuestion && !submittedPosition) {
+      showToast('지원 포지션을 입력해주세요.');
+      return;
+    }
+
     const recentMessages = messages.slice(-6);
+    const aiMessageId = crypto.randomUUID();
 
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: 'user',
-        content: message === GITHUB_QUESTION ? `${message}\n${githubUrl.trim()}` : message,
+
+        content: isGithubQuestion
+          ? `${message}\n${submittedGithubUrl}\nGitHub 닉네임: ${submittedGithubUsername}\n지원 포지션: ${submittedPosition}`
+          : message,
       },
       {
         id: aiMessageId,
@@ -62,6 +112,14 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     ]);
 
     setInput('');
+
+    if (isGithubQuestion) {
+      setGithubUrl('');
+      setGithubUsername('');
+      setPosition('');
+      setIsGithubMode(false);
+    }
+
     setIsLoading(true);
 
     try {
@@ -77,7 +135,12 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           activeTab,
           content: currentContent,
           messages: recentMessages,
-          githubUrl: message === GITHUB_QUESTION ? githubUrl.trim() : null,
+
+          githubUrl: isGithubQuestion ? submittedGithubUrl : null,
+
+          githubUsername: isGithubQuestion ? submittedGithubUsername : null,
+
+          position: isGithubQuestion ? submittedPosition : null,
         }),
       });
 
@@ -110,11 +173,6 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           ),
         );
       }
-
-      if (message === GITHUB_QUESTION) {
-        setGithubUrl('');
-        setIsGithubMode(false);
-      }
     } catch (error) {
       console.error('AI 채팅 에러:', error);
 
@@ -140,27 +198,6 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     }
   };
 
-  const hasContent = (blocks) => {
-    if (!blocks?.length) return false;
-
-    return blocks.some((block) => {
-      switch (block.type) {
-        case 'text':
-          return block.html?.replace(/<[^>]*>/g, '').trim();
-
-        case 'code':
-          return block.code?.trim();
-
-        case 'image':
-        case 'video':
-          return block.url?.trim();
-
-        default:
-          return false;
-      }
-    });
-  };
-
   const handleScroll = () => {
     const chat = chatRef.current;
 
@@ -181,6 +218,8 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
 
     setIsGithubMode(false);
     setGithubUrl('');
+    setGithubUsername('');
+    setPosition('');
   };
 
   useEffect(() => {
@@ -195,6 +234,8 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
     if (activeTab !== 'code') {
       setIsGithubMode(false);
       setGithubUrl('');
+      setGithubUsername('');
+      setPosition('');
     }
   }, [activeTab]);
 
@@ -226,18 +267,48 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
         <SuggestionList suggestions={SUGGESTIONS[activeTab] ?? []} onSuggestionClick={handleSuggestionClick} />
 
         {isGithubMode && (
-          <div className={styles.github_input_wrapper}>
-            <span className='material-symbols-sharp'>link</span>
+          <div className={styles.github_inputs}>
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>link</span>
 
-            <input
-              type='url'
-              value={githubUrl}
-              placeholder='https://github.com/username/repository'
-              onChange={(e) => {
-                setGithubUrl(e.target.value);
-              }}
-              disabled={isLoading}
-            />
+              <input
+                type='url'
+                value={githubUrl}
+                placeholder='https://github.com/username/repository'
+                onChange={(e) => {
+                  setGithubUrl(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>person</span>
+
+              <input
+                type='text'
+                value={githubUsername}
+                placeholder='GitHub 닉네임'
+                onChange={(e) => {
+                  setGithubUsername(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className={styles.github_input_wrapper}>
+              <span className='material-symbols-sharp'>work</span>
+
+              <input
+                type='text'
+                value={position}
+                placeholder='지원 포지션 (예: 프론트엔드 개발자)'
+                onChange={(e) => {
+                  setPosition(e.target.value);
+                }}
+                disabled={isLoading}
+              />
+            </div>
           </div>
         )}
 
@@ -255,7 +326,11 @@ export default function AiChatPanel({ activeTab, item, messages, setMessages, sh
           <button
             type='submit'
             aria-label='메시지 전송'
-            disabled={!input.trim() || isLoading || (isGithubMode && !githubUrl.trim())}
+            disabled={
+              !input.trim() ||
+              isLoading ||
+              (isGithubMode && (!githubUrl.trim() || !githubUsername.trim() || !position.trim()))
+            }
           >
             <span className='material-symbols-sharp'>arrow_upward</span>
           </button>

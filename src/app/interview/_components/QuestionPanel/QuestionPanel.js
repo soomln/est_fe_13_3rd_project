@@ -4,15 +4,51 @@ import { useEffect, useState } from 'react';
 
 import styles from './QuestionPanel.module.sass';
 import QuestionListButton from '../QuestionListButton';
-import { QUESTIONS } from '../../_constants/questions';
+import { QUESTIONS, getQuestionText } from '../../_constants/questions';
 import { getDocument } from '@backend/lib/api/documents';
 import { getCompany } from '@backend/lib/api/companies';
 import { generateInterviewQuestions } from '../../_lib/generateInterviewQuestions';
+
+const CACHE_KEY = 'interview_question_panel_cache_v1';
+
+function loadCache() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(cache) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch {}
+}
+
+export function clearQuestionPanelCache() {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(CACHE_KEY);
+}
+
+function matchesCache(cache, resumeId, coverLetterId, companySlug, interviewerStyle) {
+  return Boolean(
+    cache &&
+      cache.resumeId === resumeId &&
+      cache.coverLetterId === coverLetterId &&
+      cache.companySlug === companySlug &&
+      cache.interviewerStyle === interviewerStyle &&
+      cache.generatedQuestions?.length,
+  );
+}
 
 export default function QuestionPanel({
   resumeId,
   coverLetterId,
   companySlug,
+  interviewerStyle = 'friendly',
   onStart,
   onGenerationError,
 }) {
@@ -22,6 +58,14 @@ export default function QuestionPanel({
 
   useEffect(() => {
     let cancelled = false;
+
+    const cache = loadCache();
+    if (matchesCache(cache, resumeId, coverLetterId, companySlug, interviewerStyle)) {
+      setGeneratedQuestions(cache.generatedQuestions);
+      setSelectedQuestions(cache.selectedQuestions ?? []);
+      setIsGenerating(false);
+      return;
+    }
 
     const generate = async () => {
       try {
@@ -38,6 +82,7 @@ export default function QuestionPanel({
           resumeText: resume?.contentText,
           coverLetterText: coverLetter?.contentText,
           company,
+          interviewerStyle,
         });
 
         if (!cancelled) setGeneratedQuestions(questions);
@@ -45,13 +90,12 @@ export default function QuestionPanel({
         console.error('면접 질문 생성 실패:', err);
         if (!cancelled) {
           onGenerationError?.();
-          // AI 생성이 완전히 실패해도 정적 질문으로 패널이 계속 동작하게 한다.
           setGeneratedQuestions(
             QUESTIONS.filter((item) => item.category !== 'all').map((item) => ({
               category: item.category,
               title: item.title,
               description: item.description,
-              question: item.question,
+              question: getQuestionText(item, interviewerStyle),
             })),
           );
         }
@@ -65,7 +109,27 @@ export default function QuestionPanel({
     return () => {
       cancelled = true;
     };
-  }, [resumeId, coverLetterId, companySlug, onGenerationError]);
+  }, [resumeId, coverLetterId, companySlug, interviewerStyle, onGenerationError]);
+
+  useEffect(() => {
+    if (isGenerating || generatedQuestions.length === 0) return;
+    saveCache({
+      resumeId,
+      coverLetterId,
+      companySlug,
+      interviewerStyle,
+      generatedQuestions,
+      selectedQuestions,
+    });
+  }, [
+    resumeId,
+    coverLetterId,
+    companySlug,
+    interviewerStyle,
+    generatedQuestions,
+    selectedQuestions,
+    isGenerating,
+  ]);
 
   const handleSelect = (item) => {
     setSelectedQuestions((prev) => {
@@ -78,7 +142,6 @@ export default function QuestionPanel({
         ? prev.filter((q) => q.category !== item.category)
         : [...prev, item];
 
-      // 선택 순서와 상관없이 항상 생성된 카테고리 순서를 유지한다.
       return generatedQuestions.filter((q) =>
         nextCategories.some((n) => n.category === q.category),
       );

@@ -3,19 +3,34 @@
 .company_card
   display: flex
   align-items: center
-  width: 660px
-  height: 100px
-  padding: 10px 20px
-  gap: 50px
+  box-sizing: border-box
+  width: 100%
+  min-width: 0
+  height: 125px
+  padding: 16px 20px
+  gap: 32px
+
   background: $white
-  border: 1px solid $stroke3
-  border-radius: 5px
-  cursor: pointer
-  transition: background-color .2s ease, border-color .2s ease
+  border: 1px solid $sub_yellow
+  border-radius: 10px
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04)
 
   &:hover
     background: $light_yellow
     border-color: transparent
+
+.company_logo
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 80px
+  height: 80px
+
+  img
+    width: 60px
+    height: 60px
+    object-fit: contain
 
 .company_content
   display: flex

@@ -1,7 +1,7 @@
 import { updateSession } from '@backend/lib/supabase/proxy';
 import { NextResponse } from 'next/server';
 
-const PROTECTED_PATHS = ['/mypage'];
+const PROTECTED_PATHS = ['/mypage', '/interview/chat'];
 
 const BACKEND_TEST_PATH = '/backend-test';
 

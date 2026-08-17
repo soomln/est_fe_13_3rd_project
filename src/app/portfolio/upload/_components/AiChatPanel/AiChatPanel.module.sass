@@ -32,19 +32,19 @@
 
     &::-webkit-scrollbar
       display: none
+
     .chat
       display: flex
       flex-direction: column
       justify-content: flex-end
       gap: 1rem
       min-height: 100%
-      
-  
+
   footer
     display: flex
     flex-direction: column
     padding: 1.5rem 1rem
-    gap: .5rem
+    gap: 1rem
     border-top: solid 1px $stroke2
     background: $light_yellow
 
@@ -63,7 +63,7 @@
         border: solid 1px $stroke3
         border-radius: 5px
         resize: none
-      
+
       button
         display: flex
         align-items: center
@@ -74,13 +74,19 @@
         border-radius: 999px
         aspect-ratio: 1 / 1
         cursor: pointer
-        
+
         &:disabled
           opacity: 0.4
           cursor: default
 
+
+.github_inputs
+  display: flex
+  flex-direction: column
+  gap: .5rem
+
+
 .github_input_wrapper
-  // width: 100%
   min-height: 44px
   display: flex
   align-items: center
@@ -108,5 +114,3 @@
 
   &:focus-within
     border-color: $amber
-    
-  

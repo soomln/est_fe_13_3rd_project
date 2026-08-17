@@ -91,7 +91,7 @@ export default function InterviewSettingModal({
               >
                 <option value="friendly">친절한</option>
                 <option value="neutral">중립적인</option>
-                <option value="strict">엄격한</option>
+                <option value="pressure">엄격한</option>
               </select>
 
               <span className={`material-symbols-outlined ${styles.select_icon}`}>
