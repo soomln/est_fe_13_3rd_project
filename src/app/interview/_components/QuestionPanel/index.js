@@ -1,1 +1,1 @@
-export { default } from './QuestionPanel';
+export { default, clearQuestionPanelCache } from './QuestionPanel';
