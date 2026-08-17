@@ -5,6 +5,12 @@ import CompanyCard from './CompanyCard';
 import { useEffect, useState } from 'react';
 import { listCompanies } from '@backend/lib/api/companies';
 
+const recommendedKeywords = [
+  "네이버",
+  "토스",
+  "카카오",
+];
+
 export default function SearchCompaniesClient(){
   const [keyword, setKeyword] = useState("");
   const [jobRole, setJobRole] = useState("");
@@ -43,6 +49,19 @@ export default function SearchCompaniesClient(){
   setCompanies(result.items);
   };
 
+  const handleRecommendedSearch = async (keyword) => {
+  setKeyword(keyword);
+
+  const result = await listCompanies({
+    q: keyword,
+    jobRole,
+    industry,
+    size,
+  });
+
+  setCompanies(result.items);
+  };
+
   const handleReset = async () => {
   setKeyword("");
   setJobRole("");
@@ -71,23 +90,6 @@ export default function SearchCompaniesClient(){
   fetchCompanies({ industry: value });
   };
 
-  // const handleJobRoleChange = async (e) => {
-  // const value = e.target.value;
-  // setJobRole(value);
-
-  // const result = await listCompanies({
-  //   q: keyword,
-  //   jobRole: value,
-  //   industry,
-  //   size,
-  // });
-
-  // setCompanies(result.items);
-  // };
-
-  
-
-
   return (
     <div>
       {/* 상단 공통 헤더 */}
@@ -110,11 +112,15 @@ export default function SearchCompaniesClient(){
           </form>
           <div>
             <p>추천 검색어</p>
-            <div>
-              <button type='button'>#네이버</button>
-              <button type='button'>#네이버</button>
-              <button type='button'>#네이버</button>
-            </div>
+            {recommendedKeywords.map((keyword) => (
+              <button
+                key={keyword}
+                type="button"
+                onClick={() => handleRecommendedSearch(keyword)}
+              >
+                #{keyword}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -249,7 +255,7 @@ export default function SearchCompaniesClient(){
                 onChange={handleIndustryChange}/>
                 이커머스
               </label>
-              
+
               <label>
                 <input 
                 type='radio' 
