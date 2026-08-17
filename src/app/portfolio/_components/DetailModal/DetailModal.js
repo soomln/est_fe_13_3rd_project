@@ -68,7 +68,7 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
         <div className={styles.contents_wrapper}>
           <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
 
-          <Contents item={item} contentsRef={contentsRef} />
+          <Contents item={item} activeTab={activeTab} contentsRef={contentsRef} />
         </div>
 
         <ReactionBtnGroup

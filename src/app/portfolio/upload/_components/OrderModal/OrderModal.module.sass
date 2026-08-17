@@ -1,0 +1,156 @@
+@use '@/app/_variables' as *
+
+.dimmed
+  position: fixed
+  inset: 0
+  z-index: 1000
+  display: flex
+  justify-content: center
+  align-items: center
+  padding: 2rem
+  background: rgba(0, 0, 0, .4)
+
+.modal
+  width: 708px
+  max-height: 560px
+  display: flex
+  flex-direction: column
+  overflow: hidden
+  border-radius: 16px
+  background: $white
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .15)
+
+.header
+  display: flex
+  justify-content: space-between
+  align-items: flex-start
+  padding: 1.5rem
+  border-bottom: 1px solid $stroke3
+
+.description
+  margin-top: .5rem
+  color: $stroke1
+
+.close_btn
+  width: 36px
+  height: 36px
+  display: flex
+  justify-content: center
+  align-items: center
+  flex-shrink: 0
+  border: none
+  border-radius: 8px
+  background: none
+  cursor: pointer
+
+  &:hover
+    background: $light_gray
+
+.content
+  padding: 1.25rem 2rem
+  overflow-y: auto
+
+.list
+  display: flex
+  flex-direction: column
+  gap: .5rem
+  margin: 0
+  list-style: none
+
+.item
+  min-height: 68px
+  display: flex
+  align-items: center
+  gap: .75rem
+  padding: .6rem .75rem
+  border: 1px solid $stroke3
+  border-radius: 8px
+  background: $white
+
+  &.dragging
+    z-index: 10
+    opacity: .6
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .12)
+
+.drag_btn
+  width: 32px
+  height: 44px
+  display: flex
+  justify-content: center
+  align-items: center
+  flex-shrink: 0
+  border: none
+  background: none
+  color: $stroke1
+  cursor: grab
+  touch-action: none
+
+  &:active
+    cursor: grabbing
+
+.thumbnail
+  width: 64px
+  height: 48px
+  display: flex
+  justify-content: center
+  align-items: center
+  flex-shrink: 0
+  overflow: hidden
+  border-radius: 6px
+  background: $sub_green
+  color: $green
+
+.thumbnail_img
+  width: 100%
+  height: 100%
+  display: block
+  object-fit: cover
+
+.info
+  min-width: 0
+  display: flex
+  flex-direction: column
+  gap: .25rem
+
+.type
+  color: $black
+
+.preview
+  max-width: 100%
+  overflow: hidden
+  color: $stroke1
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.empty
+  padding: 3rem 0
+  color: $stroke1
+  text-align: center
+
+.footer
+  display: flex
+  justify-content: flex-end
+  align-items: center
+  gap: .5rem
+  padding: 1rem 1.5rem
+  border-top: 1px solid $stroke3
+
+.cancel_btn,
+.apply_btn
+  min-width: 72px
+  height: 40px
+  padding: 0 1rem
+  border: none
+  border-radius: 999px
+  cursor: pointer
+
+.cancel_btn
+  background: transparent
+  color: $black
+
+  &:hover
+    background: $light_gray
+
+.apply_btn
+  background: $green
+  color: #fff
