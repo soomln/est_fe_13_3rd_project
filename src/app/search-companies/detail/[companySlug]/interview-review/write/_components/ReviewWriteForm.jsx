@@ -19,6 +19,15 @@ const resultOption = [
   { value: "waiting", label: "대기중" },
 ];
 
+const channelCodeOption = [
+  { value: "online", label: "온라인" },
+  { value: "referral_friend", label: "지인 추천" },
+  { value: "referral_school", label: "학교 추천" },
+  { value: "job_fair", label: "채용 박람회" },
+  { value: "recruiter", label: "채용 담장자 제안" },
+  { value: "etc", label: "기타" },
+]
+
 
 export default function ReviewWriteForm({company}){
   const router = useRouter();
@@ -27,7 +36,7 @@ export default function ReviewWriteForm({company}){
     body: "",
     difficultyCode: "easy",
     passResultCode: "pass",
-    channelCode: "",
+    channelCode: "online",
   });
 
 const handleChange = (e) => {
@@ -112,12 +121,12 @@ const handleCancel = () => {
       label="합격 여부"
       options={resultOption}
       />
-      <FormInput 
+      <FormSelect
       name="channelCode"
-      value={form.channelCode}
       onChange={handleChange}
       label="면접 경로"
-      placeholder="면접 경로를 작성해주세요."
+      options={channelCodeOption}
+      // placeholder="면접 경로를 작성해주세요."
       /> {/* 면접 경로 */}
 
       <FormInput 

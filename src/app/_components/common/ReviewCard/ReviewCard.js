@@ -68,7 +68,7 @@ const card = (
         ) : (
           <>
             <h1>{review.title}</h1>
-            {review.questions.map((q, idx) => (
+            {review.questionList?.map((q, idx) => (
               <p key={idx}>{idx+1}. {q}</p>
             ))}
           </>
