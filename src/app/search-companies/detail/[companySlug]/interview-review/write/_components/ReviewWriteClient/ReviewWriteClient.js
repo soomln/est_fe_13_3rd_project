@@ -10,12 +10,12 @@ import FormField from '@/app/search-companies/_components/FormField';
 import PostFormShell from '@/app/search-companies/_components/PostFormShell';
 import { FormInput, FormSelect, FormTextarea } from '@/app/search-companies/_components/FormControls';
 import { useCompany } from '@/app/search-companies/detail/_components/CompanyShell';
-import { CHANNEL_ETC_CODE } from '@/app/search-companies/_lib/options';
+import { CHANNEL_ETC_CODE, SCORE_OPTIONS, toDifficultyCode } from '@/app/search-companies/_lib/options';
 
-const CODE_GROUPS = ['difficulty', 'pass_result', 'interview_channel'];
+const CODE_GROUPS = ['pass_result', 'interview_channel'];
 
 const EMPTY_FORM = {
-  difficultyCode: '',
+  difficultyScore: '',
   passResultCode: '',
   channelCode: '',
   channelEtc: '',
@@ -56,7 +56,7 @@ export default function ReviewWriteClient() {
   const setValue = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async () => {
-    if (!form.difficultyCode) return alert('면접 난이도를 선택해주세요.');
+    if (!form.difficultyScore) return alert('면접 난이도를 선택해주세요.');
     if (!form.passResultCode) return alert('합격 여부를 선택해주세요.');
     if (!form.channelCode) return alert('면접 경로를 선택해주세요.');
     if (form.channelCode === CHANNEL_ETC_CODE && !form.channelEtc.trim()) {
@@ -67,13 +67,16 @@ export default function ReviewWriteClient() {
 
     setIsSubmitting(true);
 
+    const difficultyScore = Number(form.difficultyScore);
+
     try {
       await createPost({
         postType: 'review',
         companyId: company.id,
         title: form.title.trim(),
         body: form.body.trim(),
-        difficultyCode: form.difficultyCode,
+        difficultyScore,
+        difficultyCode: toDifficultyCode(difficultyScore),
         passResultCode: form.passResultCode,
         channelCode: form.channelCode,
         channelEtc: form.channelCode === CHANNEL_ETC_CODE ? form.channelEtc.trim() : null,
@@ -102,10 +105,10 @@ export default function ReviewWriteClient() {
       <EvaluationRow>
         <FormField label='면접 난이도' inline>
           <FormSelect
-            value={form.difficultyCode}
-            options={codes.difficulty ?? []}
+            value={form.difficultyScore}
+            options={SCORE_OPTIONS}
             placeholder='면접 난이도'
-            onChange={(value) => setValue('difficultyCode', value)}
+            onChange={(value) => setValue('difficultyScore', value)}
           />
         </FormField>
 
