@@ -89,13 +89,8 @@ export default function NoticePopup() {
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) handleClose();
-      }}
-    >
-      <div className={styles.dialog} role='dialog' aria-modal='true' aria-label='공지사항'>
+    <div className={styles.overlay}>
+      <div className={styles.dialog} role='dialog' aria-label='공지사항'>
         <span className={`font_caption_b ${styles.badge}`}>NOTICE</span>
 
         <h2 className={`font_h3 ${styles.title}`}>{NOTICE.title}</h2>
