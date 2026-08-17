@@ -38,6 +38,11 @@ export default function Upload() {
 
   const [isCreated, setIsCreated] = useState(false);
 
+  const allowedBlockTypes = {
+    overview: ['text', 'image', 'video'],
+    document: ['text', 'image'],
+    code: ['text', 'code', 'image'],
+  };
   const [activeTab, setActiveTab] = useState('overview');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -65,6 +70,10 @@ export default function Upload() {
 
     fetchCurrentUser();
   }, []);
+
+  const isBlockAllowed = (type) => {
+    return allowedBlockTypes[activeTab]?.includes(type);
+  };
 
   const addBlock = (type) => {
     const newBlock = {
@@ -255,10 +264,31 @@ export default function Upload() {
 
         <aside className={styles.btns_wrapper}>
           <div className={styles.add_btns}>
-            <UploadBtn iconText='image' text='이미지' isIconFill={true} onClick={() => addBlock('image')} />
-            <UploadBtn iconText='ondemand_video' text='동영상' onClick={() => addBlock('video')} />
-            <UploadBtn iconText='text_fields' text='텍스트' onClick={() => addBlock('text')} />
-            <UploadBtn iconText='code' text='코드' onClick={() => addBlock('code')} />
+            <UploadBtn
+              iconText='image'
+              text='이미지'
+              isIconFill={true}
+              disabled={!isBlockAllowed('image')}
+              onClick={() => addBlock('image')}
+            />
+            <UploadBtn
+              iconText='ondemand_video'
+              text='동영상'
+              disabled={!isBlockAllowed('video')}
+              onClick={() => addBlock('video')}
+            />
+            <UploadBtn
+              iconText='text_fields'
+              text='텍스트'
+              disabled={!isBlockAllowed('text')}
+              onClick={() => addBlock('text')}
+            />
+            <UploadBtn
+              iconText='code'
+              text='코드'
+              disabled={!isBlockAllowed('code')}
+              onClick={() => addBlock('code')}
+            />
           </div>
           <UploadBtn iconText='import_export' text='순서 바꾸기' />
           <CustomSetting bgColor={item.bgColor} onSetColor={setBgColor} gap={item.gapPx} onSetGap={setGap} />
