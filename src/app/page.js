@@ -15,6 +15,7 @@ import CommunityPostItem from '@/app/_components/main/CommunityPostItem';
 import PortfolioSlider from '@/app/_components/main/PortfolioSlider';
 import Reveal from '@/app/_components/main/Reveal';
 import RecommendedCompanies from '@/app/_components/main/RecommendedCompanies';
+import NoticePopup from '@/app/_components/main/NoticePopup';
 
 const HERO_STATS = [
   { iconSrc: '/images/hero/stat-member.svg', value: '10,000+', label: '회원', tone: 'green' },
@@ -94,6 +95,8 @@ const POPULAR_KEYWORDS = ['카카오', '네이버', '토스', 'SK 하이닉스',
 export default function Home() {
   return (
     <>
+      <NoticePopup />
+
       <Header />
 
       <main>
