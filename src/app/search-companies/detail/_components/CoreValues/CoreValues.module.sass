@@ -1,0 +1,47 @@
+@use '@/app/_variables.sass' as *
+
+.values
+  display: flex
+  flex-direction: column
+  gap: 10px
+  box-sizing: border-box
+  padding: 20px
+  background-color: $light_green
+  border-radius: 5px
+
+.values_title
+  color: $green
+
+.values_list
+  display: grid
+  grid-template-columns: repeat(4, 1fr)
+  gap: 51px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.values_card
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 20px
+  box-sizing: border-box
+  height: 120px
+  padding: 0 30px
+  background-color: $white
+  border-radius: 10px
+
+.values_icon
+  font-size: 30px
+  color: $green
+
+.values_name
+  width: 100%
+  color: $green
+  text-align: center
+
+.values_desc
+  width: 100%
+  color: $black
+  text-align: center

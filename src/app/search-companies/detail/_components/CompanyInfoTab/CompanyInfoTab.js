@@ -1,8 +1,14 @@
 'use client';
 
+import Benefits from '@/app/search-companies/detail/_components/Benefits';
+import CompanyHighlights from '@/app/search-companies/detail/_components/CompanyHighlights';
+import CompanyInfoList from '@/app/search-companies/detail/_components/CompanyInfoList';
+import CompanyIntro from '@/app/search-companies/detail/_components/CompanyIntro';
+import CompanyNews from '@/app/search-companies/detail/_components/CompanyNews';
+import CoreValues from '@/app/search-companies/detail/_components/CoreValues';
+import MainServices from '@/app/search-companies/detail/_components/MainServices';
+import RecruitBanner from '@/app/search-companies/detail/_components/RecruitBanner';
 import { useCompany } from '@/app/search-companies/detail/_components/CompanyShell';
-import LeftContent from '@/app/search-companies/detail/_components/LeftContent/LeftContent';
-import RightSidebar from '@/app/search-companies/detail/_components/RightSidebar/RightSidebar';
 import styles from './CompanyInfoTab.module.sass';
 
 // 기업 정보 탭
@@ -20,11 +26,17 @@ export default function CompanyInfoTab() {
   return (
     <div className={styles.info}>
       <div className={styles.info_main}>
-        <LeftContent company={company} />
+        <CompanyIntro intro={company.intro} />
+        <CoreValues values={company.values ?? []} />
+        <MainServices services={company.services ?? []} />
+        <Benefits benefits={company.benefits ?? []} />
       </div>
 
       <aside className={styles.info_side}>
-        <RightSidebar company={company} />
+        <CompanyInfoList company={company} />
+        <CompanyHighlights summary={company.summary ?? []} />
+        <CompanyNews news={company.news ?? []} />
+        <RecruitBanner companyName={company.name} homepage={company.homepage} />
       </aside>
     </div>
   );

@@ -100,6 +100,7 @@ export default function SearchCompaniesClient() {
   const handleRecommendedClick = (item) => {
     setKeyword(item);
     setQuery(item);
+    setFilters(EMPTY_FILTERS);
     setPage(1);
   };
 
