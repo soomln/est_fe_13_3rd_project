@@ -1,0 +1,39 @@
+@use '@/app/_variables.sass' as *
+
+.notice
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 20px
+  box-sizing: border-box
+  padding: 100px 40px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 15px
+
+.notice_icon
+  font-size: 60px
+  color: $stroke1
+
+.notice_title
+  color: $black
+
+.notice_desc
+  color: $gray
+  text-align: center
+
+  strong
+    color: $black
+    font-weight: 700
+
+.notice_link
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  height: 50px
+  padding: 0 30px
+  color: $white
+  background-color: $black
+  border-radius: 5px
+  text-decoration: none

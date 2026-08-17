@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { getCodeGroups } from '@backend/lib/api/codes';
 import { createPost } from '@backend/lib/api/posts';
+import { useAuth } from '@/app/_components/auth';
 import EvaluationRow from '@/app/search-companies/_components/EvaluationRow';
+import ProfileRequiredNotice from '@/app/search-companies/_components/ProfileRequiredNotice';
+import useWriterProfile from '@/app/search-companies/_lib/useWriterProfile';
 import FormField from '@/app/search-companies/_components/FormField';
 import PostFormShell from '@/app/search-companies/_components/PostFormShell';
 import { FormInput, FormSelect, FormTextarea } from '@/app/search-companies/_components/FormControls';
@@ -25,7 +28,9 @@ const EMPTY_FORM = {
 
 export default function ReviewWriteClient() {
   const router = useRouter();
+  const { isLoggedIn, openLogin } = useAuth();
   const { company, companySlug } = useCompany();
+  const { writer, status: writerStatus } = useWriterProfile(isLoggedIn);
 
   const [codes, setCodes] = useState({});
   const [form, setForm] = useState(EMPTY_FORM);
@@ -56,6 +61,11 @@ export default function ReviewWriteClient() {
   const setValue = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async () => {
+    if (!writer) {
+      openLogin();
+      return;
+    }
+
     if (!form.difficultyScore) return alert('면접 난이도를 선택해주세요.');
     if (!form.passResultCode) return alert('합격 여부를 선택해주세요.');
     if (!form.channelCode) return alert('면접 경로를 선택해주세요.');
@@ -77,6 +87,9 @@ export default function ReviewWriteClient() {
         body: form.body.trim(),
         difficultyScore,
         difficultyCode: toDifficultyCode(difficultyScore),
+        jobRoleCode: writer.jobRoleCode,
+        positionLevel: writer.positionLevel,
+        educationLevel: writer.educationLevel,
         passResultCode: form.passResultCode,
         channelCode: form.channelCode,
         channelEtc: form.channelCode === CHANNEL_ETC_CODE ? form.channelEtc.trim() : null,
@@ -90,7 +103,11 @@ export default function ReviewWriteClient() {
     }
   };
 
-  if (!company) {
+  if (writerStatus === 'incomplete') {
+    return <ProfileRequiredNotice />;
+  }
+
+  if (!company || writerStatus === 'loading') {
     return <p>불러오는 중...</p>;
   }
 
