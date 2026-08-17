@@ -1,0 +1,53 @@
+@use '@/app/_variables.sass' as *
+@use '@/app/_mixin.sass' as *
+
+.summary
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+.summary_title
+  color: $black
+
+.summary_box
+  display: flex
+  align-items: center
+  gap: 80px
+  box-sizing: border-box
+  padding: 20px 50px
+  border: 1px solid $stroke1
+  border-radius: 15px
+
+.summary_item
+  display: flex
+  align-items: center
+  gap: 20px
+  flex-shrink: 0
+
+.summary_icon
+  font-size: 40px
+  color: $amber
+
+.summary_item_text
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 10px
+
+.summary_label
+  color: $black
+
+.summary_value
+  display: flex
+  align-items: baseline
+  gap: 4px
+
+.summary_score
+  +setFont(36px, 48px, 700)
+  color: $amber
+
+.summary_unit
+  color: $gray
+
+.summary_desc
+  color: $gray
