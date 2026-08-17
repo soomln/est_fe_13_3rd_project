@@ -6,6 +6,7 @@ import { getCompany } from "@backend/lib/api/companies";
 import CompanyHeader from "@/app/search-companies/detail/_components/CompanyHeader/CompanyHeader";
 import TabNavigation from "@/app/search-companies/detail/_components/TabNavigation/TabNavigation";
 import InterviewQuestionReviewDetailContent from "./InterviewQuestionReviewDetailContent";
+import { useRouter } from "next/navigation";
 
 export default function InterviewQuestionReviewDetailClient({companySlug,questionId}){
   const [company, setCompany] = useState(null);
@@ -35,6 +36,13 @@ export default function InterviewQuestionReviewDetailClient({companySlug,questio
   fetchData();
   }, [companySlug, questionId]);
 
+  const router = useRouter();
+  const handleBack = () => {
+  router.push(
+    `/search-companies/detail/${companySlug}/interview-question`
+  );
+  };
+
   if (!company || !qbank) {
     return <div>로딩 중...</div>;
   }
@@ -43,11 +51,12 @@ export default function InterviewQuestionReviewDetailClient({companySlug,questio
   return(
   <>
     <CompanyHeader company={company} />
-    <TabNavigation />
+    <TabNavigation companySlug={companySlug}/>
     <InterviewQuestionReviewDetailContent 
     question={qbank} 
     comments={comments} 
     reloadComments={fetchComments}
+    handleBack={handleBack}
     />
   </>
   );

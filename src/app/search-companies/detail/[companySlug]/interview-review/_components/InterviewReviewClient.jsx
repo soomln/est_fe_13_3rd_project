@@ -54,8 +54,6 @@ export default function InterviewReviewClient({companySlug}){
         }),
       ]);
 
-      console.log("company =", companyData);
-      console.log("posts =", result);
 
       setCompany(companyData);
       setReviews(result.items);
@@ -70,7 +68,7 @@ export default function InterviewReviewClient({companySlug}){
   return (
     <>
       <CompanyHeader company={company}/>
-      <TabNavigation />
+      <TabNavigation companySlug={companySlug}/>
       <InterviewStatistics chartData={chartData} interviewRoutes={interviewRoutes}/>
       <InterviewFilter/>
       <button type='button'>글 작성하기</button>

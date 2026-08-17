@@ -1,7 +1,6 @@
 import styles from "@/app/search-companies/_components/InterviewReviewCard.module.sass"
 
 export default function InterviewReviewDetailSummary({review}){
-  console.log(review)
 
   return(
     <>

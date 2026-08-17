@@ -28,7 +28,7 @@ export default function ReviewWriteClient({companySlug}){
   return(
     <>
       <CompanyHeader company={company}/>
-      <TabNavigation/>
+      <TabNavigation companySlug={companySlug}/>
       <ReviewWriteForm company={company}/>
     </>
   );

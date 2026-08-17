@@ -48,8 +48,6 @@ const handleChange = (e) => {
       [name]: value,
     };
 
-    console.log("next =", next);
-
     return next;
   });
 };

@@ -5,7 +5,6 @@ import { createComment } from "@backend/lib/api/comments";
 
 
 export default function InterviewQuestionReviewDetailComments({comments, postId, reloadComments}){
-  console.log(comments)
   const sortOptions = ["추천순", "최신순"];
   const [body, setBody] = useState("");
 
