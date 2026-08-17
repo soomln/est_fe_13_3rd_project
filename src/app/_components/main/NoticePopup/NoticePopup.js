@@ -24,7 +24,7 @@ const NOTICE = {
     {
       role: '서기',
       name: '김소영',
-      email: 'qnfehr948@gmail.com',
+      email: 'soyo2039@gmail.com',
       planning: ['기업 탐색', 'AI 면접 코칭'],
       build: ['AI 면접 코칭'],
     },
