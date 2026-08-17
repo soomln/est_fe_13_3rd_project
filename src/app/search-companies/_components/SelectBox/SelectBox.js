@@ -2,12 +2,12 @@
 
 import styles from './SelectBox.module.sass';
 
-// 목록 상단 필터 셀렉트
+// 목록 상단 필터 셀렉트. label 을 주면 '선택 안 함' 옵션이 맨 위에 붙는다
 export default function SelectBox({ label, value, options, onChange }) {
   return (
     <label className={styles.select}>
       <select className={`${styles.select_input} font_body_s_r`} value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value=''>{label}</option>
+        {label && <option value=''>{label}</option>}
 
         {options.map((option) => (
           <option key={option.code} value={option.code}>
