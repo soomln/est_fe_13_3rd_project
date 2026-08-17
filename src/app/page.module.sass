@@ -3,6 +3,7 @@
 // ===== 1. 히어로 =====
 
 .hero
+  overflow-x: hidden
   background-color: $white
   border-bottom: 1px solid $stroke3
 
@@ -74,32 +75,18 @@
   padding: 20px 24px
   border-radius: 16px
   text-decoration: none
-  transition: transform 0.18s ease, box-shadow 0.18s ease
 
   span
     font-size: 20px
-    transition: transform 0.18s ease
-
-  &:hover
-    transform: translateY(-3px)
-
-  &:hover span
-    transform: translateX(3px)
 
 .hero_btn_primary
   color: $white
   background-color: $green
 
-  &:hover
-    box-shadow: 0 10px 20px rgba(22, 163, 74, 0.3)
-
 .hero_btn_secondary
   color: $gray
   background-color: $white
   border: 1px solid $gray
-
-  &:hover
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1)
 
 .hero_stats
   display: flex
@@ -120,6 +107,7 @@
     padding: 40px 0
 
 .services_inner
+  box-sizing: border-box
   display: flex
   flex-direction: column
   align-items: flex-start
@@ -141,12 +129,13 @@
   width: 100%
   list-style: none
 
-  @media (max-width: 1439px)
-    grid-template-columns: repeat(3, 1fr)
+  @media (max-width: 900px)
+    grid-template-columns: repeat(3, 194px)
+    justify-content: center
     row-gap: 40px
 
   @media (max-width: 768px)
-    grid-template-columns: repeat(2, 1fr)
+    grid-template-columns: repeat(2, 194px)
 
 // ===== 3. 포트폴리오 홍보 =====
 
@@ -161,6 +150,7 @@
     padding: 40px 0
 
 .showcase_inner
+  box-sizing: border-box
   display: grid
   grid-template-columns: 1fr 1fr
   align-items: center
@@ -170,8 +160,10 @@
   margin: 0 auto
 
   @media (max-width: 1439px)
-    grid-template-columns: 1fr
     padding: 0 24px
+
+  @media (max-width: 900px)
+    grid-template-columns: 1fr
 
   @media (max-width: 768px)
     padding: 0 16px
@@ -255,6 +247,7 @@ $company_mint_border: #B9F8CF
     padding: 40px 0
 
 .company_inner
+  box-sizing: border-box
   display: flex
   flex-direction: column
   align-items: flex-start
@@ -291,7 +284,7 @@ $company_mint_border: #B9F8CF
   width: 100%
   height: 607px
 
-  @media (max-width: 1439px)
+  @media (max-width: 950px)
     flex-direction: column
     height: auto
 
@@ -319,7 +312,8 @@ $company_mint_border: #B9F8CF
   border-radius: 20px
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
 
-  @media (max-width: 1439px)
+  @media (max-width: 950px)
+    width: 100%
     height: auto
 
 .company_search_form
@@ -447,6 +441,7 @@ $feature_purple_list_bg: #EAE4FC
     padding: 40px 0
 
 .features_inner
+  box-sizing: border-box
   display: flex
   flex-direction: column
   align-items: flex-start
@@ -483,7 +478,7 @@ $feature_purple_list_bg: #EAE4FC
   gap: 20px
   width: 100%
 
-  @media (max-width: 1439px)
+  @media (max-width: 768px)
     grid-template-columns: 1fr
     grid-auto-rows: auto
     max-width: 600px
@@ -491,18 +486,11 @@ $feature_purple_list_bg: #EAE4FC
 .feature_card
   display: flex
   flex-direction: column
+  justify-content: space-between
   gap: 24px
   padding: 34px 26px 18px
   border: 2px solid transparent
   border-radius: 35px
-  transition: transform 0.18s ease, box-shadow 0.18s ease
-
-  &:hover
-    transform: translateY(-6px)
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.1)
-
-  &:hover .feature_btn span
-    transform: translateX(3px)
 
 .tone_green
   background-color: $sub_green
