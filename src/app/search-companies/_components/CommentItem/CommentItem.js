@@ -2,16 +2,16 @@
 
 import styles from './CommentItem.module.sass';
 
-// ISO datetime → "HH : MM"
+// ISO datetime → "HH:MM"
 function toTime(iso) {
   if (!iso) return '';
 
   const date = new Date(iso);
 
-  return `${String(date.getHours()).padStart(2, '0')} : ${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function CommentItem({ comment, isLiked, onLikeClick }) {
+export default function CommentItem({ comment, isLiked, isMine, onLikeClick, onDeleteClick }) {
   return (
     <li className={styles.comment}>
       <div className={styles.comment_meta}>
@@ -22,6 +22,12 @@ export default function CommentItem({ comment, isLiked, onLikeClick }) {
         <span className='font_body_l_r'>{comment.authorName}</span>
         <span className={`${styles.comment_date} font_body_l_r`}>{comment.date}</span>
         <span className={`${styles.comment_date} font_body_l_r`}>{toTime(comment.createdAt)}</span>
+
+        {isMine && (
+          <button type='button' className={`${styles.comment_delete} font_body_l_r`} onClick={onDeleteClick}>
+            삭제
+          </button>
+        )}
       </div>
 
       <div className={styles.comment_body}>
