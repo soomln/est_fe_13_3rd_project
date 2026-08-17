@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './page.module.sass';
@@ -13,16 +13,60 @@ import SettingButton from '../_components/SettingButton';
 import DocumentOption from '../_components/DocumentOption';
 import CompanySearch from '../_components/CompanySearch';
 import QuestionListButton from '../_components/QuestionListButton';
-import QuestionPanel from '../_components/QuestionPanel';
+import QuestionPanel, { clearQuestionPanelCache } from '../_components/QuestionPanel';
 import UserChatBubble from '../_components/UserChatBubble';
 import InterviewResult from '../_components/InterviewResult';
 import RetryButton from '../_components/RetryButton';
 import InterviewFeedbackModal from '../_components/InterviewFeedbackModal';
 import InterviewSettingModal from '../_components/InterviewSettingModal';
+import InterviewTimer from '../_components/InterviewTimer';
+import DocumentRequiredNotice from '../_components/DocumentRequiredNotice';
 import { createSession, saveQas, finishSession } from '@backend/lib/api/interview';
-import { getDocument } from '@backend/lib/api/documents';
+import { getDocument, listMyDocuments } from '@backend/lib/api/documents';
 import { getCompany } from '@backend/lib/api/companies';
 import { evaluateInterviewAnswers, sumSubScores } from '../_lib/evaluateInterviewAnswers';
+
+const INITIAL_MESSAGE = {
+  role: 'ai',
+  content: '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.',
+};
+
+const INTERVIEWER_STYLE_LABELS = {
+  friendly: '친절한',
+  neutral: '중립적인',
+  pressure: '엄격한',
+};
+
+const STORAGE_KEY = 'interview_chat_state_v1';
+
+function loadSavedState() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(state) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+function clearSavedState() {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(STORAGE_KEY);
+}
+
+function shouldRestoreOnMount() {
+  if (typeof window === 'undefined' || typeof performance === 'undefined') return false;
+  const [entry] = performance.getEntriesByType('navigation');
+  if (entry?.type) return entry.type === 'reload' || entry.type === 'back_forward';
+  return performance.navigation?.type === 1;
+}
 
 export default function InterviewPage() {
   const router = useRouter();
@@ -31,7 +75,7 @@ const [isSettingOpen, setIsSettingOpen] = useState(false);
 const [isQuestionList, setIsQuestionList] = useState(false);
 const [selectedQuestions, setSelectedQuestions] = useState([]);
 const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-const [messages, setMessages] = useState([]);
+const [messages, setMessages] = useState([INITIAL_MESSAGE]);
 const [isInterviewFinished, setIsInterviewFinished] = useState(false);
 const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 const [selectedResumeId, setSelectedResumeId] = useState(null);
@@ -43,13 +87,70 @@ const [showTimer, setShowTimer] = useState(false);
 const [sessionId, setSessionId] = useState(null);
 const [answers, setAnswers] = useState([]);
 const [interviewStartedAt, setInterviewStartedAt] = useState(null);
+const [timerStartedAt, setTimerStartedAt] = useState(null);
 const [isEvaluating, setIsEvaluating] = useState(false);
 const [evaluationResult, setEvaluationResult] = useState(null);
 const [evaluationError, setEvaluationError] = useState(false);
+const [pendingQaList, setPendingQaList] = useState([]);
+const [needsAutoRetry, setNeedsAutoRetry] = useState(false);
+const [hasHydrated, setHasHydrated] = useState(false);
+const chatEndRef = useRef(null);
+const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, hasCoverLetter: true });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listMyDocuments({ pageSize: 1 })
+      .then(({ counts }) => {
+        if (cancelled) return;
+        setDocStatus({
+          loading: false,
+          hasResume: (counts?.resume ?? 0) > 0,
+          hasCoverLetter: (counts?.cover_letter ?? 0) > 0,
+        });
+      })
+      .catch((err) => {
+        console.error('이력서/자소서 보유 여부 확인 실패:', err);
+        if (!cancelled) setDocStatus({ loading: false, hasResume: true, hasCoverLetter: true });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isEvaluating, evaluationResult, evaluationError]);
 
   const handleSelectCompany = (id, company) => {
     setSelectedCompanyId(id);
     setSelectedCompanySlug(company?.slug ?? null);
+  };
+
+  const handleToggleShowTimer = (next) => {
+    setShowTimer(next);
+    setTimerStartedAt(next && interviewStartedAt ? Date.now() : null);
+    if (next) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '타이머 표시를 켰습니다!\n면접이 시작되면 진행 시간이 상단에 표시돼요.',
+        },
+      ]);
+    }
+  };
+
+  const handleChangeInterviewerStyle = (next) => {
+    setInterviewerStyle(next);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'ai',
+        content: `면접관 성격을 ${INTERVIEWER_STYLE_LABELS[next] ?? next} 스타일로 설정했습니다!`,
+      },
+    ]);
   };
 
   const handleGenerationError = useCallback(() => {
@@ -62,6 +163,236 @@ const [evaluationError, setEvaluationError] = useState(false);
       },
     ]);
   }, []);
+
+  const ensureSessionId = async () => {
+    if (sessionId) return sessionId;
+
+    try {
+      const session = await createSession({
+        companyId: selectedCompanyId,
+        resumeIds: selectedResumeId ? [selectedResumeId] : [],
+        coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
+        interviewerStyle: interviewerStyle || 'friendly',
+        selectedCategories: selectedQuestions.map((question) => question.category),
+        showTimer,
+      });
+      setSessionId(session.id);
+      return session.id;
+    } catch (err) {
+      console.error('면접 세션 생성 실패(재시도):', err);
+      return null;
+    }
+  };
+
+  const runEvaluation = async (qaList) => {
+    try {
+      const [resume, coverLetter, company] = await Promise.all([
+        selectedResumeId ? getDocument(selectedResumeId) : null,
+        selectedCoverLetterId ? getDocument(selectedCoverLetterId) : null,
+        selectedCompanySlug ? getCompany(selectedCompanySlug) : null,
+      ]);
+
+      const evaluation = await evaluateInterviewAnswers({
+        resumeText: resume?.contentText,
+        coverLetterText: coverLetter?.contentText,
+        company,
+        qaList,
+      });
+
+      const results = qaList.map((qa, index) => {
+        const questionResult = evaluation.questionResults[index];
+        return {
+          ...qa,
+          feedback: {
+            summary: questionResult.summary,
+            strengths: questionResult.strengths,
+            improvements: questionResult.improvements,
+          },
+          score: questionResult.score,
+        };
+      });
+
+      const totalScore = sumSubScores(evaluation.subScores);
+
+      let resultsWithQaIds = results;
+      const activeSessionId = await ensureSessionId();
+
+      if (activeSessionId) {
+        const saved = await saveQas(
+          activeSessionId,
+          results.map((result, index) => ({
+            seq: index + 1,
+            category: result.category,
+            question: result.question,
+            answer: result.answer,
+            feedback: result.feedback,
+            score: result.score,
+          })),
+        );
+        resultsWithQaIds = results.map((result, index) => ({
+          ...result,
+          qaId: saved?.items?.find((item) => item.seq === index + 1)?.id ?? null,
+        }));
+        await finishSession(activeSessionId, {
+          durationSec: interviewStartedAt
+            ? Math.round((Date.now() - interviewStartedAt) / 1000)
+            : undefined,
+          totalScore,
+          subScores: evaluation.subScores,
+        });
+      } else {
+        console.error('면접 세션이 없어 답변/평가를 저장하지 못했습니다. 북마크도 저장되지 않습니다.');
+      }
+
+      setEvaluationResult({
+        totalScore,
+        subScores: evaluation.subScores,
+        results: resultsWithQaIds,
+      });
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '면접이 종료되었습니다!\n평가가 완료되었습니다.\n결과를 확인해보세요.',
+        },
+      ]);
+    } catch (err) {
+      console.error('면접 평가 실패:', err);
+      setEvaluationError(true);
+
+      const activeSessionId = await ensureSessionId();
+      if (activeSessionId) {
+        try {
+          await saveQas(
+            activeSessionId,
+            qaList.map((qa, index) => ({
+              seq: index + 1,
+              category: qa.category,
+              question: qa.question,
+              answer: qa.answer,
+            })),
+          );
+        } catch (saveErr) {
+          console.error('질문/답변 저장 실패:', saveErr);
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'ai',
+          content:
+            '답변 평가에 실패했습니다.\n질문과 답변은 저장되었습니다.\n아래 "평가 다시 시도" 버튼을 눌러주세요.',
+        },
+      ]);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  const handleRetryEvaluation = () => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        role: 'ai',
+        content: '답변을 다시 분석하고 있습니다...',
+      },
+    ]);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+    runEvaluation(pendingQaList);
+  };
+
+  useEffect(() => {
+    if (!shouldRestoreOnMount()) {
+      clearSavedState();
+      clearQuestionPanelCache();
+      setHasHydrated(true);
+      return;
+    }
+
+    const saved = loadSavedState();
+    if (!saved) {
+      setHasHydrated(true);
+      return;
+    }
+
+    setIsQuestionList(saved.isQuestionList ?? false);
+    setSelectedQuestions(saved.selectedQuestions ?? []);
+    setCurrentQuestionIndex(saved.currentQuestionIndex ?? 0);
+    setMessages(saved.messages?.length ? saved.messages : [INITIAL_MESSAGE]);
+    setIsInterviewFinished(saved.isInterviewFinished ?? false);
+    setSelectedResumeId(saved.selectedResumeId ?? null);
+    setSelectedCoverLetterId(saved.selectedCoverLetterId ?? null);
+    setSelectedCompanyId(saved.selectedCompanyId ?? null);
+    setSelectedCompanySlug(saved.selectedCompanySlug ?? null);
+    setInterviewerStyle(saved.interviewerStyle ?? 'friendly');
+    setShowTimer(saved.showTimer ?? false);
+    setSessionId(saved.sessionId ?? null);
+    setAnswers(saved.answers ?? []);
+    setInterviewStartedAt(saved.interviewStartedAt ?? null);
+    setTimerStartedAt(saved.timerStartedAt ?? null);
+    setEvaluationResult(saved.evaluationResult ?? null);
+    setPendingQaList(saved.pendingQaList ?? []);
+
+    if (saved.isInterviewFinished && !saved.evaluationResult && saved.pendingQaList?.length) {
+      setNeedsAutoRetry(true);
+    }
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!needsAutoRetry) return;
+    setNeedsAutoRetry(false);
+    setIsInterviewFinished(true);
+    setIsEvaluating(true);
+    setEvaluationError(false);
+    runEvaluation(pendingQaList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsAutoRetry]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    saveState({
+      isQuestionList,
+      selectedQuestions,
+      currentQuestionIndex,
+      messages,
+      isInterviewFinished,
+      selectedResumeId,
+      selectedCoverLetterId,
+      selectedCompanyId,
+      selectedCompanySlug,
+      interviewerStyle,
+      showTimer,
+      sessionId,
+      answers,
+      interviewStartedAt,
+      timerStartedAt,
+      evaluationResult,
+      pendingQaList,
+    });
+  }, [
+    isQuestionList,
+    selectedQuestions,
+    currentQuestionIndex,
+    messages,
+    isInterviewFinished,
+    selectedResumeId,
+    selectedCoverLetterId,
+    selectedCompanyId,
+    selectedCompanySlug,
+    interviewerStyle,
+    showTimer,
+    sessionId,
+    answers,
+    interviewStartedAt,
+    timerStartedAt,
+    evaluationResult,
+    pendingQaList,
+    hasHydrated,
+  ]);
 
   const handleSendAnswer = async (answer) => {
     if (selectedQuestions.length === 0) {
@@ -114,114 +445,24 @@ const [evaluationError, setEvaluationError] = useState(false);
       question: question.question,
       answer: nextAnswers[index],
     }));
+    setPendingQaList(qaList);
 
-    try {
-      const [resume, coverLetter, company] = await Promise.all([
-        selectedResumeId ? getDocument(selectedResumeId) : null,
-        selectedCoverLetterId ? getDocument(selectedCoverLetterId) : null,
-        selectedCompanySlug ? getCompany(selectedCompanySlug) : null,
-      ]);
-
-      const evaluation = await evaluateInterviewAnswers({
-        resumeText: resume?.contentText,
-        coverLetterText: coverLetter?.contentText,
-        company,
-        qaList,
-      });
-
-      const results = qaList.map((qa, index) => {
-        const questionResult = evaluation.questionResults[index];
-        return {
-          ...qa,
-          feedback: {
-            summary: questionResult.summary,
-            strengths: questionResult.strengths,
-            improvements: questionResult.improvements,
-          },
-          score: questionResult.score,
-        };
-      });
-
-      // finishSession()에 저장하는 값과 InterviewResult에 표시하는 값이 항상 같은 계산식을
-      // 쓰도록, 화면에 표시되는 subScores를 그대로 합산해서 totalScore를 구한다.
-      const totalScore = sumSubScores(evaluation.subScores);
-
-      if (sessionId) {
-        await saveQas(
-          sessionId,
-          results.map((result, index) => ({
-            seq: index + 1,
-            category: result.category,
-            question: result.question,
-            answer: result.answer,
-            feedback: result.feedback,
-            score: result.score,
-          })),
-        );
-        await finishSession(sessionId, {
-          durationSec: interviewStartedAt
-            ? Math.round((Date.now() - interviewStartedAt) / 1000)
-            : undefined,
-          totalScore,
-          subScores: evaluation.subScores,
-        });
-      }
-
-      setEvaluationResult({
-        totalScore,
-        subScores: evaluation.subScores,
-        results,
-      });
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        {
-          role: 'ai',
-          content:
-            '면접이 종료되었습니다!\n평가가 완료되었습니다.\n결과를 확인해보세요.',
-        },
-      ]);
-    } catch (err) {
-      console.error('면접 평가 실패:', err);
-      setEvaluationError(true);
-
-      if (sessionId) {
-        try {
-          await saveQas(
-            sessionId,
-            qaList.map((qa, index) => ({
-              seq: index + 1,
-              category: qa.category,
-              question: qa.question,
-              answer: qa.answer,
-            })),
-          );
-        } catch (saveErr) {
-          console.error('질문/답변 저장 실패:', saveErr);
-        }
-      }
-
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        {
-          role: 'ai',
-          content:
-            '면접이 종료되었습니다.\n\n답변 평가에 실패했습니다.\n질문과 답변은 저장되었습니다.\n잠시 후 다시 시도해주세요.',
-        },
-      ]);
-    } finally {
-      setIsEvaluating(false);
-    }
+    await runEvaluation(qaList);
   };
   const handleRetry = () => {
+    clearSavedState();
+    clearQuestionPanelCache();
     setIsInterviewFinished(false);
     setCurrentQuestionIndex(0);
-    setMessages([]);
+    setMessages([INITIAL_MESSAGE]);
     setAnswers([]);
     setSessionId(null);
     setInterviewStartedAt(null);
+    setTimerStartedAt(null);
     setIsEvaluating(false);
     setEvaluationResult(null);
     setEvaluationError(false);
+    setPendingQaList([]);
   };
   const handleStartInterview = async (questions) => {
     if (questions.length === 0) return;
@@ -231,28 +472,48 @@ const [evaluationError, setEvaluationError] = useState(false);
     setAnswers([]);
     setEvaluationResult(null);
     setEvaluationError(false);
-    setMessages([
+    setMessages((prev) => [
+      ...prev,
       {
         role: 'ai',
         content: questions[0].question,
       },
     ]);
-    setInterviewStartedAt(Date.now());
+    const startedAt = Date.now();
+    setInterviewStartedAt(startedAt);
+    if (showTimer) setTimerStartedAt(startedAt);
 
     try {
       const session = await createSession({
         companyId: selectedCompanyId,
         resumeIds: selectedResumeId ? [selectedResumeId] : [],
         coverLetterIds: selectedCoverLetterId ? [selectedCoverLetterId] : [],
-        interviewerStyle,
+        interviewerStyle: interviewerStyle || 'friendly',
         selectedCategories: questions.map((question) => question.category),
         showTimer,
       });
       setSessionId(session.id);
     } catch (err) {
       console.error('면접 세션 생성 실패:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content:
+            '면접 세션 생성에 실패했습니다.\n답변과 결과가 저장되지 않을 수 있어요.',
+        },
+      ]);
     }
   };
+
+  if (!hasHydrated) {
+    return (
+      <>
+        <Header />
+        <main className={styles.interview_page} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -262,39 +523,47 @@ const [evaluationError, setEvaluationError] = useState(false);
         <div className={`container ${styles.chat_layout}`}>
           <div className={styles.chat_container}>
             <div className={styles.chat_header}>
-              <button
-                type="button"
-                className={`${styles.exit_button} font_body_l_b`}
-                onClick={() => router.push('/interview')}
-              >
-                ← 면접 나가기
-              </button>
+              <div className={styles.chat_header_left}>
+                <button
+                  type="button"
+                  className={`${styles.exit_button} font_body_l_b`}
+                  onClick={() => {
+                    clearSavedState();
+                    clearQuestionPanelCache();
+                    router.push('/interview');
+                  }}
+                >
+                  ← 면접 나가기
+                </button>
+              </div>
 
-              <SettingButton
-                onClick={() => setIsSettingOpen(true)}
-              />
+              <div className={styles.chat_header_center}>
+                {showTimer && (
+                  <InterviewTimer startedAt={timerStartedAt} running={!isInterviewFinished} />
+                )}
+              </div>
+
+              <div className={styles.chat_header_right}>
+                <SettingButton
+                  onClick={() => setIsSettingOpen(true)}
+                />
+              </div>
             </div>
 
             <div className={styles.chat_content}>
-              {messages.length === 0 ? (
-                <AiChatBubble
-                  message={'안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.'}
-                />
-              ) : (
-                messages.map((message, index) =>
-                  message.role === 'ai' ? (
-                    <AiChatBubble
-                      key={index}
-                      message={message.content}
-                    />
-                  ) : (
-                    <UserChatBubble
-                      key={index}
-                      message={message.content}
-                      time="01:48"
-                    />
-                  ),
-                )
+              {messages.map((message, index) =>
+                message.role === 'ai' ? (
+                  <AiChatBubble
+                    key={index}
+                    message={message.content}
+                  />
+                ) : (
+                  <UserChatBubble
+                    key={index}
+                    message={message.content}
+                    time="01:48"
+                  />
+                ),
               )}
 
               {isInterviewFinished && !isEvaluating && evaluationResult && (
@@ -308,8 +577,13 @@ const [evaluationError, setEvaluationError] = useState(false);
               )}
 
               {isInterviewFinished && !isEvaluating && evaluationError && (
-                <RetryButton onClick={handleRetry} />
+                <div className={styles.evaluation_error_actions}>
+                  <RetryButton label="평가 다시 시도" onClick={handleRetryEvaluation} />
+                  <RetryButton variant="outline" onClick={handleRetry} />
+                </div>
               )}
+
+              <div ref={chatEndRef} />
             </div>
 
             {!isInterviewFinished && (
@@ -322,8 +596,16 @@ const [evaluationError, setEvaluationError] = useState(false);
               resumeId={selectedResumeId}
               coverLetterId={selectedCoverLetterId}
               companySlug={selectedCompanySlug}
+              interviewerStyle={interviewerStyle}
               onStart={handleStartInterview}
               onGenerationError={handleGenerationError}
+            />
+          ) : docStatus.loading ? (
+            <aside className={styles.option_panel} />
+          ) : !docStatus.hasResume || !docStatus.hasCoverLetter ? (
+            <DocumentRequiredNotice
+              hasResume={docStatus.hasResume}
+              hasCoverLetter={docStatus.hasCoverLetter}
             />
           ) : (
             <aside className={styles.option_panel}>
@@ -375,9 +657,9 @@ const [evaluationError, setEvaluationError] = useState(false);
           <InterviewSettingModal
             onClose={() => setIsSettingOpen(false)}
             showTimer={showTimer}
-            onToggleShowTimer={setShowTimer}
+            onToggleShowTimer={handleToggleShowTimer}
             interviewerStyle={interviewerStyle}
-            onInterviewerStyleChange={setInterviewerStyle}
+            onInterviewerStyleChange={handleChangeInterviewerStyle}
           />
         )}
       </main>
