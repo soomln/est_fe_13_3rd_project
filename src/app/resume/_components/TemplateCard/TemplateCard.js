@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import BookmarkBtn from '@/app/resume/_components/BookmarkBtn';
+import BookmarkBtn from '@/app/_components/common/BookmarkBtn';
 import PrimaryBtn from '@/app/resume/_components/PrimaryBtn';
 import styles from './TemplateCard.module.sass';
 
