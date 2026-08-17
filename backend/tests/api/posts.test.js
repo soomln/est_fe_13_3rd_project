@@ -186,51 +186,34 @@ describe('reactions', () => {
 });
 
 describe('listMyScrappedPosts', () => {
-  it('makes no further request when nothing is scrapped', async () => {
-    mockApiFetch(apiFetch, { 'GET /api/reactions': { targetIds: [] } });
-
-    await expect(listMyScrappedPosts()).resolves.toEqual({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 10,
-    });
-    expect(apiFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the scrapped order', async () => {
+  it('asks the server for my scrapped posts', async () => {
     mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['c', 'a', 'b'] },
-      'GET /api/posts': { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] },
+      'GET /api/posts': { items: [{ id: 'a' }], total: 1, page: 1, pageSize: 10 },
     });
 
     const result = await listMyScrappedPosts();
 
-    expect(result.items.map((i) => i.id)).toEqual(['c', 'a', 'b']);
-    expect(result.total).toBe(3);
+    expect(apiFetch).toHaveBeenCalledWith('/api/posts', {
+      query: { scrapped: 1, type: undefined, sort: 'latest', page: 1, pageSize: 10 },
+    });
+    expect(result.total).toBe(1);
   });
 
-  it('fetches everything then slices the page on the client', async () => {
-    mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['a', 'b', 'c'] },
-      'GET /api/posts': { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] },
+  it('passes the type, sort and page through', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/posts': { items: [], total: 0 } });
+
+    await listMyScrappedPosts({ type: 'qbank', sort: 'company', page: 2, pageSize: 4 });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/posts', {
+      query: { scrapped: 1, type: 'qbank', sort: 'company', page: 2, pageSize: 4 },
     });
-
-    const result = await listMyScrappedPosts({ page: 2, pageSize: 2 });
-
-    expect(apiFetch.mock.calls[1][1].query.pageSize).toBe(50);
-    expect(result.items.map((i) => i.id)).toEqual(['c']);
-    expect(result.total).toBe(3);
   });
 
-  it('can filter by type as well', async () => {
-    mockApiFetch(apiFetch, {
-      'GET /api/reactions': { targetIds: ['a'] },
-      'GET /api/posts': { items: [{ id: 'a' }] },
-    });
+  it('needs only one request', async () => {
+    mockApiFetch(apiFetch, { 'GET /api/posts': { items: [], total: 0 } });
 
-    await listMyScrappedPosts({ type: 'qbank' });
+    await listMyScrappedPosts();
 
-    expect(apiFetch.mock.calls[1][1].query).toEqual({ ids: 'a', type: 'qbank', pageSize: 50 });
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 });

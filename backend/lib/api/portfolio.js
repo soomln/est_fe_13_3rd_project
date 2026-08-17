@@ -5,7 +5,6 @@ import { getCurrentUser } from './auth';
 import { ApiError } from './errors';
 import {
   getMyReactionIds,
-  listMyReactionTargetIds,
   removeReactions,
   toggleReaction,
 } from './reactions';
@@ -13,20 +12,22 @@ import {
 export async function listPortfolios({
   category,
   userId,
+  q,
   sort = 'latest',
   page = 1,
   pageSize = PAGE_SIZE.portfolioGallery,
 } = {}) {
-  return apiFetch('/api/portfolios', { query: { category, userId, sort, page, pageSize } });
+  return apiFetch('/api/portfolios', { query: { category, userId, q, sort, page, pageSize } });
 }
 
 export async function listMyPortfolios({
   status,
+  q,
   sort = 'latest',
   page = 1,
   pageSize = PAGE_SIZE.myPortfolios,
 } = {}) {
-  return apiFetch('/api/portfolios', { query: { mine: 1, status, sort, page, pageSize } });
+  return apiFetch('/api/portfolios', { query: { mine: 1, status, q, sort, page, pageSize } });
 }
 
 export async function getPortfolio(id) {
@@ -39,6 +40,15 @@ export async function createPortfolio(input = {}) {
 
 export async function updatePortfolio(id, patch) {
   return apiFetch(`/api/portfolios/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch });
+}
+
+export async function findMemberByEmail(email) {
+  const { member } = await apiFetch('/api/members/lookup', { query: { email } });
+  return member;
+}
+
+export async function setPortfolioCollaborators(id, collaboratorIds) {
+  return updatePortfolio(id, { collaboratorIds });
 }
 
 export async function publishPortfolio(id) {
@@ -79,21 +89,11 @@ export async function getMyPortfolioReactions(portfolioIds) {
 }
 
 export async function listMyBookmarkedPortfolios({
+  sort = 'latest',
   page = 1,
   pageSize = PAGE_SIZE.myPortfolios,
 } = {}) {
-  const ids = await listMyReactionTargetIds(...REACTION.portfolioBookmark);
-  if (ids.length === 0) return { items: [], total: 0, page, pageSize };
-
-  const pageIds = ids.slice((page - 1) * pageSize, page * pageSize);
-  const { items } = await apiFetch('/api/portfolios', {
-    query: { ids: pageIds.join(','), pageSize },
-  });
-
-  const order = new Map(pageIds.map((id, index) => [id, index]));
-  items.sort((a, b) => order.get(a.id) - order.get(b.id));
-
-  return { items, total: ids.length, page, pageSize };
+  return apiFetch('/api/portfolios', { query: { scrapped: 1, sort, page, pageSize } });
 }
 
 export async function removePortfolioBookmarks(portfolioIds) {

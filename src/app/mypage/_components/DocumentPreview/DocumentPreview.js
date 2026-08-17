@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { getDocument } from '@backend/lib/api/documents';
+import useDialog from '@/app/mypage/_lib/useDialog';
 import formatDate from '@/app/mypage/_lib/formatDate';
+import FONT_VARS from '@/app/resume/editor/_lib/editorFonts';
 import styles from './DocumentPreview.module.sass';
 
 const TYPE_LABEL = { resume: '이력서', cover_letter: '자기소개서' };
@@ -36,23 +38,7 @@ export default function DocumentPreview({ id, onClose }) {
     };
   }, [id]);
 
-  // 열려 있는 동안 Esc 로 닫고 뒤쪽 스크롤을 막는다
-  useEffect(() => {
-    if (!id) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [id, onClose]);
+  useDialog(Boolean(id), onClose);
 
   if (!id) return null;
 
@@ -111,7 +97,7 @@ export default function DocumentPreview({ id, onClose }) {
           {status === 'ready' &&
             (doc.contentHtml ? (
               <article
-                className={styles.document_preview_paper}
+                className={`${styles.document_preview_paper} ${FONT_VARS}`}
                 dangerouslySetInnerHTML={{ __html: doc.contentHtml }}
               />
             ) : (

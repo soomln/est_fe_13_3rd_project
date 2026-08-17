@@ -2,6 +2,11 @@ const KEY = Symbol.for('callback.e2e.database');
 
 export const TABLES = [
   'profiles',
+  'profile_educations',
+  'profile_careers',
+  'profile_awards',
+  'profile_languages',
+  'portfolio_collaborators',
   'code_master',
   'companies',
   'resume_templates',
@@ -41,6 +46,11 @@ const CODES = [
   ['interview_channel', 'online', '온라인 지원', 1],
   ['interview_channel', 'etc', '기타', 2],
   ['education_level', 'bachelor', '대졸', 1],
+  ['education_level', 'master', '석사', 2],
+  ['interest_field', 'frontend', '프론트엔드', 1],
+  ['interest_field', 'backend', '백엔드', 2],
+  ['school_type', 'university', '대학교', 1],
+  ['school_type', 'graduate', '대학원', 2],
   ['career_level', 'junior', '신입', 1],
   ['edu_status', 'graduated', '졸업', 1],
   ['language_level', 'high', '상', 1],
@@ -154,10 +164,18 @@ const TEMPLATES = [
 
 export const SCHEMA = {
   profiles: [
-    'id', 'name', 'avatar_url', 'desired_role', 'career_level', 'email', 'github_url', 'bio',
-    'educations', 'careers', 'awards', 'languages', 'skill_codes', 'interest_codes',
+    'id', 'name', 'avatar_url', 'desired_role', 'career_level', 'education_level',
+    'email', 'github_url', 'bio', 'skill_codes', 'interest_codes',
     'created_at', 'updated_at',
   ],
+  profile_educations: [
+    'id', 'user_id', 'sort_order',
+    'school_type', 'school', 'major', 'status', 'admission', 'graduation',
+  ],
+  profile_careers: ['id', 'user_id', 'sort_order', 'started_on', 'ended_on', 'company', 'job_role'],
+  profile_awards: ['id', 'user_id', 'sort_order', 'awarded_on', 'title'],
+  profile_languages: ['id', 'user_id', 'sort_order', 'language', 'level', 'detail'],
+  portfolio_collaborators: ['portfolio_id', 'user_id', 'sort_order', 'created_at'],
   code_master: ['id', 'group_name', 'code', 'label', 'sort_order', 'is_active'],
   companies: Object.keys(COMPANIES[0]),
   resume_templates: Object.keys(TEMPLATES[0]),
@@ -166,7 +184,8 @@ export const SCHEMA = {
     'content', 'content_html', 'content_text', 'created_at', 'updated_at',
   ],
   portfolios: [
-    'id', 'user_id', 'title', 'category', 'thumbnail_url', 'description', 'content',
+    'id', 'user_id', 'title', 'category', 'thumbnail_url', 'description',
+    'overview', 'document', 'code',
     'bg_color', 'gap_px', 'status', 'view_count', 'created_at', 'updated_at',
   ],
   posts: [
@@ -248,10 +267,6 @@ export function ensureProfile(user) {
     email: null,
     github_url: null,
     bio: null,
-    educations: [],
-    careers: [],
-    awards: [],
-    languages: [],
     skill_codes: [],
     interest_codes: [],
     created_at: created,

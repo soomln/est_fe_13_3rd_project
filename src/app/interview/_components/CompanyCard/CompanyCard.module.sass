@@ -1,0 +1,73 @@
+@use "../../../_variables" as *
+
+.company_card
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  width: 100%
+  min-width: 0
+  height: 125px
+  padding: 16px 20px
+  gap: 32px
+
+  background: $white
+  border: 1px solid $sub_yellow
+  border-radius: 10px
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04)
+
+  &:hover
+    background: $light_yellow
+    border-color: transparent
+
+.company_logo
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 80px
+  height: 80px
+
+  img
+    width: 60px
+    height: 60px
+    object-fit: contain
+
+.company_content
+  display: flex
+  flex-direction: column
+  gap: 10px
+
+.company_title
+  display: flex
+  align-items: center
+
+.company_name
+  padding-right: 12px
+  margin-right: 12px
+  border-right: 1px solid $stroke2
+
+.company_detail
+  display: flex
+  align-items: center
+  gap: 16px
+
+.detail_item
+  display: flex
+  align-items: center
+  gap: 10px
+
+.divider
+  width: 1px
+  height: 14px
+  background: $stroke2
+
+.label
+  color: $gray
+
+.value
+  color: $black
+
+.star
+  color: $sub_yellow
+  font-variation-settings: 'FILL' 1
+  text-shadow: 1px 0 $gray, -1px 0 $gray, 0 1px $gray, 0 -1px $gray

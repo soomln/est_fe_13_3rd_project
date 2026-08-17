@@ -1,0 +1,30 @@
+@use "../../../_variables" as *
+
+.action_button
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 10px
+  box-sizing: border-box
+  cursor: pointer
+  transition: 0.2s ease
+
+.action_button.default
+  width: 644px
+  height: 64px
+  padding: 20px 24px
+
+  background: $green
+  border: 1px solid $green
+  border-radius: 12px
+  color: $white
+
+.action_button.purple
+  width: 180px
+  height: 40px
+  padding: 10px
+
+  background: $white
+  border: 1px solid $sub_purple
+  border-radius: 8px
+  color: $purple

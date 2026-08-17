@@ -4,7 +4,6 @@
   position: relative
   width: 100%
 
-
 .toolbar
   position: absolute
   top: -10%
@@ -18,6 +17,36 @@
   background: $sub_green
   overflow: hidden
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08)
+
+  .toolbar_group
+    display: flex
+    align-items: center
+    position: relative
+
+    &:not(:last-child)::after
+      content: ''
+      width: 1px
+      height: 20px
+      background: $stroke2
+
+    .color_btn
+      display: flex
+      justify-content: center
+      align-items: center
+      position: relative
+      width: 40px
+      height: 40px
+      cursor: pointer
+
+      &:hover
+        background: $sub_yellow
+
+      input[type='color']
+        position: absolute
+        width: 100%
+        height: 100%
+        opacity: 0
+        cursor: pointer  
 
   button
     display: flex
@@ -33,9 +62,6 @@
     &:hover
       background: $sub_yellow
 
-    &.active
-      background: $sub_yellow
-      color: $green
 
   select
     height: 40px
@@ -63,7 +89,7 @@
 
     .editor
       :global(.tiptap)
-        padding: 0.75rem var(--contents-padding)
+        padding: 0 var(--contents-padding)
 
 
 .editor
@@ -71,8 +97,7 @@
 
   :global(.tiptap)
     width: 100%
-    min-height: 48px
-    padding: 0.75rem 0
+    padding: 0
     outline: none
     box-sizing: border-box
     line-height: 1.6
@@ -109,17 +134,23 @@
       font-weight: 700
 
     a
-      color: $green
+      color: inherit
       text-decoration: underline
+      text-decoration-color: currentColor
       cursor: pointer
 
-    // 불릿 리스트
+      &:has(span[style*='color'])
+        text-decoration: none
+
+      span[style*='color']
+        text-decoration: underline
+        text-decoration-color: currentColor
+
     ul
       margin: 0.5rem 0
       padding-left: 1.5rem
       list-style: disc
 
-    // 숫자 리스트
     ol
       margin: 0.5rem 0
       padding-left: 1.5rem
@@ -131,7 +162,6 @@
       p
         margin: 0
 
-    // 토글
     :global([data-type='details'])
       display: flex
       align-items: flex-start
@@ -154,7 +184,6 @@
   position: absolute
   top: 0
   right: 0
-  transform: translateY(35%)
   border: 0
   background: none
   color: $warning

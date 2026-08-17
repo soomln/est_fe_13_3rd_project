@@ -1,13 +1,13 @@
-import './RetryButton.sass';
+import styles from './RetryButton.module.sass';
 
-export default function RetryButton({ onClick }) {
+export default function RetryButton({ onClick, label = '다시 연습하기', variant }) {
   return (
     <button
       type="button"
-      className="retry_button font_h4"
+      className={`${styles.retry_button} ${variant ? styles[variant] : ''} font_h4`}
       onClick={onClick}
     >
-      다시 연습하기
+      {label}
     </button>
   );
 }

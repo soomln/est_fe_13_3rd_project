@@ -1,0 +1,118 @@
+@use "../../../_variables" as *
+
+.faq_item
+  box-sizing: border-box
+  width: 100%
+  overflow: hidden
+
+  background: $white
+  border: 1px solid $sub_green
+  border-radius: 8px
+
+  transition: 0.2s ease
+
+.faq_item.open
+  border-color: $sub_green
+
+.faq_header
+  display: flex
+  align-items: center
+  justify-content: space-between
+  box-sizing: border-box
+
+  width: 100%
+  min-height: 60px
+  padding: 0 18px
+
+  background: $white
+  border: none
+
+  cursor: pointer
+  text-align: left
+
+.faq_left
+  display: flex
+  align-items: center
+  gap: 16px
+
+  min-width: 0
+
+.question_mark
+  flex-shrink: 0
+  color: $green
+
+.arrow
+  flex-shrink: 0
+  color: $black
+  font-size: 20px
+
+.faq_answer
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+  width: calc(100% - 20px)
+  margin: 0 10px 10px
+  padding: 20px
+
+  box-sizing: border-box
+
+  background: $sub_green
+  border-radius: 8px
+
+.answer_content
+  display: flex
+  align-items: center
+  gap: 14px
+
+.answer_icon
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+
+  width: 44px
+  height: 44px
+
+  border-radius: 50%
+  background: $light_green
+  color: $green
+
+  .material-symbols-rounded
+    font-size: 24px
+
+.answer_text
+  display: flex
+  flex-direction: column
+  gap: 5px
+
+  p
+    margin: 0
+
+  p:first-child
+    color: $green
+
+  p:last-child
+    color: $black
+
+.answer_list
+  display: flex
+  flex-direction: column
+  gap: 12px
+
+  margin: 0
+  padding: 0
+
+  list-style: none
+
+  li
+    display: flex
+    align-items: center
+    gap: 8px
+
+    color: $black
+
+    .material-symbols-rounded
+      flex-shrink: 0
+      color: $green
+      font-size: 17px

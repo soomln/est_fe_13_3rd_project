@@ -133,7 +133,9 @@
   height: 28px
   background-color: #767779
 
+// 말풍선이 이 상자 오른쪽 끝(= 다운로드 버튼 끝)에 맞춰 붙는다
 .editor_header_actions
+  position: relative
   display: flex
   align-items: center
   gap: 8px
@@ -167,8 +169,6 @@
   cursor: pointer
   white-space: nowrap
 
-.editor_header_download_wrap
-  position: relative
 
 .editor_header_download
   display: inline-flex
@@ -206,11 +206,12 @@
   pointer-events: none
   transition: opacity 0.2s ease, visibility 0.2s ease
 
+  // 말풍선 오른쪽 끝은 다운로드 버튼에 맞추고, 꼬리만 저장 버튼 가운데로 보낸다
   &::before,
   &::after
     content: ''
     position: absolute
-    right: 44px
+    right: 176px
     border: 8px solid transparent
 
   &::before
@@ -221,16 +222,29 @@
     bottom: calc(100% - 1px)
     border-bottom-color: $sub_yellow
 
-.editor_header_download_wrap:hover .editor_header_tip,
+// 인쇄·다운로드에 마우스를 올리면 저장 버튼 아래에 뜬다
+.editor_header_actions:has(.editor_header_print:hover),
+.editor_header_actions:has(.editor_header_download:hover),
+.editor_header_actions:has(.editor_header_print:focus-visible),
+.editor_header_actions:has(.editor_header_download:focus-visible)
+  .editor_header_tip
+    opacity: 1
+    visibility: visible
+
 .editor_header_tip_shown
   opacity: 1
   visibility: visible
 
-.editor_header_tip_blink
-  animation: tip_blink 0.9s ease
+// 인쇄·다운로드를 눌렀을 때 여기로 눈이 가야 한다
+.editor_header_save_blink
+  animation: blink 0.9s ease
 
-@keyframes tip_blink
+@keyframes blink
   0%, 50%, 100%
     opacity: 1
   25%, 75%
     opacity: 0
+
+@media print
+  .editor_header
+    display: none

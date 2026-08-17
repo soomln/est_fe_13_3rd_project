@@ -1,16 +1,21 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { resetWorld, signInAs, startWorld, stopWorld, USERS } from './support/harness';
+import { resetWorld, signInAs, signOutOfBrowser, startWorld, stopWorld, USERS } from './support/harness';
 import { rows } from './support/database';
+import { ageObject, listObjects } from './support/supabase';
 import {
   createDocument,
+  createDocumentDraftId,
   createDocumentFromTemplate,
   deleteDocument,
   deleteDocuments,
   getDocument,
   listMyDocuments,
+  removeDocumentImages,
   updateDocument,
+  uploadDocumentImage,
 } from '@backend/lib/api/documents';
+import { deleteMyAccount } from '@backend/lib/api/auth';
 import {
   getMyBookmarkedTemplateIds,
   getTemplate,
@@ -99,6 +104,30 @@ describe('free template gallery', () => {
     await expect(getMyBookmarkedTemplateIds([resumeTemplate().id])).resolves.toEqual(
       new Set([resumeTemplate().id])
     );
+  });
+
+  it('remembers my bookmark when the list is loaded again', async () => {
+    signInAs(USERS.a);
+    await toggleTemplateBookmark(resumeTemplate().id);
+
+    const { items } = await listTemplates();
+    const marked = items.find((t) => t.id === resumeTemplate().id);
+
+    expect(marked.bookmarkedByMe).toBe(true);
+    expect(items.filter((t) => t.bookmarkedByMe)).toHaveLength(1);
+    await expect(getTemplate(resumeTemplate().id)).resolves.toMatchObject({
+      bookmarkedByMe: true,
+    });
+  });
+
+  it('never marks another member bookmark as mine', async () => {
+    signInAs(USERS.a);
+    await toggleTemplateBookmark(resumeTemplate().id);
+
+    signInAs(USERS.b);
+    const { items } = await listTemplates();
+
+    expect(items.every((t) => t.bookmarkedByMe === false)).toBe(true);
   });
 });
 
@@ -358,5 +387,218 @@ describe('loading my profile into the editor', () => {
     expect(html).toContain('<li>React</li>');
     expect(html).toContain('TOEIC 900');
     expect(html).toContain('해커톤 대상');
+  });
+});
+
+describe('이력서 본문 이미지', () => {
+  const png = (name = 'photo.png') => ({ type: 'image/png', size: 1024, name });
+
+  it('uploads before the document is ever saved', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+
+    const url = await uploadDocumentImage(draftId, png());
+
+    expect(url).toBe(`/api/documents/${draftId}/images/${url.split('/').pop()}`);
+    expect(listObjects('documents')).toHaveLength(1);
+  });
+
+  it('keeps the image when the draft is saved under the same id', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    const url = await uploadDocumentImage(draftId, png());
+
+    const doc = await createDocument({
+      id: draftId,
+      docType: 'resume',
+      title: '초안에서 저장한 이력서',
+      contentHtml: `<img src="${url}" />`,
+    });
+
+    expect(doc.id).toBe(draftId);
+    expect(doc.contentHtml).toContain(url);
+    expect(listObjects('documents')).toHaveLength(1);
+  });
+
+  it('hands the file back to the owner', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    const url = await uploadDocumentImage(draftId, png());
+
+    const res = await fetch(url);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('image/png');
+  });
+
+  it('never serves another user their neighbour\'s image', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    const url = await uploadDocumentImage(draftId, png());
+
+    signInAs(USERS.b);
+
+    await expect(fetch(url)).resolves.toMatchObject({ status: 404 });
+  });
+
+  it('turns away a visitor asking for an image', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    const url = await uploadDocumentImage(draftId, png());
+
+    signOutOfBrowser();
+
+    await expect(fetch(url)).resolves.toMatchObject({ status: 401 });
+  });
+
+  it('deletes the images when the document is deleted', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    await uploadDocumentImage(draftId, png());
+    await createDocument({ id: draftId, docType: 'resume', title: '지울 이력서' });
+
+    expect(listObjects('documents')).toHaveLength(1);
+
+    await deleteDocument(draftId);
+
+    expect(listObjects('documents')).toEqual([]);
+  });
+
+  it('deletes the images of every document in a bulk delete', async () => {
+    signInAs(USERS.a);
+    const first = createDocumentDraftId();
+    const second = createDocumentDraftId();
+    await uploadDocumentImage(first, png());
+    await uploadDocumentImage(second, png());
+    await createDocument({ id: first, docType: 'resume', title: '하나' });
+    await createDocument({ id: second, docType: 'cover_letter', title: '둘' });
+
+    await deleteDocuments([first, second]);
+
+    expect(listObjects('documents')).toEqual([]);
+  });
+
+  it('discards an abandoned draft on demand', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    await uploadDocumentImage(draftId, png());
+
+    await removeDocumentImages(draftId);
+
+    expect(listObjects('documents')).toEqual([]);
+  });
+
+  it('leaves other documents alone', async () => {
+    signInAs(USERS.a);
+    const keep = createDocumentDraftId();
+    const drop = createDocumentDraftId();
+    await uploadDocumentImage(keep, png());
+    await uploadDocumentImage(drop, png());
+    await createDocument({ id: drop, docType: 'resume', title: '지울 것' });
+
+    await deleteDocument(drop);
+
+    expect(listObjects('documents')).toHaveLength(1);
+    expect(listObjects('documents')[0]).toContain(keep);
+  });
+
+  it('turns a visitor away', async () => {
+    signOutOfBrowser();
+
+    await expect(uploadDocumentImage('d1', png())).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('버려진 draft 이미지 자동 정리', () => {
+  const png = (name = 'photo.png') => ({ type: 'image/png', size: 1024, name });
+  const longAgo = '2020-01-01T00:00:00Z';
+
+  const ageEverything = () => {
+    for (const path of listObjects('documents')) ageObject('documents', path, longAgo);
+  };
+
+  it('sweeps a draft that was abandoned long ago', async () => {
+    signInAs(USERS.a);
+    await uploadDocumentImage(createDocumentDraftId(), png());
+    ageEverything();
+
+    await listMyDocuments();
+
+    expect(listObjects('documents')).toEqual([]);
+  });
+
+  it('leaves a draft that is still being written', async () => {
+    signInAs(USERS.a);
+    await uploadDocumentImage(createDocumentDraftId(), png());
+
+    await listMyDocuments();
+
+    expect(listObjects('documents')).toHaveLength(1);
+  });
+
+  it('never sweeps images of a document that was saved', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    await uploadDocumentImage(draftId, png());
+    await createDocument({ id: draftId, docType: 'resume', title: '저장된 이력서' });
+    ageEverything();
+
+    await listMyDocuments();
+
+    expect(listObjects('documents')).toHaveLength(1);
+  });
+
+  it('sweeps only the abandoned one', async () => {
+    signInAs(USERS.a);
+    const saved = createDocumentDraftId();
+    const abandoned = createDocumentDraftId();
+    await uploadDocumentImage(saved, png());
+    await uploadDocumentImage(abandoned, png());
+    await createDocument({ id: saved, docType: 'resume', title: '살아남을 이력서' });
+    ageEverything();
+
+    await listMyDocuments();
+
+    expect(listObjects('documents')).toHaveLength(1);
+    expect(listObjects('documents')[0]).toContain(saved);
+  });
+
+  it('does not touch another member drafts', async () => {
+    signInAs(USERS.b);
+    await uploadDocumentImage(createDocumentDraftId(), png());
+    ageEverything();
+
+    signInAs(USERS.a);
+    await listMyDocuments();
+
+    expect(listObjects('documents')).toHaveLength(1);
+  });
+});
+
+describe('회원 탈퇴', () => {
+  const png = (name = 'photo.png') => ({ type: 'image/png', size: 1024, name });
+
+  it('takes the resume images with the account', async () => {
+    signInAs(USERS.a);
+    const draftId = createDocumentDraftId();
+    await uploadDocumentImage(draftId, png());
+    await createDocument({ id: draftId, docType: 'resume', title: '탈퇴 전 이력서' });
+
+    expect(listObjects('documents')).toHaveLength(1);
+
+    await deleteMyAccount();
+
+    expect(listObjects('documents')).toEqual([]);
+  });
+
+  it('leaves another member files alone', async () => {
+    signInAs(USERS.b);
+    await uploadDocumentImage(createDocumentDraftId(), png());
+
+    signInAs(USERS.a);
+    await uploadDocumentImage(createDocumentDraftId(), png());
+    await deleteMyAccount();
+
+    expect(listObjects('documents')).toHaveLength(1);
   });
 });

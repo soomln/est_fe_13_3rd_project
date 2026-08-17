@@ -19,6 +19,7 @@ const CODES = {
     { group_name: 'difficulty', code: 'hard', label: '어려움' },
     { group_name: 'pass_result', code: 'pass', label: '합격' },
     { group_name: 'interview_channel', code: 'online', label: '온라인 지원' },
+    { group_name: 'interview_channel', code: 'etc', label: '기타' },
     { group_name: 'job_role', code: 'fe', label: '프론트엔드' },
     { group_name: 'education_level', code: 'bachelor', label: '대졸' },
   ],
@@ -34,9 +35,9 @@ const ROW = {
   company_slug: 'naver',
   title: '면접 후기',
   body: '분위기 좋았어요',
-  questions: ['REST 란?'],
+  questions: 'REST 란?',
   difficulty_code: 'hard',
-  difficulty_score: 4.5,
+  difficulty_score: 4,
   problem_score: 3,
   question_count: 5,
   pass_result_code: 'pass',
@@ -78,7 +79,7 @@ describe('loadLabels', () => {
     await expect(loadLabels(stub)).resolves.toEqual({
       difficulty: { hard: '어려움' },
       pass_result: { pass: '합격' },
-      interview_channel: { online: '온라인 지원' },
+      interview_channel: { online: '온라인 지원', etc: '기타' },
       job_role: { fe: '프론트엔드' },
       education_level: { bachelor: '대졸' },
     });
@@ -119,6 +120,15 @@ describe('GET /api/posts', () => {
       viewCount: 200,
       date: '2026.08.05',
     });
+  });
+
+  it('hands the screen both the raw text and a ready made list', async () => {
+    setSupabase(listStub([{ ...ROW, questions: '  REST 란?  \n\nCORS 란?\n' }]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0].questions).toBe('  REST 란?  \n\nCORS 란?\n');
+    expect(body.items[0].questionList).toEqual(['REST 란?', 'CORS 란?']);
   });
 
   it('exposes the body as both body and content', async () => {
@@ -196,7 +206,8 @@ describe('GET /api/posts', () => {
       companyLogo: null,
       title: '',
       body: '',
-      questions: [],
+      questions: '',
+      questionList: [],
       tags: [],
       overallComment: '',
       likeCount: 0,
@@ -384,13 +395,13 @@ describe('POST /api/posts', () => {
     expect(status).toBe(400);
   });
 
-  it('answers 400 when questions is not an array', async () => {
+  it('answers 400 when questions is not text', async () => {
     const { status, body } = await callRoute(POST, {
-      request: makeRequest(url(), { body: { postType: 'qbank', questions: 'a' } }),
+      request: makeRequest(url(), { body: { postType: 'qbank', questions: ['a'] } }),
     });
 
     expect(status).toBe(400);
-    expect(body.error.message).toBe('questions 는 배열이어야 합니다.');
+    expect(body.error.message).toBe('questions 는 줄바꿈으로 구분한 텍스트여야 합니다.');
   });
 
   it('answers 400 when tags is not an array', async () => {
@@ -411,7 +422,7 @@ describe('POST /api/posts', () => {
           title: '후기',
           body: '내용',
           difficultyCode: 'hard',
-          difficultyScore: 4.5,
+          difficultyScore: 4,
           problemScore: 3,
           passResultCode: 'pass',
           channelCode: 'etc',
@@ -421,7 +432,7 @@ describe('POST /api/posts', () => {
           educationLevel: 'bachelor',
           tags: ['#CS'],
           overallComment: '총평',
-          questions: ['Q1'],
+          questions: 'Q1',
         },
       }),
     });
@@ -432,9 +443,9 @@ describe('POST /api/posts', () => {
       company_id: 'c1',
       title: '후기',
       body: '내용',
-      questions: ['Q1'],
+      questions: 'Q1',
       difficulty_code: 'hard',
-      difficulty_score: 4.5,
+      difficulty_score: 4,
       problem_score: 3,
       question_count: 1,
       pass_result_code: 'pass',
@@ -448,10 +459,57 @@ describe('POST /api/posts', () => {
     });
   });
 
+  it.each([
+    ['difficultyScore', 0],
+    ['difficultyScore', 6],
+    ['difficultyScore', 3.5],
+    ['difficultyScore', -1],
+    ['difficultyScore', '4'],
+    ['problemScore', 0],
+    ['problemScore', 6],
+    ['problemScore', 4.5],
+    ['problemScore', '3'],
+  ])('answers 400 when %s is %p', async (key, value) => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', [key]: value } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toBe(`${key} 는 1~5 사이의 정수여야 합니다.`);
+  });
+
+  it.each([1, 2, 3, 4, 5])('accepts whole point scores of %i', async (score) => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'qbank', difficultyScore: score, problemScore: score },
+      }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      difficulty_score: score,
+      problem_score: score,
+    });
+  });
+
+  it('accepts null to clear a score', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'review', difficultyScore: null, problemScore: null },
+      }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      difficulty_score: null,
+      problem_score: null,
+    });
+  });
+
   it('counts the questions instead of trusting the client', async () => {
     await callRoute(POST, {
       request: makeRequest(url(), {
-        body: { postType: 'qbank', questions: ['Q1', 'Q2', 'Q3'], questionCount: 99 },
+        body: { postType: 'qbank', questions: 'Q1\nQ2\nQ3', questionCount: 99 },
       }),
     });
 
@@ -471,9 +529,21 @@ describe('POST /api/posts', () => {
     });
   });
 
+  it('ignores blank lines and trims each question', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), {
+        body: { postType: 'qbank', questions: '  Q1  \n\n\n  Q2\n   \n' },
+      }),
+    });
+
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      question_count: 2,
+    });
+  });
+
   it('counts an empty question list as zero', async () => {
     await callRoute(POST, {
-      request: makeRequest(url(), { body: { postType: 'qbank', questions: [] } }),
+      request: makeRequest(url(), { body: { postType: 'qbank', questions: '' } }),
     });
 
     expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
@@ -643,21 +713,34 @@ describe('PATCH /api/posts/:id', () => {
 
   it('the questions check applies to updates too', async () => {
     const { status } = await callRoute(PATCH_DETAIL, {
-      request: makeRequest(url(), { body: { questions: 'a' } }),
+      request: makeRequest(url(), { body: { questions: ['a'] } }),
       params: { id: 'p1' },
     });
 
     expect(status).toBe(400);
   });
 
+  it.each(['difficultyScore', 'problemScore'])(
+    'the %s check applies to updates too',
+    async (key) => {
+      const { status, body } = await callRoute(PATCH_DETAIL, {
+        request: makeRequest(url(), { body: { [key]: 4.5 } }),
+        params: { id: 'p1' },
+      });
+
+      expect(status).toBe(400);
+      expect(body.error.message).toBe(`${key} 는 1~5 사이의 정수여야 합니다.`);
+    }
+  );
+
   it('recounts the questions on update', async () => {
     await callRoute(PATCH_DETAIL, {
-      request: makeRequest(url(), { body: { questions: ['Q1', 'Q2'], questionCount: 99 } }),
+      request: makeRequest(url(), { body: { questions: 'Q1\nQ2', questionCount: 99 } }),
       params: { id: 'p1' },
     });
 
     expect(argsOf(queriesFor(supabase, 'posts')[0], 'update')[0]).toEqual([
-      { questions: ['Q1', 'Q2'], question_count: 2 },
+      { questions: 'Q1\nQ2', question_count: 2 },
     ]);
   });
 
@@ -748,5 +831,284 @@ describe('DELETE /api/posts/:id', () => {
     const { status } = await callRoute(DELETE_DETAIL, { params: { id: 'other' } });
 
     expect(status).toBe(404);
+  });
+});
+
+describe('post sorting', () => {
+  it.each([
+    ['oldest', 'created_at', true],
+    ['company', 'company_name', true],
+  ])('sort=%s orders by %s', async (sort, column, ascending) => {
+    await callRoute(GET, { request: makeRequest(url(`?sort=${sort}`)) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'order')[0]).toEqual([
+      column,
+      { ascending, nullsFirst: false },
+    ]);
+  });
+});
+
+describe('GET /api/posts?scrapped=1', () => {
+  const MARKS = [
+    { target_id: 'p1', created_at: '2026-08-03T00:00:00Z' },
+    { target_id: 'p2', created_at: '2026-08-01T00:00:00Z' },
+  ];
+  const ROWS = [
+    { ...ROW, id: 'p1', company_name: '토스' },
+    { ...ROW, id: 'p2', company_name: '가카오', post_type: 'qbank' },
+  ];
+
+  const scrapStub = (marks = MARKS, rows = ROWS) =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        reactions: { data: marks, error: null },
+        v_posts: { data: rows, error: null },
+        code_master: CODES,
+      },
+    });
+
+  it('answers 401 while signed out', async () => {
+    setSupabase(createSupabaseStub());
+
+    const { status } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(status).toBe(401);
+  });
+
+  it('puts the most recently scrapped first', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['p1', 'p2']);
+    expect(body.total).toBe(2);
+  });
+
+  it('sort=oldest flips it to the first one scrapped', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=oldest')) });
+
+    expect(body.items.map((p) => p.id)).toEqual(['p2', 'p1']);
+  });
+
+  it('sort=company orders by company name', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1&sort=company')) });
+
+    expect(body.items.map((p) => p.companyName)).toEqual(['가카오', '토스']);
+  });
+
+  it('still narrows by type', async () => {
+    const stub = scrapStub();
+    setSupabase(stub);
+
+    await callRoute(GET, { request: makeRequest(url('?scrapped=1&type=qbank')) });
+
+    expect(argsOf(queriesFor(stub, 'v_posts')[0], 'eq')).toContainEqual(['post_type', 'qbank']);
+  });
+
+  it('answers 400 for a sort the scrap list does not have', async () => {
+    setSupabase(scrapStub());
+
+    const { status, body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&sort=views')),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('스크랩 목록');
+  });
+
+  it('pages the sorted list', async () => {
+    setSupabase(scrapStub());
+
+    const { body } = await callRoute(GET, {
+      request: makeRequest(url('?scrapped=1&page=2&pageSize=1')),
+    });
+
+    expect(body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(body.items.map((p) => p.id)).toEqual(['p2']);
+  });
+
+  it('answers an empty list when nothing is scrapped', async () => {
+    setSupabase(scrapStub([], []));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url('?scrapped=1')) });
+
+    expect(body).toEqual({ items: [], total: 0, page: 1, pageSize: 10 });
+  });
+});
+
+describe('직무(jobRoleCode)', () => {
+  const JOB_CODES = {
+    data: [
+      { group_name: 'job_role', code: 'fe', label: '프론트엔드', is_active: true },
+      { group_name: 'job_role', code: 'be', label: '백엔드', is_active: true },
+    ],
+    error: null,
+  };
+
+  const writeStub = () =>
+    createSupabaseStub({
+      user: { id: 'u1' },
+      tables: {
+        code_master: JOB_CODES,
+        posts: { data: { id: 'p1' }, error: null },
+        v_posts: { data: ROW, error: null },
+      },
+    });
+
+  beforeEach(() => {
+    supabase = writeStub();
+    setSupabase(supabase);
+  });
+
+  it('saves the job role on a new review', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'be' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).toMatchObject({
+      job_role_code: 'be',
+    });
+  });
+
+  it('saves the job role on a qbank too', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'qbank', jobRoleCode: 'fe' } }),
+    });
+
+    expect(status).toBe(200);
+  });
+
+  it('rejects a job role that is not in code_master', async () => {
+    const { status, body } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'frontned' } }),
+    });
+
+    expect(status).toBe(400);
+    expect(body.error.message).toContain('fe | be');
+  });
+
+  it('never writes the row when the job role is wrong', async () => {
+    await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review', jobRoleCode: 'nope' } }),
+    });
+
+    expect(queriesFor(supabase, 'posts')).toHaveLength(0);
+  });
+
+  it('leaves the job role alone when it is not sent', async () => {
+    const { status } = await callRoute(POST, {
+      request: makeRequest(url(), { body: { postType: 'review' } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'insert')[0][0]).not.toHaveProperty(
+      'job_role_code'
+    );
+  });
+
+  it('accepts null to clear the job role', async () => {
+    const { status } = await callRoute(PATCH_DETAIL, {
+      params: { id: 'p1' },
+      request: makeRequest(url('/p1'), { body: { jobRoleCode: null } }),
+    });
+
+    expect(status).toBe(200);
+    expect(argsOf(queriesFor(supabase, 'posts')[0], 'update')[0][0]).toEqual({
+      job_role_code: null,
+    });
+  });
+
+  it('validates the job role on edit as well', async () => {
+    const { status } = await callRoute(PATCH_DETAIL, {
+      params: { id: 'p1' },
+      request: makeRequest(url('/p1'), { body: { jobRoleCode: 'nope' } }),
+    });
+
+    expect(status).toBe(400);
+  });
+});
+
+describe('직무 코드를 응답에 함께 준다', () => {
+  it('hands back the raw code so an edit form can preselect it', async () => {
+    setSupabase(
+      createSupabaseStub({ tables: { v_posts: { data: ROW, error: null }, code_master: CODES } })
+    );
+
+    const { body } = await callRoute(GET_DETAIL, { params: { id: 'p1' } });
+
+    expect(body).toMatchObject({
+      jobRole: '프론트엔드',
+      jobRoleCode: 'fe',
+      educationLevelCode: 'bachelor',
+      difficultyCode: 'hard',
+      passResultCode: 'pass',
+      channelCode: 'online',
+    });
+  });
+
+  it('answers null for a post with no job role', async () => {
+    setSupabase(listStub([{ ...ROW, job_role_code: null }]));
+
+    const { body } = await callRoute(GET, { request: makeRequest(url()) });
+
+    expect(body.items[0]).toMatchObject({ jobRole: '', jobRoleCode: null });
+  });
+
+  it('narrows the list by job role', async () => {
+    await callRoute(GET, { request: makeRequest(url('?jobRole=be')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual(['job_role_code', 'be']);
+  });
+
+  it('does not filter when jobRole is absent', async () => {
+    await callRoute(GET, { request: makeRequest(url()) });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq').map(([column]) => column);
+    expect(eqs).not.toContain('job_role_code');
+  });
+});
+
+describe('난이도 · 합격 여부 필터', () => {
+  it('narrows the list by difficulty', async () => {
+    await callRoute(GET, { request: makeRequest(url('?difficulty=hard')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual([
+      'difficulty_code',
+      'hard',
+    ]);
+  });
+
+  it('narrows the list by pass result', async () => {
+    await callRoute(GET, { request: makeRequest(url('?passResult=pass')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual([
+      'pass_result_code',
+      'pass',
+    ]);
+  });
+
+  it('stacks both filters with the job role', async () => {
+    await callRoute(GET, {
+      request: makeRequest(url('?jobRole=fe&difficulty=normal&passResult=fail')),
+    });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq');
+    expect(eqs).toContainEqual(['job_role_code', 'fe']);
+    expect(eqs).toContainEqual(['difficulty_code', 'normal']);
+    expect(eqs).toContainEqual(['pass_result_code', 'fail']);
+  });
+
+  it('does not filter when neither is given', async () => {
+    await callRoute(GET, { request: makeRequest(url()) });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq').map(([column]) => column);
+    expect(eqs).not.toContain('difficulty_code');
+    expect(eqs).not.toContain('pass_result_code');
   });
 });

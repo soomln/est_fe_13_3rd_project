@@ -1,0 +1,146 @@
+@use '@/app/_variables.sass' as *
+
+.company_card_link
+  display: block
+  text-decoration: none
+  color: inherit
+
+.company_card
+  position: relative
+  display: flex
+  flex-direction: column
+  gap: 4px
+  box-sizing: border-box
+  width: 100%
+  height: 204px
+  padding: 20px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 10px
+  cursor: pointer
+
+  &:hover
+    border-color: $green
+
+    .company_card_logo
+      display: none
+
+    .company_card_name
+      gap: 8px
+
+    .company_card_stats
+      display: flex
+
+    .company_card_bookmark
+      display: block
+
+.company_card_selected
+  border-color: $green
+
+// 삭제모드 선택 체크박스
+.company_card_check
+  position: absolute
+  top: 12px
+  left: 12px
+  z-index: 1
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 20px
+  height: 20px
+  color: transparent
+  background-color: $white
+  border: 2px solid $stroke1
+  border-radius: 4px
+  cursor: pointer
+
+  input
+    position: absolute
+    width: 100%
+    height: 100%
+    margin: 0
+    opacity: 0
+    cursor: pointer
+
+  :global(.material-symbols-sharp)
+    font-size: 16px
+
+  &:has(input:checked)
+    color: $white
+    background-color: $green
+    border-color: $green
+
+// 북마크 리본. hover 상태에서만 보인다
+.company_card_bookmark
+  position: absolute
+  top: -8px
+  right: 16px
+  z-index: 1
+  display: none
+
+.company_card_logo
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 100%
+  height: 116px
+  padding: 12px 20px
+  background-color: $white
+  border: 1px solid $stroke3
+  border-radius: 5px
+  overflow: hidden
+
+  img
+    max-width: 100%
+    max-height: 100%
+    object-fit: contain
+
+.company_card_logo_dummy
+  width: 100%
+  height: 100%
+  background-color: $stroke3
+  border-radius: 4px
+
+.company_card_name
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 4px
+  padding: 0 10px
+  text-align: center
+
+.company_card_title
+  color: $black
+
+.company_card_industry
+  color: $gray
+
+.company_card_stats
+  display: none
+  flex-direction: column
+  gap: 4px
+  margin: 0
+
+.company_card_stat
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+  dt
+    color: $gray
+
+  dd
+    margin: 0
+    color: $black
+
+.company_card_rating
+  display: flex
+  align-items: center
+  gap: 5px
+
+  :global(.material-symbols-sharp)
+    font-size: 15px
+    color: $amber
+    font-variation-settings: 'FILL' 1

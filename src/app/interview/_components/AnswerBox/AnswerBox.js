@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import './AnswerBox.sass';
+import styles from './AnswerBox.module.sass';
 
 export default function AnswerBox({ onSend }) {
   const [answer, setAnswer] = useState('');
@@ -20,19 +20,19 @@ export default function AnswerBox({ onSend }) {
   };
 
   return (
-    <div className="answer_box">
+    <div className={styles.answer_box}>
       <textarea
-        className="placeholder font_body_l_r"
+        className={`${styles.placeholder} font_body_l_r`}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="답변을 입력해주세요."
       />
 
-      <div className="input_actions">
+      <div className={styles.input_actions}>
         <button
           type="button"
-          className="voice_button"
+          className={styles.voice_button}
           aria-label="음성 입력"
         >
           <span className="material-symbols-outlined">
@@ -42,7 +42,7 @@ export default function AnswerBox({ onSend }) {
 
         <button
           type="button"
-          className="send_button"
+          className={styles.send_button}
           aria-label="답변 보내기"
           onClick={handleSubmit}
         >

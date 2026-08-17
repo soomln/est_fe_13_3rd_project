@@ -11,6 +11,8 @@ export const PAGE_SIZE = {
   scrappedCompanies: 9,
   myPortfolios: 9,
   comments: 20,
+  homeCompanies: 3,
+  homePortfolios: 5,
 };
 
 export const SORT = {
@@ -22,11 +24,18 @@ export const SORT = {
 
 export const DOCUMENT_LIMIT = 10;
 
+export const SCORE_SCALE = { min: 1, max: 5, step: 1 };
+
 export const UPLOAD_LIMIT = {
   avatar: { maxBytes: 2 * 1024 * 1024, mimes: ['image/jpeg', 'image/png', 'image/webp'] },
   portfolio: {
     maxBytes: 5 * 1024 * 1024,
     maxCount: 15,
+    mimes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  },
+  document: {
+    maxBytes: 5 * 1024 * 1024,
+    maxCount: 10,
     mimes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   },
 };

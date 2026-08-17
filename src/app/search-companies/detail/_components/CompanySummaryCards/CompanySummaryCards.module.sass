@@ -1,0 +1,32 @@
+@use '@/app/_variables.sass' as *
+
+.summary
+  display: grid
+  grid-template-columns: repeat(5, 1fr)
+  gap: 70px
+  margin: 0
+
+.summary_card
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 6px
+  box-sizing: border-box
+  height: 96px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 10px
+
+  dt
+    color: $black
+
+.summary_value
+  display: flex
+  align-items: baseline
+  gap: 4px
+  margin: 0
+  color: $green
+
+.summary_unit
+  color: $gray

@@ -1,0 +1,9 @@
+{
+  "liveSassCompile.settings.excludeList": [
+    "/.vscode/**",
+    "/node_modules/**",
+    "**/node_modules/**",
+    "/src/**"
+  ],
+  "liveSassCompile.settings.generateMap": false
+}

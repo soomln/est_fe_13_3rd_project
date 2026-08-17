@@ -2,7 +2,6 @@ import { PAGE_SIZE, REACTION } from '../constants';
 import { apiFetch } from './_fetch';
 import {
   getMyReactionIds,
-  listMyReactionTargetIds,
   removeReactions,
   toggleReaction,
 } from './reactions';
@@ -11,6 +10,9 @@ export async function listPosts({
   type,
   companyId,
   companySlug,
+  jobRole,
+  difficulty,
+  passResult,
   q,
   sort = 'latest',
   page = 1,
@@ -21,6 +23,9 @@ export async function listPosts({
       type,
       companyId,
       companySlug,
+      jobRole,
+      difficulty,
+      passResult,
       q,
       sort,
       page,
@@ -75,19 +80,13 @@ export async function getMyPostReactions(postIds) {
   return { liked, scrapped };
 }
 
-export async function listMyScrappedPosts({ type, page = 1, pageSize = PAGE_SIZE.qbank } = {}) {
-  const ids = await listMyReactionTargetIds(...REACTION.postScrap);
-  if (ids.length === 0) return { items: [], total: 0, page, pageSize };
-
-  const { items } = await apiFetch('/api/posts', {
-    query: { ids: ids.join(','), type, pageSize: 50 },
-  });
-
-  const order = new Map(ids.map((id, index) => [id, index]));
-  items.sort((a, b) => order.get(a.id) - order.get(b.id));
-
-  const from = (page - 1) * pageSize;
-  return { items: items.slice(from, from + pageSize), total: items.length, page, pageSize };
+export async function listMyScrappedPosts({
+  type,
+  sort = 'latest',
+  page = 1,
+  pageSize = PAGE_SIZE.qbank,
+} = {}) {
+  return apiFetch('/api/posts', { query: { scrapped: 1, type, sort, page, pageSize } });
 }
 
 export async function removePostScraps(postIds) {

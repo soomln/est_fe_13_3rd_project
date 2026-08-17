@@ -1,0 +1,32 @@
+@use '@/app/_variables.sass' as *
+
+.select
+  position: relative
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  width: 130px
+  height: 42px
+  border: 1px solid $stroke1
+  border-radius: 5px
+
+.select_input
+  width: 100%
+  height: 100%
+  padding: 0 28px 0 10px
+  color: $stroke1
+  background: transparent
+  border: 0
+  outline: none
+  appearance: none
+  cursor: pointer
+
+  &:focus
+    color: $black
+
+.select_arrow
+  position: absolute
+  right: 8px
+  font-size: 18px
+  color: $stroke1
+  pointer-events: none

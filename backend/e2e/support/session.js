@@ -22,6 +22,10 @@ export function lookupUser(id) {
   return registry().get(id) ?? null;
 }
 
+export function registeredUsers() {
+  return [...registry().values()];
+}
+
 export function runWithUser(user, fn) {
   return storage().run({ user }, fn);
 }

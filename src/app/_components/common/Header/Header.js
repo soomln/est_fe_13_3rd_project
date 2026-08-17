@@ -20,7 +20,6 @@ function NavContainer() {
     { label: '포트폴리오 갤러리', href: '/portfolio' },
     { label: 'AI 면접 연습', href: '/interview' },
     { label: '기업 탐색', href: '/search-companies' },
-    { label: '커뮤니티', href: '/community' },
   ];
 
   return (
