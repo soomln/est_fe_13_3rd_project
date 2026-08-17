@@ -13,22 +13,40 @@
   .backdrop
     position: fixed
     inset: 0
-    background-color: rgba(0, 0, 0, 0.6)
+    background-color: rgba(0, 0, 0, .6)
     backdrop-filter: blur(4px)
 
   .modalBox
-    display: flex
-    gap: 1.5rem
     position: relative
     z-index: 10
-    height: 100%
     display: flex
+    gap: 1.5rem
+    height: 100%
 
     .contents_wrapper
       display: flex
       flex-direction: column
       width: 100%
-    
+
+      .tab_header
+        display: flex
+        justify-content: space-between
+        align-items: center
+        width: 100%
+
+        .edit_btn
+          flex-shrink: 0
+          padding: .5rem 1rem
+          border: none
+          border-radius: 5px
+          background: $black
+          color: $white
+          cursor: pointer
+          transition: .2s
+
+          &:hover
+            background: rgba(255, 255, 255, .05)
+
     .close_btn
       padding: 8px
       color: $gray
