@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
 
 import { uploadDocumentImages } from '@backend/lib/api/documents';
@@ -22,6 +22,42 @@ export default function EditorToolbar({ editor, documentId, onNotify }) {
   const [palette, setPalette] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef(null);
+  // 아래 줄로 내려갔는지. 그때는 맨 앞 구분선을 숨긴다
+  const [isWrapped, setIsWrapped] = useState(false);
+  const innerRef = useRef(null);
+  const restRef = useRef(null);
+
+  // 화면 폭만으로는 알 수 없다. 채팅 패널을 닫으면 좁아도 한 줄이 된다
+  const measure = useCallback(() => {
+    const first = innerRef.current?.firstElementChild;
+    const rest = restRef.current;
+    if (!first || !rest) return;
+
+    const wrapped = rest.offsetTop > first.offsetTop;
+    setIsWrapped((prev) => (prev === wrapped ? prev : wrapped));
+  }, []);
+
+  // 다시 그릴 때마다 확인한다. 채팅 패널은 0.2초에 걸쳐 열리므로 한 번 더 본다
+  useEffect(() => {
+    measure();
+    const timer = setTimeout(measure, 250);
+    return () => clearTimeout(timer);
+  });
+
+  // 창 크기를 바꾸거나 채팅 패널을 여닫으면 다시 그리지 않고 폭만 바뀐다
+  useEffect(() => {
+    const inner = innerRef.current;
+    if (!inner) return undefined;
+
+    window.addEventListener('resize', measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(inner);
+
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer.disconnect();
+    };
+  }, [measure, editor]);
 
   // 커서 자리 상태를 구독한다. 이게 없으면 버튼 눌린 표시와 글꼴·크기가 안 따라온다
   const state = useEditorState({
@@ -191,9 +227,9 @@ export default function EditorToolbar({ editor, documentId, onNotify }) {
 
   return (
     <div className={styles.toolbar}>
-      <AiToolMenu />
+      <div className={styles.toolbar_inner} ref={innerRef}>
+        <AiToolMenu />
 
-      <div className={styles.toolbar_inner}>
         <FontTools
           font={font}
           size={size}
@@ -201,34 +237,39 @@ export default function EditorToolbar({ editor, documentId, onNotify }) {
           onChangeSize={(value) => run((chain) => chain.setFontSize(`${value}px`))}
         />
 
-        {TOOL_GROUPS.map((group, index) => (
-          <Fragment key={index}>
-            <span className={styles.toolbar_divider} aria-hidden='true' />
+        <div
+          ref={restRef}
+          className={`${styles.toolbar_rest} ${isWrapped ? styles.toolbar_rest_wrapped : ''}`}
+        >
+          {TOOL_GROUPS.map((group, index) => (
+            <Fragment key={index}>
+              <span className={styles.toolbar_divider} aria-hidden='true' />
 
-            {group.map((tool) => (
-              <span key={tool.icon} className={styles.toolbar_tool}>
-                <ToolBtn
-                  icon={tool.icon}
-                  label={tool.label}
-                  isActive={tool.isActive}
-                  onClick={tool.onClick}
-                />
-
-                {tool.palette && (
-                  <ColorPicker
-                    isOpen={palette === tool.palette}
-                    current={tool.paletteValue}
-                    onPick={(color) => {
-                      setPalette(null);
-                      tool.onPick(color);
-                    }}
-                    onClose={() => setPalette(null)}
+              {group.map((tool) => (
+                <span key={tool.icon} className={styles.toolbar_tool}>
+                  <ToolBtn
+                    icon={tool.icon}
+                    label={tool.label}
+                    isActive={tool.isActive}
+                    onClick={tool.onClick}
                   />
-                )}
-              </span>
-            ))}
-          </Fragment>
-        ))}
+
+                  {tool.palette && (
+                    <ColorPicker
+                      isOpen={palette === tool.palette}
+                      current={tool.paletteValue}
+                      onPick={(color) => {
+                        setPalette(null);
+                        tool.onPick(color);
+                      }}
+                      onClose={() => setPalette(null)}
+                    />
+                  )}
+                </span>
+              ))}
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       <TableMenu editor={editor} isInTable={Boolean(state?.table)} />
