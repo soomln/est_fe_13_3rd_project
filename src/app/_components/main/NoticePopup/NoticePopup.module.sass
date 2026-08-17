@@ -11,6 +11,7 @@
   background: rgba(17, 17, 17, 0.5)
 
 .dialog
+  box-sizing: border-box
   position: relative
   display: flex
   flex-direction: column
@@ -65,6 +66,41 @@
 
   &:hover
     opacity: 0.8
+
+.team_list
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.team_member
+  display: flex
+  flex-direction: column
+  gap: 2px
+  padding: 10px 12px
+  background-color: $light_gray
+  border-radius: 12px
+
+.team_role
+  display: inline-flex
+  padding: 1px 8px
+  color: $green
+  background-color: $sub_green
+  border-radius: 999px
+  font-size: 11px
+
+.team_name
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 6px
+  color: $black
+
+.team_email
+  color: $gray
+
+.team_detail
+  color: $gray
+  line-height: 1.5
 
 .footerRow
   display: flex
