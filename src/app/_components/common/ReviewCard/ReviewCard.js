@@ -32,7 +32,7 @@ export default function ReviewCard({
     <div className={styles.review_card} onClick={onClick}>
       {showBookmark && (
         <div className={styles.bookmark_wrapper}>
-          <BookmarkBtn size={52} isActive={isBookmarked} onClick={onBookmarkClick} />
+          <BookmarkBtn size={60} isActive={isBookmarked} onClick={onBookmarkClick} />
         </div>
       )}
 

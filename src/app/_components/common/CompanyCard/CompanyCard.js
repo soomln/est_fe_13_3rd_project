@@ -40,7 +40,7 @@ export default function CompanyCard({
 
       {showBookmark && (
         <div className={styles.company_card_bookmark}>
-          <BookmarkBtn size={32} isActive={isBookmarked} onClick={onBookmarkClick} />
+          <BookmarkBtn size={40} isActive={isBookmarked} onClick={onBookmarkClick} />
         </div>
       )}
 
