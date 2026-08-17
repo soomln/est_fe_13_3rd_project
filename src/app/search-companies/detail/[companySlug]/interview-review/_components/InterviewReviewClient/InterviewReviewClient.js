@@ -88,6 +88,8 @@ export default function InterviewReviewClient({ companySlug }) {
           type: 'review',
           companySlug,
           jobRole: filters.jobRole,
+          difficulty: filters.difficulty,
+          passResult: filters.passResult,
           sort: filters.sort,
           page,
         });
@@ -109,14 +111,7 @@ export default function InterviewReviewClient({ companySlug }) {
     return () => {
       ignore = true;
     };
-  }, [companySlug, filters.jobRole, filters.sort, page]);
-
-  // 난이도 / 합격 여부는 목록 API 가 아직 지원하지 않아 받아온 페이지에서 거른다
-  const visibleReviews = reviews.filter(
-    (review) =>
-      (!filters.difficulty || review.difficultyCode === filters.difficulty) &&
-      (!filters.passResult || review.passResultCode === filters.passResult)
-  );
+  }, [companySlug, filters.jobRole, filters.difficulty, filters.passResult, filters.sort, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE.reviews));
 
@@ -165,15 +160,15 @@ export default function InterviewReviewClient({ companySlug }) {
 
       {status === 'error' && <p className={styles.review_state}>면접 후기를 불러오지 못했습니다.</p>}
 
-      {status !== 'error' && visibleReviews.length === 0 && (
+      {status !== 'error' && reviews.length === 0 && (
         <p className={styles.review_state}>
           {status === 'loading' ? '불러오는 중...' : '조건에 맞는 면접 후기가 없습니다.'}
         </p>
       )}
 
-      {visibleReviews.length > 0 && (
+      {reviews.length > 0 && (
         <ul className={styles.review_list}>
-          {visibleReviews.map((review) => (
+          {reviews.map((review) => (
             <ReviewCard
               key={review.id}
               href={`/search-companies/detail/${companySlug}/interview-review/${review.id}`}

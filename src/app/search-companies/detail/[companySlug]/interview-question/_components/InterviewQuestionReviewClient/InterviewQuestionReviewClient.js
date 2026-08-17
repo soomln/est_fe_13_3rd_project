@@ -59,6 +59,8 @@ export default function InterviewQuestionReviewClient({ companySlug }) {
           type: 'qbank',
           companySlug,
           jobRole: filters.jobRole,
+          difficulty: filters.difficulty,
+          passResult: filters.passResult,
           sort: filters.sort,
           page,
         });
@@ -80,14 +82,7 @@ export default function InterviewQuestionReviewClient({ companySlug }) {
     return () => {
       ignore = true;
     };
-  }, [companySlug, filters.jobRole, filters.sort, page]);
-
-  // 난이도 / 합격 여부는 목록 API 가 아직 지원하지 않아 받아온 페이지에서 거른다
-  const visibleQuestions = questions.filter(
-    (question) =>
-      (!filters.difficulty || question.difficultyCode === filters.difficulty) &&
-      (!filters.passResult || question.passResultCode === filters.passResult)
-  );
+  }, [companySlug, filters.jobRole, filters.difficulty, filters.passResult, filters.sort, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE.qbank));
 
@@ -134,15 +129,15 @@ export default function InterviewQuestionReviewClient({ companySlug }) {
 
       {status === 'error' && <p className={styles.question_state}>면접 족보를 불러오지 못했습니다.</p>}
 
-      {status !== 'error' && visibleQuestions.length === 0 && (
+      {status !== 'error' && questions.length === 0 && (
         <p className={styles.question_state}>
           {status === 'loading' ? '불러오는 중...' : '조건에 맞는 면접 족보가 없습니다.'}
         </p>
       )}
 
-      {visibleQuestions.length > 0 && (
+      {questions.length > 0 && (
         <ul className={styles.question_list}>
-          {visibleQuestions.map((question) => (
+          {questions.map((question) => (
             <ReviewCard
               key={question.id}
               href={`/search-companies/detail/${companySlug}/interview-question/${question.id}`}
