@@ -10,7 +10,7 @@ export default function SuggestionList({ suggestions, onSuggestionClick }) {
           className={styles.suggestion}
           onClick={() => onSuggestionClick(suggestion)}
         >
-          {suggestion}
+          <span className='font_body_s_b'>{suggestion}</span>
         </button>
       ))}
     </div>

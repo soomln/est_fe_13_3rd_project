@@ -231,8 +231,10 @@ export default function Upload() {
         <aside className={styles.ai_chat}>
           <AiChatPanel
             activeTab={activeTab}
+            item={item}
             messages={messages}
             setMessages={setMessages}
+            showToast={showToast}
             onClose={() => setIsChatOpen(false)}
           />
         </aside>

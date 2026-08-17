@@ -41,14 +41,11 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
       const { width, height } = await getImageSize(file);
       const imageUrl = await uploadPortfolioImage(portfolioID, file);
 
-      const parentWidth = uploadRef.current?.clientWidth || width;
-      const displayWidth = Math.min(width, parentWidth);
-
       updateBlock(block.id, {
         url: imageUrl,
         originalWidth: width,
         originalHeight: height,
-        width: displayWidth,
+        width: 100,
       });
     } catch (error) {
       console.error('이미지 업로드 실패:', error);
@@ -58,20 +55,21 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
   const startResize = (e) => {
     e.preventDefault();
 
-    if (!block.originalWidth) return;
+    const parentWidth = uploadRef.current?.clientWidth;
+
+    if (!parentWidth) return;
 
     const startX = e.clientX;
-    const startWidth = block.width || block.originalWidth;
-
-    const parentWidth = uploadRef.current?.clientWidth || block.originalWidth;
-    const maxWidth = Math.min(block.originalWidth, parentWidth);
-    const minWidth = Math.min(200, maxWidth);
+    const startWidthPercent = block.width ?? 100;
 
     const handlePointerMove = (e) => {
       const diff = e.clientX - startX;
-      const nextWidth = startWidth + diff;
 
-      const width = Math.max(minWidth, Math.min(nextWidth, maxWidth));
+      const diffPercent = (diff / parentWidth) * 100;
+
+      const nextWidth = startWidthPercent + diffPercent;
+
+      const width = Math.max(20, Math.min(nextWidth, 100));
 
       updateBlock(block.id, {
         width,
@@ -94,8 +92,7 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
           <div
             className={styles.preview}
             style={{
-              width: `${block.width || block.originalWidth}px`,
-              maxWidth: '100%',
+              width: `${block.width ?? 100}%`,
             }}
           >
             <Image
@@ -116,8 +113,9 @@ export default function ImageBlock({ block, isEditMode = false, portfolioID, upd
             )}
           </div>
         ) : (
-          <label>
+          <label className={styles.upload_label}>
             <div className='material-symbols-outlined'>add_photo_alternate</div>
+
             <div>이미지를 업로드해주세요.</div>
 
             <input type='file' accept='image/*' onChange={onUploadImage} />
