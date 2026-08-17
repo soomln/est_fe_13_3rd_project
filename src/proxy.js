@@ -3,10 +3,22 @@ import { NextResponse } from 'next/server';
 
 const PROTECTED_PATHS = ['/mypage'];
 
+const BACKEND_TEST_PATH = '/backend-test';
+
+const backendTestOpen =
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_BACKEND_TEST === '1';
+
 export async function proxy(request) {
+  const { pathname } = request.nextUrl;
+
+  const isBackendTest =
+    pathname === BACKEND_TEST_PATH || pathname.startsWith(`${BACKEND_TEST_PATH}/`);
+  if (isBackendTest && !backendTestOpen) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const { response, user } = await updateSession(request);
 
-  const { pathname } = request.nextUrl;
   const needsAuth = PROTECTED_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );

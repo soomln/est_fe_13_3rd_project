@@ -54,6 +54,11 @@ NEXT_PUBLIC_ALAN_CLIENT_ID=
 
 > `.env.local` 이 없어도 앱은 뜹니다. 다만 로그인/데이터 기능은 동작하지 않습니다.
 
+> ⚠️ **`/backend-test` 는 배포본에서 404 입니다.** 글을 만들고 지우는 버튼이 있는 개발용 페이지라
+> 프로덕션에서는 `src/proxy.js` 가 막습니다. 로컬(`npm run dev`)에서는 그냥 열립니다.
+> 배포본에서 확인해야 할 때만 Vercel 환경변수에 `ENABLE_BACKEND_TEST=1` 을 넣고 재배포하세요.
+> **끝나면 반드시 다시 지우거나 `0` 으로 바꿉니다.**
+
 ### Alan AI 환경변수 ⚠️ 각자 값이 다릅니다
 
 `NEXT_PUBLIC_ALAN_CLIENT_ID` 는 **사람마다 다르게** 배정돼 있습니다. 팀 단톡의 배정표에서
