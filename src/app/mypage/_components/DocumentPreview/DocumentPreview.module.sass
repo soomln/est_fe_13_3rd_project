@@ -1,5 +1,5 @@
 @use '@/app/_variables.sass' as *
-@use '@/app/_mixin.sass' as *
+@use '@/app/resume/editor/_lib/documentBody' as *
 
 .document_preview_overlay
   position: fixed
@@ -123,68 +123,14 @@
   &:hover
     opacity: 0.9
 
-// 문서 본문은 에디터가 만든 순수 HTML 이라 태그에 직접 스타일을 준다
+// 본문 태그 규칙은 에디터와 같은 것을 쓴다
 .document_preview_paper
   padding: 56px
-  color: $black
   background-color: $white
   border: 1px solid $stroke3
   border-radius: 8px
 
-  :global(h1)
-    +setFont(28px, 36px, 700)
-    margin-bottom: 8px
-
-  :global(h2)
-    +setFont(20px, 24px, 700)
-    margin: 32px 0 12px
-    padding-bottom: 8px
-    border-bottom: 1px solid $stroke3
-
-  :global(h3)
-    +setFont(16px, 20px, 600)
-    margin: 24px 0 8px
-
-  :global(p)
-    +setFont(16px, 26px, 400)
-    margin-bottom: 12px
-
-  :global(em)
-    color: $gray
-    font-style: normal
-
-  :global(ul),
-  :global(ol)
-    margin-bottom: 12px
-    padding-left: 20px
-    list-style: disc
-
-  :global(li)
-    +setFont(16px, 26px, 400)
-
-  :global(table)
-    width: 100%
-    margin-bottom: 12px
-    border-collapse: collapse
-
-  :global(td),
-  :global(th)
-    +setFont(16px, 26px, 400)
-    padding: 10px 12px
-    text-align: left
-    border: 1px solid $stroke3
-
-  :global(td:first-child)
-    width: 200px
-    color: $gray
-    background-color: $light_gray
-
-  :global(a)
-    color: $green
-    text-decoration: underline
-
-  :global(img)
-    max-width: 100%
+  +documentBody
 
 @keyframes preview_fade
   from

@@ -1,0 +1,36 @@
+@use '@/app/_variables.sass' as *
+@use '@/app/resume/editor/_lib/toolRow' as *
+
+.image_menu
+  +toolRow
+
+.image_menu_title
+  +toolRowTitle
+
+.image_menu_group
+  +toolRowGroup
+
+.image_menu_field
+  display: flex
+  align-items: center
+  gap: 4px
+  margin-right: 6px
+  color: $gray
+
+.image_menu_input
+  box-sizing: border-box
+  width: 56px
+  height: 30px
+  padding: 0 6px
+  color: $black
+  text-align: center
+  background-color: $white
+  border: 1px solid $gray
+  border-radius: 6px
+
+  &:focus
+    outline: none
+    border-color: $green
+
+.image_menu_unit
+  color: $gray

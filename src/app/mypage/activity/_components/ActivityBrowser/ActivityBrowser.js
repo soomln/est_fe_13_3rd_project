@@ -11,6 +11,7 @@ import CompanyCard from '@/app/mypage/_components/CompanyCard';
 import FilterChip from '@/app/mypage/_components/FilterChip';
 import QbankCard from '@/app/mypage/_components/QbankCard';
 import Toast from '@/app/mypage/_components/Toast';
+import ErrorState from '@/app/mypage/_components/ErrorState';
 import styles from './ActivityBrowser.module.sass';
 
 // 카드 높이가 달라서 탭마다 개수를 다르게 둔다
@@ -227,25 +228,9 @@ export default function ActivityBrowser() {
         )}
 
         {status === 'error' && (
-          <div className={styles.activity_browser_empty}>
-            <span
-              className={`material-symbols-sharp ${styles.activity_browser_empty_icon}`}
-              aria-hidden='true'
-            >
-              error
-            </span>
-            <p className={`${styles.activity_browser_empty_title} font_h4`}>불러오지 못했어요</p>
-            <p className={`${styles.activity_browser_empty_desc} font_body_m_r`}>
-              잠시 뒤 다시 시도해주세요.
-            </p>
-            <button
-              type='button'
-              className={`${styles.activity_browser_ghost_btn} ${styles.activity_browser_retry} font_body_l_b`}
-              onClick={() => setReloadKey((prev) => prev + 1)}
-            >
-              다시 불러오기
-            </button>
-          </div>
+          <ErrorState
+            onRetry={() => setReloadKey((prev) => prev + 1)}
+          />
         )}
 
         {status === 'ready' && items.length > 0 ? (

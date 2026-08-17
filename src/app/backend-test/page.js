@@ -710,6 +710,9 @@ export default function BackendTestPage() {
               <li>
                 태그 <b>{companies.filter((c) => c.tags?.length).length}</b>/{companies.length}
               </li>
+              <li>
+                규모 <b>{companies.filter((c) => c.size).length}</b>/{companies.length}
+              </li>
             </ul>
 
             <div style={S.grid}>
@@ -723,7 +726,9 @@ export default function BackendTestPage() {
                     )}
                   </span>
                   <span style={S.companyName}>{c.name}</span>
-                  <span style={S.companyMeta}>{c.category}</span>
+                  <span style={S.companyMeta}>
+                    {[c.category, c.size].filter(Boolean).join(' · ') || '-'}
+                  </span>
                   <span style={S.companyMeta}>
                     ★ {c.rating ?? '-'} · 관심 {c.favorite} · 후기 {c.review}
                   </span>
@@ -777,6 +782,7 @@ export default function BackendTestPage() {
                   {[
                     ['로고', detail.logo],
                     ['업종', detail.industry],
+                    ['규모', detail.size],
                     ['소개', detail.intro],
                     ['대표자', detail.ceo],
                     ['설립일', detail.founded],
@@ -1716,6 +1722,59 @@ export default function BackendTestPage() {
             }
           >
             면접 족보 작성
+          </button>
+
+          <button
+            type='button'
+            style={S.btn}
+            onClick={() =>
+              runDocAction('난이도 · 합격 여부 필터 확인', async () => {
+                const write = (difficultyCode, passResultCode) =>
+                  createPost({
+                    postType: 'review',
+                    companyId: companies[0]?.id ?? null,
+                    title: `필터 확인 ${difficultyCode}/${passResultCode}`,
+                    body: '필터 확인용',
+                    difficultyCode,
+                    passResultCode,
+                  });
+
+                const made = [
+                  await write('hard', 'pass'),
+                  await write('hard', 'fail'),
+                  await write('easy', 'fail'),
+                ];
+
+                try {
+                  const [hard, fail, both, all] = await Promise.all([
+                    listPosts({ type: 'review', difficulty: 'hard', pageSize: 50 }),
+                    listPosts({ type: 'review', passResult: 'fail', pageSize: 50 }),
+                    listPosts({
+                      type: 'review',
+                      difficulty: 'hard',
+                      passResult: 'fail',
+                      pageSize: 50,
+                    }),
+                    listPosts({ type: 'review', pageSize: 50 }),
+                  ]);
+
+                  const clean =
+                    hard.items.every((p) => p.difficultyCode === 'hard') &&
+                    fail.items.every((p) => p.passResultCode === 'fail') &&
+                    both.items.every(
+                      (p) => p.difficultyCode === 'hard' && p.passResultCode === 'fail'
+                    ) &&
+                    hard.total < all.total;
+
+                  return `${clean ? '정상' : '문제'} — 전체 ${all.total} · 어려움 ${hard.total} · 불합격 ${fail.total} · 둘 다 ${both.total}`;
+                } finally {
+                  await deletePosts(made.map((p) => p.id));
+                  await reloadPosts();
+                }
+              })
+            }
+          >
+            난이도 · 합격 여부 필터
           </button>
 
           <button

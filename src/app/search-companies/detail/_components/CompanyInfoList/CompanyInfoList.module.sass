@@ -1,0 +1,35 @@
+@use '@/app/_variables.sass' as *
+
+.info
+  display: flex
+  flex-direction: column
+  gap: 20px
+  color: $black
+
+.info_list
+  display: flex
+  flex-direction: column
+  gap: 10px
+  margin: 0
+
+.info_row
+  display: flex
+  gap: 20px
+
+  dt
+    flex-shrink: 0
+    width: 51px
+    color: $gray
+
+  dd
+    margin: 0
+    color: $black
+    word-break: break-all
+
+.info_link
+  color: $black
+  text-decoration: none
+
+  &:hover
+    color: $green
+    text-decoration: underline

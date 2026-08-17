@@ -1073,3 +1073,42 @@ describe('직무 코드를 응답에 함께 준다', () => {
     expect(eqs).not.toContain('job_role_code');
   });
 });
+
+describe('난이도 · 합격 여부 필터', () => {
+  it('narrows the list by difficulty', async () => {
+    await callRoute(GET, { request: makeRequest(url('?difficulty=hard')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual([
+      'difficulty_code',
+      'hard',
+    ]);
+  });
+
+  it('narrows the list by pass result', async () => {
+    await callRoute(GET, { request: makeRequest(url('?passResult=pass')) });
+
+    expect(argsOf(queriesFor(supabase, 'v_posts')[0], 'eq')).toContainEqual([
+      'pass_result_code',
+      'pass',
+    ]);
+  });
+
+  it('stacks both filters with the job role', async () => {
+    await callRoute(GET, {
+      request: makeRequest(url('?jobRole=fe&difficulty=normal&passResult=fail')),
+    });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq');
+    expect(eqs).toContainEqual(['job_role_code', 'fe']);
+    expect(eqs).toContainEqual(['difficulty_code', 'normal']);
+    expect(eqs).toContainEqual(['pass_result_code', 'fail']);
+  });
+
+  it('does not filter when neither is given', async () => {
+    await callRoute(GET, { request: makeRequest(url()) });
+
+    const eqs = argsOf(queriesFor(supabase, 'v_posts')[0], 'eq').map(([column]) => column);
+    expect(eqs).not.toContain('difficulty_code');
+    expect(eqs).not.toContain('pass_result_code');
+  });
+});
