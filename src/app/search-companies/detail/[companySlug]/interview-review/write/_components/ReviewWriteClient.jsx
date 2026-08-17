@@ -1,35 +1,14 @@
 "use client"
-import { useState, useEffect } from 'react';
 
-import CompanyHeader from '@/app/search-companies/detail/_components/CompanyHeader/CompanyHeader';
-import TabNavigation from '@/app/search-companies/detail/_components/TabNavigation/TabNavigation';
+import { useCompany } from '@/app/search-companies/detail/_components/CompanyShell';
 import ReviewWriteForm from './ReviewWriteForm';
-import { getCompany } from '@backend/lib/api/companies';
 
-export default function ReviewWriteClient({companySlug}){
-  const [company, setCompany] = useState(null);
-
-  useEffect(() => {
-  async function fetchData() {
-    const [companyData] = await Promise.all([
-      getCompany(companySlug),
-    ]);
-
-    setCompany(companyData);
-  }
-
-  fetchData();
-  }, [companySlug]);
+export default function ReviewWriteClient(){
+  const { company } = useCompany();
 
   if (!company) {
-    return <div>로딩 중...</div>;
+    return <p>불러오는 중...</p>;
   }
 
-  return(
-    <>
-      <CompanyHeader company={company}/>
-      <TabNavigation companySlug={companySlug}/>
-      <ReviewWriteForm company={company}/>
-    </>
-  );
+  return <ReviewWriteForm company={company} />;
 }

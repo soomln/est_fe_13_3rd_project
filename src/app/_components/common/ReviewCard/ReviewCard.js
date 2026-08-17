@@ -1,25 +1,27 @@
-import Bookmark from '../Bookmark';
+import BookmarkBtn from '../BookmarkBtn';
 import styles from './ReviewCard.module.sass';
 import Link from 'next/link';
 
-/**
- * [공통] 면접 후기/포스트 카드 컴포넌트
- */
+// 면접 후기 / 면접 족보 카드
 export default function ReviewCard({
   companyLogo = null,
   companyName = '',
   review,
   href,
-  onBookmarkClick, // 백엔드 구현 시 수정 필요
+  showBookmark = false,
+  isBookmarked,
+  onBookmarkClick,
   onClick,
 }) {
 
 
 const card = (
   <li key={review.id} className={styles.review_card} onClick={onClick}>
-      <div className={styles.bookmark_wrapper}>
-        <Bookmark size='large' onClick={onBookmarkClick} />
-      </div>
+      {showBookmark && (
+        <div className={styles.bookmark_wrapper}>
+          <BookmarkBtn size={60} isActive={isBookmarked} onClick={onBookmarkClick} />
+        </div>
+      )}
 
       <div className={styles.card_header}>
         {companyLogo && (

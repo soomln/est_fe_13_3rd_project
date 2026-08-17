@@ -1,13 +1,11 @@
 import ValueCard from "./ValueCard";
 import ServiceCard from "./ServiceCard";
 import BenefitItem from "./BenefitItem";
-import "./LeftContent.module.sass";
 
 export default function LeftContent({company}){
 
   return(
     <>
-    <h1>=========LeftContent==========</h1>
       <section>
         <h2>기업 소개</h2>
         <p>회사 소개 내용...</p>

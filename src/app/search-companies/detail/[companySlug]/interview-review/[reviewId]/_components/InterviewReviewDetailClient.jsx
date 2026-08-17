@@ -1,65 +1,50 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { getPost } from "@backend/lib/api/posts";
 import { listComments } from "@backend/lib/api/comments";
-import { getCompany } from "@backend/lib/api/companies";
-import CompanyHeader from "@/app/search-companies/detail/_components/CompanyHeader/CompanyHeader";
-import TabNavigation from "@/app/search-companies/detail/_components/TabNavigation/TabNavigation";
 import InterviewReviewDetailContent from "./InterviewReviewDetailContent";
-import { useRouter } from "next/navigation";
 
-
-
-export default function InterviewReviewDetailClient({companySlug,reviewId}){
-  const [company, setCompany] = useState(null);
+export default function InterviewReviewDetailClient({ companySlug, reviewId }) {
   const [review, setReview] = useState(null);
   const [comments, setComments] = useState([]);
 
-  const fetchComments = async () => {
-  const commentData = await listComments(reviewId);
-  setComments(commentData.items ?? []);
-  };
-  
-  useEffect(() => {
-  async function fetchData() {
-    const [companyData, reviewData, commentData] = await Promise.all([
-      getCompany(companySlug),
-      getPost(reviewId),
-      listComments(reviewId),
-    ]);
-
-    setCompany(companyData);
-    setReview(reviewData);
-    setComments(commentData.items ?? []);
-    await fetchComments();
-  }
-
-  fetchData();
-  }, [companySlug, reviewId]);
-
   const router = useRouter();
-  const handleBack = () => {
-  router.push(
-    `/search-companies/detail/${companySlug}/interview-review`
-  );
+
+  const fetchComments = async () => {
+    const commentData = await listComments(reviewId);
+    setComments(commentData.items ?? []);
   };
-  
-  if (!company || !review) {
-    return <div>로딩 중...</div>;
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [reviewData, commentData] = await Promise.all([getPost(reviewId), listComments(reviewId)]);
+
+        setReview(reviewData);
+        setComments(commentData.items ?? []);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchData();
+  }, [reviewId]);
+
+  const handleBack = () => {
+    router.push(`/search-companies/detail/${companySlug}/interview-review`);
+  };
+
+  if (!review) {
+    return <p>불러오는 중...</p>;
   }
 
-
-  return(
-  <>
-    <CompanyHeader company={company} />
-    <TabNavigation companySlug={companySlug}/>
-    
-    <InterviewReviewDetailContent 
-    review={review} 
-    comments={comments} 
-    reloadComments={fetchComments}
-    handleBack={handleBack}
+  return (
+    <InterviewReviewDetailContent
+      review={review}
+      comments={comments}
+      reloadComments={fetchComments}
+      handleBack={handleBack}
     />
-  </>
   );
 }
