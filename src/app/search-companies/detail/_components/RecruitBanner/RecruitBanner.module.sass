@@ -1,0 +1,37 @@
+@use '@/app/_variables.sass' as *
+
+.banner
+  display: flex
+  align-items: center
+  gap: 10px
+  box-sizing: border-box
+  padding: 10px 20px
+  background-color: $light_yellow
+  border-radius: 5px
+
+.banner_text
+  display: flex
+  flex-direction: column
+  gap: 10px
+  color: $black
+
+.banner_link
+  display: flex
+  align-items: center
+  justify-content: center
+  box-sizing: border-box
+  width: 133px
+  height: 30px
+  color: $white
+  background-color: $black
+  border-radius: 3px
+  text-decoration: none
+
+  &:hover
+    background-color: $gray
+
+.banner_image
+  flex-shrink: 0
+  width: 130px
+  height: 116px
+  object-fit: contain

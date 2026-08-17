@@ -1,9 +1,19 @@
-.tab 
-  color: #666
+@use '@/app/_variables.sass' as *
+
+.tabs
+  display: flex
+  gap: 30px
+  padding-left: 30px
+
+.tab
+  padding-bottom: 6px
+  color: $black
   text-decoration: none
+  border-bottom: 2px solid transparent
 
+  &:hover
+    color: $green
 
-.active 
-  color: #3b82f6
-  font-weight: 700
-  border-bottom: 2px solid #3b82f6
+.tab_active
+  color: $green
+  border-bottom-color: $green
