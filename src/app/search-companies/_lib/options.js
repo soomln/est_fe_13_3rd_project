@@ -13,8 +13,15 @@ export const FILTER_VISIBLE_COUNT = 3;
 export const SORT_OPTIONS = [
   { value: 'latest', label: '최신순' },
   { value: 'popular', label: '인기순' },
+  { value: 'comments', label: '댓글순' },
   { value: 'views', label: '조회순' },
 ];
+
+// 파이차트 3분할 색상. 디자인은 와이어프레임 색을 20% 투명도로 썼기에 브랜드 색으로 치환했다
+export const CHART_COLORS = ['#E7D7FE', '#CCEDD8', '#FFEBCC'];
+
+// 통계 패널 집계에 쓰는 후기 조회 개수 (목록 API 의 pageSize 상한)
+export const STATS_SAMPLE_SIZE = 50;
 
 export const CHANNEL_ETC_CODE = 'etc';
 

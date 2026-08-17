@@ -1,0 +1,34 @@
+@use '@/app/_variables.sass' as *
+
+.legend
+  display: flex
+  align-items: center
+  box-sizing: border-box
+  padding: 20px 10px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 5px
+
+.legend_inner
+  display: flex
+  align-items: center
+  justify-content: space-between
+  width: 720px
+  max-width: 100%
+
+.legend_item
+  display: flex
+  align-items: center
+  gap: 10px
+
+.legend_icon
+  font-size: 25px
+  color: $gray
+
+.legend_value
+  padding-right: 10px
+  color: $black
+  border-right: 1px solid $stroke2
+
+.legend_label
+  color: $black
