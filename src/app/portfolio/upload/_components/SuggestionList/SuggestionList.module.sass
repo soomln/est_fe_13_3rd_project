@@ -1,0 +1,23 @@
+@use '@/app/_variables' as *
+
+.suggestions
+  display: flex
+  flex-wrap: wrap
+  gap: .4rem
+  margin-bottom: .6rem
+
+.suggestion
+  padding: .35rem .65rem
+  border: 1px solid $green
+  border-radius: 999px
+  background: $sub_green
+  color: $green
+  font-size: 11px
+  line-height: 1.4
+  white-space: nowrap
+  cursor: pointer
+  transition: .2s
+
+  &:hover
+    background: $green
+    color: $white
