@@ -11,7 +11,7 @@ export default function QbankCard({ qbank, isSelected = false, onToggle }) {
     route,
     jobInfo,
     createdAt,
-    questions,
+    questionList,
     bookmark,
     comment,
   } = qbank;
@@ -74,7 +74,7 @@ export default function QbankCard({ qbank, isSelected = false, onToggle }) {
       </div>
 
       <ol className={styles.qbank_card_questions}>
-        {questions.map((question) => (
+        {(questionList ?? []).map((question) => (
           <li key={question} className='font_body_m_r'>
             {question}
           </li>
