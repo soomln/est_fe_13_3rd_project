@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import styles from './AiChatBubble.module.sass';
 
-export default function AiChatBubble({ message }) {
+export default function AiChatBubble({ message, time }) {
   const displayMessage =
     message ||
     '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.';
@@ -30,7 +30,7 @@ export default function AiChatBubble({ message }) {
           </div>
 
           <span className={`${styles.message_time} font_caption_r`}>
-            01:43
+            {time}
           </span>
         </div>
       </div>
