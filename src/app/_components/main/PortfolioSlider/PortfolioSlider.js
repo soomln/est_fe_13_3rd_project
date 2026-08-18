@@ -1,41 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectCards, Navigation, Pagination, Parallax } from 'swiper/modules';
+import { EffectCards, Navigation, Pagination } from 'swiper/modules';
 import { listPortfolios } from '@backend/lib/api/portfolio';
 import { PAGE_SIZE } from '@backend/lib/constants';
-import { formatDate } from '@/utils/formatDate';
+import PortfolioCard from '@/app/_components/common/PortfolioCard';
 
 import 'swiper/css';
 import 'swiper/css/effect-cards';
 import 'swiper/css/pagination';
-import 'swiper/css/parallax';
 
 import styles from './PortfolioSlider.module.sass';
-
-const CATEGORY_LABELS = {
-  web: '웹',
-  app: '앱',
-};
-
-const FALLBACK_COVER = '/images/main/portfolio-showcase.png';
-
-function toSlide(item) {
-  return {
-    id: item.id,
-    cover: item.thumbnailUrl || FALLBACK_COVER,
-    title: item.title,
-    author: [item.authorName, item.authorRole].filter(Boolean).join(' · '),
-    badge: CATEGORY_LABELS[item.category] ?? '',
-    date: formatDate(item.createdAt),
-  };
-}
 
 export default function PortfolioSlider() {
   const prevRef = useRef(null);
   const nextRef = useRef(null);
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState('loading');
 
@@ -45,7 +27,7 @@ export default function PortfolioSlider() {
     listPortfolios({ sort: 'latest', pageSize: PAGE_SIZE.homePortfolios })
       .then(({ items: fetched }) => {
         if (cancelled) return;
-        setItems(fetched.map(toSlide));
+        setItems(fetched);
         setStatus('ready');
       })
       .catch(() => {
@@ -56,6 +38,12 @@ export default function PortfolioSlider() {
       cancelled = true;
     };
   }, []);
+
+  const updateReactionCount = (portfolioId, field, amount) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === portfolioId ? { ...item, [field]: item[field] + amount } : item)),
+    );
+  };
 
   if (status === 'loading') return null;
 
@@ -78,9 +66,8 @@ export default function PortfolioSlider() {
 
       <Swiper
         className={styles.swiper}
-        modules={[EffectCards, Navigation, Pagination, Parallax]}
+        modules={[EffectCards, Navigation, Pagination]}
         effect='cards'
-        parallax
         grabCursor
         cardsEffect={{ perSlideOffset: 8, perSlideRotate: 2, slideShadows: false }}
         navigation
@@ -91,31 +78,12 @@ export default function PortfolioSlider() {
         pagination={{ clickable: true, bulletClass: styles.dot, bulletActiveClass: styles.dot_active }}
       >
         {items.map((item) => (
-          <SwiperSlide key={item.id} className={styles.preview_card}>
-            <div className={styles.preview_cover} data-swiper-parallax='-18%'>
-              <Image
-                src={item.cover}
-                alt={`${item.title} 미리보기`}
-                fill
-                sizes='(max-width: 1439px) 100vw, 585px'
-                className={styles.preview_cover_img}
-              />
-            </div>
-
-            <div className={styles.preview_meta}>
-              <div className={styles.preview_meta_top} data-swiper-parallax='-60'>
-                <div>
-                  <p className={`font_h4 ${styles.preview_name}`}>{item.title}</p>
-                  <p className={`font_caption_b ${styles.preview_author}`}>{item.author}</p>
-                </div>
-                {item.badge && <span className={`font_caption_b ${styles.preview_badge}`}>{item.badge}</span>}
-              </div>
-
-              <div className={styles.preview_meta_bottom} data-swiper-parallax='-30'>
-                <div className={styles.preview_tags} />
-                <span className={`font_caption_b ${styles.preview_date}`}>{item.date}</span>
-              </div>
-            </div>
+          <SwiperSlide key={item.id}>
+            <PortfolioCard
+              item={item}
+              onClick={() => router.push(`/portfolio?modal=${item.id}`)}
+              updateReactionCount={updateReactionCount}
+            />
           </SwiperSlide>
         ))}
       </Swiper>

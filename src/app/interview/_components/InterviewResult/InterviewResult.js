@@ -9,8 +9,6 @@ export default function InterviewResult({
   onFeedback,
   onRetry,
 }) {
-  // 최종 점수는 화면에 실제로 표시되는 5개 세부 점수(scores)를 그대로 합산한 값이어야 하므로,
-  // 별도로 전달된 totalScore를 신뢰하지 않고 이 자리에서 직접 계산한다.
   const totalScore = sumSubScores(scores);
 
   return (

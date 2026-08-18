@@ -2,6 +2,9 @@
 @use '@/app/_mixin.sass' as *
 
 .header
+  position: sticky
+  top: 0
+  z-index: 100
   background: $white
   width: 100%
   background-color: $white
@@ -12,7 +15,6 @@
   justify-content: center
   box-sizing: border-box
   width: 100%
-  // Figma 실측: pt-21px / pb-22px (비대칭)
   padding: 21px 0 22px
 
 .frame

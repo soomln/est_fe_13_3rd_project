@@ -216,6 +216,7 @@ export default function PortfolioBrowser() {
         isOpen={Boolean(previewId)}
         itemID={previewId}
         onClose={() => setPreviewId(null)}
+        isMyPage={true}
       />
 
       {isDeleteMode && (
@@ -262,9 +263,7 @@ export default function PortfolioBrowser() {
           </p>
         )}
 
-        {status === 'error' && (
-          <ErrorState onRetry={() => setReloadKey((prev) => prev + 1)} />
-        )}
+        {status === 'error' && <ErrorState onRetry={() => setReloadKey((prev) => prev + 1)} />}
 
         {status === 'ready' && items.length > 0 ? (
           <ul className={styles.portfolio_browser_grid}>

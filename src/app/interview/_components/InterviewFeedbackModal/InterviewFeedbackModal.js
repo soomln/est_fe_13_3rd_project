@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import styles from './InterviewFeedbackModal.module.sass';
+import { getMyScrappedQaIds, toggleQaScrap } from '@backend/lib/api/interview';
 
 export default function InterviewFeedbackModal({
   results = [],
@@ -12,21 +13,55 @@ export default function InterviewFeedbackModal({
     useState(results[0]?.category || null);
   const [bookmarkedQuestions, setBookmarkedQuestions] =
     useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const qaIds = results.map((r) => r.qaId).filter(Boolean);
+    if (qaIds.length === 0) return undefined;
+
+    getMyScrappedQaIds(qaIds)
+      .then((scrappedIds) => {
+        if (cancelled) return;
+        const bookmarked = results
+          .filter((r) => r.qaId && scrappedIds.has(r.qaId))
+          .map((r) => r.category);
+        setBookmarkedQuestions(bookmarked);
+      })
+      .catch((err) => {
+        console.error('북마크 상태 조회 실패:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [results]);
+
   const handleToggle = (id) => {
     setOpenQuestionId((prev) =>
       prev === id ? null : id,
     );
   };
-  const handleBookmark = (id) => {
+  const handleBookmark = async (item) => {
+    const wasBookmarked = bookmarkedQuestions.includes(item.id);
     setBookmarkedQuestions((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id],
+      wasBookmarked ? prev.filter((v) => v !== item.id) : [...prev, item.id],
     );
+
+    if (!item.qaId) return;
+
+    try {
+      await toggleQaScrap(item.qaId);
+    } catch (err) {
+      console.error('질문 스크랩 실패:', err);
+      setBookmarkedQuestions((prev) =>
+        wasBookmarked ? [...prev, item.id] : prev.filter((v) => v !== item.id),
+      );
+    }
   };
   const feedbackList = results.map(
     (item) => ({
       id: item.category,
+      qaId: item.qaId ?? null,
       title: item.title,
       question: item.question,
       answer: item.answer || '',
@@ -53,6 +88,10 @@ export default function InterviewFeedbackModal({
             <p className={`${styles.modal_description} font_body_s_r`}>
               원하는 질문에 북마크를 클릭하면, 마이페이지에 두고
               언제든지 다시 볼 수 있어요!
+            </p>
+            <p className={`${styles.modal_notice} font_body_s_r`}>
+              질문별 점수는 각 10점 만점이에요. 100점 만점인 최종 점수와는
+              별도의 기준으로 채점돼요.
             </p>
           </div>
           <button
@@ -93,7 +132,7 @@ export default function InterviewFeedbackModal({
                     </span>
                     {typeof item.score === 'number' && (
                       <span className={`${styles.question_score} font_body_m_b`}>
-                        {item.score}점
+                        {item.score}점 <span className={styles.score_max}>/ 10점</span>
                       </span>
                     )}
                     <span className="material-symbols-outlined">
@@ -110,7 +149,7 @@ export default function InterviewFeedbackModal({
                         : ''
                     }`}
                     onClick={() =>
-                      handleBookmark(item.id)
+                      handleBookmark(item)
                     }
                     aria-label="북마크"
                   >
@@ -126,7 +165,7 @@ export default function InterviewFeedbackModal({
                   <div className={styles.feedback_detail}>
                     <section>
                       <h3 className="font_body_l_b">
-                        {item.title} 질문
+                        AI면접관 질문
                       </h3>
                       <p className={`font_body_l_r ${styles.question_text}`}>
                         {item.question}

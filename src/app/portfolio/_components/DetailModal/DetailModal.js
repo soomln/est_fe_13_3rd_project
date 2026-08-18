@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import useToast from '@/hooks/useToast';
 
 import ToastMessage from '../ToastMessage';
@@ -13,10 +14,12 @@ import { getPortfolio } from '@backend/lib/api/portfolio';
 
 import styles from './DetailModal.module.sass';
 
-export default function DetailModal({ isOpen, onClose, itemID, updateReactionCount }) {
+export default function DetailModal({ isOpen, onClose, itemID, updateReactionCount, isMyPage = false }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [item, setItem] = useState(null);
+
+  const router = useRouter();
 
   const { isToastVisible, toastMessage, showToast } = useToast();
 
@@ -40,6 +43,10 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
 
     getItem();
   }, [itemID]);
+
+  const onEdit = () => {
+    router.push(`/portfolio/upload?id=${item.id}`);
+  };
 
   const handleUpdateReactionCount = (portfolioId, field, amount) => {
     // page.js의 목록 데이터 갱신
@@ -66,7 +73,15 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
 
       <div className={`container ${styles.modalBox}`}>
         <div className={styles.contents_wrapper}>
-          <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
+          <div className={styles.tab_header}>
+            <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
+
+            {isMyPage && (
+              <button type='button' className={`${styles.edit_btn} font_body_m_b`} onClick={onEdit}>
+                수정하기
+              </button>
+            )}
+          </div>
 
           <Contents item={item} activeTab={activeTab} contentsRef={contentsRef} />
         </div>
