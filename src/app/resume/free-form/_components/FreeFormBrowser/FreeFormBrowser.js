@@ -154,6 +154,8 @@ export default function FreeFormBrowser() {
               type={item.docType === 'resume' ? '이력서' : '자기소개서'}
               title={item.title}
               views={item.views}
+              thumbnailUrl={item.thumbnail}
+              isBookmarked={item.bookmarkedByMe}
             />
           ))}
         </ul>

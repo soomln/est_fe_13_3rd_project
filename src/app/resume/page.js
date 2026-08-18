@@ -7,7 +7,6 @@ import Footer from '@/app/_components/common/Footer';
 import StepCard from '@/app/resume/_components/StepCard';
 import HeroStat from '@/app/resume/_components/HeroStat';
 import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
-import NextPortfolios from '@/app/resume/_components/NextPortfolios';
 import MyDocsLink from '@/app/resume/_components/MyDocsLink';
 import FunctionBox from '@/app/resume/_components/FunctionBox';
 import RankBox from '@/app/resume/_components/RankBox';
@@ -59,7 +58,17 @@ const AI_RANKS = [
   { rank: 5, label: '🌱 입사 후 포부', levelText: '보통', tone: 'normal' },
 ];
 
-const NEXT_TEAMS = ['React 스터디원 모집', '사이드 프로젝트 팀원', '면접 스터디 3인'];
+const NEXT_COMPANIES = [
+  { name: '토스', tag: '채용중' },
+  { name: '당근', tag: '채용중' },
+  { name: '우아한형제들', tag: '후기 24' },
+];
+
+const NEXT_PORTFOLIOS = [
+  { name: '개발자 포트폴리오', like: 128 },
+  { name: '커머스 플랫폼 리뉴얼', like: 96 },
+  { name: '사내 대시보드 개편', like: 74 },
+];
 
 const CTA_POINTS = ['무료 양식 12종', '설치 없이 웹에서', '평균 40분 완성'];
 
@@ -321,28 +330,38 @@ export default function Resume() {
                   </>
                 }
               >
-                <NextPortfolios />
+                {NEXT_PORTFOLIOS.map((item) => (
+                  <div key={item.name} className={styles.next_mock_project}>
+                    <p className={styles.next_mock_project_name}>{item.name}</p>
+                    <span className={styles.next_mock_like}>
+                      <span className='material-symbols-sharp' aria-hidden='true'>
+                        favorite
+                      </span>
+                      {item.like}
+                    </span>
+                  </div>
+                ))}
               </LinkCard>
 
               <LinkCard
                 tone='purple'
-                icon='👥'
-                label='함께 성장'
-                title='팀 매칭 · 커뮤니티'
-                btnLabel='팀원 · 정보 찾기'
-                btnHref='/community'
+                icon='🏢'
+                label='어디에 지원할까'
+                title='나에게 맞는 기업 탐색'
+                btnLabel='기업 둘러보기'
+                btnHref='/search-companies'
                 desc={
                   <>
-                    스터디 · 사이드 프로젝트 팀원을 찾거나,
+                    관심 기업의 채용 공고를 모아보고,
                     <br />
-                    실제 <b>면접 후기</b>와 <b>기업 정보</b>를 개발자들과 나눠요
+                    먼저 다녀온 개발자들의 <b>면접 후기</b>와 <b>질문 족보</b>를 확인해요
                   </>
                 }
               >
-                {NEXT_TEAMS.map((name) => (
-                  <div key={name} className={styles.next_mock_project}>
-                    <p className={styles.next_mock_project_name}>{name}</p>
-                    <span className={styles.next_mock_project_tag}>모집중</span>
+                {NEXT_COMPANIES.map((company) => (
+                  <div key={company.name} className={styles.next_mock_project}>
+                    <p className={styles.next_mock_project_name}>{company.name}</p>
+                    <span className={styles.next_mock_project_tag}>{company.tag}</span>
                   </div>
                 ))}
               </LinkCard>
