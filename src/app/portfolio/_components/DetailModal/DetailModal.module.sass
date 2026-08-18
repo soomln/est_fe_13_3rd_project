@@ -3,31 +3,34 @@
 .overlay
   position: fixed
   inset: 0
-  z-index: 50
+  z-index: 9999
   display: flex
   flex-direction: column
   justify-content: end
   align-items: center
-  padding: 4rem 4rem 0 4rem
+  padding: 4rem 4rem 0
+  overflow: hidden
 
   .backdrop
-    position: fixed
+    position: absolute
     inset: 0
+    z-index: 0
     background-color: rgba(0, 0, 0, .6)
     backdrop-filter: blur(4px)
 
   .modalBox
     position: relative
-    z-index: 10
+    z-index: 1
     display: flex
     gap: 1.5rem
+    width: 100%
     height: 100%
 
     .contents_wrapper
       display: flex
       flex-direction: column
-      padding-top: 5rem
       width: 100%
+      min-width: 0
 
       .tab_header
         display: flex
@@ -49,5 +52,7 @@
             background: rgba(255, 255, 255, .05)
 
     .close_btn
+      flex-shrink: 0
       padding: 8px
       color: $gray
+      cursor: pointer
