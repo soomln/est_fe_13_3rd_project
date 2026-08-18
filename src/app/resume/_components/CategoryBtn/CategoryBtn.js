@@ -9,7 +9,10 @@ export default function CategoryBtn({ label, count, isActive = false, onClick })
       onClick={onClick}
     >
       {label}
-      <span className={styles.category_btn_count}>{` · ${count}`}</span>
+      {/* 개수를 아직 못 받았을 때는 숫자를 감춘다 */}
+      {count === undefined ? null : (
+        <span className={styles.category_btn_count}>{` · ${count}`}</span>
+      )}
     </button>
   );
 }

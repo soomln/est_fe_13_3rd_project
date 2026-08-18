@@ -61,6 +61,8 @@ export default function NoticePopup() {
   const [hideToday, setHideToday] = useState(false);
 
   useEffect(() => {
+    // 서버 렌더링 시점엔 localStorage가 없어서, 마운트 후 클라이언트에서만 노출 여부를 판단해야 함
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (window.localStorage.getItem(STORAGE_KEY) !== todayKey()) setOpen(true);
   }, []);
 
@@ -89,13 +91,8 @@ export default function NoticePopup() {
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) handleClose();
-      }}
-    >
-      <div className={styles.dialog} role='dialog' aria-modal='true' aria-label='공지사항'>
+    <div className={styles.overlay}>
+      <div className={styles.dialog} role='dialog' aria-label='공지사항'>
         <span className={`font_caption_b ${styles.badge}`}>NOTICE</span>
 
         <h2 className={`font_h3 ${styles.title}`}>{NOTICE.title}</h2>

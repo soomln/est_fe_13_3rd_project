@@ -221,7 +221,7 @@ export default function useCoach({ editor } = {}) {
         ? `\n${result.skipped.join(' · ')} 은(는) 이미 쓰신 내용이 있어서 두었어요.`
         : '';
       say(
-        `${result.filled.join(' · ')} 을(를) 채웠어요.${left}\n마음에 안 들면 되돌리기(Ctrl+Z) 한 번으로 되돌릴 수 있어요.`
+        `${result.filled.join(' · ')} 을(를) 채웠어요.${left}\n이전으로 돌리고 싶다면 Ctrl+Z로 되돌릴 수 있어요.\n더 필요한 게 있거나 궁금한 점이 있다면 말씀해주세요.`
       );
     },
     [editor, profile, say]
