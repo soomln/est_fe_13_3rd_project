@@ -65,8 +65,6 @@ export default function Portpolio() {
 
         const mappedItems = portfolioItems.map((item) => ({
           ...item,
-
-          // 서버에서 이미 내려주는 값 사용
           isLiked: item.likedByMe ?? false,
           isBookmarked: item.bookmarkedByMe ?? false,
         }));
@@ -84,20 +82,17 @@ export default function Portpolio() {
             nextItems = [...prev, ...newItems];
           }
 
-          // 현재까지 불러온 개수가 전체 개수보다 적으면 다음 페이지 존재
           setHasMore(nextItems.length < (data.total ?? 0));
 
           return nextItems;
         });
 
-        // 상단 Swiper는 최초 전체 최신순에서만 랜덤 6개 저장
         if (page === 1 && selectedCategory === 'all' && selectedSort === 'latest') {
           setBestPortfolioItems([...mappedItems].sort(() => Math.random() - 0.5).slice(0, 6));
         }
       } catch (error) {
         if (!isCancelled) {
           console.error(`포트폴리오 ${page}페이지 조회 실패:`, error);
-
           setHasMore(false);
         }
       } finally {
@@ -114,7 +109,6 @@ export default function Portpolio() {
     };
   }, [page, selectedCategory, selectedSort]);
 
-  // 무한 스크롤
   useEffect(() => {
     const target = loadMoreRef.current;
 
@@ -128,7 +122,6 @@ export default function Portpolio() {
           return;
         }
 
-        // 같은 요소에서 page가 여러 번 증가하는 것 방지
         observer.unobserve(entry.target);
 
         setPage((prev) => prev + 1);
@@ -187,7 +180,6 @@ export default function Portpolio() {
     params.delete('modal');
 
     const queryString = params.toString();
-
     const cleanUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
     router.replace(cleanUrl, {
@@ -224,7 +216,6 @@ export default function Portpolio() {
       }),
     );
 
-    // Swiper 카드도 같이 갱신
     setBestPortfolioItems((prev) =>
       prev.map((item) => {
         if (item.id !== portfolioId) {
@@ -330,17 +321,17 @@ export default function Portpolio() {
           </section>
         </div>
 
-        <DetailModal
-          isOpen={isModalOpen}
-          onClose={onCloseDetail}
-          itemID={selectedItemID}
-          isLiked={selectedItem?.isLiked ?? false}
-          isBookmarked={selectedItem?.isBookmarked ?? false}
-          updateReaction={updateReaction}
-        />
-
         <Footer />
       </main>
+
+      <DetailModal
+        isOpen={isModalOpen}
+        onClose={onCloseDetail}
+        itemID={selectedItemID}
+        isLiked={selectedItem?.isLiked ?? false}
+        isBookmarked={selectedItem?.isBookmarked ?? false}
+        updateReaction={updateReaction}
+      />
     </>
   );
 }
