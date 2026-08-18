@@ -7,6 +7,8 @@ import Footer from '@/app/_components/common/Footer';
 import StepCard from '@/app/resume/_components/StepCard';
 import HeroStat from '@/app/resume/_components/HeroStat';
 import TemplateBrowser from '@/app/resume/_components/TemplateBrowser';
+import NextPortfolios from '@/app/resume/_components/NextPortfolios';
+import MyDocsLink from '@/app/resume/_components/MyDocsLink';
 import FunctionBox from '@/app/resume/_components/FunctionBox';
 import RankBox from '@/app/resume/_components/RankBox';
 import LinkCard from '@/app/resume/_components/LinkCard';
@@ -42,16 +44,6 @@ const HERO_STATS = [
   { value: '8,500+', label: '작성 완료' },
 ];
 
-// 주의: supabase 연결 전까지 쓰는 임시 목록
-const FREE_TEMPLATES = [
-  { id: 1, type: '이력서', title: '이력서', views: 3290 },
-  { id: 2, type: '이력서', title: '이력서', views: 3290 },
-  { id: 3, type: '자기소개서', title: '자기소개서', views: 3290 },
-  { id: 4, type: '이력서', title: '이력서', views: 3290 },
-  { id: 5, type: '자기소개서', title: '자기소개서', views: 3290 },
-  { id: 6, type: '이력서', title: '이력서', views: 3290 },
-];
-
 const EDITOR_FUNCTIONS = [
   '설치 없이 브라우저에서 편집',
   'AI에게 물어보며 작성',
@@ -67,13 +59,6 @@ const AI_RANKS = [
   { rank: 5, label: '🌱 입사 후 포부', levelText: '보통', tone: 'normal' },
 ];
 
-// 주의: supabase 연결 전까지 쓰는 임시 목록
-const NEXT_PORTFOLIOS = [
-  { name: '이스트캠프 리뉴얼', likes: 128 },
-  { name: 'Rounz 리뉴얼', likes: 94 },
-  { name: 'CallBack 팀 프로젝트', likes: 76 },
-];
-
 const NEXT_TEAMS = ['React 스터디원 모집', '사이드 프로젝트 팀원', '면접 스터디 3인'];
 
 const CTA_POINTS = ['무료 양식 12종', '설치 없이 웹에서', '평균 40분 완성'];
@@ -86,7 +71,12 @@ export default function Resume() {
         <section className={styles.hero}>
           <div className={`container ${styles.hero_inner}`}>
             <div className={styles.hero_intro}>
-              <span className={`${styles.hero_badge} font_body_s_b`}>무료 양식 · 브라우저 편집 · AI 연습</span>
+              <span className={`${styles.hero_badge} font_body_s_b`}>
+                <span className='material-symbols-rounded' aria-hidden='true'>
+                  description
+                </span>
+                무료 양식 · 브라우저 편집 · AI 코칭
+              </span>
 
               <h1 className={`${styles.hero_title} font_title`}>
                 쓰기 어려운 취업 서류,
@@ -108,12 +98,12 @@ export default function Resume() {
                     arrow_forward
                   </span>
                 </Link>
-                <Link href='/mypage/documents' className={`${styles.hero_btn_secondary} font_h4`}>
+                <MyDocsLink className={`${styles.hero_btn_secondary} font_h4`}>
                   내 문서함으로 이동
                   <span className='material-symbols-sharp' aria-hidden='true'>
                     arrow_forward
                   </span>
-                </Link>
+                </MyDocsLink>
               </div>
 
               <div className={styles.hero_stats}>
@@ -162,7 +152,7 @@ export default function Resume() {
               </p>
             </div>
 
-            <TemplateBrowser items={FREE_TEMPLATES} />
+            <TemplateBrowser />
           </div>
         </section>
 
@@ -331,17 +321,7 @@ export default function Resume() {
                   </>
                 }
               >
-                {NEXT_PORTFOLIOS.map((item) => (
-                  <div key={item.name} className={styles.next_mock_project}>
-                    <p className={styles.next_mock_project_name}>{item.name}</p>
-                    <span className={styles.next_mock_project_like}>
-                      <span className='material-symbols-sharp' aria-hidden='true'>
-                        favorite
-                      </span>
-                      {item.likes}
-                    </span>
-                  </div>
-                ))}
+                <NextPortfolios />
               </LinkCard>
 
               <LinkCard
@@ -399,12 +379,12 @@ export default function Resume() {
                         arrow_forward
                       </span>
                     </Link>
-                    <Link href='/mypage/documents' className={`${styles.cta_btn_secondary} font_body_m_b`}>
+                    <MyDocsLink className={`${styles.cta_btn_secondary} font_body_m_b`}>
                       내 문서함으로 이동
                       <span className='material-symbols-sharp' aria-hidden='true'>
                         arrow_forward
                       </span>
-                    </Link>
+                    </MyDocsLink>
                   </div>
                 </div>
 
