@@ -11,6 +11,7 @@ import Toast from '@/app/mypage/_components/Toast';
 import UnsavedGuard from '@/app/mypage/_components/UnsavedGuard';
 import ProfileSection from '@/app/mypage/_components/ProfileSection';
 import ProfileForm from '@/app/mypage/_components/ProfileForm';
+import BasicFields from '@/app/mypage/_components/ProfileEdit/BasicFields';
 import InfoRow from '@/app/mypage/_components/InfoRow';
 import AwardRow from '@/app/mypage/_components/AwardRow';
 import LogoItem from '@/app/mypage/_components/LogoItem';
@@ -120,6 +121,38 @@ export default function ProfileView({ profile }) {
         </Link>
       </div>
 
+      {editing === 'basic' ? (
+        <section className={styles.profile_view_basic}>
+          <div className={styles.profile_view_basic_head}>
+            <h2 className={`${styles.profile_view_basic_title} font_h3`}>기본 정보</h2>
+
+            <div className={styles.profile_view_basic_actions}>
+              <button
+                type='button'
+                className={`${styles.profile_view_basic_cancel} font_body_l_b`}
+                onClick={cancelEdit}
+              >
+                취소
+              </button>
+              <button
+                type='button'
+                className={`${styles.profile_view_basic_save} font_body_l_b`}
+                disabled={isSaving}
+                onClick={saveEdit}
+              >
+                {isSaving ? '저장 중…' : '저장'}
+              </button>
+            </div>
+          </div>
+
+          <BasicFields
+            draft={draft}
+            onChange={setDraft}
+            hasNameError={problem?.fields?.[0]?.name === 'blank'}
+            onPhotoError={(message) => showToast(message, 'error')}
+          />
+        </section>
+      ) : (
       <section className={styles.profile_view_summary}>
         {profile.avatarUrl ? (
           <img src={profile.avatarUrl} alt='' className={styles.profile_view_summary_avatar} />
@@ -148,7 +181,18 @@ export default function ProfileView({ profile }) {
             </span>
           ))}
         </div>
+
+        <button
+          type='button'
+          className={`${styles.profile_view_summary_edit} font_body_l_b`}
+          disabled={editing !== null}
+          title={editing !== null ? '수정 중인 섹션을 먼저 저장하거나 취소해주세요' : undefined}
+          onClick={() => startEdit('basic')}
+        >
+          수정
+        </button>
       </section>
+      )}
 
       <UnsavedGuard isDirty={isDirty} />
 
