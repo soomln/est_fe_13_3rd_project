@@ -59,10 +59,17 @@
     display: block
     margin-left: auto
 
+  // 칸 너비를 끌어서 정하려면 fixed 여야 한다. auto 면 지정한 너비가 무시된다
   table
     width: 100%
     margin-top: 12px
+    table-layout: fixed
     border-collapse: collapse
+
+  // 너비 조절 손잡이가 붙을 기준
+  th,
+  td
+    position: relative
 
   th
     +setFont(16px, 20px, 600)
