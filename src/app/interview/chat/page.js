@@ -25,6 +25,7 @@ import { createSession, saveQas, finishSession } from '@backend/lib/api/intervie
 import { getDocument, listMyDocuments } from '@backend/lib/api/documents';
 import { getCompany } from '@backend/lib/api/companies';
 import { evaluateInterviewAnswers, sumSubScores } from '../_lib/evaluateInterviewAnswers';
+import useVoiceInterview from '../_hooks/useVoiceInterview';
 
 const INITIAL_MESSAGE = {
   role: 'ai',
@@ -96,6 +97,7 @@ const [needsAutoRetry, setNeedsAutoRetry] = useState(false);
 const [hasHydrated, setHasHydrated] = useState(false);
 const chatEndRef = useRef(null);
 const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, hasCoverLetter: true });
+const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -449,6 +451,33 @@ const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, has
 
     await runEvaluation(qaList);
   };
+
+  const lastMessage = messages[messages.length - 1];
+  const latestAiMessage = lastMessage?.role === 'ai' ? lastMessage.content : null;
+
+  const voice = useVoiceInterview({
+    isActive: isVoiceMode,
+    aiMessage: latestAiMessage,
+    isInterviewFinished,
+    isEvaluating,
+    onAnswerFinalized: handleSendAnswer,
+    onVoiceInterviewEnd: () => setIsVoiceMode(false),
+  });
+
+  const handleToggleVoiceMode = () => {
+    if (!isVoiceMode && selectedQuestions.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '면접 질문에 필요한 정보를 왼쪽 패널에서 선택해 주세요.',
+        },
+      ]);
+      return;
+    }
+    setIsVoiceMode((prev) => !prev);
+  };
+
   const handleRetry = () => {
     clearSavedState();
     clearQuestionPanelCache();
@@ -587,7 +616,15 @@ const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, has
             </div>
 
             {!isInterviewFinished && (
-              <AnswerBox onSend={handleSendAnswer} />
+              <AnswerBox
+                onSend={handleSendAnswer}
+                isVoiceMode={isVoiceMode}
+                voiceStatus={voice.status}
+                voiceSupported={voice.supported}
+                voiceError={voice.error}
+                interimTranscript={voice.interimTranscript}
+                onToggleVoice={handleToggleVoiceMode}
+              />
             )}
           </div>
 
