@@ -1,25 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { toggleTemplateBookmark } from '@backend/lib/api/templates';
+import { getTemplate, toggleTemplateBookmark } from '@backend/lib/api/templates';
 import { useAuth } from '@/app/_components/auth';
 import BookmarkBtn from '@/app/_components/common/BookmarkBtn';
 import PrimaryBtn from '@/app/resume/_components/PrimaryBtn';
 import styles from './TemplateCard.module.sass';
 
-export default function TemplateCard({
-  id,
-  type,
-  title,
-  views,
-  thumbnailUrl = '',
-  isBookmarked = false,
-  onBookmark,
-}) {
+export default function TemplateCard({ id, type, title, views, isBookmarked = false, onBookmark }) {
   const { isLoggedIn, openLogin } = useAuth();
   const [saved, setSaved] = useState(isBookmarked);
+  const [preview, setPreview] = useState('');
+
+  // 미리보기는 편집기에서 열리는 양식 그대로를 줄여서 보여준다
+  useEffect(() => {
+    let alive = true;
+
+    getTemplate(id)
+      .then((doc) => {
+        if (alive) setPreview(doc?.contentHtml ?? '');
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, [id]);
 
   // 서버 응답을 기다리지 않고 먼저 켠다. 실패하면 되돌린다
   const toggle = async () => {
@@ -44,15 +52,13 @@ export default function TemplateCard({
       <Link href={`/resume/editor?template=${id}`} className={styles.template_card_link}>
         <div className={styles.template_card_top}>
           <div className={styles.template_card_thumb}>
-            {thumbnailUrl ? (
-              <img src={thumbnailUrl} alt={`${title} 미리보기`} className={styles.template_card_thumb_img} />
-            ) : (
-              <div className={styles.template_card_thumb_empty}>
-                <span className='material-symbols-sharp' aria-hidden='true'>
-                  description
-                </span>
-              </div>
-            )}
+            <div className={styles.template_card_paper}>
+              <div
+                className={styles.template_card_doc}
+                aria-hidden='true'
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
+            </div>
           </div>
 
           <div className={styles.template_card_overlay}>

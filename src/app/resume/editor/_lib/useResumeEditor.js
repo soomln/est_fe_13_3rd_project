@@ -28,7 +28,8 @@ export default function useResumeEditor({ content, onChange }) {
       Highlight.configure({ multicolor: true }),
       ResizableImage.configure({ inline: true }),
       PageBreaks,
-      Table.configure({ resizable: true }),
+      // handleWidth 기본값 5px 은 잡기 어렵다. 칸 경계 좌우로 넉넉히 준다
+      Table.configure({ resizable: true, handleWidth: 12, cellMinWidth: 40 }),
       TableRow,
       TableHeader,
       TableCell,

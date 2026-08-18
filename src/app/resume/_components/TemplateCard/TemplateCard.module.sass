@@ -1,4 +1,5 @@
 @use '@/app/_variables.sass' as *
+@use '@/app/resume/editor/_lib/documentBody' as *
 
 // 양식 카드
 .template_card
@@ -28,23 +29,22 @@
     border-radius: 16px
     overflow: hidden
 
-  .template_card_thumb_img
-    width: 100%
-    height: 100%
-    object-fit: cover
-    object-position: top
-
-  .template_card_thumb_empty
+  // 편집기에서 열리는 문서(794px)를 그대로 줄여서 보여준다
+  .template_card_paper
     display: flex
-    align-items: center
     justify-content: center
     width: 100%
     height: 100%
-    background-color: $light_gray
+    background-color: $white
 
-    :global(.material-symbols-sharp)
-      font-size: 64px
-      color: $stroke2
+  // 문서 폭(794)은 그대로 두고 종이 여백만 줄여 글씨를 크게 보여준다
+  .template_card_doc
+    flex-shrink: 0
+    box-sizing: border-box
+    width: 794px
+    padding: 20px 24px
+    zoom: 0.31
+    +documentBody
 
   .template_card_overlay
     position: absolute

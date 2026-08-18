@@ -45,6 +45,21 @@
   :global(.selectedCell)
     background-color: $sub_green
 
+  // 칸 경계에 잡고 끌 수 있는 손잡이
+  :global(.column-resize-handle)
+    position: absolute
+    top: 0
+    right: -3px
+    bottom: -3px
+    z-index: 1
+    width: 6px
+    background-color: $green
+    pointer-events: none
+
+  &:global(.resize-cursor),
+  :global(.resize-cursor)
+    cursor: col-resize
+
   &:focus
     outline: none
 
