@@ -19,12 +19,14 @@ import PortfolioCard from '@/app/_components/common/PortfolioCard';
 import QuickBtns from './_components/QuickBtns';
 import DetailModal from '@/app/portfolio/_components/DetailModal';
 
-import { listPortfolios } from '@backend/lib/api/portfolio';
+import { listPortfolios, getMyPortfolioReactions } from '@backend/lib/api/portfolio';
 
 export default function Portpolio() {
   const categoryList = ['all', 'web', 'app'];
 
   const [items, setItems] = useState([]);
+  const [bestPortfolioIds, setBestPortfolioIds] = useState([]);
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSort, setSelectedSort] = useState('latest');
 
@@ -34,8 +36,7 @@ export default function Portpolio() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const modalId = searchParams.get('modal');
-  const selectedItemID = modalId;
+  const selectedItemID = searchParams.get('modal');
   const isModalOpen = !!selectedItemID;
 
   useEffect(() => {
@@ -46,9 +47,39 @@ export default function Portpolio() {
           page: 1,
         });
 
-        setItems(data.items);
+        const portfolioItems = data.items ?? [];
+
+        if (portfolioItems.length === 0) {
+          setItems([]);
+          return;
+        }
+
+        const portfolioIds = portfolioItems.map((item) => item.id);
+
+        let liked = new Set();
+        let bookmarked = new Set();
+
+        try {
+          const reactions = await getMyPortfolioReactions(portfolioIds);
+
+          liked = reactions.liked ?? new Set();
+          bookmarked = reactions.bookmarked ?? new Set();
+        } catch (error) {
+          console.error('리액션 조회 실패:', error);
+        }
+
+        const itemsWithReactions = portfolioItems.map((item) => ({
+          ...item,
+          isLiked: liked.has(item.id),
+          isBookmarked: bookmarked.has(item.id),
+        }));
+
+        setItems(itemsWithReactions);
+
+        // 상단 Swiper는 최초 로딩 시에만 랜덤 6개 선택
+        setBestPortfolioIds([...portfolioIds].sort(() => Math.random() - 0.5).slice(0, 6));
       } catch (error) {
-        console.error(error);
+        console.error('포트폴리오 조회 실패:', error);
       }
     };
 
@@ -70,6 +101,10 @@ export default function Portpolio() {
         return new Date(b.createdAt) - new Date(a.createdAt);
     }
   });
+
+  const bestPortfolioItems = bestPortfolioIds.map((id) => items.find((item) => item.id === id)).filter(Boolean);
+
+  const selectedItem = items.find((item) => item.id === selectedItemID);
 
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -94,16 +129,31 @@ export default function Portpolio() {
     });
   };
 
-  const updateReactionCount = (portfolioId, field, amount) => {
+  const updateReaction = (portfolioId, type, isActive) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === portfolioId
-          ? {
-              ...item,
-              [field]: item[field] + amount,
-            }
-          : item,
-      ),
+      prev.map((item) => {
+        if (item.id !== portfolioId) {
+          return item;
+        }
+
+        if (type === 'like') {
+          return {
+            ...item,
+            isLiked: isActive,
+            likeCount: item.likeCount + (isActive ? 1 : -1),
+          };
+        }
+
+        if (type === 'bookmark') {
+          return {
+            ...item,
+            isBookmarked: isActive,
+            bookmarkCount: item.bookmarkCount + (isActive ? 1 : -1),
+          };
+        }
+
+        return item;
+      }),
     );
   };
 
@@ -113,29 +163,6 @@ export default function Portpolio() {
       block: 'start',
     });
   };
-
-  const portfolioList = sortedItems.map((item) => (
-    <PortfolioCard
-      key={item.id}
-      item={item}
-      onClick={() => {
-        onOpenDetail(item);
-      }}
-      updateReactionCount={updateReactionCount}
-    />
-  ));
-
-  const bestPortfolioList = items.map((item) => (
-    <SwiperSlide key={item.id}>
-      <PortfolioCard
-        item={item}
-        onClick={() => {
-          onOpenDetail(item);
-        }}
-        updateReactionCount={updateReactionCount}
-      />
-    </SwiperSlide>
-  ));
 
   return (
     <>
@@ -166,7 +193,11 @@ export default function Portpolio() {
                 slideShadows: true,
               }}
             >
-              {bestPortfolioList}
+              {bestPortfolioItems.map((item) => (
+                <SwiperSlide key={item.id}>
+                  <PortfolioCard item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+                </SwiperSlide>
+              ))}
             </Swiper>
           </section>
 
@@ -190,7 +221,12 @@ export default function Portpolio() {
               </div>
             </div>
 
-            <ul className={styles.item_list}>{portfolioList}</ul>
+            <ul className={styles.item_list}>
+              {sortedItems.map((item) => (
+                <PortfolioCard key={item.id} item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+              ))}
+            </ul>
+
             <QuickBtns onMoveTop={handleMoveTop} />
           </section>
         </div>
@@ -199,7 +235,9 @@ export default function Portpolio() {
           isOpen={isModalOpen}
           onClose={onCloseDetail}
           itemID={selectedItemID}
-          updateReactionCount={updateReactionCount}
+          isLiked={selectedItem?.isLiked ?? false}
+          isBookmarked={selectedItem?.isBookmarked ?? false}
+          updateReaction={updateReaction}
         />
 
         <Footer />
