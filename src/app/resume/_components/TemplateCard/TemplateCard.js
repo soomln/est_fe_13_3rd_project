@@ -1,10 +1,44 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 
+import { toggleTemplateBookmark } from '@backend/lib/api/templates';
+import { useAuth } from '@/app/_components/auth';
 import BookmarkBtn from '@/app/_components/common/BookmarkBtn';
 import PrimaryBtn from '@/app/resume/_components/PrimaryBtn';
 import styles from './TemplateCard.module.sass';
 
-export default function TemplateCard({ id, type, title, views, thumbnailUrl = '' }) {
+export default function TemplateCard({
+  id,
+  type,
+  title,
+  views,
+  thumbnailUrl = '',
+  isBookmarked = false,
+  onBookmark,
+}) {
+  const { isLoggedIn, openLogin } = useAuth();
+  const [saved, setSaved] = useState(isBookmarked);
+
+  // 서버 응답을 기다리지 않고 먼저 켠다. 실패하면 되돌린다
+  const toggle = async () => {
+    if (!isLoggedIn) {
+      openLogin();
+      return;
+    }
+
+    const next = !saved;
+    setSaved(next);
+
+    try {
+      await toggleTemplateBookmark(id);
+      if (onBookmark) onBookmark(id, next);
+    } catch {
+      setSaved(!next);
+    }
+  };
+
   return (
     <li className={styles.template_card}>
       <Link href={`/resume/editor?template=${id}`} className={styles.template_card_link}>
@@ -44,7 +78,7 @@ export default function TemplateCard({ id, type, title, views, thumbnailUrl = ''
       </Link>
 
       <div className={styles.template_card_bookmark}>
-        <BookmarkBtn />
+        <BookmarkBtn isActive={saved} onClick={toggle} />
       </div>
     </li>
   );

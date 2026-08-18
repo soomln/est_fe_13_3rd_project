@@ -20,7 +20,8 @@ const toCard = (item) => ({
   type: item.docType === 'resume' ? '이력서' : '자기소개서',
   title: item.title,
   views: item.views,
-  thumbnailUrl: item.thumbnailUrl,
+  thumbnailUrl: item.thumbnail,
+  isBookmarked: item.bookmarkedByMe,
 });
 
 export default function TemplateBrowser() {
@@ -101,6 +102,7 @@ export default function TemplateBrowser() {
               title={item.title}
               views={item.views}
               thumbnailUrl={item.thumbnailUrl}
+              isBookmarked={item.isBookmarked}
             />
           ))}
         </ul>
