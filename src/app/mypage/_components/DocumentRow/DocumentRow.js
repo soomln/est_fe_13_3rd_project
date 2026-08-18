@@ -15,6 +15,8 @@ export default function DocumentRow({
   isSelected = false,
   onToggle,
   onPreview,
+  editHref,
+  editLabel = '편집',
 }) {
   const tone = docType === 'resume' ? 'green' : 'amber';
   const isPreviewable = !onToggle && Boolean(onPreview);
@@ -50,13 +52,13 @@ export default function DocumentRow({
       </Body>
 
       <Link
-        href={`/resume/editor?document=${id}`}
+        href={editHref ?? `/resume/editor?document=${id}`}
         className={`${styles.document_row_edit} font_body_l_b`}
       >
         <span className='material-symbols-sharp' aria-hidden='true'>
           edit
         </span>
-        편집
+        {editLabel}
       </Link>
     </li>
   );

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { listMyDocuments, deleteDocuments } from '@backend/lib/api/documents';
+import { listMyBookmarkedTemplateIds, listTemplates } from '@backend/lib/api/templates';
 import Pagination from '@/app/_components/common/Pagination';
 import ErrorState from '@/app/mypage/_components/ErrorState';
 import FilterChip from '@/app/mypage/_components/FilterChip';
@@ -23,7 +24,28 @@ const DOC_TYPES = [
   { value: '', label: '전체' },
   { value: 'resume', label: '이력서' },
   { value: 'cover_letter', label: '자기소개서' },
+  { value: 'scrapped', label: '스크랩한 양식' },
 ];
+
+// 내 문서가 아니라 스크랩해둔 무료 양식이다. 전체 목록에는 섞지 않는다
+const SCRAPPED = 'scrapped';
+
+// 양식이 12개뿐이라 전부 받아서 거른다. 수가 늘면 서버에 거르기를 요청한다
+const TEMPLATE_FETCH = 50;
+
+async function loadScrappedTemplates({ q, page }) {
+  const [ids, all] = await Promise.all([
+    listMyBookmarkedTemplateIds(),
+    listTemplates({ pageSize: TEMPLATE_FETCH, sort: 'popular' }),
+  ]);
+
+  const picked = new Set(ids);
+  let items = (all.items ?? []).filter((item) => picked.has(item.id));
+  if (q) items = items.filter((item) => item.title.includes(q));
+
+  const from = (page - 1) * PAGE_SIZE;
+  return { items: items.slice(from, from + PAGE_SIZE), total: items.length };
+}
 
 const SORTS = { 등록순: 'created', 최신순: 'latest', 이름순: 'title' };
 
@@ -50,12 +72,16 @@ export default function DocumentBrowser() {
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const sortLabel = Object.keys(SORTS).find((label) => SORTS[label] === sort);
 
+  const isScrapped = docType === SCRAPPED;
+
   // 거르기·정렬·쪽 나누기는 서버가 한다
   useEffect(() => {
     let alive = true;
     setStatus('loading');
 
-    listMyDocuments({ docType: docType || undefined, q: keyword || undefined, sort, page, pageSize: PAGE_SIZE })
+    (docType === SCRAPPED
+      ? loadScrappedTemplates({ q: keyword, page })
+      : listMyDocuments({ docType: docType || undefined, q: keyword || undefined, sort, page, pageSize: PAGE_SIZE }))
       .then((result) => {
         if (!alive) return;
         setData(result);
@@ -131,7 +157,7 @@ export default function DocumentBrowser() {
         </div>
 
         <div className={styles.document_browser_head_btns}>
-          {isDeleteMode ? (
+          {isScrapped ? null : isDeleteMode ? (
             <>
               <Link
                 href='/mypage/documents'
@@ -196,7 +222,7 @@ export default function DocumentBrowser() {
       />
       <DocumentPreview id={previewId} onClose={() => setPreviewId(null)} />
 
-      {isDeleteMode && (
+      {isDeleteMode && !isScrapped && (
         <p className={`${styles.document_browser_notice} font_body_m_b`} role='status'>
           <span className='material-symbols-sharp' aria-hidden='true'>
             info
@@ -217,7 +243,7 @@ export default function DocumentBrowser() {
               />
             ))}
 
-            {isDeleteMode && (
+            {isDeleteMode && !isScrapped && (
               <span className={`${styles.document_browser_guide} font_body_m_b`}>
                 삭제할 문서를 선택해주세요
               </span>
@@ -227,14 +253,16 @@ export default function DocumentBrowser() {
           <div className={styles.document_browser_tools}>
             <SearchPill
               key={keyword}
-              placeholder='문서 이름으로 검색'
+              placeholder={isScrapped ? '양식 이름으로 검색' : '문서 이름으로 검색'}
               onSearch={(text) => updateQuery({ q: text, page: 1 })}
             />
-            <SortPill
-              options={Object.keys(SORTS)}
-              value={sortLabel}
-              onChange={(label) => updateQuery({ sort: SORTS[label], page: 1 })}
-            />
+            {!isScrapped && (
+              <SortPill
+                options={Object.keys(SORTS)}
+                value={sortLabel}
+                onChange={(label) => updateQuery({ sort: SORTS[label], page: 1 })}
+              />
+            )}
           </div>
         </div>
 
@@ -259,10 +287,14 @@ export default function DocumentBrowser() {
                 index={(currentPage - 1) * PAGE_SIZE + index + 1}
                 docType={item.docType}
                 title={item.title}
-                updatedAt={formatDate(item.updatedAt)}
+                updatedAt={
+                  isScrapped ? `조회 ${(item.views ?? 0).toLocaleString()}` : formatDate(item.updatedAt)
+                }
                 isSelected={selectedIds.includes(item.id)}
-                onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
-                onPreview={() => setPreviewId(item.id)}
+                onToggle={isDeleteMode && !isScrapped ? () => toggleOne(item.id) : undefined}
+                onPreview={isScrapped ? undefined : () => setPreviewId(item.id)}
+                editHref={isScrapped ? `/resume/editor?template=${item.id}` : undefined}
+                editLabel={isScrapped ? '작성' : '편집'}
               />
             ))}
           </ul>
@@ -276,9 +308,13 @@ export default function DocumentBrowser() {
             >
               folder_open
             </span>
-            <p className={`${styles.document_browser_empty_title} font_h4`}>저장한 문서가 없습니다</p>
+            <p className={`${styles.document_browser_empty_title} font_h4`}>
+              {isScrapped ? '스크랩한 양식이 없습니다' : '저장한 문서가 없습니다'}
+            </p>
             <p className={`${styles.document_browser_empty_desc} font_body_m_r`}>
-              새로 작성하기를 눌러 이력서나 자기소개서를 만들어보세요.
+              {isScrapped
+                ? '무료 양식 모음에서 마음에 드는 양식을 북마크해보세요.'
+                : '새로 작성하기를 눌러 이력서나 자기소개서를 만들어보세요.'}
             </p>
           </div>
         )}
