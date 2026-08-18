@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+import { listTemplates } from '@backend/lib/api/templates';
 import CategoryBtn from '@/app/resume/_components/CategoryBtn';
 import TemplateCard from '@/app/resume/_components/TemplateCard';
 import styles from './TemplateBrowser.module.sass';
@@ -11,9 +12,35 @@ const ALL_CATEGORY = '전체';
 const CATEGORIES = [ALL_CATEGORY, '이력서', '자기소개서'];
 const PAGE_SIZE = 3;
 
-export default function TemplateBrowser({ items }) {
+// 랜딩에서는 몇 장만 보여주고 거르기는 화면 안에서 한다
+const FETCH_SIZE = 12;
+
+const toCard = (item) => ({
+  id: item.id,
+  type: item.docType === 'resume' ? '이력서' : '자기소개서',
+  title: item.title,
+  views: item.views,
+  thumbnailUrl: item.thumbnailUrl,
+});
+
+export default function TemplateBrowser() {
+  const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
   const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+
+    listTemplates({ pageSize: FETCH_SIZE })
+      .then((result) => {
+        if (alive) setItems((result?.items ?? []).map(toCard));
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const visibleItems =
     selectedCategory === ALL_CATEGORY ? items : items.filter((item) => item.type === selectedCategory);
