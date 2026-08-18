@@ -27,10 +27,17 @@ import { getCompany } from '@backend/lib/api/companies';
 import { evaluateInterviewAnswers, sumSubScores } from '../_lib/evaluateInterviewAnswers';
 import useVoiceInterview from '../_hooks/useVoiceInterview';
 
-const INITIAL_MESSAGE = {
-  role: 'ai',
-  content: '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.',
-};
+function formatMessageTime(date = new Date()) {
+  return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function createInitialMessage() {
+  return {
+    role: 'ai',
+    content: '안녕하세요!\n저는 AI 면접관입니다.\n\n면접 진행을 위해\n우측 패널의 옵션을 선택해주세요.',
+    time: formatMessageTime(),
+  };
+}
 
 const INTERVIEWER_STYLE_LABELS = {
   friendly: '친절한',
@@ -72,32 +79,32 @@ function shouldRestoreOnMount() {
 export default function InterviewPage() {
   const router = useRouter();
 
-const [isSettingOpen, setIsSettingOpen] = useState(false);
-const [isQuestionList, setIsQuestionList] = useState(false);
-const [selectedQuestions, setSelectedQuestions] = useState([]);
-const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-const [messages, setMessages] = useState([INITIAL_MESSAGE]);
-const [isInterviewFinished, setIsInterviewFinished] = useState(false);
-const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-const [selectedResumeId, setSelectedResumeId] = useState(null);
-const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
-const [selectedCompanyId, setSelectedCompanyId] = useState(null);
-const [selectedCompanySlug, setSelectedCompanySlug] = useState(null);
-const [interviewerStyle, setInterviewerStyle] = useState('friendly');
-const [showTimer, setShowTimer] = useState(false);
-const [sessionId, setSessionId] = useState(null);
-const [answers, setAnswers] = useState([]);
-const [interviewStartedAt, setInterviewStartedAt] = useState(null);
-const [timerStartedAt, setTimerStartedAt] = useState(null);
-const [isEvaluating, setIsEvaluating] = useState(false);
-const [evaluationResult, setEvaluationResult] = useState(null);
-const [evaluationError, setEvaluationError] = useState(false);
-const [pendingQaList, setPendingQaList] = useState([]);
-const [needsAutoRetry, setNeedsAutoRetry] = useState(false);
-const [hasHydrated, setHasHydrated] = useState(false);
-const chatEndRef = useRef(null);
-const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, hasCoverLetter: true });
-const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSettingOpen, setIsSettingOpen] = useState(false);
+  const [isQuestionList, setIsQuestionList] = useState(false);
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [messages, setMessages] = useState(() => [createInitialMessage()]);
+  const [isInterviewFinished, setIsInterviewFinished] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState(null);
+  const [selectedCoverLetterId, setSelectedCoverLetterId] = useState(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [selectedCompanySlug, setSelectedCompanySlug] = useState(null);
+  const [interviewerStyle, setInterviewerStyle] = useState('friendly');
+  const [showTimer, setShowTimer] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [interviewStartedAt, setInterviewStartedAt] = useState(null);
+  const [timerStartedAt, setTimerStartedAt] = useState(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState(null);
+  const [evaluationError, setEvaluationError] = useState(false);
+  const [pendingQaList, setPendingQaList] = useState([]);
+  const [needsAutoRetry, setNeedsAutoRetry] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const chatEndRef = useRef(null);
+  const [docStatus, setDocStatus] = useState({ loading: true, hasResume: true, hasCoverLetter: true });
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,6 +146,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
         {
           role: 'ai',
           content: '타이머 표시를 켰습니다!\n면접이 시작되면 진행 시간이 상단에 표시돼요.',
+          time: formatMessageTime(),
         },
       ]);
     }
@@ -151,20 +159,75 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       {
         role: 'ai',
         content: `면접관 성격을 ${INTERVIEWER_STYLE_LABELS[next] ?? next} 스타일로 설정했습니다!`,
+        time: formatMessageTime(),
       },
     ]);
   };
 
-  const handleGenerationError = useCallback(() => {
+  // 질문 리스트 생성 버튼을 누른 직후: 아직 QuestionPanel의 실제 API 호출 전이라
+  // 새 메시지로 추가한다.
+  const handleGenerationChecking = useCallback(() => {
     setMessages((prev) => [
       ...prev,
       {
         role: 'ai',
-        content:
-          '선택하신 정보를 바탕으로\n맞춤 질문을 생성하지 못했습니다.\n\n기본 질문으로 면접을 진행합니다.',
+        content: '선택하신 정보를 확인하고 있어요. 잠시만 기다려주세요!',
+        time: formatMessageTime(),
       },
     ]);
   }, []);
+
+  // 실제 질문 생성 API 호출이 시작되는 시점: "확인 중" 메시지를 이어서 교체한다.
+  const handleGenerationStart = useCallback(() => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        role: 'ai',
+        content: '이력서와 자기소개서, 기업 정보를 분석해서 맞춤형 면접 질문을 만들고 있어요.',
+        time: formatMessageTime(),
+      },
+    ]);
+  }, []);
+
+  const handleGenerationSuccess = useCallback(() => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        role: 'ai',
+        content: '질문이 준비됐어요! 면접을 시작해볼까요?',
+        time: formatMessageTime(),
+      },
+    ]);
+  }, []);
+
+  const handleGenerationError = useCallback(() => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        role: 'ai',
+        content: '질문을 준비하는 중 문제가 발생했어요. 다시 시도해주세요.',
+        time: formatMessageTime(),
+      },
+    ]);
+  }, []);
+
+  // 이력서/자소서 계정 자체가 없으면 DocumentRequiredNotice가 먼저 막아주므로,
+  // 여기서는 "둘 중 최소 하나는 선택했는지"만 확인한다(기업 선택은 선택 사항).
+  const handleLoadQuestionList = () => {
+    if (!selectedResumeId && !selectedCoverLetterId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content: '면접 질문을 생성하기 전에 이력서 또는 자기소개서를 먼저 선택해주세요.',
+          time: formatMessageTime(),
+        },
+      ]);
+      return;
+    }
+    handleGenerationChecking();
+    setIsQuestionList(true);
+  };
 
   const ensureSessionId = async () => {
     if (sessionId) return sessionId;
@@ -257,6 +320,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
           role: 'ai',
           content:
             '면접이 종료되었습니다!\n평가가 완료되었습니다.\n결과를 확인해보세요.',
+          time: formatMessageTime(),
         },
       ]);
     } catch (err) {
@@ -286,6 +350,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
           role: 'ai',
           content:
             '답변 평가에 실패했습니다.\n질문과 답변은 저장되었습니다.\n아래 "평가 다시 시도" 버튼을 눌러주세요.',
+          time: formatMessageTime(),
         },
       ]);
     } finally {
@@ -299,6 +364,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       {
         role: 'ai',
         content: '답변을 다시 분석하고 있습니다...',
+        time: formatMessageTime(),
       },
     ]);
     setIsEvaluating(true);
@@ -310,6 +376,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
     if (!shouldRestoreOnMount()) {
       clearSavedState();
       clearQuestionPanelCache();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 새로고침/뒤로가기가 아니면 저장된 상태 없이 즉시 초기 화면을 렌더링해야 함
       setHasHydrated(true);
       return;
     }
@@ -323,7 +390,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
     setIsQuestionList(saved.isQuestionList ?? false);
     setSelectedQuestions(saved.selectedQuestions ?? []);
     setCurrentQuestionIndex(saved.currentQuestionIndex ?? 0);
-    setMessages(saved.messages?.length ? saved.messages : [INITIAL_MESSAGE]);
+    setMessages(saved.messages?.length ? saved.messages : [createInitialMessage()]);
     setIsInterviewFinished(saved.isInterviewFinished ?? false);
     setSelectedResumeId(saved.selectedResumeId ?? null);
     setSelectedCoverLetterId(saved.selectedCoverLetterId ?? null);
@@ -346,6 +413,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   useEffect(() => {
     if (!needsAutoRetry) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 자동 재시도 트리거 상태를 곧바로 소비하고 재평가를 시작해야 함
     setNeedsAutoRetry(false);
     setIsInterviewFinished(true);
     setIsEvaluating(true);
@@ -403,6 +471,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
         {
           role: 'ai',
           content: '면접 질문에 필요한 정보를 왼쪽 패널에서 선택해 주세요.',
+          time: formatMessageTime(),
         },
       ]);
       return;
@@ -415,6 +484,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       {
         role: 'user',
         content: answer,
+        time: formatMessageTime(),
       },
     ];
 
@@ -422,6 +492,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       nextMessages.push({
         role: 'ai',
         content: selectedQuestions[nextIndex].question,
+        time: formatMessageTime(),
       });
       setCurrentQuestionIndex(nextIndex);
       setMessages(nextMessages);
@@ -435,6 +506,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       {
         role: 'ai',
         content: '면접이 종료되었습니다!\n답변을 분석하고 있습니다...',
+        time: formatMessageTime(),
       },
     ]);
     setIsInterviewFinished(true);
@@ -471,6 +543,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
         {
           role: 'ai',
           content: '면접 질문에 필요한 정보를 왼쪽 패널에서 선택해 주세요.',
+          time: formatMessageTime(),
         },
       ]);
       return;
@@ -483,7 +556,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
     clearQuestionPanelCache();
     setIsInterviewFinished(false);
     setCurrentQuestionIndex(0);
-    setMessages([INITIAL_MESSAGE]);
+    setMessages([createInitialMessage()]);
     setAnswers([]);
     setSessionId(null);
     setInterviewStartedAt(null);
@@ -506,6 +579,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
       {
         role: 'ai',
         content: questions[0].question,
+        time: formatMessageTime(),
       },
     ]);
     const startedAt = Date.now();
@@ -530,6 +604,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
           role: 'ai',
           content:
             '면접 세션 생성에 실패했습니다.\n답변과 결과가 저장되지 않을 수 있어요.',
+          time: formatMessageTime(),
         },
       ]);
     }
@@ -585,12 +660,13 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
                   <AiChatBubble
                     key={index}
                     message={message.content}
+                    time={message.time}
                   />
                 ) : (
                   <UserChatBubble
                     key={index}
                     message={message.content}
-                    time="01:48"
+                    time={message.time}
                   />
                 ),
               )}
@@ -635,6 +711,8 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
               companySlug={selectedCompanySlug}
               interviewerStyle={interviewerStyle}
               onStart={handleStartInterview}
+              onGenerationStart={handleGenerationStart}
+              onGenerationSuccess={handleGenerationSuccess}
               onGenerationError={handleGenerationError}
             />
           ) : docStatus.loading ? (
@@ -665,18 +743,7 @@ const [isVoiceMode, setIsVoiceMode] = useState(false);
                 selectedId={selectedCompanyId}
                 onSelect={handleSelectCompany}
               />
-              <QuestionListButton
-                onClick={() => {
-                  if (
-                    !selectedResumeId ||
-                    !selectedCoverLetterId ||
-                    !selectedCompanyId
-                  ) {
-                    return;
-                  }
-                  setIsQuestionList(true);
-                }}
-              >
+              <QuestionListButton onClick={handleLoadQuestionList}>
                 질문 리스트 불러오기
               </QuestionListButton>
             </aside>

@@ -52,6 +52,8 @@ export default function QuestionPanel({
   companySlug,
   interviewerStyle = 'friendly',
   onStart,
+  onGenerationStart,
+  onGenerationSuccess,
   onGenerationError,
 }) {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
@@ -68,6 +70,7 @@ export default function QuestionPanel({
     const cache = loadCache();
     if (matchesCache(cache, resumeId, coverLetterId, companySlug, interviewerStyle)) {
       isFallbackRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 세션 캐시 히트 시 API 호출 없이 즉시 캐시된 질문으로 렌더링해야 함
       setGeneratedQuestions(cache.generatedQuestions);
       setSelectedQuestions(cache.selectedQuestions ?? []);
       setIsGenerating(false);
@@ -85,6 +88,11 @@ export default function QuestionPanel({
           companySlug ? getCompany(companySlug) : null,
         ]);
 
+        // StrictMode가 개발 모드에서 만드는 첫 번째(취소될) 호출은 여기서 걸러내,
+        // 실제로 API를 부르지 않는 시도까지 "생성 중" 안내가 뜨지 않도록 한다.
+        if (cancelled) return;
+        onGenerationStart?.();
+
         // contentText가 비어 있는 이력서(template_id가 NULL인 경우 등)는
         // content_html에 실제 본문이 있을 수 있으므로 그걸 대신 사용한다.
         const resumeText = resume?.contentText || stripHtml(resume?.contentHtml) || '';
@@ -100,6 +108,7 @@ export default function QuestionPanel({
         if (!cancelled) {
           isFallbackRef.current = false;
           setGeneratedQuestions(questions);
+          onGenerationSuccess?.();
         }
       } catch (err) {
         if (err?.name === 'AbortError') return;
@@ -127,7 +136,15 @@ export default function QuestionPanel({
       cancelled = true;
       controller.abort();
     };
-  }, [resumeId, coverLetterId, companySlug, interviewerStyle, onGenerationError]);
+  }, [
+    resumeId,
+    coverLetterId,
+    companySlug,
+    interviewerStyle,
+    onGenerationStart,
+    onGenerationSuccess,
+    onGenerationError,
+  ]);
 
   useEffect(() => {
     if (isGenerating || generatedQuestions.length === 0 || isFallbackRef.current) return;
@@ -219,6 +236,7 @@ export default function QuestionPanel({
 
       <QuestionListButton
         onClick={() => onStart(selectedQuestions)}
+        disabled={isGenerating}
       >
         선택한 질문으로 시작하기
       </QuestionListButton>
