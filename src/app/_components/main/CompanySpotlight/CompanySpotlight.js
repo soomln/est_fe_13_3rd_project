@@ -82,6 +82,8 @@ function ScoreDonut({ label, value, color, animate, delay, replayKey }) {
   useEffect(() => {
     if (!animate) return undefined;
 
+    // rAF 루프를 새로 시작하기 전에 카운트업 애니메이션 값을 0으로 리셋
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayValue(0);
     let raf;
     let startTime = null;
