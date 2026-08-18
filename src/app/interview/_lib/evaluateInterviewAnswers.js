@@ -2,20 +2,13 @@ import { stripHtml, truncate } from './generateInterviewQuestions';
 
 const ALAN_CLIENT_ID = process.env.NEXT_PUBLIC_ALAN_CLIENT_ID;
 
-// 서버(우리 라우트)→Alan 구간은 여전히 GET 쿼리스트링이라 길이 제한이 있다(alan-question/route.js
-// 참고). 평가 프롬프트는 질문 생성 프롬프트와 달리 답변 5개를 통째로 담아야 해서 훨씬 길어지기
-// 쉬우므로, 질문 생성 때보다 더 타이트하게 잘라 URL 길이 제한(502/414)에 걸리지 않게 한다.
 const MAX_DOC_LENGTH = 120;
 const MAX_COMPANY_LENGTH = 80;
 const MAX_ANSWER_LENGTH = 200;
 
-// InterviewResult에 이미 정의된 세부 점수 항목(답변내용/전달력/논리성/전문성/태도)을 그대로 사용한다.
-// 항목당 20점 만점 * 5개 = 100점 만점이며, 최종 점수는 이 5개 항목의 합으로만 계산한다(평균 사용 금지).
 export const SUB_SCORE_KEYS = ['content', 'delivery', 'logic', 'skill', 'attitude'];
 const SUB_SCORE_MAX = 20;
 
-// 화면에 표시되는 5개 세부 점수(subScores)를 그대로 합산한 값만 최종 점수로 인정한다.
-// finishSession() 저장값과 InterviewResult 표시값이 항상 같은 계산식을 쓰도록 이 함수 하나로 통일한다.
 export function sumSubScores(subScores) {
   return SUB_SCORE_KEYS.reduce((sum, key) => sum + (Number(subScores?.[key]) || 0), 0);
 }
@@ -65,8 +58,6 @@ function clampScore(value, max) {
   return Math.min(max, Math.max(0, Math.round(num)));
 }
 
-// AI 응답이 항상 완벽한 JSON/모든 질문을 포함한다는 보장이 없으므로, 하나라도 검증에 실패하면
-// 임의의 점수로 채우지 않고 에러를 던져 호출부(chat/page.js)가 실패로 처리하게 한다.
 export async function evaluateInterviewAnswers({ resumeText, coverLetterText, company, qaList }) {
   if (!ALAN_CLIENT_ID) {
     throw new Error('NEXT_PUBLIC_ALAN_CLIENT_ID가 설정되지 않았습니다.');
@@ -131,8 +122,6 @@ export async function evaluateInterviewAnswers({ resumeText, coverLetterText, co
     subScores[key] = value;
   }
 
-  // 최종 점수는 AI가 반환하는 totalScore를 신뢰하지 않고, 화면에 표시하는 5개 subScores(항목당
-  // 20점 만점)의 합으로만 계산한다. 평균을 쓰지 않으므로 항상 0~100 범위가 그대로 보장된다.
   const totalScore = sumSubScores(subScores);
 
   return { questionResults, totalScore, subScores };
