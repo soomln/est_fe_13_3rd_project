@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import styles from './QuestionPanel.module.sass';
 import QuestionListButton from '../QuestionListButton';
 import { QUESTIONS, getQuestionText } from '../../_constants/questions';
 import { getDocument } from '@backend/lib/api/documents';
 import { getCompany } from '@backend/lib/api/companies';
-import { generateInterviewQuestions } from '../../_lib/generateInterviewQuestions';
+import { generateInterviewQuestions, stripHtml } from '../../_lib/generateInterviewQuestions';
 
-const CACHE_KEY = 'interview_question_panel_cache_v1';
+// v1에는 생성 실패 시 사용하는 기본 템플릿 질문이 "성공"과 구분 없이 캐시될 수 있었던
+// 문제가 있어 v2로 올려 기존에 저장된 캐시를 무효화한다.
+const CACHE_KEY = 'interview_question_panel_cache_v2';
 
 function loadCache() {
   if (typeof window === 'undefined') return null;
@@ -55,16 +57,21 @@ export default function QuestionPanel({
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
   const [isGenerating, setIsGenerating] = useState(true);
+  // 이번 generatedQuestions가 AI 생성 결과가 아니라 실패 시의 기본 템플릿인지 표시.
+  // fallback 결과는 세션 캐시에 저장하지 않아, 다음에 같은 이력서를 골랐을 때 다시 시도하게 한다.
+  const isFallbackRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     const cache = loadCache();
     if (matchesCache(cache, resumeId, coverLetterId, companySlug, interviewerStyle)) {
+      isFallbackRef.current = false;
       setGeneratedQuestions(cache.generatedQuestions);
       setSelectedQuestions(cache.selectedQuestions ?? []);
       setIsGenerating(false);
-      return;
+      return undefined;
     }
 
     const generate = async () => {
@@ -78,17 +85,27 @@ export default function QuestionPanel({
           companySlug ? getCompany(companySlug) : null,
         ]);
 
+        // contentText가 비어 있는 이력서(template_id가 NULL인 경우 등)는
+        // content_html에 실제 본문이 있을 수 있으므로 그걸 대신 사용한다.
+        const resumeText = resume?.contentText || stripHtml(resume?.contentHtml) || '';
+
         const questions = await generateInterviewQuestions({
-          resumeText: resume?.contentText,
+          resumeText,
           coverLetterText: coverLetter?.contentText,
           company,
           interviewerStyle,
+          signal: controller.signal,
         });
 
-        if (!cancelled) setGeneratedQuestions(questions);
+        if (!cancelled) {
+          isFallbackRef.current = false;
+          setGeneratedQuestions(questions);
+        }
       } catch (err) {
+        if (err?.name === 'AbortError') return;
         console.error('면접 질문 생성 실패:', err);
         if (!cancelled) {
+          isFallbackRef.current = true;
           onGenerationError?.();
           setGeneratedQuestions(
             QUESTIONS.filter((item) => item.category !== 'all').map((item) => ({
@@ -108,11 +125,12 @@ export default function QuestionPanel({
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [resumeId, coverLetterId, companySlug, interviewerStyle, onGenerationError]);
 
   useEffect(() => {
-    if (isGenerating || generatedQuestions.length === 0) return;
+    if (isGenerating || generatedQuestions.length === 0 || isFallbackRef.current) return;
     saveCache({
       resumeId,
       coverLetterId,

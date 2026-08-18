@@ -175,6 +175,7 @@ export async function generateInterviewQuestions({
   company,
   categories = QUESTION_CATEGORIES,
   interviewerStyle = 'friendly',
+  signal,
 }) {
   if (!ALAN_CLIENT_ID) {
     throw new Error('NEXT_PUBLIC_ALAN_CLIENT_ID가 설정되지 않았습니다.');
@@ -192,6 +193,7 @@ export async function generateInterviewQuestions({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content, client_id: ALAN_CLIENT_ID }),
+    signal,
   });
   if (!res.ok) {
     throw new Error(`Alan AI 호출에 실패했습니다. (HTTP ${res.status})`);
