@@ -32,6 +32,68 @@
   :global(.material-symbols-sharp)
     font-size: 24px
 
+// 기본 정보 개별 수정 모드
+.profile_view_basic
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
+  gap: 16px
+  padding: 32px 33px
+  background-color: $white
+  border: 1px solid $stroke2
+  border-radius: 20px
+
+.profile_view_basic_head
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 16px
+
+.profile_view_basic_title
+  color: $black
+
+.profile_view_basic_actions
+  flex-shrink: 0
+  display: flex
+  gap: 8px
+
+.profile_view_basic_cancel,
+.profile_view_basic_save,
+.profile_view_summary_edit
+  flex-shrink: 0
+  padding: 6px 12px
+  border-radius: 8px
+  cursor: pointer
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease
+
+.profile_view_basic_cancel,
+.profile_view_summary_edit
+  color: $stroke1
+  background-color: $white
+  border: 1px solid $stroke3
+
+  &:hover
+    color: $green
+    border-color: $green
+
+.profile_view_basic_save
+  color: $white
+  background-color: $green
+  border: 1px solid $green
+
+// 다른 섹션을 수정 중이면 못 누른다
+.profile_view_summary_edit
+  align-self: flex-start
+
+  &:disabled
+    color: $stroke2
+    border-color: $stroke3
+    cursor: not-allowed
+
+    &:hover
+      color: $stroke2
+      border-color: $stroke3
+
 .profile_view_summary
   display: flex
   align-items: center
