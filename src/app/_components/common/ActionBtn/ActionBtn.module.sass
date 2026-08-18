@@ -3,13 +3,15 @@
 .action_btn
   display: inline-flex
   align-items: center
-  cursor: pointer
-  border: none
-  padding: 0
   gap: 0.125rem
+  padding: 0
+  border: none
   background: transparent
   color: $black
-  
-  .icon
-    &.active
-      font-variation-settings: 'FILL' 1
+  cursor: pointer
+
+.icon
+  font-variation-settings: 'FILL' 0
+
+  &.active
+    font-variation-settings: 'FILL' 1
