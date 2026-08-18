@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
 
 import Header from '@/app/_components/common/Header';
 import Footer from '@/app/_components/common/Footer';
+import MyDocsLink from '@/app/resume/_components/MyDocsLink';
 import FreeFormBrowser from '@/app/resume/free-form/_components/FreeFormBrowser';
 import styles from './page.module.sass';
 
@@ -22,9 +22,7 @@ export default function FreeForm() {
             </p>
           </div>
 
-          <Link href='/mypage/documents' className={`${styles.free_form_docs_btn} font_h4`}>
-            내 문서함
-          </Link>
+          <MyDocsLink className={`${styles.free_form_docs_btn} font_h4`}>내 문서함</MyDocsLink>
         </div>
 
         <Suspense>
