@@ -221,10 +221,6 @@ export default function InterviewPage() {
                     <span>•••</span>
                   </div>
 
-                  <span className={`${styles.hero_shape} ${styles.hero_heart}`}>
-                    ♥
-                  </span>
-
                   <span className={`${styles.hero_star} ${styles.hero_star_1}`}>
                     ✦
                   </span>

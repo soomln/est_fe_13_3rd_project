@@ -91,37 +91,37 @@
   top: 12%
   left: 5%
   color: $white
-  background-color: #65D99A
+  background-color: $green
   animation: bubble_left 3.5s ease-in-out infinite
 
   &::after
     left: 22px
     border-width: 14px 8px 0 0
-    border-color: #65D99A transparent transparent transparent
+    border-color: $green transparent transparent transparent
 
 .hero_bubble_purple
   top: 35%
   right: 2%
   color: $white
-  background-color: #B98CFF
+  background-color: $purple
   animation: bubble_right 4s ease-in-out 0.5s infinite
 
   &::after
     right: 20px
     border-width: 14px 0 0 8px
-    border-color: #B98CFF transparent transparent transparent
+    border-color: $purple transparent transparent transparent
 
 .hero_bubble_yellow
   bottom: 17%
   left: 8%
   color: $white
-  background-color: #FFD84D
+  background-color: $amber
   animation: bubble_bottom 3.8s ease-in-out 1s infinite
 
   &::after
     left: 25px
     border-width: 14px 8px 0 0
-    border-color: #FFD84D transparent transparent transparent
+    border-color: $amber transparent transparent transparent
 
 .hero_circle
   position: absolute
@@ -135,7 +135,7 @@
   right: 20%
   width: 22px
   height: 22px
-  background-color: #B8F3C8
+  background-color: $green
   animation: circle_1 3.5s ease-in-out infinite
 
 .hero_circle_2
@@ -143,7 +143,7 @@
   right: 0
   width: 16px
   height: 16px
-  background-color: #DCC8FF
+  background-color: $purple
   animation: circle_2 4s ease-in-out 0.5s infinite
 
 .hero_circle_3
@@ -151,7 +151,7 @@
   right: 13%
   width: 28px
   height: 28px
-  background-color: #FFF0A8
+  background-color: $amber
   animation: circle_3 3.2s ease-in-out 1s infinite
 
 .hero_circle_4
@@ -159,13 +159,13 @@
   left: 4%
   width: 16px
   height: 16px
-  background-color: #A9EFC4
+  background-color: $black
   animation: circle_4 4.2s ease-in-out 0.3s infinite
 
 .hero_star
   position: absolute
   z-index: 4
-  color: $green
+  color: $black
   line-height: 1
   pointer-events: none
   animation: star_float 2.8s ease-in-out infinite
@@ -192,13 +192,6 @@
   z-index: 4
   pointer-events: none
 
-.hero_heart
-  top: 27%
-  right: 15%
-  color: #54D98D
-  font-size: 48px
-  animation: heart_float 3s ease-in-out infinite
-
 .hero_orbit
   position: absolute
   z-index: 1
@@ -206,7 +199,7 @@
   left: 50%
   width: 480px
   height: 260px
-  border: 2px dashed rgba(0, 166, 61, 0.25)
+  border: 2px dashed $black
   border-radius: 50%
   transform: translate(-50%, -50%) rotate(-12deg)
   animation: orbit_rotate 12s linear infinite
@@ -287,14 +280,6 @@
   50%
     transform: translateY(-10px) rotate(18deg)
     opacity: 1
-
-@keyframes heart_float
-  0%,
-  100%
-    transform: translateY(0) rotate(-5deg)
-
-  50%
-    transform: translateY(-12px) rotate(5deg)
 
 .content_section
   display: flex
