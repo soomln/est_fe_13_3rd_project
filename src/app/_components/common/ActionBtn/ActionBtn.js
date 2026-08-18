@@ -1,23 +1,21 @@
-import { useState } from 'react';
 import styles from './ActionBtn.module.sass';
 
-export default function LikeBtn({ iconText, count, onClick }) {
-  const [isActive, setIsActive] = useState(false);
-  const handleClick = async (e) => {
-    e.stopPropagation();
+export default function ActionBtn({ iconText, count, isActive = false, onClick }) {
+  const handleClick = async (event) => {
+    event.stopPropagation();
 
     try {
-      await onClick(isActive);
-      setIsActive((prev) => !prev);
+      await onClick();
     } catch (error) {
       console.error('액션 처리 실패:', error);
     }
   };
 
   return (
-    <button className={`${styles.action_btn}`} onClick={handleClick}>
+    <button type='button' className={styles.action_btn} onClick={handleClick}>
       <span className={`${styles.icon} material-symbols-rounded ${isActive ? styles.active : ''}`}>{iconText}</span>
-      <span className={`count font_body_m_b`}>{count}</span>
+
+      <span className='count font_body_m_b'>{count}</span>
     </button>
   );
 }

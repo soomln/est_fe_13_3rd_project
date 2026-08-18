@@ -14,7 +14,15 @@ import { getPortfolio } from '@backend/lib/api/portfolio';
 
 import styles from './DetailModal.module.sass';
 
-export default function DetailModal({ isOpen, onClose, itemID, updateReactionCount, isMyPage = false }) {
+export default function DetailModal({
+  isOpen,
+  onClose,
+  itemID,
+  isLiked = false,
+  isBookmarked = false,
+  updateReaction,
+  isMyPage = false,
+}) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [item, setItem] = useState(null);
@@ -30,40 +38,67 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
   }, []);
 
   useEffect(() => {
-    if (!itemID) return;
+    if (!itemID) {
+      setItem(null);
+      return;
+    }
 
     const getItem = async () => {
       try {
         const data = await getPortfolio(itemID);
-        setItem(data);
+
+        setItem({
+          ...data,
+          isLiked,
+          isBookmarked,
+        });
       } catch (error) {
         console.error('포트폴리오 상세 조회 실패:', error);
       }
     };
 
     getItem();
-  }, [itemID]);
+  }, [itemID, isLiked, isBookmarked]);
 
   const onEdit = () => {
+    if (!item) return;
+
     router.push(`/portfolio/upload?id=${item.id}`);
   };
 
-  const handleUpdateReactionCount = (portfolioId, field, amount) => {
-    // page.js의 목록 데이터 갱신
-    updateReactionCount(portfolioId, field, amount);
+  const handleUpdateReaction = (portfolioId, type, isActive) => {
+    // page.js 목록 데이터 갱신
+    updateReaction(portfolioId, type, isActive);
 
-    // Window의 상세 데이터 갱신
+    // 모달 상세 데이터 갱신
     setItem((prev) => {
-      if (!prev || prev.id !== portfolioId) return prev;
+      if (!prev || prev.id !== portfolioId) {
+        return prev;
+      }
 
-      return {
-        ...prev,
-        [field]: prev[field] + amount,
-      };
+      if (type === 'like') {
+        return {
+          ...prev,
+          isLiked: isActive,
+          likeCount: prev.likeCount + (isActive ? 1 : -1),
+        };
+      }
+
+      if (type === 'bookmark') {
+        return {
+          ...prev,
+          isBookmarked: isActive,
+          bookmarkCount: prev.bookmarkCount + (isActive ? 1 : -1),
+        };
+      }
+
+      return prev;
     });
   };
 
-  if (!mounted || !isOpen || !item) return null;
+  if (!mounted || !isOpen || !item) {
+    return null;
+  }
 
   return createPortal(
     <div className={styles.overlay}>
@@ -90,7 +125,7 @@ export default function DetailModal({ isOpen, onClose, itemID, updateReactionCou
           item={item}
           contentsRef={contentsRef}
           showToast={showToast}
-          updateReactionCount={handleUpdateReactionCount}
+          updateReaction={handleUpdateReaction}
         />
       </div>
     </div>,
