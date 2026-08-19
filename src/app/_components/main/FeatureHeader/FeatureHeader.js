@@ -13,7 +13,7 @@ export default function FeatureHeader({
       </span>
 
       <div className={styles.text}>
-        <p className={`font_h3 ${styles.title}`}>{title}</p>
+        <h3 className={`font_h3 ${styles.title}`}>{title}</h3>
         <p className={`font_body_s_b ${styles.description}`}>{description}</p>
       </div>
     </div>
