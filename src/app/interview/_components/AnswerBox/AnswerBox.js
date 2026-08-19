@@ -61,6 +61,7 @@ export default function AnswerBox({
           onKeyDown={handleKeyDown}
           disabled={isVoiceMode}
           placeholder={isVoiceMode ? '마이크에 대고 답변해주세요.' : '답변을 입력해주세요.'}
+          aria-label="답변 입력"
         />
 
         {statusMessage && (

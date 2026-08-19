@@ -219,7 +219,7 @@ export default function QuestionPanel({
                     : 'check_box_outline_blank'}
                 </span>
 
-                <div className={styles.question_info}>
+                <span className={styles.question_info}>
                   <strong className="font_h4">
                     {question.title}
                   </strong>
@@ -227,7 +227,7 @@ export default function QuestionPanel({
                   <p className="font_body_m_r">
                     {description}
                   </p>
-                </div>
+                </span>
               </button>
             </li>
           );
