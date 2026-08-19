@@ -8,7 +8,7 @@ export default function ServiceIntro({
   return (
     <div className={styles.service_intro}>
       <p className={`font_h4 ${styles.eyebrow}`}>{eyebrow}</p>
-      <p className={`font_h1 ${styles.title}`}>{title}</p>
+      <h2 className={`font_h1 ${styles.title}`}>{title}</h2>
       <p className={`font_body_l_r ${styles.description}`}>{description}</p>
     </div>
   );
