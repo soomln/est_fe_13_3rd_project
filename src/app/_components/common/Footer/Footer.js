@@ -80,7 +80,7 @@ const Footer = () => {
             </div>
             <form className={styles.newsletter_form} onSubmit={(e) => e.preventDefault()}>
               <div className={styles.input_wrapper}>
-                <span className={`material-symbols-sharp ${styles.input_icon}`}>mail</span>
+                <span className={`material-symbols-sharp ${styles.input_icon}`} aria-hidden='true'>mail</span>
                 <input
                   type='email'
                   placeholder='이메일 주소'

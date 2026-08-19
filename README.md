@@ -40,27 +40,54 @@ AI 기반 개발자 취업 준비 플랫폼입니다. 이력서·자기소개서
 ## 아키텍처
 
 ```mermaid
-flowchart LR
-    User(["사용자 브라우저"])
-
-    subgraph NextApp["Next.js App Router"]
-        Pages["Server / Client Components"]
-        Routes["Route Handlers (/api/*)"]
+flowchart TB
+    subgraph ClientGroup[" "]
+        Browser["🖥️ 사용자 브라우저"]
     end
 
-    Supabase[("Supabase\nAuth · DB · Storage")]
-    Alan["Alan AI"]
-    Genai["Google GenAI"]
+    subgraph Vercel["▲ Vercel · Next.js App Router"]
+        direction TB
+        Pages["📄 Server / Client Components<br/>페이지 렌더링"]
+        AuthCb["🔑 Auth Callback<br/>/auth/callback"]
+        Proxy["🔄 Proxy<br/>요청마다 세션 갱신"]
+        Routes["🌐 Route Handlers<br/>/api/*"]
+    end
 
-    User <--> Pages
-    Pages --> Supabase
-    Pages --> Routes
+    subgraph ExternalGroup[" "]
+        direction TB
+        Supabase[("🗄️ Supabase<br/>Auth · DB · Storage")]
+        Alan["🤖 Alan AI"]
+        Genai["✨ Google GenAI"]
+    end
+
+    Browser -->|"페이지 요청"| Pages
+    Browser -->|"OAuth 로그인"| AuthCb
+    Browser -.->|"매 요청마다"| Proxy
+    AuthCb -->|"세션 발급"| Supabase
+    Proxy -->|"세션 검증/갱신"| Supabase
+    Pages -->|"데이터 CRUD"| Supabase
+    Pages -->|"AI 요청"| Routes
     Routes -->|"CORS 우회 프록시"| Alan
-    Routes --> Genai
+    Routes -->|"AI 요청"| Genai
+
+    classDef client fill:#EEFDF3,stroke:#00A63D,stroke-width:1.5px,color:#111111
+    classDef nextjs fill:#111111,stroke:#00A63D,stroke-width:1.5px,color:#FFFFFF
+    classDef external fill:#FFFFFF,stroke:#6F6F6F,stroke-width:1.5px,color:#111111
+    classDef db fill:#00A63D,stroke:#00A63D,stroke-width:1.5px,color:#FFFFFF
+
+    class Browser client
+    class Pages,AuthCb,Proxy,Routes nextjs
+    class Alan,Genai external
+    class Supabase db
+
+    style ClientGroup fill:transparent,stroke:transparent
+    style ExternalGroup fill:transparent,stroke:transparent
+    style Vercel fill:#FAFAFA,stroke:#00A63D,stroke-width:1px,color:#00A63D
 ```
 
-- 브라우저에서 외부 AI API(Alan AI)를 직접 호출하면 CORS로 차단되기 때문에, Next.js Route Handler가 서버에서 대신 호출하는 프록시 역할을 합니다.
-- 인증·데이터·파일 저장은 Supabase를 통해 처리합니다.
+- **로그인**: 브라우저 → OAuth 제공자 인증 → `/auth/callback`이 Supabase 세션 발급 → 이후 모든 요청은 Proxy(`src/proxy.js`)가 세션을 자동 갱신합니다.
+- **AI 연동**: 브라우저에서 Alan AI를 직접 호출하면 CORS로 차단되기 때문에, Route Handler가 서버에서 대신 호출하는 프록시 역할을 합니다.
+- **데이터**: 인증·DB·파일 저장은 전부 Supabase 하나로 처리합니다.
 
 ## 팀 구성 및 담당
 
