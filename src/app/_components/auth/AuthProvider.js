@@ -6,7 +6,7 @@ import {
   signInWith,
   signOut as signOutApi,
 } from '@backend/lib/api/auth';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import AuthModal from './AuthModal';
 
@@ -27,11 +27,17 @@ export default function AuthProvider({ children }) {
   const [connectingProvider, setConnectingProvider] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
+  // getCurrentUser()(/api/me)와 onAuthChange()(Supabase 실시간 인증 이벤트)가
+  // 마운트 시 동시에 실행돼서 순서 보장이 없다. onAuthChange가 먼저 정확한 상태를
+  // 반영해도 뒤늦게 도착한 getCurrentUser 응답이 덮어쓸 수 있어서,
+  // onAuthChange가 한 번이라도 발생하면 그 이후엔 authoritative로 취급한다.
+  const authChangedRef = useRef(false);
+
   useEffect(() => {
     let isAlive = true;
 
     getCurrentUser()
-      .then((currentUser) => isAlive && setUser(currentUser))
+      .then((currentUser) => isAlive && !authChangedRef.current && setUser(currentUser))
       .catch(() => {})
       .finally(() => isAlive && setIsLoading(false));
 
@@ -40,7 +46,14 @@ export default function AuthProvider({ children }) {
     };
   }, []);
 
-  useEffect(() => onAuthChange(setUser), []);
+  useEffect(
+    () =>
+      onAuthChange((nextUser) => {
+        authChangedRef.current = true;
+        setUser(nextUser);
+      }),
+    []
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
