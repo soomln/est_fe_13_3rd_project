@@ -19,7 +19,7 @@ export default function FaqItem({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
-        <div className={styles.faq_left}>
+        <span className={styles.faq_left}>
           <span className={`${styles.question_mark} font_body_m_b`}>
             Q.
           </span>
@@ -27,7 +27,7 @@ export default function FaqItem({
           <span className="font_body_m_b">
             {question}
           </span>
-        </div>
+        </span>
 
         <span className={`${styles.arrow} material-symbols-rounded`}>
           {isOpen

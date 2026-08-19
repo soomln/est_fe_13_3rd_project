@@ -624,6 +624,8 @@ export default function InterviewPage() {
       <Header />
 
       <main className={styles.interview_page}>
+        <h1 className={styles.sr_only}>AI 면접 진행</h1>
+
         <div className={`container ${styles.chat_layout}`}>
           <div className={styles.chat_container}>
             <div className={styles.chat_header}>

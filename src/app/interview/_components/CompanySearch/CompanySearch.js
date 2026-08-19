@@ -63,6 +63,7 @@ export default function CompanySearch({
           }}
           placeholder="기업명을 입력하세요."
           className="font_body_s_r"
+          aria-label="기업명 검색"
         />
         <button
           type="button"
@@ -97,6 +98,15 @@ export default function CompanySearch({
                   isSelected ? 'is_selected' : ''
                 }`}
                 onClick={() => onSelect(company.id, company)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect(company.id, company);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
               >
                 <span className={`material-symbols-outlined ${styles.company_checkbox}`}>
                   {isSelected
