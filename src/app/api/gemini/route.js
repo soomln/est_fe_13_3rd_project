@@ -58,6 +58,10 @@ const MAX_CONTRIBUTION_LENGTH = 70000;
 // GitHub API 병렬 요청 수
 const GITHUB_BATCH_SIZE = 10;
 
+// ==============================
+// GitHub 기본 설정
+// ==============================
+
 function getGithubHeaders() {
   const headers = {
     Accept: 'application/vnd.github+json',
@@ -111,7 +115,10 @@ function isSourceFile(path) {
     return false;
   }
 
+  // README 완전 제외
   if (
+    lowerPath === 'readme.md' ||
+    lowerPath.endsWith('/readme.md') ||
     lowerPath.endsWith('.min.js') ||
     lowerPath.endsWith('.map') ||
     lowerPath.endsWith('package-lock.json') ||
@@ -126,10 +133,6 @@ function isSourceFile(path) {
 
 function getFilePriority(path) {
   const lowerPath = path.toLowerCase();
-
-  if (lowerPath === 'readme.md' || lowerPath.endsWith('/readme.md')) {
-    return 100;
-  }
 
   if (lowerPath === 'package.json') {
     return 95;
@@ -278,6 +281,7 @@ async function getGithubRepositoryData(githubUrl) {
     .sort((a, b) => getFilePriority(b.path) - getFilePriority(a.path))
     .slice(0, MAX_FILES);
 
+  // 주요 파일 10개씩 병렬 조회
   const fetchedFiles = await processInBatches(sourceFiles, GITHUB_BATCH_SIZE, async (file) => {
     try {
       const content = await getFileContent(owner, repo, file.path, branch);
@@ -403,6 +407,7 @@ async function getGithubUserContributionData(owner, repo, githubUsername) {
         break;
       }
 
+      // README / lock / 빌드 파일 등 제외
       if (!isSourceFile(file.filename)) {
         continue;
       }
@@ -560,7 +565,10 @@ ${repository.topics.join(', ') || '없음'}
 
 
 아래는 프로젝트 전체 구조와 맥락을 이해하기 위해
-레포지토리에서 선별한 주요 파일들이야.
+레포지토리에서 선별한 주요 소스 파일들이야.
+
+README는 분석에서 제외되어 있으며,
+실제 소스 코드와 설정 파일을 중심으로 판단해줘.
 
 ${fileContents}
 
@@ -584,6 +592,8 @@ ${contributionContents}
 중요한 판단 기준:
 
 - 레포지토리 전체 코드는 프로젝트 구조와 구현 맥락을 이해하는 용도로 사용해줘.
+
+- README의 설명은 사용하지 말고 실제 코드와 커밋 변경 내역을 근거로 판단해줘.
 
 - 사용자의 실제 기여도를 판단할 때는 ${githubUsername} 사용자의 커밋과 변경 코드를 우선적인 근거로 사용해줘.
 
@@ -644,6 +654,7 @@ ${contributionContents}
 
 function createPortfolioPrompt({ message, activeTab, content, messages }) {
   const conversationText = createConversationText(messages);
+
   const isContentQuestion = CONTENT_QUESTIONS.includes(message);
 
   const basePrompt = `
