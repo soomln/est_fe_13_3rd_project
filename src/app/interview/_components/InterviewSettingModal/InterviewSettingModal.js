@@ -88,6 +88,7 @@ export default function InterviewSettingModal({
                 className={`${styles.personality_select} font_body_m_r`}
                 value={interviewerStyle}
                 onChange={(e) => onInterviewerStyleChange(e.target.value)}
+                aria-label="면접관 성격 선택"
               >
                 <option value="friendly">친절한</option>
                 <option value="neutral">중립적인</option>

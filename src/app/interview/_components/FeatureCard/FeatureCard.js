@@ -6,7 +6,7 @@ export default function FeatureCard({
 }) {
   return (
     <article className={styles.feature_card}>
-      <h3 className="font_body_l_b">{title}</h3>
+      <h2 className="font_body_l_b">{title}</h2>
 
       <p className="font_body_m_r">
         {description}
