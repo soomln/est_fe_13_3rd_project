@@ -249,6 +249,7 @@ export default function Home() {
                         type='text'
                         name='q'
                         placeholder='원하시는 기업, 직무, 기술 스택을 검색해보세요.'
+                        aria-label='기업, 직무, 기술 스택 검색'
                         className={`font_caption_b ${styles.company_search_input}`}
                       />
                     </div>

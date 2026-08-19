@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { PAGE_SIZE } from '@backend/lib/constants';
 import { getCodeGroups } from '@backend/lib/api/codes';
@@ -18,9 +19,11 @@ const EMPTY_FILTERS = { jobRole: '', size: '', industry: '' };
 
 export default function SearchCompaniesClient() {
   const { isLoggedIn, openLogin } = useAuth();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') ?? '';
 
-  const [keyword, setKeyword] = useState('');
-  const [query, setQuery] = useState('');
+  const [keyword, setKeyword] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
 
