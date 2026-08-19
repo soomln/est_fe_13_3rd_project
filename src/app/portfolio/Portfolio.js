@@ -25,51 +25,144 @@ export default function Portpolio() {
   const categoryList = ['all', 'web', 'app'];
 
   const [items, setItems] = useState([]);
+  const [bestPortfolioItems, setBestPortfolioItems] = useState([]);
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSort, setSelectedSort] = useState('latest');
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
   const galleryRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const modalId = searchParams.get('modal');
-  const selectedItemID = modalId;
+  const selectedItemID = searchParams.get('modal');
   const isModalOpen = !!selectedItemID;
 
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchItems = async () => {
       try {
+        setIsLoading(true);
+
         const data = await listPortfolios({
-          sort: 'latest',
-          page: 1,
+          category: selectedCategory === 'all' ? undefined : selectedCategory,
+          sort: selectedSort,
+          page,
         });
 
-        setItems(data.items);
+        if (isCancelled) {
+          return;
+        }
+
+        const portfolioItems = data.items ?? [];
+
+        const mappedItems = portfolioItems.map((item) => ({
+          ...item,
+          isLiked: item.likedByMe ?? false,
+          isBookmarked: item.bookmarkedByMe ?? false,
+        }));
+
+        setItems((prev) => {
+          let nextItems;
+
+          if (page === 1) {
+            nextItems = mappedItems;
+          } else {
+            const existingIds = new Set(prev.map((item) => item.id));
+
+            const newItems = mappedItems.filter((item) => !existingIds.has(item.id));
+
+            nextItems = [...prev, ...newItems];
+          }
+
+          setHasMore(nextItems.length < (data.total ?? 0));
+
+          return nextItems;
+        });
+
+        if (page === 1 && selectedCategory === 'all' && selectedSort === 'latest') {
+          setBestPortfolioItems([...mappedItems].sort(() => Math.random() - 0.5).slice(0, 6));
+        }
       } catch (error) {
-        console.error(error);
+        if (!isCancelled) {
+          console.error(`포트폴리오 ${page}페이지 조회 실패:`, error);
+          setHasMore(false);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchItems();
-  }, []);
 
-  const filteredItems = items.filter((item) => selectedCategory === 'all' || item.category === selectedCategory);
+    return () => {
+      isCancelled = true;
+    };
+  }, [page, selectedCategory, selectedSort]);
 
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (selectedSort) {
-      case 'popular':
-        return b.likeCount - a.likeCount;
+  useEffect(() => {
+    const target = loadMoreRef.current;
 
-      case 'bookmarks':
-        return b.bookmarkCount - a.bookmarkCount;
-
-      case 'latest':
-      default:
-        return new Date(b.createdAt) - new Date(a.createdAt);
+    if (!target || isLoading || !hasMore) {
+      return;
     }
-  });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        observer.unobserve(entry.target);
+
+        setPage((prev) => prev + 1);
+      },
+      {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isLoading, hasMore, items.length]);
+
+  const selectedItem = items.find((item) => item.id === selectedItemID);
+
+  const handleCategoryChange = (category) => {
+    if (category === selectedCategory) {
+      return;
+    }
+
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
+    setSelectedCategory(category);
+  };
+
+  const handleSortChange = (sort) => {
+    if (sort === selectedSort) {
+      return;
+    }
+
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
+    setSelectedSort(sort);
+  };
 
   const onOpenDetail = (item) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -94,16 +187,61 @@ export default function Portpolio() {
     });
   };
 
-  const updateReactionCount = (portfolioId, field, amount) => {
+  const updateReaction = (portfolioId, type, isActive) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === portfolioId
-          ? {
-              ...item,
-              [field]: item[field] + amount,
-            }
-          : item,
-      ),
+      prev.map((item) => {
+        if (item.id !== portfolioId) {
+          return item;
+        }
+
+        if (type === 'like') {
+          return {
+            ...item,
+            isLiked: isActive,
+            likedByMe: isActive,
+            likeCount: item.likeCount + (isActive ? 1 : -1),
+          };
+        }
+
+        if (type === 'bookmark') {
+          return {
+            ...item,
+            isBookmarked: isActive,
+            bookmarkedByMe: isActive,
+            bookmarkCount: item.bookmarkCount + (isActive ? 1 : -1),
+          };
+        }
+
+        return item;
+      }),
+    );
+
+    setBestPortfolioItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== portfolioId) {
+          return item;
+        }
+
+        if (type === 'like') {
+          return {
+            ...item,
+            isLiked: isActive,
+            likedByMe: isActive,
+            likeCount: item.likeCount + (isActive ? 1 : -1),
+          };
+        }
+
+        if (type === 'bookmark') {
+          return {
+            ...item,
+            isBookmarked: isActive,
+            bookmarkedByMe: isActive,
+            bookmarkCount: item.bookmarkCount + (isActive ? 1 : -1),
+          };
+        }
+
+        return item;
+      }),
     );
   };
 
@@ -113,29 +251,6 @@ export default function Portpolio() {
       block: 'start',
     });
   };
-
-  const portfolioList = sortedItems.map((item) => (
-    <PortfolioCard
-      key={item.id}
-      item={item}
-      onClick={() => {
-        onOpenDetail(item);
-      }}
-      updateReactionCount={updateReactionCount}
-    />
-  ));
-
-  const bestPortfolioList = items.map((item) => (
-    <SwiperSlide key={item.id}>
-      <PortfolioCard
-        item={item}
-        onClick={() => {
-          onOpenDetail(item);
-        }}
-        updateReactionCount={updateReactionCount}
-      />
-    </SwiperSlide>
-  ));
 
   return (
     <>
@@ -166,7 +281,11 @@ export default function Portpolio() {
                 slideShadows: true,
               }}
             >
-              {bestPortfolioList}
+              {bestPortfolioItems.map((item) => (
+                <SwiperSlide key={item.id}>
+                  <PortfolioCard item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+                </SwiperSlide>
+              ))}
             </Swiper>
           </section>
 
@@ -179,31 +298,40 @@ export default function Portpolio() {
                     category={category}
                     initChecked={category === 'all'}
                     onClick={() => {
-                      setSelectedCategory(category);
+                      handleCategoryChange(category);
                     }}
                   />
                 ))}
               </div>
 
               <div className={styles.sort}>
-                <SortBtn selectedSort={selectedSort} onChange={setSelectedSort} />
+                <SortBtn selectedSort={selectedSort} onChange={handleSortChange} />
               </div>
             </div>
 
-            <ul className={styles.item_list}>{portfolioList}</ul>
+            <ul className={styles.item_list}>
+              {items.map((item) => (
+                <PortfolioCard key={item.id} item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+              ))}
+            </ul>
+
+            {items.length > 0 && hasMore && !isLoading && <div ref={loadMoreRef} className={styles.load_more} />}
+
             <QuickBtns onMoveTop={handleMoveTop} />
           </section>
         </div>
 
-        <DetailModal
-          isOpen={isModalOpen}
-          onClose={onCloseDetail}
-          itemID={selectedItemID}
-          updateReactionCount={updateReactionCount}
-        />
-
         <Footer />
       </main>
+
+      <DetailModal
+        isOpen={isModalOpen}
+        onClose={onCloseDetail}
+        itemID={selectedItemID}
+        isLiked={selectedItem?.isLiked ?? false}
+        isBookmarked={selectedItem?.isBookmarked ?? false}
+        updateReaction={updateReaction}
+      />
     </>
   );
 }
