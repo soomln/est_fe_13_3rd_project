@@ -40,15 +40,23 @@ const SOURCE_EXTENSIONS = [
 
 const EXCLUDED_PATHS = ['node_modules/', '.next/', 'dist/', 'build/', 'coverage/', 'vendor/', '.git/'];
 
-const MAX_FILES = 20;
-const MAX_FILE_LENGTH = 12000;
-const MAX_REPOSITORY_LENGTH = 100000;
+// ==============================
+// GitHub 분석 제한
+// ==============================
 
-// 추가
-const MAX_USER_COMMITS = 15;
-const MAX_COMMIT_FILES = 40;
-const MAX_PATCH_LENGTH = 5000;
-const MAX_CONTRIBUTION_LENGTH = 80000;
+// 프로젝트 전체 구조 파악용
+const MAX_FILES = 8;
+const MAX_FILE_LENGTH = 8000;
+const MAX_REPOSITORY_LENGTH = 50000;
+
+// 사용자 실제 기여도 분석용
+const MAX_USER_COMMITS = 40;
+const MAX_COMMIT_FILES = 50;
+const MAX_PATCH_LENGTH = 3500;
+const MAX_CONTRIBUTION_LENGTH = 70000;
+
+// GitHub API 병렬 요청 수
+const GITHUB_BATCH_SIZE = 10;
 
 function getGithubHeaders() {
   const headers = {
@@ -57,10 +65,9 @@ function getGithubHeaders() {
     'User-Agent': 'optime-portfolio-ai',
   };
 
-  // *********** 토큰 발급 후 주석 해제 *********** //
-  // if (process.env.GITHUB_TOKEN) {
-  //   headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  // }
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
 
   return headers;
 }
@@ -194,6 +201,28 @@ async function githubFetch(url, options = {}) {
   return response;
 }
 
+// ==============================
+// 병렬 처리
+// ==============================
+
+async function processInBatches(items, batchSize, callback) {
+  const results = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+
+    const batchResults = await Promise.all(batch.map((item) => callback(item)));
+
+    results.push(...batchResults);
+  }
+
+  return results;
+}
+
+// ==============================
+// Repository API
+// ==============================
+
 async function getRepositoryInfo(owner, repo) {
   const response = await githubFetch(`https://api.github.com/repos/${owner}/${repo}`);
 
@@ -225,7 +254,10 @@ async function getFileContent(owner, repo, path, branch) {
   return response.text();
 }
 
-// 기존 레포 전체 분석용
+// ==============================
+// 프로젝트 전체 구조 분석
+// ==============================
+
 async function getGithubRepositoryData(githubUrl) {
   const parsed = parseGithubUrl(githubUrl);
 
@@ -246,33 +278,52 @@ async function getGithubRepositoryData(githubUrl) {
     .sort((a, b) => getFilePriority(b.path) - getFilePriority(a.path))
     .slice(0, MAX_FILES);
 
+  const fetchedFiles = await processInBatches(sourceFiles, GITHUB_BATCH_SIZE, async (file) => {
+    try {
+      const content = await getFileContent(owner, repo, file.path, branch);
+
+      if (!content) {
+        return null;
+      }
+
+      return {
+        path: file.path,
+        content,
+      };
+    } catch (error) {
+      console.error(`GitHub 파일 조회 실패: ${file.path}`, error);
+
+      return null;
+    }
+  });
+
   const files = [];
 
   let totalLength = 0;
 
-  for (const file of sourceFiles) {
+  for (const file of fetchedFiles) {
+    if (!file) {
+      continue;
+    }
+
     if (totalLength >= MAX_REPOSITORY_LENGTH) {
       break;
     }
 
-    try {
-      const content = await getFileContent(owner, repo, file.path, branch);
+    const remainingLength = MAX_REPOSITORY_LENGTH - totalLength;
 
-      if (!content) continue;
+    const slicedContent = file.content.slice(0, Math.min(MAX_FILE_LENGTH, remainingLength));
 
-      const remainingLength = MAX_REPOSITORY_LENGTH - totalLength;
-
-      const slicedContent = content.slice(0, Math.min(MAX_FILE_LENGTH, remainingLength));
-
-      files.push({
-        path: file.path,
-        content: slicedContent,
-      });
-
-      totalLength += slicedContent.length;
-    } catch (error) {
-      console.error(`GitHub 파일 조회 실패: ${file.path}`, error);
+    if (!slicedContent) {
+      continue;
     }
+
+    files.push({
+      path: file.path,
+      content: slicedContent,
+    });
+
+    totalLength += slicedContent.length;
   }
 
   if (!files.length) {
@@ -282,7 +333,6 @@ async function getGithubRepositoryData(githubUrl) {
   return {
     owner,
     repo,
-
     name: repository.name,
     fullName: repository.full_name,
     description: repository.description ?? '',
@@ -294,7 +344,7 @@ async function getGithubRepositoryData(githubUrl) {
 }
 
 // ==============================
-// 여기부터 사용자 기여도 분석용 추가
+// 사용자 기여도 분석
 // ==============================
 
 async function getUserCommits(owner, repo, githubUsername) {
@@ -321,62 +371,70 @@ async function getGithubUserContributionData(owner, repo, githubUsername) {
     throw new Error(`${githubUsername} 사용자의 커밋을 이 레포지토리에서 찾지 못했습니다.`);
   }
 
+  // 커밋 상세 정보 10개씩 병렬 조회
+  const commitDetails = await processInBatches(commits, GITHUB_BATCH_SIZE, async (commit) => {
+    try {
+      return await getCommitDetail(owner, repo, commit.sha);
+    } catch (error) {
+      console.error(`GitHub 커밋 상세 조회 실패: ${commit.sha}`, error);
+
+      return null;
+    }
+  });
+
   const result = [];
 
   let totalLength = 0;
   let totalFileCount = 0;
 
-  for (const commit of commits) {
+  for (const detail of commitDetails) {
+    if (!detail) {
+      continue;
+    }
+
     if (totalLength >= MAX_CONTRIBUTION_LENGTH || totalFileCount >= MAX_COMMIT_FILES) {
       break;
     }
 
-    try {
-      const detail = await getCommitDetail(owner, repo, commit.sha);
+    const files = [];
 
-      const files = [];
-
-      for (const file of detail.files ?? []) {
-        if (totalLength >= MAX_CONTRIBUTION_LENGTH || totalFileCount >= MAX_COMMIT_FILES) {
-          break;
-        }
-
-        // lock 파일 등은 기여도 분석에서 제외
-        if (!isSourceFile(file.filename)) {
-          continue;
-        }
-
-        const remainingLength = MAX_CONTRIBUTION_LENGTH - totalLength;
-
-        const patch = (file.patch ?? '').slice(0, Math.min(MAX_PATCH_LENGTH, remainingLength));
-
-        files.push({
-          filename: file.filename,
-          status: file.status,
-          additions: file.additions ?? 0,
-          deletions: file.deletions ?? 0,
-          changes: file.changes ?? 0,
-          patch,
-        });
-
-        totalLength += patch.length;
-        totalFileCount += 1;
+    for (const file of detail.files ?? []) {
+      if (totalLength >= MAX_CONTRIBUTION_LENGTH || totalFileCount >= MAX_COMMIT_FILES) {
+        break;
       }
 
-      if (!files.length) {
+      if (!isSourceFile(file.filename)) {
         continue;
       }
 
-      result.push({
-        sha: detail.sha,
-        message: detail.commit?.message ?? '',
-        date: detail.commit?.author?.date ?? '',
-        authorLogin: detail.author?.login ?? null,
-        files,
+      const remainingLength = MAX_CONTRIBUTION_LENGTH - totalLength;
+
+      const patch = (file.patch ?? '').slice(0, Math.min(MAX_PATCH_LENGTH, remainingLength));
+
+      files.push({
+        filename: file.filename,
+        status: file.status,
+        additions: file.additions ?? 0,
+        deletions: file.deletions ?? 0,
+        changes: file.changes ?? 0,
+        patch,
       });
-    } catch (error) {
-      console.error(`GitHub 커밋 상세 조회 실패: ${commit.sha}`, error);
+
+      totalLength += patch.length;
+      totalFileCount += 1;
     }
+
+    if (!files.length) {
+      continue;
+    }
+
+    result.push({
+      sha: detail.sha,
+      message: detail.commit?.message ?? '',
+      date: detail.commit?.author?.date ?? '',
+      authorLogin: detail.author?.login ?? null,
+      files,
+    });
   }
 
   if (!result.length) {
@@ -385,6 +443,10 @@ async function getGithubUserContributionData(owner, repo, githubUsername) {
 
   return result;
 }
+
+// ==============================
+// 이전 대화
+// ==============================
 
 function createConversationText(messages) {
   if (!messages?.length) {
@@ -400,10 +462,13 @@ function createConversationText(messages) {
     .join('\n\n');
 }
 
+// ==============================
+// GitHub 분석 Prompt
+// ==============================
+
 function createGithubPrompt({ message, repository, contributions, githubUsername, position, messages }) {
   const conversationText = createConversationText(messages);
 
-  // 기존 레포 전체 코드
   const fileContents = repository.files
     .map(
       (file) => `
@@ -416,7 +481,6 @@ ${file.content}
     )
     .join('\n');
 
-  // 추가: 사용자 커밋 / 변경 코드
   const contributionContents = contributions
     .map((commit) => {
       const changedFiles = commit.files
@@ -574,6 +638,10 @@ ${contributionContents}
 `;
 }
 
+// ==============================
+// Portfolio Prompt
+// ==============================
+
 function createPortfolioPrompt({ message, activeTab, content, messages }) {
   const conversationText = createConversationText(messages);
   const isContentQuestion = CONTENT_QUESTIONS.includes(message);
@@ -597,7 +665,6 @@ ${message}
 - 제공된 내용에서 확인할 수 없는 사실은 임의로 만들어내지 마.
 `;
 
-  // 일반 질문
   if (!isContentQuestion) {
     return `
 ${basePrompt}
@@ -613,7 +680,6 @@ ${JSON.stringify(content, null, 2)}
 `;
   }
 
-  // Overview 추천 질문
   if (activeTab === 'overview') {
     return `
 ${basePrompt}
@@ -635,7 +701,6 @@ Overview 분석 기준:
 `;
   }
 
-  // Code 추천 질문
   if (activeTab === 'code') {
     return `
 ${basePrompt}
@@ -659,6 +724,10 @@ Code 분석 기준:
 
   return basePrompt;
 }
+
+// ==============================
+// API Route
+// ==============================
 
 export async function POST(request) {
   try {
@@ -721,10 +790,8 @@ export async function POST(request) {
         );
       }
 
-      // 기존 레포 전체 코드 분석
       const repository = await getGithubRepositoryData(githubUrl.trim());
 
-      // 추가: 해당 사용자의 커밋 / 변경 코드
       const contributions = await getGithubUserContributionData(
         repository.owner,
         repository.repo,
