@@ -21,21 +21,31 @@ import DetailModal from '@/app/portfolio/_components/DetailModal';
 
 import { listPortfolios } from '@backend/lib/api/portfolio';
 
-export default function Portpolio() {
+const mapPortfolioItems = (portfolioItems) =>
+  portfolioItems.map((item) => ({
+    ...item,
+    isLiked: item.likedByMe ?? false,
+    isBookmarked: item.bookmarkedByMe ?? false,
+  }));
+
+export default function Portpolio({ initialData, initialBestPortfolioItems }) {
   const categoryList = ['all', 'web', 'app'];
 
-  const [items, setItems] = useState([]);
-  const [bestPortfolioItems, setBestPortfolioItems] = useState([]);
+  const [items, setItems] = useState(() => mapPortfolioItems(initialData.items ?? []));
+  const [bestPortfolioItems, setBestPortfolioItems] = useState(() =>
+    mapPortfolioItems(initialBestPortfolioItems ?? []),
+  );
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSort, setSelectedSort] = useState('latest');
 
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState((initialData.items?.length ?? 0) < (initialData.total ?? 0));
   const [isLoading, setIsLoading] = useState(false);
 
   const galleryRef = useRef(null);
   const loadMoreRef = useRef(null);
+  const loadedRequestRef = useRef('all:latest:1');
 
   const router = useRouter();
   const pathname = usePathname();
@@ -45,6 +55,13 @@ export default function Portpolio() {
   const isModalOpen = !!selectedItemID;
 
   useEffect(() => {
+    const requestKey = `${selectedCategory}:${selectedSort}:${page}`;
+
+    if (loadedRequestRef.current === requestKey) {
+      return;
+    }
+
+    loadedRequestRef.current = requestKey;
     let isCancelled = false;
 
     const fetchItems = async () => {
@@ -63,11 +80,7 @@ export default function Portpolio() {
 
         const portfolioItems = data.items ?? [];
 
-        const mappedItems = portfolioItems.map((item) => ({
-          ...item,
-          isLiked: item.likedByMe ?? false,
-          isBookmarked: item.bookmarkedByMe ?? false,
-        }));
+        const mappedItems = mapPortfolioItems(portfolioItems);
 
         setItems((prev) => {
           let nextItems;
@@ -281,9 +294,15 @@ export default function Portpolio() {
                 slideShadows: true,
               }}
             >
-              {bestPortfolioItems.map((item) => (
+              {bestPortfolioItems.map((item, index) => (
                 <SwiperSlide key={item.id}>
-                  <PortfolioCard item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+                  <PortfolioCard
+                    item={item}
+                    onClick={onOpenDetail}
+                    updateReaction={updateReaction}
+                    imageSizes='(min-width: 1440px) 720px, 40vw'
+                    isLcpImage={index < 2}
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>
@@ -311,7 +330,13 @@ export default function Portpolio() {
 
             <ul className={styles.item_list}>
               {items.map((item) => (
-                <PortfolioCard key={item.id} item={item} onClick={onOpenDetail} updateReaction={updateReaction} />
+                <PortfolioCard
+                  key={item.id}
+                  item={item}
+                  onClick={onOpenDetail}
+                  updateReaction={updateReaction}
+                  imageSizes='(min-width: 1440px) 342px, 25vw'
+                />
               ))}
             </ul>
 
