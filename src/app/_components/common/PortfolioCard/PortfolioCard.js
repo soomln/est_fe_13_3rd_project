@@ -64,7 +64,7 @@ export default function PortfolioCard({
           <div className={styles.label}>
             <span>{item.category}</span>
 
-            <TitleTag className='font_h4'>{item.title}</TitleTag>
+            <TitleTag className={`font_h4 ${styles.title}`}>{item.title}</TitleTag>
           </div>
 
           <p className='font_body_r_b'>{item.description}</p>
