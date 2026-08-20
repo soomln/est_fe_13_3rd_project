@@ -9,26 +9,6 @@ import styles from './EditorHeader.module.sass';
 const BLINK_MS = 900;
 const TIP_STAY_MS = 3000;
 
-// 인쇄 미디어쿼리의 기준 폭은 화면이 아니라 종이(A4 약 794px)다.
-// 그래서 1280px 미만용 안내 화면이 켜지고 본문이 숨는다. 인쇄하는 동안만 되돌린다
-function keepOnlyDocument() {
-  const root = document.querySelector('.ProseMirror')?.closest('body > *');
-  if (!root) return null;
-
-  root.dataset.printRoot = 'true';
-
-  const sheet = document.createElement('style');
-  sheet.textContent =
-    '@media print{body>*:not([data-print-root]){display:none!important}' +
-    'body>[data-print-root]{display:block!important}}';
-  document.head.append(sheet);
-
-  return () => {
-    sheet.remove();
-    delete root.dataset.printRoot;
-  };
-}
-
 export default function EditorHeader({
   isChatOpen,
   onOpenChat,
@@ -68,22 +48,18 @@ export default function EditorHeader({
 
   useEffect(() => clearTimers, []);
 
-  // 인쇄 버튼이든 Ctrl+P 든 브라우저가 인쇄를 시작할 때 걸리도록 beforeprint 에 붙인다.
-  // 인쇄 대화상자의 파일 이름은 문서 제목에서 온다
+  // 인쇄 대화상자의 파일 이름이 문서 제목에서 온다.
+  // 인쇄 버튼이든 Ctrl+P 든 걸리도록 beforeprint 에 붙인다
   useEffect(() => {
-    let undo = null;
     let previous = '';
 
     const before = () => {
       previous = document.title;
       document.title = title.trim() || '이력서';
-      undo = keepOnlyDocument();
     };
 
     const after = () => {
       document.title = previous;
-      undo?.();
-      undo = null;
     };
 
     window.addEventListener('beforeprint', before);
@@ -92,7 +68,6 @@ export default function EditorHeader({
     return () => {
       window.removeEventListener('beforeprint', before);
       window.removeEventListener('afterprint', after);
-      undo?.();
     };
   }, [title]);
 

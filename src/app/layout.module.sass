@@ -2,3 +2,8 @@
 .app_wide
   @media (max-width: 1279px)
     display: none
+
+  // 인쇄할 때 기준 폭은 화면이 아니라 종이(A4 약 794px)라 위 조건이 켜진다.
+  // 그래도 본문은 나와야 한다
+  @media print
+    display: block

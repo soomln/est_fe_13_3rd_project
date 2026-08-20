@@ -8,6 +8,10 @@
   @media (min-width: 1280px)
     display: none
 
+  // 인쇄에는 이 안내가 나오면 안 된다. 종이 폭이 1280 보다 좁아 위 조건이 꺼진다
+  @media print
+    display: none
+
 // ─── 헤더 ────────────────────────────────────
 .head
   position: sticky
