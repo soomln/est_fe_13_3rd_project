@@ -128,7 +128,8 @@ export default function EditorHeader({
         </Link>
       </div>
 
-      <div className={styles.editor_header_title}>
+      {/* 편집기 화면의 유일한 제목이라 h1 으로 둔다. 라벨을 안에 둬야 편집 중에도 제목이 비지 않는다 */}
+      <h1 className={styles.editor_header_title}>
         <span className={`${styles.editor_header_title_label} font_h4`}>제목:</span>
 
         {isEditingTitle ? (
@@ -152,7 +153,7 @@ export default function EditorHeader({
             {title || '이름을 입력해주세요'}
           </button>
         )}
-      </div>
+      </h1>
 
       <div className={styles.editor_header_tools}>
         <div className={styles.editor_header_history}>
