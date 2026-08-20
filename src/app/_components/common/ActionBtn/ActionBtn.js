@@ -1,8 +1,21 @@
+'use client';
+
+import { useAuth } from '@/app/_components/auth';
+
 import styles from './ActionBtn.module.sass';
 
 export default function ActionBtn({ iconText, count, isActive = false, onClick }) {
+  const { isLoggedIn, isLoading, openLogin } = useAuth();
+
   const handleClick = async (event) => {
     event.stopPropagation();
+
+    if (isLoading) return;
+
+    if (!isLoggedIn) {
+      openLogin();
+      return;
+    }
 
     try {
       await onClick();

@@ -38,13 +38,21 @@ export default function ReactionBtnGroup({ item, contentsRef, showToast, updateR
 
   return (
     <div className={styles.group}>
-      <CircleBadge src='/images/estSoft-1.png' name={item.authorName} size='medium' textColor='#ffffff' />
-      <ReactionBtn iconText='thumb_up' value={item.likeCount} isToggle isActive={item.isLiked} onClick={handleLike} />
+      <CircleBadge src={item.authorAvatar} name={item.authorName} size='medium' textColor='#ffffff' />
+      <ReactionBtn
+        iconText='thumb_up'
+        value={item.likeCount}
+        isToggle
+        isActive={item.isLiked}
+        requiresAuth
+        onClick={handleLike}
+      />
       <ReactionBtn
         iconText='bookmark'
         value={item.bookmarkCount}
         isToggle
         isActive={item.isBookmarked}
+        requiresAuth
         onClick={handleBookmark}
       />
       <ReactionBtn iconText='share' value='공유' onClick={onCopyUrl} />
