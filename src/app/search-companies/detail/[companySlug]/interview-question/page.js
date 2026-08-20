@@ -8,7 +8,7 @@ export const metadata = {
     title: '면접 족보 | CallBack',
     description: '기업별 실제 면접 질문과 면접 족보를 확인해보세요.',
     type: 'website',
-    images: ['/public/images/OG_Image.png'],
+    images: ['/images/OG_Image.png'],
   },
 };
 
