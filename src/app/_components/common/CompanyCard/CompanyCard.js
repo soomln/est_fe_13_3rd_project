@@ -65,7 +65,8 @@ export default function CompanyCard({
             <span className='material-symbols-sharp' aria-hidden='true'>
               star
             </span>
-            {rating ?? '-'}
+            {/* {rating ?? '-'} */}
+            {'-'}
           </dd>
         </div>
 

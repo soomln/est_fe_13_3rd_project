@@ -40,16 +40,36 @@ const Footer = () => {
             </p>
             <div className={styles.social_buttons}>
               <button className={styles.social_icon} aria-label='Github'>
-                <img src='/images/github-icon.svg' alt='github' />
+                <Image 
+                src='/images/github-icon.svg' 
+                alt='github' 
+                width={16}
+                height={16}
+                />
               </button>
               <button className={styles.social_icon} aria-label='Twitter'>
-                <img src='/images/twiter-icon.svg' alt='twitter' />
+                <Image 
+                src='/images/twiter-icon.svg' 
+                alt='twitter'  
+                width={16}
+                height={16}       
+                />
               </button>
               <button className={styles.social_icon} aria-label='LinkedIn'>
-                <img src='/images/linkedin-icon.svg' alt='linkedin' />
+                <Image 
+                src='/images/linkedin-icon.svg' 
+                alt='linkedin' 
+                width={16}
+                height={16}
+                />
               </button>
               <button className={styles.social_icon} aria-label='Instagram'>
-                <img src='/images/instagram-icon.svg' alt='instagram' />
+                <Image 
+                src='/images/instagram-icon.svg' 
+                alt='instagram' 
+                width={16}
+                height={16}
+                />
               </button>
             </div>
           </div>
