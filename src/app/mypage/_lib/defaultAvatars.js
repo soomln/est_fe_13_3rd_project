@@ -21,4 +21,13 @@ const DEFAULT_AVATARS = FACES.map(
   (face) => `data:image/svg+xml;utf8,${encodeURIComponent(draw(face))}`,
 );
 
+// 직접 올린 사진이 담기는 곳
+const UPLOADED = '/storage/v1/object/public/avatars/';
+
+// 구글·깃허브에서 따라온 사진은 쓰지 않는다. 우리 기본 이미지 중 첫 번째를 준다
+export function toOurAvatar(url) {
+  if (!url) return DEFAULT_AVATARS[0];
+  return url.startsWith('data:') || url.includes(UPLOADED) ? url : DEFAULT_AVATARS[0];
+}
+
 export default DEFAULT_AVATARS;
