@@ -25,7 +25,9 @@ export async function loadProfileView() {
 const ROWS = {
   educations: (p) => p.educations.map((item) => [item.meta, item.title, item.sub, item.badge]),
   careers: (p) => p.careers.map((item) => [item.meta, item.title, item.sub]),
-  languages: (p) => p.languages.map((item) => [item.title, item.badge, item.sub]),
+  // 어학은 딴 날짜가 없다. "자격 및 어학" 표의 취득일 칸을 비워 자격과 줄을 맞춘다
+  languages: (p) =>
+    p.languages.map((item) => ['', item.title, [item.badge, item.sub].filter(Boolean).join(' · ')]),
   awards: (p) => p.awards.map((item) => [item.date, item.title]),
   skills: (p) => (p.skills.length ? [[p.skills.join(', ')]] : []),
   headline: (p) => (p.bio || p.headline ? [[p.bio || p.headline]] : []),
@@ -56,10 +58,40 @@ export const LABELS = {
 
 const text = (value) => String(value ?? '').trim();
 const isHeading = (node) => /^H[1-3]$/.test(node.tagName);
+const depth = (node) => Number(node.tagName[1]);
+
+const rowsOf = (table) => [...(table.querySelector('tbody') ?? table).rows];
+
+// 첫 줄이 전부 th 면 제목 줄이 있는 가로 표다. 그 아래가 데이터 줄이다
+const isHeaderRow = (row) => [...row.children].every((cell) => cell.tagName === 'TH');
+
+// 그 밖의 표는 줄마다 "라벨 | 값" 인 세로 표로 본다
+const isLabelTable = (table) => {
+  const rows = rowsOf(table);
+  return (
+    rows.length > 0 && !isHeaderRow(rows[0]) && rows.every((row) => row.children.length >= 2)
+  );
+};
+
+// 사진처럼 rowspan 이 걸린 칸이 있으면 앞이 밀린다. 뒤에서 두 칸을 라벨과 값으로 본다
+const labelCell = (row) => row.children[row.children.length - 2];
+const valueCell = (row) => row.children[row.children.length - 1];
 
 // 양식은 예시 글자로 채워져 있다. 이런 글자만 있으면 아직 안 쓴 것으로 본다
 const PLACEHOLDER = /[○△]|example\.com|0000-0000/;
-const isUntouched = (node) => !text(node.textContent) || PLACEHOLDER.test(node.textContent);
+const isBlank = (node) => !text(node?.textContent) || PLACEHOLDER.test(node.textContent);
+
+// 표는 라벨을 빼고 값 칸만 본다. 라벨을 같이 세면 빈 양식이 "이미 쓴 것" 으로 보인다
+function isUntouched(node) {
+  if (node.tagName !== 'TABLE') return isBlank(node);
+
+  const rows = rowsOf(node);
+  const cells = isLabelTable(node)
+    ? rows.map(valueCell)
+    : rows.filter((row) => !isHeaderRow(row)).flatMap((row) => [...row.children]);
+
+  return cells.every(isBlank);
+}
 
 // 칸 수에 맞춘다. 넘치면 마지막 칸에 몰아 넣는다
 function fit(row, count) {
@@ -76,12 +108,8 @@ function writeTable(doc, table, rows) {
   const count = old[0]?.children.length ?? 2;
   const cellTag = old[0]?.children[0]?.tagName.toLowerCase() ?? 'td';
 
-  // 세 칸 이상이면서 숫자가 없는 첫 줄은 제목 줄로 보고 남긴다.
-  // 두 칸짜리는 "이메일 | 값" 처럼 왼쪽이 이름표라 제목 줄이 아니다
-  const keep =
-    count >= 3 && old.length > 1 && ![...old[0].children].some((cell) => /\d/.test(cell.textContent))
-      ? 1
-      : 0;
+  // 칸이 전부 th 인 첫 줄만 제목 줄로 보고 남긴다
+  const keep = old[0] && isHeaderRow(old[0]) && old.length > 1 ? 1 : 0;
 
   old.slice(keep).forEach((row) => row.remove());
 
@@ -100,48 +128,78 @@ function writeTable(doc, table, rows) {
 function writeContact(table, profile) {
   let count = 0;
 
-  [...(table.querySelector('tbody') ?? table).rows].forEach((row) => {
+  rowsOf(table).forEach((row) => {
     if (row.children.length < 2) return;
 
-    const value = contactValue(row.children[0].textContent, profile);
+    const value = contactValue(labelCell(row).textContent, profile);
     if (!value) return;
 
-    row.children[1].textContent = value;
+    valueCell(row).textContent = value;
     count += 1;
   });
 
   return count > 0;
 }
 
+// 양식이 쓴 형식 그대로 채운다. 표면 표에, 목록이면 목록에, 그다음이 제목 자리다
 function writeInto(doc, nodes, rows) {
-  const first = nodes[0];
-  nodes.slice(1).forEach((node) => node.remove());
+  const table = nodes.find((node) => node.tagName === 'TABLE');
 
-  if (first.tagName === 'TABLE') {
-    writeTable(doc, first, rows);
-    return;
+  if (table) {
+    // 라벨 표는 줄마다 뜻이 달라 목록으로 갈아끼우면 표가 망가진다
+    if (isLabelTable(table)) return false;
+    writeTable(doc, table, rows);
+    return true;
   }
 
-  const lines = rows.map(toLine);
+  const list = nodes.find((node) => node.tagName === 'UL' || node.tagName === 'OL');
 
-  if (first.tagName === 'UL' || first.tagName === 'OL') {
-    first.replaceChildren(
-      ...lines.map((line) => {
+  if (list) {
+    list.replaceChildren(
+      ...rows.map((row) => {
         const item = doc.createElement('li');
-        item.textContent = line;
+        const line = doc.createElement('p');
+        line.textContent = toLine(row);
+        item.append(line);
         return item;
       })
     );
-    return;
+    return true;
   }
 
+  // 하위 제목으로만 나뉜 항목은 제목 자리에 한 줄씩 쓴다
+  const slots = nodes.filter(isHeading);
+
+  if (slots.length) {
+    let tail = nodes[nodes.length - 1];
+
+    rows.forEach((row, index) => {
+      if (slots[index]) {
+        slots[index].textContent = toLine(row);
+        return;
+      }
+
+      const extra = doc.createElement(slots[0].tagName);
+      extra.textContent = toLine(row);
+      tail.after(extra);
+      tail = extra;
+    });
+
+    return true;
+  }
+
+  const first = nodes[0];
+  nodes.slice(1).forEach((node) => node.remove());
+
   first.replaceWith(
-    ...lines.map((line) => {
+    ...rows.map((row) => {
       const paragraph = doc.createElement('p');
-      paragraph.textContent = line;
+      paragraph.textContent = toLine(row);
       return paragraph;
     })
   );
+
+  return true;
 }
 
 // 프로필에 그 항목의 값이 있는지
@@ -158,30 +216,57 @@ export default function fillProfile(html, profile, { overwrite } = {}) {
   const filled = [];
   const skipped = [];
 
+  // 채워 넣은 글이 하위 제목에 남으면 그 제목이 다시 걸린다. 한 번 다룬 자리는 건너뛴다
+  const used = new Set();
+
+  // 같은 항목을 두 제목이 노리면(자격 및 어학 / 수상 내역) 더 길게 맞은 제목이 가져간다
+  const owner = new Map();
+
   blocks.forEach((node, index) => {
     if (!isHeading(node)) return;
 
-    const key = matchSection(node.textContent).find((each) => hasValue(each, profile));
-    if (!key) return;
+    matchSection(node.textContent)
+      .filter((hit) => hasValue(hit.key, profile))
+      .forEach((hit) => {
+        const best = owner.get(hit.key);
+        if (!best || hit.length > best.length) owner.set(hit.key, { index, length: hit.length });
+      });
+  });
 
+  blocks.forEach((node, index) => {
+    if (!isHeading(node) || used.has(node)) return;
+
+    // "자격 및 어학" 처럼 한 제목이 두 항목을 겸하면 둘 다 넣는다
+    const keys = matchSection(node.textContent)
+      .filter((hit) => owner.get(hit.key)?.index === index)
+      .map((hit) => hit.key);
+    if (!keys.length) return;
+
+    // 하위 제목(h3)은 그 항목 안에 든 자리다. 같거나 큰 제목, 또는 구분선에서 끊는다
     const section = [];
-    for (let next = index + 1; next < blocks.length && !isHeading(blocks[next]); next += 1) {
-      section.push(blocks[next]);
+    for (let next = index + 1; next < blocks.length; next += 1) {
+      const each = blocks[next];
+      if (each.tagName === 'HR') break;
+      if (isHeading(each) && depth(each) <= depth(node)) break;
+      section.push(each);
     }
     if (!section.length) return;
 
+    section.forEach((each) => used.add(each));
+
     if (!overwrite && !section.every(isUntouched)) {
-      skipped.push(LABELS[key]);
+      keys.forEach((key) => skipped.push(LABELS[key]));
       return;
     }
 
-    if (key === 'contact') {
+    if (keys.includes('contact')) {
       if (section[0].tagName !== 'TABLE' || !writeContact(section[0], profile)) return;
     } else {
-      writeInto(doc, section, ROWS[key](profile).filter((row) => row.some(text)));
+      const rows = keys.flatMap((key) => ROWS[key](profile)).filter((row) => row.some(text));
+      if (!writeInto(doc, section, rows)) return;
     }
 
-    filled.push(LABELS[key]);
+    keys.forEach((key) => filled.push(LABELS[key]));
   });
 
   return {
