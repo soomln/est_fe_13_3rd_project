@@ -58,7 +58,7 @@ const Footer = () => {
           <nav className={styles.menus_wrapper}>
             {FOOTER_MENUS.map((menu, index) => (
               <div key={index} className={styles.menu_column}>
-                <h4 className={`font_body_m_b ${styles.menu_title}`}>{menu.title}</h4>
+                <h3 className={`font_body_m_b ${styles.menu_title}`}>{menu.title}</h3>
                 <ul className={styles.menu_list}>
                   {menu.items.map((item, itemIndex) => (
                     <li key={itemIndex}>
@@ -75,7 +75,7 @@ const Footer = () => {
           {/* 3. 뉴스레터 영역 */}
           <div className={styles.newsletter_section}>
             <div className={styles.newsletter_header}>
-              <h4 className={`font_body_m_b ${styles.newsletter_title}`}>뉴스레터</h4>
+              <h3 className={`font_body_m_b ${styles.newsletter_title}`}>뉴스레터</h3>
               <p className={`font_body_s_r ${styles.newsletter_desc}`}>최신 취업 정보를 이메일로</p>
             </div>
             <form className={styles.newsletter_form} onSubmit={(e) => e.preventDefault()}>
