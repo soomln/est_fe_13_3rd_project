@@ -1,25 +1,93 @@
-import * as icons from 'simple-icons';
+// 기술 스택 로고. simple-icons 는 아이콘이 3천 개라 통째로 가져오면
+// 쓰지 않는 것까지 번들에 다 실린다. 쓰는 것만 이름으로 콕 집어 가져온다
+//
+// 주의: code_master 의 tech_stack 에 코드가 늘면 여기에도 줄을 추가해야 한다
+import {
+  siC,
+  siCplusplus,
+  siCss,
+  siDart,
+  siDjango,
+  siDocker,
+  siDotnet,
+  siFastapi,
+  siFigma,
+  siFirebase,
+  siFlutter,
+  siGit,
+  siGo,
+  siGooglecloud,
+  siGraphql,
+  siHtml5,
+  siJavascript,
+  siKotlin,
+  siKubernetes,
+  siMongodb,
+  siMysql,
+  siNestjs,
+  siNextdotjs,
+  siNodedotjs,
+  siOpenjdk,
+  siPhp,
+  siPostgresql,
+  siPython,
+  siReact,
+  siRedis,
+  siRuby,
+  siRust,
+  siSpring,
+  siSupabase,
+  siSvelte,
+  siSwift,
+  siTypescript,
+  siVuedotjs,
+} from 'simple-icons';
 
-// tech_stack 코드와 simple-icons 이름이 다른 것들
-const ALIASES = {
-  html: 'siHtml5',
-  nextjs: 'siNextdotjs',
-  vue: 'siVuedotjs',
-  nodejs: 'siNodedotjs',
-  cpp: 'siCplusplus',
-  java: 'siOpenjdk',
-  gcp: 'siGooglecloud',
-  react_native: 'siReact',
+// 로고가 없는 기술(C#·AWS·Azure)은 목록에 없다. 부르는 쪽에서 글자 원으로 그린다
+const ICONS = {
+  html: siHtml5,
+  css: siCss,
+  javascript: siJavascript,
+  typescript: siTypescript,
+  react: siReact,
+  nextjs: siNextdotjs,
+  vue: siVuedotjs,
+  svelte: siSvelte,
+  nodejs: siNodedotjs,
+  nestjs: siNestjs,
+  spring: siSpring,
+  java: siOpenjdk,
+  kotlin: siKotlin,
+  python: siPython,
+  django: siDjango,
+  fastapi: siFastapi,
+  go: siGo,
+  rust: siRust,
+  c: siC,
+  cpp: siCplusplus,
+  dotnet: siDotnet,
+  php: siPhp,
+  ruby: siRuby,
+  swift: siSwift,
+  flutter: siFlutter,
+  dart: siDart,
+  "react_native": siReact,
+  mysql: siMysql,
+  postgresql: siPostgresql,
+  mongodb: siMongodb,
+  redis: siRedis,
+  graphql: siGraphql,
+  docker: siDocker,
+  kubernetes: siKubernetes,
+  gcp: siGooglecloud,
+  firebase: siFirebase,
+  supabase: siSupabase,
+  git: siGit,
+  figma: siFigma,
 };
 
-const keyOf = (code) => {
-  const camel = code.replace(/_(.)/g, (_, char) => char.toUpperCase());
-  return `si${camel[0].toUpperCase()}${camel.slice(1)}`;
-};
-
-// 로고가 없는 기술(C#·AWS·Azure 등)은 null. 부르는 쪽에서 글자 원으로 그린다
 export default function techIcon(code) {
-  const icon = icons[ALIASES[code] ?? keyOf(code)];
+  const icon = ICONS[code];
   if (!icon) return null;
 
   return { path: icon.path, color: `#${icon.hex}` };

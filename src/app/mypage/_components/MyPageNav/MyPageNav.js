@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth } from '@/app/_components/auth';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
+import { toOurAvatar } from '@/app/mypage/_lib/defaultAvatars';
 import styles from './MyPageNav.module.sass';
 
 const MENUS = [
@@ -36,8 +37,8 @@ export default function MyPageNav() {
   return (
     <aside className={styles.mypage_nav}>
       <div className={styles.mypage_nav_profile}>
-        {profile?.avatar_url ? (
-          <img src={profile.avatar_url} alt='' className={styles.mypage_nav_avatar} />
+        {profile ? (
+          <img src={toOurAvatar(profile.avatar_url)} alt='' className={styles.mypage_nav_avatar} />
         ) : (
           <span className={styles.mypage_nav_avatar} />
         )}

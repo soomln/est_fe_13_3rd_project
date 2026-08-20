@@ -24,10 +24,19 @@ const DEFAULT_AVATARS = FACES.map(
 // 직접 올린 사진이 담기는 곳
 const UPLOADED = '/storage/v1/object/public/avatars/';
 
+// 화면에는 120px 로 나온다. 고해상도 화면까지 감안해 두 배로 받는다
+const SIZE = 240;
+
+// 올린 사진을 원본 그대로 내보내면 1MB 가 넘는다. 스토리지에 줄여서 달라고 한다
+const resized = (url) =>
+  `${url.replace('/object/public/', '/render/image/public/')}?width=${SIZE}&height=${SIZE}&resize=cover&quality=80`;
+
 // 구글·깃허브에서 따라온 사진은 쓰지 않는다. 우리 기본 이미지 중 첫 번째를 준다
 export function toOurAvatar(url) {
   if (!url) return DEFAULT_AVATARS[0];
-  return url.startsWith('data:') || url.includes(UPLOADED) ? url : DEFAULT_AVATARS[0];
+  if (url.startsWith('data:')) return url;
+
+  return url.includes(UPLOADED) ? resized(url) : DEFAULT_AVATARS[0];
 }
 
 export default DEFAULT_AVATARS;
