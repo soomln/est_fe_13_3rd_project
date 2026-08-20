@@ -92,6 +92,7 @@ const COMMUNITY_POSTS = [
 
 const POPULAR_KEYWORDS = ['카카오', '네이버', '토스', 'SK 하이닉스', '삼성SDS', '배민'];
 
+
 export default function Home() {
   return (
     <>
