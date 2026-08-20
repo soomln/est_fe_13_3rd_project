@@ -10,7 +10,7 @@ export default function AiChatBubble({ message, time }) {
     <div className={styles.ai_chat_bubble}>
       <div className={styles.ai_profile}>
         <Image
-          src="/images/interview/ai-interviewer.png"
+          src="/images/interview/ai-interviewer.webp"
           alt="AI 면접관"
           width={80}
           height={80}
