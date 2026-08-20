@@ -1,20 +1,10 @@
-import localFont from 'next/font/local';
 import 'reset-css';
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 import './globals.sass';
-import 'material-symbols/outlined.css';
-import 'material-symbols/rounded.css';
-import 'material-symbols/sharp.css';
 
 import { AuthProvider } from './_components/auth';
 import SmallScreenNotice from './_components/common/SmallScreenNotice';
 import styles from './layout.module.sass';
-
-const pretendard = localFont({
-  src: '../../public/fonts/PretendardVariable.woff2',
-  display: 'swap',
-  weight: '100 900',
-  variable: '--font-pretendard',
-});
 
 export const metadata = {
   title: 'CallBack',
@@ -30,7 +20,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang='ko' className={pretendard.variable}>
+    <html lang='ko'>
       <head></head>
       <body>
         <AuthProvider>

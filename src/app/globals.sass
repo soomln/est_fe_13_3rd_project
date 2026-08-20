@@ -1,5 +1,55 @@
 @use '@/app/_mixin.sass' as *
 
+@font-face
+  font-family: 'Material Symbols Outlined'
+  font-style: normal
+  font-weight: 100 700
+  font-display: block
+  src: url('/fonts/material-symbols-outlined-subset.woff2') format('woff2')
+
+@font-face
+  font-family: 'Material Symbols Rounded'
+  font-style: normal
+  font-weight: 100 700
+  font-display: block
+  src: url('/fonts/material-symbols-rounded-subset.woff2') format('woff2')
+
+@font-face
+  font-family: 'Material Symbols Sharp'
+  font-style: normal
+  font-weight: 100 700
+  font-display: block
+  src: url('/fonts/material-symbols-sharp-subset.woff2') format('woff2')
+
+.material-symbols-outlined,
+.material-symbols-rounded,
+.material-symbols-sharp
+  font-weight: normal
+  font-style: normal
+  font-size: 24px
+  line-height: 1
+  letter-spacing: normal
+  text-transform: none
+  display: inline-block
+  white-space: nowrap
+  word-wrap: normal
+  direction: ltr
+  -webkit-font-feature-settings: 'liga'
+  -webkit-font-smoothing: antialiased
+  font-feature-settings: 'liga'
+
+.material-symbols-outlined
+  font-family: 'Material Symbols Outlined'
+
+.material-symbols-rounded
+  font-family: 'Material Symbols Rounded'
+
+.material-symbols-sharp
+  font-family: 'Material Symbols Sharp'
+
+:root
+  --font-pretendard: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif
+
 // Layout //
 .container
   // 1. 기본 데스크톱 스타일 (1440px 고정/중앙 정렬)
