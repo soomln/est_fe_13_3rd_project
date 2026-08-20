@@ -307,7 +307,7 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
           </section>
 
           <section className={styles.gallery} ref={galleryRef}>
-            <div className={styles.btns_wrapper}>
+            <header>
               <div className={styles.radio_btns}>
                 {categoryList.map((category) => (
                   <CategoryBtn
@@ -324,7 +324,7 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
               <div className={styles.sort}>
                 <SortBtn selectedSort={selectedSort} onChange={handleSortChange} />
               </div>
-            </div>
+            </header>
 
             <ul className={styles.item_list}>
               {items.map((item) => (
@@ -343,6 +343,8 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
             {items.length > 0 && hasMore && !isLoading && <div ref={loadMoreRef} className={styles.load_more} />}
 
             <QuickBtns onMoveTop={handleMoveTop} />
+
+            <div className={styles.footer} aria-hidden='true' />
           </section>
         </div>
 

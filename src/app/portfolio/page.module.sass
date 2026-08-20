@@ -5,7 +5,7 @@
   .container
     display: flex
     flex-direction: column
-    gap: 4rem
+    gap: 6rem
     padding: 0 0 4rem 0
 
   .hero
@@ -24,11 +24,22 @@
 .gallery
   display: flex
   flex-direction: column
-  gap: 1.5rem
+  gap: 2.5rem
+  border-radius: 20px
 
-  .btns_wrapper
+  header
+    position: sticky
+    top: 84px
     display: flex
     justify-content: space-between
+    padding: 1rem 1rem
+    z-index: 10
+    box-shadow: 0 0px 4px rgba(0,0,0,.1)
+    border-radius: 20px 20px 0 0
+    background-color: $light_green
+
+    @media (max-width: 1279px)
+      top: 65px
 
     .radio_btns
       display: flex
@@ -45,3 +56,10 @@
   .load_more
     width: 100%
     height: 1px
+
+  .footer
+    width: 100%
+    height: 64px
+    box-shadow: 0 0px 4px rgba(0,0,0,.1)
+    border-radius: 0 0 20px 20px 
+    background: $light_green
