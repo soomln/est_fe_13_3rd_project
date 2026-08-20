@@ -13,11 +13,11 @@ import RankBox from '@/app/resume/_components/RankBox';
 import LinkCard from '@/app/resume/_components/LinkCard';
 
 export const metadata = {
-  title: 'CallBack | 이력서·자기소개서',
+  title: '이력서·자기소개서 | CallBack',
   description: 'AI와 함께 이력서와 자기소개서를 부담 없이 작성하고, 더 완성도 있게 다듬어보세요!',
 
   openGraph: {
-    title: 'CallBack | 이력서·자기소개서',
+    title: '이력서·자기소개서 | CallBack',
     description: 'AI와 함께 이력서와 자기소개서를 부담 없이 작성하고, 더 완성도 있게 다듬어보세요!',
   },
 };

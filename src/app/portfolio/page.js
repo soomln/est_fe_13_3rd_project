@@ -4,11 +4,11 @@ import { headers } from 'next/headers';
 import Portfolio from './Portfolio';
 
 export const metadata = {
-  title: 'CallBack | 포트폴리오 갤러리',
+  title: '포트폴리오 갤러리 | CallBack',
   description: '포트폴리오를 한 곳에 정리하고, 나만의 강점을 담아 효과적으로 PR해보세요!',
 
   openGraph: {
-    title: 'CallBack | 포트폴리오 갤러리',
+    title: '포트폴리오 갤러리 | CallBack',
     description: '포트폴리오를 한 곳에 정리하고, 나만의 강점을 담아 효과적으로 PR해보세요!',
   },
 };

@@ -1,14 +1,13 @@
 import CompanyInfoTab from '@/app/search-companies/detail/_components/CompanyInfoTab';
 
 export const metadata = {
-  title: 'CallBack',
-  description: '개발자를 위한 취업 준비 플랫폼. 당신의 취업 준비를 최적화 하세요!',
+  title: '기업 상세 | CallBack',
+  description: '기업 정보부터 면접 후기, 족보까지 확인하고, 나에게 맞는 기업을 찾아보세요!',
 
   openGraph: {
-    title: 'CallBack',
-    description: '개발자를 위한 취업 준비 플랫폼. 당신의 취업 준비를 최적화 하세요!',
+    title: '기업 상세 | CallBack',
+    description: '기업 정보부터 면접 후기, 족보까지 확인하고, 나에게 맞는 기업을 찾아보세요!',
     type: 'website',
-    images: ['/images/OG_Image.png'],
   },
 };
 
