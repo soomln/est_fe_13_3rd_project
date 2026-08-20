@@ -27,6 +27,11 @@ export default async function downloadPdf(pagesEl, fileName) {
       scale: SHOT_SCALE,
       backgroundColor: '#FFFFFF',
       useCORS: true,
+      // 편집기가 커서 자리로 넣는 주소 없는 img 는 건너뛴다. 읽으려다 콘솔에 오류를 찍는다
+      ignoreElements: (element) => element.tagName === 'IMG' && !element.getAttribute('src'),
+      // 못 읽는 그림 하나 때문에 기본 15초를 기다리지 않는다
+      imageTimeout: 5000,
+      logging: false,
     });
 
     const count = Math.max(
