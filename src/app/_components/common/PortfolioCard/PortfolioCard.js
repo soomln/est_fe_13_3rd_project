@@ -6,7 +6,15 @@ import { togglePortfolioLike, togglePortfolioBookmark } from '@backend/lib/api/p
 
 import styles from './PortfolioCard.module.sass';
 
-export default function PortfolioCard({ item, onClick, isSelected = false, onToggle, updateReaction }) {
+export default function PortfolioCard({
+  item,
+  onClick,
+  isSelected = false,
+  onToggle,
+  updateReaction,
+  imageSizes = '100vw',
+  isLcpImage = false,
+}) {
   const handleLike = async () => {
     const active = await togglePortfolioLike(item.id);
 
@@ -38,7 +46,15 @@ export default function PortfolioCard({ item, onClick, isSelected = false, onTog
 
       <div className={styles.thumb_box}>
         {item.thumbnailUrl ? (
-          <Image src={item.thumbnailUrl} fill alt={item.title || '포트폴리오 썸네일'} className={styles.thumb_img} />
+          <Image
+            src={item.thumbnailUrl}
+            fill
+            sizes={imageSizes}
+            loading={isLcpImage ? 'eager' : undefined}
+            fetchPriority={isLcpImage ? 'high' : undefined}
+            alt={item.title || '포트폴리오 썸네일'}
+            className={styles.thumb_img}
+          />
         ) : (
           <div className={`font_h2 ${styles.thumb_dummy}`}>NULL</div>
         )}
