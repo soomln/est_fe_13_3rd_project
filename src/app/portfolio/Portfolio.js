@@ -99,10 +99,6 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
 
           return nextItems;
         });
-
-        if (page === 1 && selectedCategory === 'all' && selectedSort === 'latest') {
-          setBestPortfolioItems([...mappedItems].sort(() => Math.random() - 0.5).slice(0, 6));
-        }
       } catch (error) {
         if (!isCancelled) {
           console.error(`포트폴리오 ${page}페이지 조회 실패:`, error);
