@@ -38,6 +38,33 @@ export default function DetailModal({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+
+    root.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !item) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      contentsRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isOpen, item]);
+
+  useEffect(() => {
     if (!itemID) {
       setItem(null);
       return;
@@ -64,6 +91,14 @@ export default function DetailModal({
     if (!item) return;
 
     router.push(`/portfolio/upload?id=${item.id}`);
+  };
+
+  const handleChangeTab = (tab) => {
+    setActiveTab(tab);
+    contentsRef.current?.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    });
   };
 
   const handleUpdateReaction = (portfolioId, type, isActive) => {
@@ -106,10 +141,15 @@ export default function DetailModal({
 
       {isToastVisible && <ToastMessage message={toastMessage} />}
 
-      <div className={`container ${styles.modalBox}`}>
+      <div
+        className={`container ${styles.modalBox}`}
+        role='dialog'
+        aria-modal='true'
+        aria-label='포트폴리오 상세'
+      >
         <div className={styles.contents_wrapper}>
           <div className={styles.tab_header}>
-            <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={setActiveTab} />
+            <TabGroup bgColor={item.bgColor} activeTab={activeTab} onChangeTab={handleChangeTab} />
 
             {isMyPage && (
               <button type='button' className={`${styles.edit_btn} font_body_m_b`} onClick={onEdit}>

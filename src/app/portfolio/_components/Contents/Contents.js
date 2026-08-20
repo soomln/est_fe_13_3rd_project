@@ -57,7 +57,8 @@ export default function Contents({
   return (
     <div
       ref={contentsRef}
-      className={styles.container}
+      className={`${!isEditMode ? 'container' : ''} ${styles.container}`}
+      tabIndex={isEditMode ? undefined : -1}
       style={{
         backgroundColor: item?.bgColor,
       }}
