@@ -3,6 +3,7 @@
 import Benefits from '@/app/search-companies/detail/_components/Benefits';
 import CompanyHighlights from '@/app/search-companies/detail/_components/CompanyHighlights';
 import CompanyInfoList from '@/app/search-companies/detail/_components/CompanyInfoList';
+import CompanyInfoSkeleton from '../CompanyInfoSkeleton/CompanyInfoSkeleton';
 import CompanyIntro from '@/app/search-companies/detail/_components/CompanyIntro';
 import CompanyNews from '@/app/search-companies/detail/_components/CompanyNews';
 import CoreValues from '@/app/search-companies/detail/_components/CoreValues';
@@ -20,7 +21,8 @@ export default function CompanyInfoTab() {
   }
 
   if (!company) {
-    return <p className={styles.info_state}>불러오는 중...</p>;
+    return <CompanyInfoSkeleton />;
+    // return <p className={styles.info_state}>불러오는 중...</p>;
   }
 
   return (
