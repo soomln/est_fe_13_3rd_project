@@ -37,9 +37,11 @@
     min-height: 100%
     outline: none
 
+  // 표는 테두리 때문에 폭이 0.8px 더 잡힌다. auto 면 그 1px 때문에
+  // 가로 스크롤이 생기고 오른쪽 테두리가 잘린다. 폭은 tableWidth 확장이 막는다
   :global(.tableWrapper)
     margin-top: 12px
-    overflow-x: auto
+    overflow-x: visible
 
   // 칸을 고를 때 표시
   :global(.selectedCell)
@@ -79,12 +81,18 @@
 :global(body > div > .react-renderer.node-image img)
   width: 100%
 
-// 종이 크기와 여백은 인쇄 설정이 맡는다
+// 인쇄 여백은 화면의 종이 여백(.document_page padding)과 같아야 한다.
+// 다르면 한 장에 담기는 높이가 달라져서 인쇄 쪽 나누기가 화면과 어긋난다
 @page
   size: A4
-  margin: 18mm 20mm
+  margin: 64px 76px 94px
 
 @media print
+  // 794px 인 채로 두면 종이의 인쇄 폭(약 642px)보다 넓어서 브라우저가 81% 로 줄여 맞춘다.
+  // 그러면 세로도 같이 줄어 한 장에 더 담기고, 끊기는 지점이 화면과 어긋난다
+  .document_stack
+    width: auto
+
   .document_sheets
     display: none
 
