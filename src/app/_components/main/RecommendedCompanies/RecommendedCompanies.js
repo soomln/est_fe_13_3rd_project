@@ -41,7 +41,13 @@ export default function RecommendedCompanies() {
             <li key={company.id}>
               <Link href={`/search-companies/detail/${company.slug}`} className={styles.company_list_item}>
                 {company.logo ? (
-                  <img src={company.logo} alt={`${company.name} 로고`} className={styles.company_list_logo} />
+                  <img
+                    src={company.logo}
+                    alt={`${company.name} 로고`}
+                    width={50}
+                    height={38}
+                    className={styles.company_list_logo}
+                  />
                 ) : (
                   <span className={`material-symbols-rounded ${styles.company_list_logo_fallback}`} aria-hidden='true'>
                     domain
