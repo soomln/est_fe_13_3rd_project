@@ -198,7 +198,7 @@ export default function InterviewPage() {
               <div className={styles.hero_right}>
                 <div className={styles.hero_visual}>
                   <img
-                    src="/images/interview/AIimg.png"
+                    src="/images/interview/AIimg.webp"
                     alt="AI 면접 플랫폼"
                     className={styles.hero_image}
                   />
@@ -355,7 +355,7 @@ export default function InterviewPage() {
                   '채용공고별 면접 보기',
                   '직무별 면접 보기',
                 ]}
-                image="/images/interview/feature-interview.png"
+                image="/images/interview/feature-interview.webp"
               />
 
               <CoreFeatureCard
@@ -379,7 +379,7 @@ export default function InterviewPage() {
                   '자소서 기반 질문 생성',
                   '예상 질문 리스트 생성',
                 ]}
-                image="/images/interview/feature-resume.png"
+                image="/images/interview/feature-resume.webp"
               />
             </div>
           </section>
@@ -410,7 +410,7 @@ export default function InterviewPage() {
             </div>
             <div className={styles.guide_robot}>
               <Image
-                src="/images/interview/AIguide.png"
+                src="/images/interview/AIguide.webp"
                 alt="AI 면접 가이드 로봇"
                 width={130}
                 height={210}
