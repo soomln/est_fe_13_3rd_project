@@ -6,7 +6,9 @@ import PortfolioCard from '@/app/_components/common/PortfolioCard';
 export default function PortfolioPreview({ item }) {
   return (
     <ul className={styles.portfolio_preview}>
-      <PortfolioCard item={item} onClick={() => {}} />
+      <li>
+        <PortfolioCard item={item} onClick={() => {}} />
+      </li>
     </ul>
   );
 }

@@ -269,6 +269,7 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
         <div className={`container ${styles.container}`}>
           <section className={styles.hero}>
             <Swiper
+              wrapperTag='ul'
               className={`mySwiper ${styles.swiper_slider}`}
               modules={[Scrollbar, Autoplay, EffectCoverflow]}
               scrollbar={{
@@ -291,13 +292,14 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
               }}
             >
               {bestPortfolioItems.map((item, index) => (
-                <SwiperSlide key={item.id}>
+                <SwiperSlide tag='li' key={item.id}>
                   <PortfolioCard
                     item={item}
                     onClick={onOpenDetail}
                     updateReaction={updateReaction}
                     imageSizes='(min-width: 1440px) 720px, 40vw'
                     isLcpImage={index < 2}
+                    titleTag='h3'
                   />
                 </SwiperSlide>
               ))}
@@ -326,13 +328,15 @@ export default function Portpolio({ initialData, initialBestPortfolioItems }) {
 
             <ul className={styles.item_list}>
               {items.map((item) => (
-                <PortfolioCard
-                  key={item.id}
-                  item={item}
-                  onClick={onOpenDetail}
-                  updateReaction={updateReaction}
-                  imageSizes='(min-width: 1440px) 342px, 25vw'
-                />
+                <li key={item.id}>
+                  <PortfolioCard
+                    item={item}
+                    onClick={onOpenDetail}
+                    updateReaction={updateReaction}
+                    imageSizes='(min-width: 1440px) 342px, 25vw'
+                    titleTag='h3'
+                  />
+                </li>
               ))}
             </ul>
 

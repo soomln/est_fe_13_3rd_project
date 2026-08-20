@@ -14,6 +14,7 @@ export default function PortfolioCard({
   updateReaction,
   imageSizes = '100vw',
   isLcpImage = false,
+  titleTag: TitleTag = 'h4',
 }) {
   const handleLike = async () => {
     const active = await togglePortfolioLike(item.id);
@@ -28,7 +29,7 @@ export default function PortfolioCard({
   };
 
   return (
-    <li className={styles.portfolio_card} onClick={() => onClick(item)}>
+    <div className={styles.portfolio_card} onClick={() => onClick(item)}>
       {onToggle && (
         <label
           className={styles.select_box}
@@ -63,7 +64,7 @@ export default function PortfolioCard({
           <div className={styles.label}>
             <span>{item.category}</span>
 
-            <h4 className='font_h4'>{item.title}</h4>
+            <TitleTag className='font_h4'>{item.title}</TitleTag>
           </div>
 
           <p className='font_body_r_b'>{item.description}</p>
@@ -97,6 +98,6 @@ export default function PortfolioCard({
           />
         </div>
       </div>
-    </li>
+    </div>
   );
 }
