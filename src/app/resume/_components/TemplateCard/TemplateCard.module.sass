@@ -31,19 +31,21 @@
 
   // 편집기에서 열리는 문서(794px)를 그대로 줄여서 보여준다
   .template_card_paper
-    display: flex
-    justify-content: center
+    position: relative
     width: 100%
     height: 100%
+    overflow: hidden
     background-color: $white
 
-  // 문서 폭(794)은 그대로 두고 종이 여백만 줄여 글씨를 크게 보여준다
+  // 편집기 종이(.document_page)와 같은 폭·여백. 배율은 카드 폭에 맞춰 TemplateCard 가 넣는다
+  // 흐름에서 빼지 않으면 794px 이 카드 폭을 밀어내고, 그 폭으로 배율을 재게 된다
   .template_card_doc
-    flex-shrink: 0
+    position: absolute
+    top: 0
+    left: 0
     box-sizing: border-box
     width: 794px
-    padding: 20px 24px
-    zoom: 0.31
+    padding: 64px 76px 94px
     +documentBody
 
   .template_card_overlay
