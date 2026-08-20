@@ -1,5 +1,7 @@
 // 서버(profiles 테이블)와 화면이 쓰는 이름이 달라서 여기서 맞춘다
 
+import DEFAULT_AVATARS, { toOurAvatar } from '@/app/mypage/_lib/defaultAvatars';
+
 const labelOf = (list, code) => list.find((item) => item.code === code)?.label ?? code;
 const codeOf = (list, label) => list.find((item) => item.label === label)?.code ?? null;
 
@@ -50,7 +52,7 @@ const EMPTY = {
   headline: '',
   email: '',
   github: '',
-  avatarUrl: '',
+  avatarUrl: DEFAULT_AVATARS[0],
   bio: '',
   stats: [],
   desiredRole: '',
@@ -88,7 +90,7 @@ export function toView(profile, codes, stats) {
     headline,
     email: profile.email ?? '',
     github: profile.github_url ?? '',
-    avatarUrl: profile.avatar_url ?? '',
+    avatarUrl: toOurAvatar(profile.avatar_url),
     bio: profile.bio ?? '',
     desiredRole: profile.desired_role ? labelOf(roles, profile.desired_role) : '',
     careerLevel: profile.career_level ? labelOf(levels, profile.career_level) : '',

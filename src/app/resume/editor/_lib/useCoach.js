@@ -16,14 +16,19 @@ const PICKED_SELF = '알겠습니다. 작성이 어려운 게 있거나 궁금�
 
 // 말투가 핵심이다. 정보 목록만 주면 면접관처럼 캐묻는다.
 // Alan 은 출력 틀을 그려주면 빈 답을 준다. 규칙은 자연어로만 쓴다.
-// 질문 전체가 900자를 넘으면 안 된다. 규칙이 길면 사용자가 한 말이 밀려난다
+// 질문 전체가 900자를 넘으면 안 된다. 규칙이 길면 사용자가 한 말이 밀려난다.
+// 다 갖춰지면 쓰라고 하면 끝없이 캐묻는다. 먼저 쓰고 그다음에 묻게 한다
 const SYSTEM = `너는 IT 취업 준비생의 이력서 쓰는 걸 도와주는 친구야. 다정한 존댓말로, 이모지는 하나 정도.
-제일 처음 대화를 시작할 때 어떤 직무에 지원하는지 먼저 물어봐.
-사용자가 묻는 질문에 공감하고 "같이 찾아볼까요?" 처럼 함께 하자고 해. 가르치듯 "~해보세요" 라고 하지 마. 사용자가 지식 수준이 높아보인다면 그에 맞게 답해주고, 관련 지식이 약해보이거나 대답을 어려워 하면 일상과 같이 관점을 바꿔 질문해.
-세 문장 이내로 짧게, 마지막에 하나만 물어. 목록으로 여러 개 묻지 마.
-언제 · 무엇을 맡았는지 · 어떻게 했는지 · 어떤 결과가 났는지 가 다 나오면 더 묻지 말고
-반드시 "이렇게 쓰면 좋을 것 같아요:" 로 시작하는 줄을 넣고 이력서에 넣을 문장을 써줘.
+사용자가 아직 아무 경험도 말하지 않았다면 어떤 직무에 지원하는지만 물어봐.
+경험이나 강점을 한 가지라도 말했다면 더 캐묻지 말고, 반드시 "이렇게 쓰면 좋을 것 같아요:" 로 시작하는 줄을 넣어 이력서에 넣을 문장을 두세 줄 써줘.
+없는 회사나 숫자를 지어내지 마. 초안을 준 다음에 더 좋게 만들 질문을 하나만 덧붙여.
+대화가 이어지면 앞서 준 문장을 새로 들은 내용까지 넣어 더 구체적으로 고쳐 써줘.
+공감하고 "같이 찾아볼까요?" 처럼 함께 하자고 해. 가르치듯 "~해보세요" 라고 하지 마. 같은 것을 두 번 묻지 마.
 넣어달라고 하면, 너는 문서를 고칠 수 없으니 "문서에서 넣을 곳을 클릭해 커서를 둔 뒤 아래 [문서에 넣기] 버튼을 눌러주세요" 라고 안내해.`;
+
+// 그래도 캐묻기만 하면 못 박는다. 질문은 그대로 두어 대화가 이어지게 한다
+const DRAFT_NOW =
+  '\n지금까지 나온 말이면 충분해. 이번 답에는 "이렇게 쓰면 좋을 것 같아요:" 로 시작하는 이력서 문장을 반드시 넣어줘.';
 
 const PUT_CHOICE = { key: 'put', label: '문서에 넣기' };
 const PUT_HINT = '문서에서 넣을 곳을 클릭해 커서를 둔 뒤 「문서에 넣기」를 눌러주세요.';
@@ -45,6 +50,11 @@ const sameText = (a, b) => a.replace(/["'“”]/g, '').trim() === b.replace(/["
 const DRAFT_SIGN = /이렇게 쓰면|이렇게 작성|초안이에요|초안입니다/;
 
 const looksDraft = (text) => DRAFT_SIGN.test(text);
+
+// 사용자가 두 번째로 말하는데 아직 초안이 없으면 이번엔 쓰게 한다
+const needsDraft = (turns) =>
+  turns.filter((turn) => turn.role === 'user' && !turn.pick).length >= 1 &&
+  !turns.some((turn) => turn.role === 'ai' && looksDraft(turn.text));
 
 const FILL_CHOICES = [
   { key: 'fill-empty', label: '빈 곳만 채우기' },
@@ -158,7 +168,8 @@ export default function useCoach({ editor } = {}) {
       abortRef.current = controller;
 
       try {
-        const answer = await ask(buildPrompt(SYSTEM, turns, editor, text), {
+        const rule = needsDraft(turns) ? SYSTEM + DRAFT_NOW : SYSTEM;
+        const answer = await ask(buildPrompt(rule, turns, editor, text), {
           signal: controller.signal,
         });
 

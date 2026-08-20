@@ -1,16 +1,42 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
+
 import styles from './SearchPill.module.sass';
 
+// 한 자 칠 때마다 찾으면 서버를 너무 자주 부른다. 잠깐 멈췄을 때 한 번만 보낸다
+const DELAY = 250;
+
 // 알약 모양 검색창 + 검색 버튼
-export default function SearchPill({ placeholder = '검색어를 입력해주세요', onSearch }) {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSearch?.(new FormData(event.currentTarget).get('keyword').trim());
-  };
+export default function SearchPill({
+  placeholder = '검색어를 입력해주세요',
+  keyword = '',
+  onSearch,
+}) {
+  const [text, setText] = useState(keyword);
+
+  // 부모가 넘기는 함수는 그릴 때마다 새로 만들어진다. 기다리는 시간이 초기화되지 않게 담아둔다
+  const fire = useRef(onSearch);
+  useEffect(() => {
+    fire.current = onSearch;
+  });
+
+  useEffect(() => {
+    if (text.trim() === keyword) return undefined;
+
+    const timer = setTimeout(() => fire.current?.(text.trim()), DELAY);
+    return () => clearTimeout(timer);
+  }, [text, keyword]);
 
   return (
-    <form className={styles.search_pill} onSubmit={handleSubmit} role='search'>
+    <form
+      className={styles.search_pill}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSearch?.(text.trim());
+      }}
+      role='search'
+    >
       <div className={styles.search_pill_field}>
         <span className='material-symbols-sharp' aria-hidden='true'>
           search
@@ -21,6 +47,8 @@ export default function SearchPill({ placeholder = '검색어를 입력해주세
           className={`${styles.search_pill_input} font_body_m_r`}
           placeholder={placeholder}
           aria-label={placeholder}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
         />
       </div>
 

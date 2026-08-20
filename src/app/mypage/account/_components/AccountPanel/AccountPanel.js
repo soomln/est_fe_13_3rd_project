@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getMyAccount, deleteMyAccount, uploadAvatar } from '@backend/lib/api/mypage';
 import { useMyProfile } from '@/app/mypage/_components/MyProfileProvider';
 import AvatarPicker from '@/app/mypage/_components/AvatarPicker';
+import { toOurAvatar } from '@/app/mypage/_lib/defaultAvatars';
 import formatDate from '@/app/mypage/_lib/formatDate';
 import styles from './AccountPanel.module.sass';
 
@@ -44,7 +45,7 @@ export default function AccountPanel() {
 
   const email = account?.email ?? '불러오는 중이에요…';
   const joinedAt = formatDate(account?.createdAt);
-  const avatarUrl = profile?.avatar_url ?? '';
+  const avatarUrl = toOurAvatar(profile?.avatar_url);
 
   // 용량·형식 검사는 uploadAvatar 가 하고 메시지를 그대로 보여준다
   const handlePickPhoto = async (event) => {
