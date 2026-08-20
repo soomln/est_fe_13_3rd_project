@@ -52,8 +52,13 @@ $card_gap: 43.5px
   &::-webkit-scrollbar
     display: none
 
+  // 폭이 모자라면 카드가 조금 줄어든다. 0 으로 잠그면 대신 잘려 나간다
+  // (사파리는 스크롤바 자리를 잡을 때가 있어 크롬보다 폭이 덜 남는다)
+  // width 가 없으면 카드가 제 폭을 몰라 342 보다 작게 잡힌다
   > li
-    flex: 0 0 342px
+    flex: 0 1 342px
+    width: 342px
+    min-width: 0
 
 .template_browser_arrow
   flex-shrink: 0
