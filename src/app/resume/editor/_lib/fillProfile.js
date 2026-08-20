@@ -252,8 +252,6 @@ export default function fillProfile(html, profile, { overwrite } = {}) {
     }
     if (!section.length) return;
 
-    section.forEach((each) => used.add(each));
-
     if (!overwrite && !section.every(isUntouched)) {
       keys.forEach((key) => skipped.push(LABELS[key]));
       return;
@@ -266,6 +264,8 @@ export default function fillProfile(html, profile, { overwrite } = {}) {
       if (!writeInto(doc, section, rows)) return;
     }
 
+    // 넣는 데 실패한 자리까지 막으면, 문서 제목(h1)이 걸렸을 때 아래 제목이 전부 막힌다
+    section.forEach((each) => used.add(each));
     keys.forEach((key) => filled.push(LABELS[key]));
   });
 

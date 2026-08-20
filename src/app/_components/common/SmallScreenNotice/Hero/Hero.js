@@ -19,7 +19,14 @@ export default function Hero() {
       </p>
 
       <div className={styles.hero_visual}>
-        <img src='/images/small-screen-notice/hero.png' alt='' className={styles.hero_img} />
+        {/* 1280px 이상에서는 이 안내가 숨겨진다. lazy 여야 그때 안 받는다 */}
+        <img
+          src='/images/small-screen-notice/hero.png'
+          alt=''
+          className={styles.hero_img}
+          loading='lazy'
+          decoding='async'
+        />
         <Confetti />
       </div>
 

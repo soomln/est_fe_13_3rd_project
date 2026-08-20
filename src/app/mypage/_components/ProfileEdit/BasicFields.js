@@ -47,7 +47,7 @@ export default function BasicFields({ draft, onChange, hasNameError, onPhotoErro
   };
 
   return (
-    <section className={styles.profile_edit_basic}>
+    <div className={styles.profile_edit_basic}>
       <div className={styles.profile_edit_avatar_col}>
         <div className={styles.profile_edit_avatar_box}>
           {draft.avatarUrl ? (
@@ -121,6 +121,6 @@ export default function BasicFields({ draft, onChange, hasNameError, onPhotoErro
           onChange={(event) => onChange({ ...draft, github: event.target.value })}
         />
       </div>
-    </section>
+    </div>
   );
 }

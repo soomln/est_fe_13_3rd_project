@@ -74,6 +74,7 @@ export default function SmallScreenNotice() {
         </Link>
       </header>
 
+      {/* 제목 없는 알림 띠라 section 이 아니라 div 를 쓴다 */}
       <div className={styles.guide}>
         <p className={`${styles.guide_title} font_body_m_b`}>
           <span className='material-symbols-rounded'>desktop_windows</span>

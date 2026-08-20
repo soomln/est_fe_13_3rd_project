@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
 import SearchCompaniesClient from './_components/SearchCompaniesClient';
+import styles from './page.module.sass';
 
 export const metadata = {
   title: '기업 탐색 | CallBack',
@@ -15,7 +16,7 @@ export const metadata = {
 
 export default function SearchCompaniesPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className={styles.search_companies_placeholder} />}>
       <SearchCompaniesClient />
     </Suspense>
   );

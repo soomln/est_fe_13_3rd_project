@@ -23,17 +23,17 @@ export function useMyProfile() {
   return useContext(MyProfileContext) ?? { status: 'loading', codes: {} };
 }
 
-export default function MyProfileProvider({ children }) {
-  const [profile, setProfile] = useState(null);
-  const [codes, setCodes] = useState({});
+export default function MyProfileProvider({ children, initialProfile = null, initialCodes = null }) {
+  const [profile, setProfile] = useState(initialProfile);
+  const [codes, setCodes] = useState(initialCodes ?? {});
   const [stats, setStats] = useState(null);
-  const [status, setStatus] = useState('loading');
+  // 서버에서 미리 받아왔으면 불러오는 중 화면을 건너뛴다
+  const [status, setStatus] = useState(initialProfile && initialCodes ? 'ready' : 'loading');
   const [reloadKey, setReloadKey] = useState(0);
 
   // 개수는 없어도 화면이 뜨니 실패해도 넘어간다
   useEffect(() => {
     let alive = true;
-    setStatus('loading');
 
     Promise.all([getMyProfile(), getCodeGroups(CODE_GROUPS), getMyProfileStats().catch(() => null)])
       .then(([myProfile, codeGroups, myStats]) => {
