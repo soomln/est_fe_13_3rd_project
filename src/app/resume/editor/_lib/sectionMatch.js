@@ -10,16 +10,19 @@ export function normalize(text) {
 
 // 프로필 항목마다 이력서에서 쓰일 법한 제목들
 const SECTIONS = [
-  { key: 'educations', names: ['학력', '학력사항', '교육및활동', '학업', '출신학교', 'education'] },
+  // "교육 및 활동" 은 부트캠프·대외활동 자리라 학력이 아니다. 사용자가 직접 쓴다
+  { key: 'educations', names: ['학력', '학력사항', '학업', '출신학교', 'education'] },
   { key: 'careers', names: ['경력', '경력사항', '경력요약', '업무경험', '직무경험', 'experience', 'career'] },
-  { key: 'languages', names: ['언어', '어학', '외국어', '어학능력', 'language'] },
+  // "자격 및 어학" 처럼 둘이 같은 길이로 걸리면 앞에 쓴 쪽이 먼저 들어간다
   { key: 'awards', names: ['수상', '수상내역', '수상경력', '자격', '자격사항', '자격증', 'award', 'certificate'] },
+  { key: 'languages', names: ['언어', '어학', '외국어', '어학능력', 'language'] },
   { key: 'headline', names: ['한줄소개', '자기소개', '나를한문장으로', 'summary', 'about'] },
   { key: 'contact', names: ['인적사항', '연락처', '기본정보', 'contact', 'profile'] },
   { key: 'skills', names: ['기술스택', '기술', '보유기술', '스킬', 'skills', 'techstack'] },
 ];
 
-// 제목 하나가 어느 항목들에 해당하는지. "경력 · 학력" 처럼 둘을 겸하면 둘 다 준다
+// 제목 하나가 어느 항목들에 해당하는지. "경력 · 학력" 처럼 둘을 겸하면 둘 다 준다.
+// 얼마나 길게 맞았는지도 같이 준다. 같은 항목을 두 제목이 노리면 더 길게 맞은 쪽이 가져간다
 export function matchSection(heading) {
   const target = normalize(heading);
   if (!target) return [];
@@ -37,5 +40,5 @@ export function matchSection(heading) {
   });
 
   // 더 길게 맞은 쪽이 더 확실하다
-  return hits.sort((a, b) => b.length - a.length).map((hit) => hit.key);
+  return hits.sort((a, b) => b.length - a.length).map(({ key, length }) => ({ key, length }));
 }

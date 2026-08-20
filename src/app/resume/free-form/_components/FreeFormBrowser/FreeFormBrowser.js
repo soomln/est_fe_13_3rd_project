@@ -123,7 +123,6 @@ export default function FreeFormBrowser() {
 
         <div className={styles.free_form_tools}>
           <SearchBar
-            key={keyword}
             keyword={keyword}
             onSearch={(text) => updateQuery({ q: text, page: 1 })}
           />

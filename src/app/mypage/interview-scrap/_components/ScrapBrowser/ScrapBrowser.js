@@ -210,7 +210,7 @@ export default function ScrapBrowser() {
 
           <div className={styles.scrap_browser_tools}>
             <SearchPill
-              key={keyword}
+              keyword={keyword}
               placeholder='키워드로 검색'
               onSearch={(text) => updateQuery({ q: text, page: 1 })}
             />

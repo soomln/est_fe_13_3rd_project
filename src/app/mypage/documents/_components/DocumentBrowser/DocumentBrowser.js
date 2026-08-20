@@ -252,7 +252,7 @@ export default function DocumentBrowser() {
 
           <div className={styles.document_browser_tools}>
             <SearchPill
-              key={keyword}
+              keyword={keyword}
               placeholder={isScrapped ? '양식 이름으로 검색' : '문서 이름으로 검색'}
               onSearch={(text) => updateQuery({ q: text, page: 1 })}
             />

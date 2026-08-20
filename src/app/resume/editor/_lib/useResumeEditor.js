@@ -9,6 +9,7 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 
 import PageBreaks from '@/app/resume/editor/_lib/pageBreaks';
 import ResizableImage from '@/app/resume/editor/_lib/ResizableImage';
+import TableWidth from '@/app/resume/editor/_lib/tableWidth';
 
 // 이력서 본문 편집기. 툴바가 이 editor 를 받아서 명령을 건다
 export default function useResumeEditor({ content, onChange }) {
@@ -33,6 +34,7 @@ export default function useResumeEditor({ content, onChange }) {
       TableRow,
       TableHeader,
       TableCell,
+      TableWidth,
     ],
     content: content ?? '',
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),

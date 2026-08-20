@@ -43,24 +43,38 @@ function measure(view) {
   let filled = 0;
   let prevBottom = 0;
   let count = 1;
+  // 직전 블록이 제목이면 기억해 둔다. 제목만 앞 장에 남기지 않으려고 쓴다
+  let heading = null;
 
   blocks.forEach((el, index) => {
-    const { height, marginTop, marginBottom } = sizeOf(el);
+    const size = sizeOf(el);
     // 위아래 여백은 큰 쪽 하나만 남는다
-    const gap = filled === 0 ? 0 : Math.max(prevBottom, marginTop);
+    const gap = filled === 0 ? 0 : Math.max(prevBottom, size.marginTop);
 
-    if (filled > 0 && filled + gap + height > CONTENT_HEIGHT) {
+    if (filled > 0 && filled + gap + size.height > CONTENT_HEIGHT) {
+      // 제목만 앞 장 끝에 남으면 보기 나쁘다. 앞이 제목이면 제목부터 넘긴다
+      const start = heading ?? { index, before: { filled, prevBottom }, size };
+
       breaks.push({
-        pos: positions[index] ?? 0,
-        height: CONTENT_HEIGHT + SKIP - filled - prevBottom - marginTop,
+        pos: positions[start.index] ?? 0,
+        height:
+          CONTENT_HEIGHT + SKIP - start.before.filled - start.before.prevBottom - start.size.marginTop,
       });
-      filled = height;
+
+      filled =
+        start === heading
+          ? heading.size.height + Math.max(heading.size.marginBottom, size.marginTop) + size.height
+          : size.height;
+      prevBottom = size.marginBottom;
+      heading = null;
       count += 1;
-    } else {
-      filled += gap + height;
+      return;
     }
 
-    prevBottom = marginBottom;
+    // 앞에 아무것도 없는 제목은 넘겨봐야 빈 장만 생긴다
+    heading = /^H[1-3]$/.test(el.tagName) && filled > 0 ? { index, before: { filled, prevBottom }, size } : null;
+    filled += gap + size.height;
+    prevBottom = size.marginBottom;
   });
 
   return { breaks, count };
