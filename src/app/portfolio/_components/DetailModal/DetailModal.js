@@ -137,7 +137,7 @@ export default function DetailModal({
 
   return createPortal(
     <div className={styles.overlay}>
-      <div className={styles.backdrop} onClick={onClose} />
+      <div className={styles.backdrop} onPointerDown={onClose} />
 
       {isToastVisible && <ToastMessage message={toastMessage} />}
 
