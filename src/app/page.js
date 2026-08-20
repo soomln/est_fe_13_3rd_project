@@ -160,7 +160,9 @@ export default function Home() {
 
             <ul className={styles.service_grid}>
               {SERVICES.map((item) => (
-                <ServiceCard key={item.title} {...item} />
+                <li key={item.title}>
+                  <ServiceCard {...item} />
+                </li>
               ))}
             </ul>
           </div>
