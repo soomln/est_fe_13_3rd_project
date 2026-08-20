@@ -1,7 +1,29 @@
+'use client';
+
+import { useAuth } from '@/app/_components/auth';
+
 import styles from './ReactionBtn.module.sass';
 
-export default function ReactionBtn({ iconText, value, isToggle = false, isActive = false, onClick }) {
+export default function ReactionBtn({
+  iconText,
+  value,
+  isToggle = false,
+  isActive = false,
+  requiresAuth = false,
+  onClick,
+}) {
+  const { isLoggedIn, isLoading, openLogin } = useAuth();
+
   const handleClick = async () => {
+    if (requiresAuth) {
+      if (isLoading) return;
+
+      if (!isLoggedIn) {
+        openLogin();
+        return;
+      }
+    }
+
     try {
       await onClick?.();
     } catch (error) {
