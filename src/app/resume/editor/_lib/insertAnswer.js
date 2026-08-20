@@ -6,6 +6,9 @@ const UNDO_HINT = '\n이전으로 돌리고 싶다면 Ctrl+Z로 되돌릴 수 �
 // "아래 버튼을 눌러주세요" 같은 안내는 이력서에 들어가면 안 된다
 const GUIDE_LINE = /버튼|눌러\s*주|넣으시려면|넣어드릴까요/;
 
+// 초안 뒤에는 "더 다듬을 부분이 있을까요?" 같은 되묻는 줄이 붙는다
+const ASK_LINE = /[?？]\s*$/;
+
 // 이력서에 넣을 줄만 골라낸다
 function pickLines(text) {
   const lines = text
@@ -20,6 +23,9 @@ function pickLines(text) {
     .filter((index) => index >= 0)
     .pop();
   const body = guide === undefined ? lines : lines.slice(guide + 1);
+
+  // 끝에 붙은 되묻는 줄은 이력서에 들어가면 안 된다. 초안 안의 물음표는 남긴다
+  while (body.length && ASK_LINE.test(body[body.length - 1])) body.pop();
 
   // 목록으로 왔으면 목록만 넣는다
   const listed = body.filter((line) => /^[·•\-*]\s/.test(line));
