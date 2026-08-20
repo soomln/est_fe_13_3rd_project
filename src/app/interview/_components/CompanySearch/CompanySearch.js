@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import styles from './CompanySearch.module.sass';
 import { listCompanies } from '@backend/lib/api/companies';
 
+// 한 자 칠 때마다 찾으면 서버를 너무 자주 부른다. 잠깐 멈췄을 때 한 번만 보낸다
+const SEARCH_DELAY = 250;
+
 export default function CompanySearch({
   selectedId,
   onSelect,
@@ -12,41 +15,35 @@ export default function CompanySearch({
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [again, setAgain] = useState(0);
 
+  // 한 자 칠 때마다 찾는다. 다 지우면 빈 검색어가 되어 처음 목록으로 돌아간다
   useEffect(() => {
-    const fetchCompanies = async () => {
+    let ignore = false;
+    const trimmedKeyword = keyword.trim();
+
+    const timer = setTimeout(async () => {
       try {
         const { items } = await listCompanies({
+          q: trimmedKeyword || undefined,
           page: 1,
           pageSize: 20,
         });
+        if (ignore) return;
         setCompanies(items);
+        setSearchKeyword(trimmedKeyword);
       } catch (error) {
-        console.error('기업 조회 실패:', error);
+        console.error('기업 검색 실패:', error);
       } finally {
-        setIsLoading(false);
+        if (!ignore) setIsLoading(false);
       }
-    };
-    fetchCompanies();
-  }, []);
+    }, SEARCH_DELAY);
 
-  const handleSearch = async () => {
-    const trimmedKeyword = keyword.trim();
-    setSearchKeyword(trimmedKeyword);
-    setIsLoading(true);
-    try {
-      const { items } = await listCompanies({
-        q: trimmedKeyword,
-        page: 1,
-        pageSize: 20,
-      });
-      setCompanies(items);
-    } catch (error) {
-      console.error('기업 검색 실패:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [keyword, again]);
 
   return (
     <section className={styles.company_search}>
@@ -58,7 +55,7 @@ export default function CompanySearch({
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              handleSearch();
+              setAgain((n) => n + 1);
             }
           }}
           placeholder="기업명을 입력하세요."
@@ -69,7 +66,7 @@ export default function CompanySearch({
           type="button"
           className={styles.company_search_button}
           aria-label="기업 검색"
-          onClick={handleSearch}
+          onClick={() => setAgain((n) => n + 1)}
         >
           <span className="material-symbols-outlined">
             search

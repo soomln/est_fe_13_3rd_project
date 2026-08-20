@@ -17,6 +17,9 @@ import styles from './SearchCompaniesClient.module.sass';
 const RECOMMENDED_KEYWORDS = ['네이버', '토스', '카카오'];
 const EMPTY_FILTERS = { jobRole: '', size: '', industry: '' };
 
+// 한 자 칠 때마다 찾으면 서버를 너무 자주 부른다. 잠깐 멈췄을 때 한 번만 보낸다
+const SEARCH_DELAY = 250;
+
 export default function SearchCompaniesClient() {
   const { isLoggedIn, openLogin } = useAuth();
   const searchParams = useSearchParams();
@@ -51,6 +54,18 @@ export default function SearchCompaniesClient() {
       ignore = true;
     };
   }, []);
+
+  // 입력을 멈추면 검색어로 옮긴다. 다 지우면 빈 검색어가 되어 처음 목록으로 돌아간다
+  useEffect(() => {
+    if (keyword.trim() === query) return undefined;
+
+    const timer = setTimeout(() => {
+      setQuery(keyword.trim());
+      setPage(1);
+    }, SEARCH_DELAY);
+
+    return () => clearTimeout(timer);
+  }, [keyword, query]);
 
   useEffect(() => {
     let ignore = false;
