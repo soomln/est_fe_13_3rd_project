@@ -48,23 +48,38 @@ export default function PortfolioSlider() {
   if (status === 'loading') return null;
 
   if (status === 'error' || items.length === 0) {
-    return <p className={`font_body_s_r ${styles.preview_empty}`}>포트폴리오를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>;
+    return (
+      <p className={`font_body_s_r ${styles.preview_empty}`}>
+        포트폴리오를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+      </p>
+    );
   }
 
   return (
     <div className={styles.preview}>
-      <button ref={prevRef} type='button' className={`${styles.preview_nav} ${styles.preview_nav_prev}`} aria-label='이전 포트폴리오'>
+      <button
+        ref={prevRef}
+        type='button'
+        className={`${styles.preview_nav} ${styles.preview_nav_prev}`}
+        aria-label='이전 포트폴리오'
+      >
         <span className='material-symbols-rounded' aria-hidden='true'>
           chevron_left
         </span>
       </button>
-      <button ref={nextRef} type='button' className={`${styles.preview_nav} ${styles.preview_nav_next}`} aria-label='다음 포트폴리오'>
+      <button
+        ref={nextRef}
+        type='button'
+        className={`${styles.preview_nav} ${styles.preview_nav_next}`}
+        aria-label='다음 포트폴리오'
+      >
         <span className='material-symbols-rounded' aria-hidden='true'>
           chevron_right
         </span>
       </button>
 
       <Swiper
+        wrapperTag='ul'
         className={styles.swiper}
         modules={[EffectCards, Navigation, Pagination]}
         effect='cards'
@@ -78,7 +93,7 @@ export default function PortfolioSlider() {
         pagination={{ clickable: true, bulletClass: styles.dot, bulletActiveClass: styles.dot_active }}
       >
         {items.map((item) => (
-          <SwiperSlide key={item.id}>
+          <SwiperSlide tag='li' key={item.id}>
             <PortfolioCard
               item={item}
               onClick={() => router.push(`/portfolio?modal=${item.id}`)}

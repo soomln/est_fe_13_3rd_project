@@ -63,6 +63,7 @@
     position: relative
     width: 100%
     aspect-ratio: 5 / 4
+    overflow: hidden
 
   .thumb_img
     width: 100%
@@ -98,6 +99,7 @@
       display: flex
       flex-direction: column
       gap: 0.25rem
+
       span
         display: inline-flex
         align-items: center
@@ -112,6 +114,9 @@
         font-size: 10px
         font-weight: 700
         line-height: 1
+
+      .title
+        word-break: keep-all
 
     p
       word-break: break-all

@@ -268,17 +268,18 @@ export default function PortfolioBrowser() {
         {status === 'ready' && items.length > 0 ? (
           <ul className={styles.portfolio_browser_grid}>
             {items.map((item) => (
-              <PortfolioCard
-                key={item.id}
-                item={item}
-                onClick={() => {
-                  if (isDeleteMode) toggleOne(item.id);
-                  else setPreviewId(item.id);
-                }}
-                isSelected={selectedIds.includes(item.id)}
-                onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
-                updateReactionCount={updateReactionCount}
-              />
+              <li key={item.id}>
+                <PortfolioCard
+                  item={item}
+                  onClick={() => {
+                    if (isDeleteMode) toggleOne(item.id);
+                    else setPreviewId(item.id);
+                  }}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggle={isDeleteMode ? () => toggleOne(item.id) : undefined}
+                  updateReactionCount={updateReactionCount}
+                />
+              </li>
             ))}
           </ul>
         ) : status === 'ready' ? (
