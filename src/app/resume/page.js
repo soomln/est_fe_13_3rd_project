@@ -12,6 +12,16 @@ import FunctionBox from '@/app/resume/_components/FunctionBox';
 import RankBox from '@/app/resume/_components/RankBox';
 import LinkCard from '@/app/resume/_components/LinkCard';
 
+export const metadata = {
+  title: 'CallBack | 이력서·자기소개서',
+  description: 'AI와 함께 이력서와 자기소개서를 부담 없이 작성하고, 더 완성도 있게 다듬어보세요!',
+
+  openGraph: {
+    title: 'CallBack | 이력서·자기소개서',
+    description: 'AI와 함께 이력서와 자기소개서를 부담 없이 작성하고, 더 완성도 있게 다듬어보세요!',
+  },
+};
+
 const HERO_STEPS = [
   {
     step: 'STEP 01',
@@ -275,7 +285,9 @@ export default function Resume() {
               </span>
 
               <div className={styles.next_progress_step}>
-                <span className={`${styles.next_progress_icon} ${styles.next_progress_icon_next} font_body_l_b`}>2</span>
+                <span className={`${styles.next_progress_icon} ${styles.next_progress_icon_next} font_body_l_b`}>
+                  2
+                </span>
                 <div className={styles.next_progress_text}>
                   <p className={`${styles.next_progress_label_next} font_caption_b`}>다음 단계</p>
                   <p className={`${styles.next_progress_title} font_body_s_b`}>서류로 시작하는 취업 준비</p>

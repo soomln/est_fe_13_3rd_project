@@ -3,6 +3,16 @@ import { randomInt } from 'node:crypto';
 import { headers } from 'next/headers';
 import Portfolio from './Portfolio';
 
+export const metadata = {
+  title: 'CallBack | 포트폴리오 갤러리',
+  description: '포트폴리오를 한 곳에 정리하고, 나만의 강점을 담아 효과적으로 PR해보세요!',
+
+  openGraph: {
+    title: 'CallBack | 포트폴리오 갤러리',
+    description: '포트폴리오를 한 곳에 정리하고, 나만의 강점을 담아 효과적으로 PR해보세요!',
+  },
+};
+
 async function getInitialPortfolios() {
   const requestHeaders = await headers();
   const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
