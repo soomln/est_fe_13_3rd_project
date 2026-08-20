@@ -74,7 +74,8 @@ export default function SmallScreenNotice() {
         </Link>
       </header>
 
-      <section className={styles.guide}>
+      {/* 제목 없는 알림 띠라 section 이 아니라 div 를 쓴다 */}
+      <div className={styles.guide}>
         <p className={`${styles.guide_title} font_body_m_b`}>
           <span className='material-symbols-rounded'>desktop_windows</span>
           지금은 PC에서만 만날 수 있어요
@@ -82,7 +83,7 @@ export default function SmallScreenNotice() {
         <p className={`${styles.guide_desc} font_caption_r`}>
           작은 화면에서도 쓸 수 있는 CallBack을 만들고 있어요
         </p>
-      </section>
+      </div>
 
       <Hero />
 
