@@ -10,6 +10,8 @@ import { togglePortfolioLike, togglePortfolioBookmark } from '@backend/lib/api/p
 
 import styles from './PortfolioCard.module.sass';
 
+const toValidAvatarSrc = (src) => src.replace(/^data:image\/svg\+xml;utf8,/, 'data:image/svg+xml;charset=UTF-8,');
+
 export default function PortfolioCard({
   item,
   onClick,
@@ -91,7 +93,13 @@ export default function PortfolioCard({
       <div className={styles.info_box}>
         <div className={styles.author_info}>
           {item.authorAvatar ? (
-            <img src={item.authorAvatar} alt={item.authorName} width={24} height={24} className={styles.avatar_img} />
+            <img
+              src={toValidAvatarSrc(item.authorAvatar)}
+              alt={item.authorName}
+              width={24}
+              height={24}
+              className={styles.avatar_img}
+            />
           ) : (
             <span className={styles.avatar_dummy} />
           )}
