@@ -18,18 +18,15 @@ const MEASURE_DELAY = 80;
 
 export const pageBreaksKey = new PluginKey('pageBreaks');
 
-// 어느 문단 앞에서 장을 넘겨야 하는지, 몇 장이 되는지 잰다
-function measure(view) {
-  const blocks = [...view.dom.children].filter((el) => !el.dataset.pageSpacer);
+// 어느 블록 앞에서 장을 넘겨야 하는지, 몇 장이 되는지 잰다. 미리보기도 같이 쓴다
+export function planPages(container) {
+  const blocks = [...container.children].filter((el) => !el.dataset.pageSpacer);
   if (!blocks.length) return { breaks: [], count: 1 };
-
-  const positions = [];
-  view.state.doc.forEach((_node, offset) => positions.push(offset));
 
   // 자리에서 재면 빈 자리를 넣은 뒤 값이 달라져 넣었다 뺐다를 반복한다.
   // 각 문단의 제 높이와 제 여백만 보면 빈 자리와 상관없이 늘 같은 값이 나온다
   // offsetHeight 는 정수로 잘려서 문단이 많으면 몇 px 씩 어긋난다. 소수까지 재고 배율을 되돌린다
-  const scale = view.dom.getBoundingClientRect().width / view.dom.offsetWidth || 1;
+  const scale = container.getBoundingClientRect().width / container.offsetWidth || 1;
   const sizeOf = (el) => {
     const style = getComputedStyle(el);
     return {
@@ -56,7 +53,7 @@ function measure(view) {
       const start = heading ?? { index, before: { filled, prevBottom }, size };
 
       breaks.push({
-        pos: positions[start.index] ?? 0,
+        index: start.index,
         height:
           CONTENT_HEIGHT + SKIP - start.before.filled - start.before.prevBottom - start.size.marginTop,
       });
@@ -78,6 +75,19 @@ function measure(view) {
   });
 
   return { breaks, count };
+}
+
+// 편집기는 블록 순서 대신 문서 안 위치가 필요하다
+function measure(view) {
+  const { breaks, count } = planPages(view.dom);
+
+  const positions = [];
+  view.state.doc.forEach((_node, offset) => positions.push(offset));
+
+  return {
+    breaks: breaks.map((item) => ({ pos: positions[item.index] ?? 0, height: item.height })),
+    count,
+  };
 }
 
 const isSame = (a, b) =>

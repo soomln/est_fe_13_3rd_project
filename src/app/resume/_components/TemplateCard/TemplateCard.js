@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 import { getTemplate, toggleTemplateBookmark } from '@backend/lib/api/templates';
@@ -8,6 +8,9 @@ import { useAuth } from '@/app/_components/auth';
 import BookmarkBtn from '@/app/_components/common/BookmarkBtn';
 import PrimaryBtn from '@/app/resume/_components/PrimaryBtn';
 import styles from './TemplateCard.module.sass';
+
+// 편집기 A4 종이 폭. DocumentPage.module.sass 와 같은 값이어야 한다
+const PAPER_WIDTH = 794;
 
 export default function TemplateCard({ id, type, title, views, isBookmarked = false, onBookmark }) {
   const { isLoggedIn, openLogin } = useAuth();
@@ -28,6 +31,25 @@ export default function TemplateCard({ id, type, title, views, isBookmarked = fa
       alive = false;
     };
   }, [id]);
+
+  // 편집기 문서(794px)를 카드 폭에 딱 맞춘다. 아래로 넘치는 부분은 잘린다
+  const thumbRef = useRef(null);
+  const docRef = useRef(null);
+
+  useEffect(() => {
+    const thumb = thumbRef.current;
+    if (!thumb) return undefined;
+
+    const fit = () => {
+      if (docRef.current) docRef.current.style.zoom = thumb.clientWidth / PAPER_WIDTH;
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(thumb);
+
+    return () => observer.disconnect();
+  }, [preview]);
 
   // 서버 응답을 기다리지 않고 먼저 켠다. 실패하면 되돌린다
   const toggle = async () => {
@@ -51,9 +73,10 @@ export default function TemplateCard({ id, type, title, views, isBookmarked = fa
     <li className={styles.template_card}>
       <Link href={`/resume/editor?template=${id}`} className={styles.template_card_link}>
         <div className={styles.template_card_top}>
-          <div className={styles.template_card_thumb}>
+          <div className={styles.template_card_thumb} ref={thumbRef}>
             <div className={styles.template_card_paper}>
               <div
+                ref={docRef}
                 className={styles.template_card_doc}
                 aria-hidden='true'
                 dangerouslySetInnerHTML={{ __html: preview }}

@@ -1,4 +1,8 @@
+'use client';
+
 import Image from 'next/image';
+
+import { useAuth } from '@/app/_components/auth';
 
 import ActionBtn from '../ActionBtn';
 
@@ -16,6 +20,19 @@ export default function PortfolioCard({
   isLcpImage = false,
   titleTag: TitleTag = 'h4',
 }) {
+  const { isLoggedIn, isLoading, openLogin } = useAuth();
+
+  const handleCardClick = () => {
+    if (isLoading) return;
+
+    if (!isLoggedIn) {
+      openLogin();
+      return;
+    }
+
+    onClick(item);
+  };
+
   const handleLike = async () => {
     const active = await togglePortfolioLike(item.id);
 
@@ -29,7 +46,7 @@ export default function PortfolioCard({
   };
 
   return (
-    <div className={styles.portfolio_card} onClick={() => onClick(item)}>
+    <div className={styles.portfolio_card} onClick={handleCardClick}>
       {onToggle && (
         <label
           className={styles.select_box}
